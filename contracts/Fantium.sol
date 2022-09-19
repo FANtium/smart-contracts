@@ -7,8 +7,21 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Fantium is ERC721, Ownable {
+
+    using Strings for uint256;
+
+    uint256 constant ONE_MILLION = 1_000_000;
+
     // generic platform event fields
     bytes32 constant FIELD_NEXT_COLLECTION_ID = "nextCollectionId";
+    bytes32 constant FIELD_FANTIUM_PRIMARY_MARKET_ROYALTY_PERCENTAGE =
+        "fantium primary royalty %";
+    bytes32 constant FIELD_FANTIUM_SECONDARY_MARKET_ROYALTY_BPS =
+        "fantium secondary royalty BPS";
+    bytes32 constant FIELD_FANTIUM_PRIMARY_ADDRESS =
+        "fantium primary sale address";
+    bytes32 constant FIELD_FANTIUM_SECONDARY_ADDRESS =
+        "fantium secondary sale address";
 
     // generic collection event fields
     bytes32 constant FIELD_COLLECTION_CREATED = "created";
@@ -19,9 +32,10 @@ contract Fantium is ERC721, Ownable {
     bytes32 constant FIELD_COLLECTION_PRICE = "price";
     bytes32 constant FIELD_COLLECTION_MAX_INVOCATIONS = "max invocations";
     bytes32 constant FIELD_COLLECTION_PRIMARY_MARKET_ROYALTY_PERCENTAGE =
-        "primary royalty percentage";
+        "collection primary sale %";
     bytes32 constant FIELD_COLLECTION_SECONDARY_MARKET_ROYALTY_PERCENTAGE =
-        "secondary royalty percentage";
+        "collection secondary sale %";
+    bytes32 constant FIELD_COLLECTION_BASE_URI = "collection base uri";
 
     struct Collection {
         uint24 invocations;
@@ -30,6 +44,7 @@ contract Fantium is ERC721, Ownable {
         bool paused;
         string name;
         string athleteName;
+        string collectionBaseURI;
         address payable athleteAddress;
         // packed uint: max of 100, max uint8 = 255
         uint8 athletePrimarySalesPercentage;
@@ -71,6 +86,80 @@ contract Fantium is ERC721, Ownable {
     }
 
     //////////////////////////////////////////////////////////////
+    //////////////////////// TOKEN ///////////////////////////////
+    //////////////////////////////////////////////////////////////
+
+    /**
+     * @notice Mints a token from collection `_collectionId` and sets the
+     * token's owner to `_to`.
+     * @param _to Address to be the minted token's owner.
+     * @param _collectionId Project ID to mint a token on.
+     * @param _by Purchaser of minted token.
+     * @dev name of function is optimized for gas usage
+     */
+    function mint(
+        address _to,
+        uint256 _collectionId,
+        address _by
+    ) external returns (uint256 _tokenId) {
+        // CHECKS
+        Collection storage collection = collections[_collectionId];
+        // load invocations into memory
+        uint24 invocationsBefore = collection.invocations;
+        uint24 invocationsAfter;
+        unchecked {
+            // invocationsBefore guaranteed <= maxInvocations <= 1_000_000,
+            // 1_000_000 << max uint24, so no possible overflow
+            invocationsAfter = invocationsBefore + 1;
+        }
+        uint24 maxInvocations = collection.maxInvocations;
+
+        require(
+            invocationsBefore < maxInvocations,
+            "Must not exceed max invocations"
+        );
+        require(!collection.paused, "Purchases are paused.");
+
+        // EFFECTS
+        // increment project's invocations
+        collection.invocations = invocationsAfter;
+        uint256 thisTokenId;
+        unchecked {
+            // invocationsBefore is uint24 << max uint256. In production use,
+            // _projectId * ONE_MILLION must be << max uint256, otherwise
+            // tokenIdToProjectId function become invalid.
+            // Therefore, no risk of overflow
+            thisTokenId = (_collectionId * ONE_MILLION) + invocationsBefore;
+        }
+
+        // INTERACTIONS
+        _mint(_to, thisTokenId);
+
+        // Do not need to also log `collectionId` in event, as the `collectionId` for
+        // a given token can be derived from the `tokenId` with:
+        //   collectionId = collectionId / 1_000_000
+        emit Mint(_to, thisTokenId);
+
+        return thisTokenId;
+    }
+
+    /**
+     * @notice Gets token URI for token ID `_tokenId`.
+     * @dev token URIs are the concatenation of the project base URI and the
+     * token ID.
+     */
+    function tokenURI(uint256 _tokenId)
+        public
+        view
+        override
+        returns (string memory)
+    {
+        string memory _collectionBaseURI = collections[_tokenId / ONE_MILLION]
+            .collectionBaseURI;
+        return string.concat(_collectionBaseURI, _tokenId.toString());
+    }
+
+    //////////////////////////////////////////////////////////////
     ////////////////////// COLLECTIONS ///////////////////////////
     //////////////////////////////////////////////////////////////
 
@@ -84,6 +173,7 @@ contract Fantium is ERC721, Ownable {
     function addCollection(
         string memory _collectionName,
         string memory _athleteName,
+        string memory _collectionBaseURI,
         address payable _athleteAddress,
         uint24 _maxInvocations,
         uint256 _priceInWei,
@@ -93,6 +183,7 @@ contract Fantium is ERC721, Ownable {
         uint256 collectionId = _nextCollectionId;
         collections[collectionId].name = _collectionName;
         collections[collectionId].athleteName = _athleteName;
+        collections[collectionId].collectionBaseURI = _collectionBaseURI;
         collections[collectionId].athleteAddress = _athleteAddress;
         collections[collectionId].paused = true;
         collections[collectionId].priceInWei = _priceInWei;
@@ -165,6 +256,18 @@ contract Fantium is ERC721, Ownable {
     }
 
     /**
+     * @notice Updates collection baseURI for collection `_collectionId` to be
+     * `_collectionBaseURI`.
+     */
+    function updateCollectionBaseURI(
+        uint256 _collectionId,
+        string memory _collectionBaseURI
+    ) external onlyOwner {
+        collections[_collectionId].collectionBaseURI = _collectionBaseURI;
+        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_BASE_URI);
+    }
+
+    /**
      * @notice Updates Athlete name for collection `_collectionId` to be
      * `_collectionAthleteName`.
      */
@@ -187,7 +290,7 @@ contract Fantium is ERC721, Ownable {
      * be sent to the athlete. This must be less than
      * or equal to 95 percent.
      */
-    function updateCollectionPrimaryMarketRoyaltyPercentage(
+    function updateCollectionAthletePrimaryMarketRoyaltyPercentage(
         uint256 _collectionId,
         uint256 _primaryMarketRoyalty
     ) external onlyOwner {
@@ -212,7 +315,7 @@ contract Fantium is ERC721, Ownable {
      * be sent to the athlete. This must be less than
      * or equal to 95 percent.
      */
-    function updateCollectionSecondaryMarketRoyaltyPercentage(
+    function updateCollectionAthleteSecondaryMarketRoyaltyPercentage(
         uint256 _collectionId,
         uint256 _secondMarketRoyalty
     ) external onlyOwner {
@@ -227,8 +330,65 @@ contract Fantium is ERC721, Ownable {
     }
 
     //////////////////////////////////////////////////////////////
+    //////////////////////// PLATFROM ////////////////////////////
+    //////////////////////////////////////////////////////////////
+
+    /**
+     * @notice Updates the platform primary market royalties to be
+     * `_primaryMarketRoyalty` percent.
+     * @param _primaryMarketRoyalty Percent of primary sales revenue that will
+     * be sent to the platform. This must be less than
+     * or equal to 95 percent.
+     */
+    function updatePlatformPrimaryMarketRoyaltyPercentage(
+        uint256 _primaryMarketRoyalty
+    ) external onlyOwner {
+        require(_primaryMarketRoyalty <= 95, "Max of 95%");
+        _FANtiumPrimarySalesPercentage = uint8(_primaryMarketRoyalty);
+        emit PlatformUpdated(FIELD_FANTIUM_PRIMARY_MARKET_ROYALTY_PERCENTAGE);
+    }
+
+    /**
+     * @notice Updates the platform secondary market royalties to be
+     * `_secondMarketRoyaltyBPS` percent.
+     * @param _secondMarketRoyaltyBPS Percent of secondary sales revenue that will
+     * be sent to the platform. This must be less than
+     * or equal to 95 percent.
+     */
+    function updatePlatformSecondaryMarketRoyaltyBPS(
+        uint256 _secondMarketRoyaltyBPS
+    ) external onlyOwner {
+        require(_secondMarketRoyaltyBPS <= 9500, "Max of 95%");
+        FANtiumSecondarySalesBPS = uint256(_secondMarketRoyaltyBPS);
+        emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_MARKET_ROYALTY_BPS);
+    }
+
+    /**
+     * @notice Updates the platform address to be `_platformAddress`.
+     */
+    function updateFANtiumPrimarySaleAddress(
+        address payable _FANtiumPrimarySalesAddress
+    ) external onlyOwner {
+        FANtiumPrimarySalesAddress = _FANtiumPrimarySalesAddress;
+        emit PlatformUpdated(FIELD_FANTIUM_PRIMARY_ADDRESS);
+    }
+
+    // update fantium secondary sales address
+    function updateFANtiumSecondarySaleAddress(
+        address payable _FANtiumSecondarySalesAddress
+    ) external onlyOwner {
+        FANtiumSecondarySalesAddress = _FANtiumSecondarySalesAddress;
+        emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_ADDRESS);
+    }
+
+    //////////////////////////////////////////////////////////////
     ///////////////////////// EVENTS /////////////////////////////
     //////////////////////////////////////////////////////////////
+
+    /**
+     * @notice Token ID `_tokenId` minted to `_to`.
+     */
+    event Mint(address indexed _to, uint256 indexed _tokenId);
 
     /**
      * @notice Collection ID `_collectionId` updated on bytes32-encoded field
