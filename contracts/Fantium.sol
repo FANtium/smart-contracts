@@ -68,6 +68,23 @@ contract Fantium is ERC721, Ownable {
     /// next collection ID to be created
     uint248 private _nextCollectionId;
 
+    //////////////////////////////////////////////////////////////
+    ////////////////////// MODIFIERS /////////////////////////////
+    //////////////////////////////////////////////////////////////
+
+    modifier onlyAthlete(uint256 _collectionId) {
+        require(
+            msg.sender == collections[_collectionId].athleteAddress || msg.sender == owner(),
+            "Only athlete or admin"
+        );
+        _;
+    }
+
+
+    //////////////////////////////////////////////////////////////
+    ///////////////////// CONSTRUCTOR ////////////////////////////
+    //////////////////////////////////////////////////////////////
+
     /**
      * @notice Initializes contract.
      * @param _tokenName Name of token.
@@ -85,6 +102,7 @@ contract Fantium is ERC721, Ownable {
         emit PlatformUpdated(FIELD_NEXT_COLLECTION_ID);
     }
 
+
     //////////////////////////////////////////////////////////////
     //////////////////////// TOKEN ///////////////////////////////
     //////////////////////////////////////////////////////////////
@@ -93,14 +111,11 @@ contract Fantium is ERC721, Ownable {
      * @notice Mints a token from collection `_collectionId` and sets the
      * token's owner to `_to`.
      * @param _to Address to be the minted token's owner.
-     * @param _collectionId Project ID to mint a token on.
-     * @param _by Purchaser of minted token.
-     * @dev name of function is optimized for gas usage
+     * @param _collectionId collection ID to mint a token on.
      */
     function mint(
         address _to,
         uint256 _collectionId,
-        address _by
     ) external returns (uint256 _tokenId) {
         // CHECKS
         Collection storage collection = collections[_collectionId];
@@ -158,6 +173,7 @@ contract Fantium is ERC721, Ownable {
             .collectionBaseURI;
         return string.concat(_collectionBaseURI, _tokenId.toString());
     }
+
 
     //////////////////////////////////////////////////////////////
     ////////////////////// COLLECTIONS ///////////////////////////
@@ -225,7 +241,7 @@ contract Fantium is ERC721, Ownable {
      */
     function toggleCollectionIsPaused(uint256 _collectionId)
         external
-        onlyOwner
+        onlyAthlete(_collectionId)
     {
         collections[_collectionId].paused = !collections[_collectionId].paused;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_PAUSED);
@@ -329,6 +345,7 @@ contract Fantium is ERC721, Ownable {
         );
     }
 
+
     //////////////////////////////////////////////////////////////
     //////////////////////// PLATFROM ////////////////////////////
     //////////////////////////////////////////////////////////////
@@ -380,6 +397,7 @@ contract Fantium is ERC721, Ownable {
         FANtiumSecondarySalesAddress = _FANtiumSecondarySalesAddress;
         emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_ADDRESS);
     }
+
 
     //////////////////////////////////////////////////////////////
     ///////////////////////// EVENTS /////////////////////////////
