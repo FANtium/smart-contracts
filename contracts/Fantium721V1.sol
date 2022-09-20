@@ -10,6 +10,9 @@ contract Fantium is ERC721, Ownable {
 
     using Strings for uint256;
 
+    // Mapping from token ID to owner address
+    mapping(uint256 => address) internal _owners;
+
     uint256 constant ONE_MILLION = 1_000_000;
 
     // generic platform event fields
@@ -80,7 +83,6 @@ contract Fantium is ERC721, Ownable {
         _;
     }
 
-
     //////////////////////////////////////////////////////////////
     ///////////////////// CONSTRUCTOR ////////////////////////////
     //////////////////////////////////////////////////////////////
@@ -115,7 +117,7 @@ contract Fantium is ERC721, Ownable {
      */
     function mint(
         address _to,
-        uint256 _collectionId,
+        uint256 _collectionId
     ) external returns (uint256 _tokenId) {
         // CHECKS
         Collection storage collection = collections[_collectionId];
