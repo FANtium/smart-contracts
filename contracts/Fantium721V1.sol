@@ -6,6 +6,11 @@ import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+/**
+ * @title FANtium ERC721 contract V1.
+ * @author MTX stuido AG.
+ */
+
 contract Fantium is ERC721, Ownable {
 
     using Strings for uint256;

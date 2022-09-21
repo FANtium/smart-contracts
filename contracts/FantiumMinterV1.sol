@@ -21,6 +21,9 @@ contract FantiumMinterMerkleV1 is ReentrancyGuard {
     /// This contract handles cores with interface
     IFantium721V1 private immutable fantium721Contract;
 
+    // List of addresses that are allowed to mint
+    address[] public kycedAddresses;
+
     /// collecionId => merkle root
     mapping(uint256 => bytes32) public collectionMerkleRoot;
     /// collecionId => purchaser address => has purchased one or more mints
@@ -85,6 +88,34 @@ contract FantiumMinterMerkleV1 is ReentrancyGuard {
                 collectionMerkleRoot[_collectionId],
                 hashAddress(_address)
             );
+    }
+
+    /////////////////////////////////////////
+    //////////// KYC FUNCTIONS ////////////// 
+    /////////////////////////////////////////
+
+    /**
+     * @notice Add address to KYC list.
+     * @param _address address to be added to KYC list.
+     */
+    function addAddressToKYC(address _address) external onlyOwner {
+        kycedAddresses.push(_address);
+        emit AddressAddedToKYC(_address);
+    }
+
+    /**
+     * @notice Remove address from KYC list.
+     * @param _address address to be removed from KYC list.
+     */ 
+    function removeAddressFromKYC(address _address) external onlyOwner {
+        for (uint256 i = 0; i < kycedAddresses.length; i++) {
+            if (kycedAddresses[i] == _address) {
+                kycedAddresses[i] = kycedAddresses[kycedAddresses.length - 1];
+                kycedAddresses.pop();
+                emit AddressRemovedFromKYC(_address);
+                return;
+            }
+        }
     }
 
 
@@ -158,7 +189,7 @@ contract FantiumMinterMerkleV1 is ReentrancyGuard {
             collectionMintedBy[_collectionId][msg.sender] = true;
         }
 
-        tokenId = minterFilter.mint(_to, _collectionId, msg.sender);
+        tokenId = fantium721Contract.mint(_to, _collectionId, msg.sender);
 
         // okay if this underflows because if statement will always eval false.
         // this is only for gas optimization (core enforces maxInvocations).
