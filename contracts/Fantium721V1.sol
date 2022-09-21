@@ -6,12 +6,14 @@ import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+import "./FantiumAbstract.sol";
+
 /**
  * @title FANtium ERC721 contract V1.
  * @author MTX stuido AG.
  */
 
-contract Fantium is ERC721, Ownable {
+contract Fantium is ERC721, Ownable, FantiumAbstract {
 
     using Strings for uint256;
 
@@ -45,33 +47,18 @@ contract Fantium is ERC721, Ownable {
         "collection secondary sale %";
     bytes32 constant FIELD_COLLECTION_BASE_URI = "collection base uri";
 
-    struct Collection {
-        uint24 invocations;
-        uint24 maxInvocations;
-        uint256 priceInWei;
-        bool paused;
-        string name;
-        string athleteName;
-        string collectionBaseURI;
-        address payable athleteAddress;
-        // packed uint: max of 100, max uint8 = 255
-        uint8 athletePrimarySalesPercentage;
-        // packed uint: max of 100, max uint8 = 255
-        uint8 athleteSecondarySalesPercentage;
-    }
-
     mapping(uint256 => Collection) public collections;
 
     /// FANtium's payment address for all primary sales revenues (packed)
-    address payable public FANtiumPrimarySalesAddress;
+    address payable public fantiumPrimarySalesAddress;
     /// Percentage of primary sales revenue allocated to FANtium (packed)
     /// packed uint: max of 25, max uint8 = 255
-    uint8 private _FANtiumPrimarySalesPercentage = 10;
+    uint8 private _fantiumPrimarySalesPercentage = 10;
 
     /// FANtium payment address for all secondary sales royalty revenues
-    address payable public FANtiumSecondarySalesAddress;
+    address payable public fantiumSecondarySalesAddress;
     /// Basis Points of secondary sales royalties allocated to FANtium
-    uint256 public FANtiumSecondarySalesBPS = 250;
+    uint256 public fantiumSecondarySalesBPS = 250;
 
     /// next collection ID to be created
     uint248 private _nextCollectionId;
@@ -87,6 +74,7 @@ contract Fantium is ERC721, Ownable {
         );
         _;
     }
+
 
     //////////////////////////////////////////////////////////////
     ///////////////////// CONSTRUCTOR ////////////////////////////
@@ -143,13 +131,13 @@ contract Fantium is ERC721, Ownable {
         require(!collection.paused, "Purchases are paused.");
 
         // EFFECTS
-        // increment project's invocations
+        // increment collection's invocations
         collection.invocations = invocationsAfter;
         uint256 thisTokenId;
         unchecked {
             // invocationsBefore is uint24 << max uint256. In production use,
-            // _projectId * ONE_MILLION must be << max uint256, otherwise
-            // tokenIdToProjectId function become invalid.
+            // _collectionId * ONE_MILLION must be << max uint256, otherwise
+            // tokenIdTocollectionId function become invalid.
             // Therefore, no risk of overflow
             thisTokenId = (_collectionId * ONE_MILLION) + invocationsBefore;
         }
@@ -167,7 +155,7 @@ contract Fantium is ERC721, Ownable {
 
     /**
      * @notice Gets token URI for token ID `_tokenId`.
-     * @dev token URIs are the concatenation of the project base URI and the
+     * @dev token URIs are the concatenation of the collection base URI and the
      * token ID.
      */
     function tokenURI(uint256 _tokenId)
@@ -368,7 +356,7 @@ contract Fantium is ERC721, Ownable {
         uint256 _primaryMarketRoyalty
     ) external onlyOwner {
         require(_primaryMarketRoyalty <= 95, "Max of 95%");
-        _FANtiumPrimarySalesPercentage = uint8(_primaryMarketRoyalty);
+        _fantiumPrimarySalesPercentage = uint8(_primaryMarketRoyalty);
         emit PlatformUpdated(FIELD_FANTIUM_PRIMARY_MARKET_ROYALTY_PERCENTAGE);
     }
 
@@ -383,7 +371,7 @@ contract Fantium is ERC721, Ownable {
         uint256 _secondMarketRoyaltyBPS
     ) external onlyOwner {
         require(_secondMarketRoyaltyBPS <= 9500, "Max of 95%");
-        FANtiumSecondarySalesBPS = uint256(_secondMarketRoyaltyBPS);
+        fantiumSecondarySalesBPS = uint256(_secondMarketRoyaltyBPS);
         emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_MARKET_ROYALTY_BPS);
     }
 
@@ -401,10 +389,82 @@ contract Fantium is ERC721, Ownable {
     function updateFANtiumSecondarySaleAddress(
         address payable _FANtiumSecondarySalesAddress
     ) external onlyOwner {
-        FANtiumSecondarySalesAddress = _FANtiumSecondarySalesAddress;
+        fantiumSecondarySalesAddress = _FANtiumSecondarySalesAddress;
         emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_ADDRESS);
     }
 
+
+    //////////////////////////////////////////////////////////////
+    ///////////////////////// VIEWS //////////////////////////////
+    //////////////////////////////////////////////////////////////
+
+    // get collection for collectionId
+    function getCollection(uint256 _collectionId)
+        external
+        view
+        returns (Collection memory)
+    {
+        return collections[_collectionId];
+    }
+
+    /**
+     * @notice View function that returns appropriate revenue splits between
+     * different FANtium, athlete, and athlete's additional primary sales
+     * payee given a sale price of `_price` on collection `_collectionId`.
+     * This always returns three revenue amounts and three addresses, but if a
+     * revenue is zero for either athlete or additional payee, the corresponding
+     * address returned will also be null (for gas optimization).
+     * Does not account for refund if user overpays for a token (minter should
+     * handle a refund of the difference, if appropriate).
+     * Some minters may have alternative methods of splitting payments, in
+     * which case they should implement their own payment splitting logic.
+     * @param _collectionId collection ID to be queried.
+     * @param _price Sale price of token.
+     * @return fantiumRevenue_ amount of revenue to be sent to FANtium
+     * @return fantiumAddress_ address to send FANtium revenue to
+     * @return athleteRevenue_ amount of revenue to be sent to athlete
+     * @return athleteAddress_ address to send athlete revenue to. Will be null
+     * if no revenue is due to athlete (gas optimization).
+     * @dev this always returns 2 addresses and 2 revenues, but if the
+     * revenue is zero, the corresponding address will be address(0). It is up
+     * to the contract performing the revenue split to handle this
+     * appropriately.
+     */
+    function getPrimaryRevenueSplits(uint256 _collectionId, uint256 _price)
+        external
+        view
+        returns (
+            uint256 fantiumRevenue_,
+            address payable fantiumAddress_,
+            uint256 athleteRevenue_,
+            address payable athleteAddress_
+        )
+    {
+        // get athlete address & revenue from collection
+        Collection memory collection = collections[_collectionId];
+
+        // calculate revenues
+        fantiumRevenue_ =
+            (_price * uint256(_fantiumPrimarySalesPercentage)) /
+            100;
+        uint256 collectionFunds;
+        unchecked {
+            // fantiumRevenue_ is always <=25, so guaranteed to never underflow
+            collectionFunds = _price - fantiumRevenue_;
+        }
+
+         unchecked {
+            // projectIdToAdditionalPayeePrimarySalesPercentage is always
+            // <=100, so guaranteed to never underflow
+            athleteRevenue_ = collectionFunds;
+        }
+       
+        // set addresses from storage
+        fantiumAddress_ = fantiumPrimarySalesAddress;
+        if (athleteRevenue_ > 0) {
+            athleteAddress_ = collection.athleteAddress;
+        }
+    }
 
     //////////////////////////////////////////////////////////////
     ///////////////////////// EVENTS /////////////////////////////

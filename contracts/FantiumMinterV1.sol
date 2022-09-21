@@ -5,6 +5,8 @@ import "@openzeppelin-4.7/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin-4.7/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin-4.7/contracts/security/ReentrancyGuard.sol";
 
+import "./FantiumAbstract.sol";
+
 /**
  * @title Filtered Minter contract that allows tokens to be minted with ETH
  * for addresses in a Merkle allowlist.
@@ -12,7 +14,7 @@ import "@openzeppelin-4.7/contracts/security/ReentrancyGuard.sol";
  * @author MTX stuido AG.
  */
 
-contract FantiumMinterMerkleV1 is ReentrancyGuard {
+contract FantiumMinterMerkleV1 is ReentrancyGuard, FantiumAbstract {
     using MerkleProof for bytes32[];
 
     /// Core contract address this minter interacts with
@@ -91,7 +93,7 @@ contract FantiumMinterMerkleV1 is ReentrancyGuard {
     }
 
     /////////////////////////////////////////
-    //////////// KYC FUNCTIONS ////////////// 
+    //////////// KYC FUNCTIONS //////////////
     /////////////////////////////////////////
 
     /**
@@ -106,7 +108,7 @@ contract FantiumMinterMerkleV1 is ReentrancyGuard {
     /**
      * @notice Remove address from KYC list.
      * @param _address address to be removed from KYC list.
-     */ 
+     */
     function removeAddressFromKYC(address _address) external onlyOwner {
         for (uint256 i = 0; i < kycedAddresses.length; i++) {
             if (kycedAddresses[i] == _address) {
@@ -118,12 +120,25 @@ contract FantiumMinterMerkleV1 is ReentrancyGuard {
         }
     }
 
+    /**
+     * @notice Check if address is KYCed.
+     * @param _address address to be checked.
+     * @return isKYCed true if address is KYCed.
+     */
+    function isAddressKYCed(address _address) public view returns (bool) {
+        for (uint256 i = 0; i < kycedAddresses.length; i++) {
+            if (kycedAddresses[i] == _address) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /////////////////////////////////////////
     ///////// MINTING FUNCTIONS /////////////
     /////////////////////////////////////////
 
-        /**
+    /**
      * @notice Purchases a token from collection `_collectionId` and sets
      * the token's owner to `_to`.
      * @param _to Address to be the new token's owner.
@@ -136,68 +151,53 @@ contract FantiumMinterMerkleV1 is ReentrancyGuard {
         uint256 _collectionId,
         bytes32[] calldata _proof
     ) external payable returns (uint256 tokenId) {
-        return purchaseTo_K1L(_to, _collectionId, _proof);
+        return _purchaseTo(_to, _collectionId, _proof);
     }
 
     /**
      * @notice gas-optimized version of purchaseTo(address,uint256,bytes32[]).
      */
-    function purchaseTo_K1L(
+    function _purchaseTo(
         address _to,
         uint256 _collectionId,
         bytes32[] calldata _proof
     ) public payable nonReentrant returns (uint256 tokenId) {
         // CHECKS
 
+        Collection storage _collection = fantium721Contract.getCollection(
+            _collectionId
+        );
 
-        //TODO pull collection config from core contract
-
-
-        collectionConfig storage _collectionConfig = collectionConfig[_collectionId];
+        //check if collections invocations is less than max invocations
         require(
-            !_collectionConfig.maxHasBeenInvoked,
+            _collection.invocations < _collection.maxInvocations,
             "Maximum number of invocations reached"
         );
 
         // load price of token into memory
-        uint256 _pricePerTokenInWei = _collectionConfig.pricePerTokenInWei;
+        uint256 _pricePerTokenInWei = _collection.priceInWei;
 
+        // check if msg.value is more or equal to price of token
         require(
             msg.value >= _pricePerTokenInWei,
             "Must send minimum value to mint!"
         );
 
-        // require artist to have configured price of token on this minter
-        require(_collectionConfig.priceIsConfigured, "Price not configured");
-
-        // no contract filter since Merkle tree controls allowed addresses
-
+        /*
+         * Check if address is allowed to mint on collection `_collectionId`.
+         * If not, check if address is KYCed.
+         */
         // require valid Merkle proof
         require(
             verifyAddress(_collectionId, _proof, msg.sender),
             "Invalid Merkle proof"
         );
 
-        // limit mints per address by collection
-        if (collectionMintedBy[_collectionId][msg.sender]) {
-            require(
-                _collectionConfig.mintLimiterDisabled,
-                "Limit 1 mint per address"
-            );
-        } else {
-            // EFFECTS
-            collectionMintedBy[_collectionId][msg.sender] = true;
-        }
+        // or require KYCed address
+        require(isAddressKYCed(msg.sender), "Address not KYCed");
 
+        // EFFECTS
         tokenId = fantium721Contract.mint(_to, _collectionId, msg.sender);
-
-        // okay if this underflows because if statement will always eval false.
-        // this is only for gas optimization (core enforces maxInvocations).
-        unchecked {
-            if (tokenId % ONE_MILLION == _collectionConfig.maxInvocations - 1) {
-                _collectionConfig.maxHasBeenInvoked = true;
-            }
-        }
 
         // INTERACTIONS
         _splitFundsETH(_collectionId, _pricePerTokenInWei);
@@ -205,7 +205,7 @@ contract FantiumMinterMerkleV1 is ReentrancyGuard {
         return tokenId;
     }
 
-     /**
+    /**
      * @dev splits ETH funds between sender (if refund),
      * FANtium, and athlete for a token purchased on
      * collection `_collectionId`.
@@ -227,22 +227,13 @@ contract FantiumMinterMerkleV1 is ReentrancyGuard {
                 address payable fantiumAddress_,
                 uint256 artistRevenue_,
                 address payable artistAddress_,
-                uint256 additionalPayeePrimaryRevenue_,
-                address payable additionalPayeePrimaryAddress_
-
-
-                //TODO implement view function in core contract
-
-
             ) = fantium721Contract.getPrimaryRevenueSplits(
                     _collectionId,
                     _pricePerTokenInWei
                 );
             // FANtium payment
             if (fantiumRevenue_ > 0) {
-                (success_, ) = fantiumAddress_.call{value: fantiumRevenue_}(
-                    ""
-                );
+                (success_, ) = fantiumAddress_.call{value: fantiumRevenue_}("");
                 require(success_, "FANtium payment failed");
             }
             // artist payment
@@ -250,12 +241,6 @@ contract FantiumMinterMerkleV1 is ReentrancyGuard {
                 (success_, ) = artistAddress_.call{value: artistRevenue_}("");
                 require(success_, "Artist payment failed");
             }
-            // additional payee payment
-            if (additionalPayeePrimaryRevenue_ > 0) {
-                (success_, ) = additionalPayeePrimaryAddress_.call{
-                    value: additionalPayeePrimaryRevenue_
-                }("");
-                require(success_, "Additional Payee payment failed");
             }
         }
     }
