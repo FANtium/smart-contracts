@@ -9,7 +9,7 @@ import "./FantiumAbstract.sol";
 
 /**
  * @title Filtered Minter contract that allows tokens to be minted with ETH
- * for addresses in a Merkle allowlist.
+ * for addresses in a Merkle allowlist and/or allowlist.
  * This is designed to be used with IFantium721V1 contracts.
  * @author MTX stuido AG.
  */

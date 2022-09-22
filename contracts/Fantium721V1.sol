@@ -342,7 +342,7 @@ contract Fantium is ERC721, Ownable, FantiumAbstract {
 
 
     //////////////////////////////////////////////////////////////
-    //////////////////////// PLATFROM ////////////////////////////
+    ///////////////////////// ROYALTY ////////////////////////////
     //////////////////////////////////////////////////////////////
 
     /**
@@ -376,21 +376,82 @@ contract Fantium is ERC721, Ownable, FantiumAbstract {
     }
 
     /**
-     * @notice Updates the platform address to be `_platformAddress`.
+     * @notice Updates the platform address to be `_fantiumPrimarySalesAddress`.
      */
     function updateFANtiumPrimarySaleAddress(
-        address payable _FANtiumPrimarySalesAddress
+        address payable _fantiumPrimarySalesAddress
     ) external onlyOwner {
-        FANtiumPrimarySalesAddress = _FANtiumPrimarySalesAddress;
+        fantiumPrimarySalesAddress = _fantiumPrimarySalesAddress;
         emit PlatformUpdated(FIELD_FANTIUM_PRIMARY_ADDRESS);
     }
 
+    /**
+     * @notice Updates the FANtium's secondary sales'
+     * address to be `_fantiumSecondarySalesAddress`.
+     */
     // update fantium secondary sales address
     function updateFANtiumSecondarySaleAddress(
-        address payable _FANtiumSecondarySalesAddress
+        address payable _fantiumSecondarySalesAddress
     ) external onlyOwner {
-        fantiumSecondarySalesAddress = _FANtiumSecondarySalesAddress;
+        fantiumSecondarySalesAddress = _fantiumSecondarySalesAddress;
         emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_ADDRESS);
+    }
+
+     /**
+     * @notice Gets royalty Basis Points (BPS) for token ID `_tokenId`.
+     * This conforms to the IManifold interface designated in the Royalty
+     * Registry's RoyaltyEngineV1.sol contract.
+     * ref: https://github.com/manifoldxyz/royalty-registry-solidity
+     * @param _tokenId Token ID to be queried.
+     * @return recipients Array of royalty payment recipients
+     * @return bps Array of Basis Points (BPS) allocated to each recipient,
+     * aligned by index.
+     * @dev reverts if invalid _tokenId
+     * @dev only returns recipients that have a non-zero BPS allocation
+     */
+    function getRoyalties(uint256 _tokenId)
+        external
+        view
+        // onlyValidTokenId(_tokenId)
+        returns (address payable[] memory recipients, uint256[] memory bps)
+    {
+        // initialize arrays with maximum potential length
+        recipients = new address payable[](3);
+        bps = new uint256[](3);
+
+        uint256 collectionId = _tokenId / ONE_MILLION;
+        Collection storage collection = collections[
+            collectionId
+        ];
+        // load values into memory
+        uint256 royaltyPercentageForAthlete = collection
+            .athleteSecondarySalesPercentage;
+        // calculate BPS = percentage * 100
+        uint256 athleteBPS = royaltyPercentageForAthlete * 100;
+
+        uint256 fantiumBPS = fantiumSecondarySalesBPS;
+        // populate arrays
+        uint256 payeeCount;
+        if (athleteBPS > 0) {
+            recipients[payeeCount] = collection.athleteAddress;
+            bps[payeeCount++] = athleteBPS;
+        }
+        if (fantiumBPS > 0) {
+            recipients[payeeCount] = fantiumSecondarySalesAddress;
+            bps[payeeCount++] = fantiumBPS;
+        }
+
+        //TODO - check if this is necessary
+        
+        // trim arrays if necessary
+        // if (2 > payeeCount) {
+        //     assembly {
+        //         let decrease := sub(2, payeeCount)
+        //         mstore(recipients, sub(mload(recipients), decrease))
+        //         mstore(bps, sub(mload(bps), decrease))
+        //     }
+        // }
+        return (recipients, bps);
     }
 
 
@@ -454,7 +515,7 @@ contract Fantium is ERC721, Ownable, FantiumAbstract {
         }
 
          unchecked {
-            // projectIdToAdditionalPayeePrimarySalesPercentage is always
+            // collectionIdToAdditionalPayeePrimarySalesPercentage is always
             // <=100, so guaranteed to never underflow
             athleteRevenue_ = collectionFunds;
         }
