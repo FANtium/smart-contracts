@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import "@openzeppelin-4.7/contracts/utils/cryptography/MerkleProof.sol";
-import "@openzeppelin-4.7/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin-4.7/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "./FantiumAbstract.sol";
+import "./interfaces/IFantium721V1.sol";
 
 /**
  * @title Filtered Minter contract that allows tokens to be minted with ETH
@@ -14,7 +15,7 @@ import "./FantiumAbstract.sol";
  * @author MTX stuido AG.
  */
 
-contract FantiumMinterMerkleV1 is ReentrancyGuard, FantiumAbstract {
+contract FantiumMinterMerkleV1 is ReentrancyGuard, FantiumAbstract, Ownable {
     using MerkleProof for bytes32[];
 
     /// Core contract address this minter interacts with
@@ -40,56 +41,7 @@ contract FantiumMinterMerkleV1 is ReentrancyGuard, FantiumAbstract {
      */
     constructor(address _fantium721Address) ReentrancyGuard() {
         fantium721Address = _fantium721Address;
-        genArtCoreContract = IFantium721V1(_fantium721Address);
-    }
-
-    /////////////////////////////////////////
-    ///////// MERKLE ROOT FUNCTIONS /////////
-    /////////////////////////////////////////
-
-    /**
-     * @notice Update the Merkle root for collection `_collectionId`.
-     * @param _collectionId collection ID to be updated.
-     * @param _root root of Merkle tree defining addresses allowed to mint
-     * on collection `_collectionId`.
-     */
-    function updateMerkleRoot(uint256 _collectionId, bytes32 _root)
-        external
-        onlyArtist(_collectionId)
-    {
-        collectionMerkleRoot[_collectionId] = _root;
-        emit ConfigValueSet(_collectionId, CONFIG_MERKLE_ROOT, _root);
-    }
-
-    /**
-     * @notice Returns hashed address (to be used as merkle tree leaf).
-     * Included as a public function to enable users to calculate their hashed
-     * address in Solidity when generating proofs off-chain.
-     * @param _address address to be hashed
-     * @return bytes32 hashed address, via keccak256 (using encodePacked)
-     */
-    function hashAddress(address _address) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(_address));
-    }
-
-    /**
-     * @notice Verify if address is allowed to mint on collection `_collectionId`.
-     * @param _collectionId collection ID to be checked.
-     * @param _proof Merkle proof for address.
-     * @param _address Address to check.
-     * @return inAllowlist true only if address is allowed to mint and valid
-     * Merkle proof was provided
-     */
-    function verifyAddress(
-        uint256 _collectionId,
-        bytes32[] calldata _proof,
-        address _address
-    ) public view returns (bool) {
-        return
-            _proof.verifyCalldata(
-                collectionMerkleRoot[_collectionId],
-                hashAddress(_address)
-            );
+        fantium721Contract = IFantium721V1(_fantium721Address);
     }
 
     /////////////////////////////////////////
@@ -187,13 +139,6 @@ contract FantiumMinterMerkleV1 is ReentrancyGuard, FantiumAbstract {
          * Check if address is allowed to mint on collection `_collectionId`.
          * If not, check if address is KYCed.
          */
-        // require valid Merkle proof
-        require(
-            verifyAddress(_collectionId, _proof, msg.sender),
-            "Invalid Merkle proof"
-        );
-
-        // or require KYCed address
         require(isAddressKYCed(msg.sender), "Address not KYCed");
 
         // EFFECTS
@@ -227,6 +172,7 @@ contract FantiumMinterMerkleV1 is ReentrancyGuard, FantiumAbstract {
                 address payable fantiumAddress_,
                 uint256 artistRevenue_,
                 address payable artistAddress_,
+
             ) = fantium721Contract.getPrimaryRevenueSplits(
                     _collectionId,
                     _pricePerTokenInWei
@@ -241,7 +187,13 @@ contract FantiumMinterMerkleV1 is ReentrancyGuard, FantiumAbstract {
                 (success_, ) = artistAddress_.call{value: artistRevenue_}("");
                 require(success_, "Artist payment failed");
             }
-            }
         }
     }
+
+    ///////////////////////////////////////////
+    ////////////////// EVENTS /////////////////
+    ///////////////////////////////////////////
+
+    event AddressAddedToKYC(address indexed _address);
+    event AddressRemovedFromKYC(address indexed _address);
 }

@@ -7,15 +7,19 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "./FantiumAbstract.sol";
+import "./interfaces/IFantium721V1.sol";
 
 /**
  * @title FANtium ERC721 contract V1.
  * @author MTX stuido AG.
  */
 
-contract Fantium is ERC721, Ownable, FantiumAbstract {
+contract Fantium721V1 is ERC721, Ownable, IFantium721V1 {
 
     using Strings for uint256;
+
+    /// single minter allowed for this core contract
+    address public minterContract;
 
     // Mapping from token ID to owner address
     mapping(uint256 => address) internal _owners;
@@ -113,6 +117,7 @@ contract Fantium is ERC721, Ownable, FantiumAbstract {
         uint256 _collectionId
     ) external returns (uint256 _tokenId) {
         // CHECKS
+        require(msg.sender == minterContract, "Must mint from minter contract");
         Collection storage collection = collections[_collectionId];
         // load invocations into memory
         uint24 invocationsBefore = collection.invocations;
@@ -167,6 +172,22 @@ contract Fantium is ERC721, Ownable, FantiumAbstract {
         string memory _collectionBaseURI = collections[_tokenId / ONE_MILLION]
             .collectionBaseURI;
         return string.concat(_collectionBaseURI, _tokenId.toString());
+    }
+
+
+    //////////////////////////////////////////////////////////////
+    //////////////////////////// STATE ///////////////////////////
+    //////////////////////////////////////////////////////////////
+
+    /**
+     * @notice Updates minter to `_address`.
+     */
+    function updateMinterContract(address _address)
+        external
+        onlyOwner
+    {
+        minterContract = _address;
+        emit MinterUpdated(_address);
     }
 
 
@@ -290,7 +311,12 @@ contract Fantium is ERC721, Ownable, FantiumAbstract {
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ATHLETE_NAME);
     }
 
-    /**
+
+    //////////////////////////////////////////////////////////////
+    ///////////////////////// ROYALTY ////////////////////////////
+    //////////////////////////////////////////////////////////////
+
+     /**
      * @notice Updates athlete primary market royalties for collection
      * `_collectionId` to be `_primaryMarketRoyalty` percent.
      * This DOES NOT include the primary market royalty percentages collected
@@ -340,11 +366,6 @@ contract Fantium is ERC721, Ownable, FantiumAbstract {
         );
     }
 
-
-    //////////////////////////////////////////////////////////////
-    ///////////////////////// ROYALTY ////////////////////////////
-    //////////////////////////////////////////////////////////////
-
     /**
      * @notice Updates the platform primary market royalties to be
      * `_primaryMarketRoyalty` percent.
@@ -363,22 +384,22 @@ contract Fantium is ERC721, Ownable, FantiumAbstract {
     /**
      * @notice Updates the platform secondary market royalties to be
      * `_secondMarketRoyaltyBPS` percent.
-     * @param _secondMarketRoyaltyBPS Percent of secondary sales revenue that will
+     * @param _fantiumSecondarySalesBPS Percent of secondary sales revenue that will
      * be sent to the platform. This must be less than
      * or equal to 95 percent.
      */
-    function updatePlatformSecondaryMarketRoyaltyBPS(
-        uint256 _secondMarketRoyaltyBPS
+    function updateFantiumSecondaryMarketRoyaltyBPS(
+        uint256 _fantiumSecondarySalesBPS
     ) external onlyOwner {
-        require(_secondMarketRoyaltyBPS <= 9500, "Max of 95%");
-        fantiumSecondarySalesBPS = uint256(_secondMarketRoyaltyBPS);
+        require(_fantiumSecondarySalesBPS <= 9500, "Max of 95%");
+        fantiumSecondarySalesBPS = uint256(_fantiumSecondarySalesBPS);
         emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_MARKET_ROYALTY_BPS);
     }
 
     /**
      * @notice Updates the platform address to be `_fantiumPrimarySalesAddress`.
      */
-    function updateFANtiumPrimarySaleAddress(
+    function updateFantiumPrimarySaleAddress(
         address payable _fantiumPrimarySalesAddress
     ) external onlyOwner {
         fantiumPrimarySalesAddress = _fantiumPrimarySalesAddress;
@@ -549,4 +570,9 @@ contract Fantium is ERC721, Ownable, FantiumAbstract {
      * @notice Platform updated on bytes32-encoded field `_field`.
      */
     event PlatformUpdated(bytes32 indexed _field);
+
+    /**
+     * @notice currentMinter updated to `_currentMinter`.
+     */
+    event MinterUpdated(address indexed _currentMinter);
 }
