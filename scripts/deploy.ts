@@ -1,18 +1,35 @@
+import { writeFileSync } from "fs";
 import { ethers } from "hardhat";
+import { join } from "path";
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
 
-  const lockedAmount = ethers.utils.parseEther("1");
+  const [deployer] = await ethers.getSigners();
+  console.log("Deploying contracts with the account:", deployer.address);
+  console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const Lock = await ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+  // We get the contract to deploy
+  const Fantium721V1 = await ethers.getContractFactory("Fantium721V1");
+  const nftContract = await Fantium721V1.deploy("FANtium", "FAN", 1);
 
-  await lock.deployed();
+  await nftContract.deployed();
 
-  console.log("Lock with 1 ETH deployed to:", lock.address);
+  console.log("Fantium721V1 deployed to:", nftContract.address);
+
+  const FantiumMinterFactory = await ethers.getContractFactory("FantiumMinterV1");
+  const minterContract = await FantiumMinterFactory.deploy(nftContract.address);
+
+  await minterContract.deployed();
+
+  console.log("FantiumMinterV1 deployed to:", minterContract.address);
+
+  const data = {
+    "Fantium721V1": nftContract.address,
+    "FantiumMinterV1": minterContract.address,
+  }
+  writeFileSync(join(__dirname, './address/contractAddresses.json'), JSON.stringify(data), {
+    flag: 'w',
+  });
 }
 
 // We recommend this pattern to be able to use async/await everywhere

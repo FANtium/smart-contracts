@@ -27,13 +27,16 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {},
     mumbai: {
-      accounts:["0x" + PRIVATE_KEY],
+      accounts: ["0x" + PRIVATE_KEY],
       url: POLYGON_MUMBAI_RPC_PROVIDER,
-    }, 
+    },
   },
   etherscan: {
     apiKey: POLYGONSCAN_API_KEY,
- }
+  },
+  mocha: {
+    timeout: 100000000
+  },
 };
 
 export default config;
