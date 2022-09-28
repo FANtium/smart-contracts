@@ -14,8 +14,7 @@ import "./interfaces/IFantium721V1.sol";
  * @author MTX stuido AG.
  */
 
-contract Fantium721V1 is ERC721, Ownable, IFantium721V1 {
-
+contract Fantium721V1 is ERC721, Ownable, IFantium721V1, FantiumAbstract {
     using Strings for uint256;
 
     /// single minter allowed for this core contract
@@ -67,13 +66,15 @@ contract Fantium721V1 is ERC721, Ownable, IFantium721V1 {
     /// next collection ID to be created
     uint248 private _nextCollectionId;
 
+
     //////////////////////////////////////////////////////////////
     ////////////////////// MODIFIERS /////////////////////////////
     //////////////////////////////////////////////////////////////
 
     modifier onlyAthlete(uint256 _collectionId) {
         require(
-            msg.sender == collections[_collectionId].athleteAddress || msg.sender == owner(),
+            msg.sender == collections[_collectionId].athleteAddress ||
+                msg.sender == owner(),
             "Only athlete or admin"
         );
         _;
@@ -112,10 +113,10 @@ contract Fantium721V1 is ERC721, Ownable, IFantium721V1 {
      * @param _to Address to be the minted token's owner.
      * @param _collectionId collection ID to mint a token on.
      */
-    function mint(
-        address _to,
-        uint256 _collectionId
-    ) external returns (uint256 _tokenId) {
+    function mint(address _to, uint256 _collectionId, address _by)
+        external
+        returns (uint256 _tokenId)
+    {
         // CHECKS
         require(msg.sender == minterContract, "Must mint from minter contract");
         Collection storage collection = collections[_collectionId];
@@ -171,7 +172,7 @@ contract Fantium721V1 is ERC721, Ownable, IFantium721V1 {
     {
         string memory _collectionBaseURI = collections[_tokenId / ONE_MILLION]
             .collectionBaseURI;
-        return string.concat(_collectionBaseURI, _tokenId.toString());
+        return string(bytes.concat(bytes(_collectionBaseURI), bytes(_tokenId.toString())));
     }
 
 
@@ -182,10 +183,7 @@ contract Fantium721V1 is ERC721, Ownable, IFantium721V1 {
     /**
      * @notice Updates minter to `_address`.
      */
-    function updateMinterContract(address _address)
-        external
-        onlyOwner
-    {
+    function updateMinterContract(address _address) external onlyOwner {
         minterContract = _address;
         emit MinterUpdated(_address);
     }
@@ -316,7 +314,7 @@ contract Fantium721V1 is ERC721, Ownable, IFantium721V1 {
     ///////////////////////// ROYALTY ////////////////////////////
     //////////////////////////////////////////////////////////////
 
-     /**
+    /**
      * @notice Updates athlete primary market royalties for collection
      * `_collectionId` to be `_primaryMarketRoyalty` percent.
      * This DOES NOT include the primary market royalty percentages collected
@@ -411,14 +409,14 @@ contract Fantium721V1 is ERC721, Ownable, IFantium721V1 {
      * address to be `_fantiumSecondarySalesAddress`.
      */
     // update fantium secondary sales address
-    function updateFANtiumSecondarySaleAddress(
+    function updateFantiumSecondarySaleAddress(
         address payable _fantiumSecondarySalesAddress
     ) external onlyOwner {
         fantiumSecondarySalesAddress = _fantiumSecondarySalesAddress;
         emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_ADDRESS);
     }
 
-     /**
+    /**
      * @notice Gets royalty Basis Points (BPS) for token ID `_tokenId`.
      * This conforms to the IManifold interface designated in the Royalty
      * Registry's RoyaltyEngineV1.sol contract.
@@ -433,17 +431,18 @@ contract Fantium721V1 is ERC721, Ownable, IFantium721V1 {
     function getRoyalties(uint256 _tokenId)
         external
         view
-        // onlyValidTokenId(_tokenId)
-        returns (address payable[] memory recipients, uint256[] memory bps)
+        returns (
+            // onlyValidTokenId(_tokenId)
+            address payable[] memory recipients,
+            uint256[] memory bps
+        )
     {
         // initialize arrays with maximum potential length
         recipients = new address payable[](3);
         bps = new uint256[](3);
 
         uint256 collectionId = _tokenId / ONE_MILLION;
-        Collection storage collection = collections[
-            collectionId
-        ];
+        Collection storage collection = collections[collectionId];
         // load values into memory
         uint256 royaltyPercentageForAthlete = collection
             .athleteSecondarySalesPercentage;
@@ -463,7 +462,7 @@ contract Fantium721V1 is ERC721, Ownable, IFantium721V1 {
         }
 
         //TODO - check if this is necessary
-        
+
         // trim arrays if necessary
         // if (2 > payeeCount) {
         //     assembly {
@@ -474,7 +473,6 @@ contract Fantium721V1 is ERC721, Ownable, IFantium721V1 {
         // }
         return (recipients, bps);
     }
-
 
     //////////////////////////////////////////////////////////////
     ///////////////////////// VIEWS //////////////////////////////
@@ -487,6 +485,38 @@ contract Fantium721V1 is ERC721, Ownable, IFantium721V1 {
         returns (Collection memory)
     {
         return collections[_collectionId];
+    }
+
+    // get all collection properties for collectionId
+    function getCollectionData(uint256 _collectionId)
+        external
+        view
+        returns (
+            uint24 invocations,
+            uint24 maxInvocations,
+            uint256 priceInWei,
+            bool paused,
+            string memory name,
+            string memory athleteName,
+            string memory collectionBaseURI,
+            address payable athleteAddress,
+            uint8 athletePrimarySalesPercentage,
+            uint8 athleteSecondarySalesPercentage
+        )
+    {
+        Collection memory collection = collections[_collectionId];
+        return (
+            collection.invocations,
+            collection.maxInvocations,
+            collection.priceInWei,
+            collection.paused,
+            collection.name,
+            collection.athleteName,
+            collection.collectionBaseURI,
+            collection.athleteAddress,
+            collection.athletePrimarySalesPercentage,
+            collection.athleteSecondarySalesPercentage
+        );
     }
 
     /**
@@ -535,12 +565,12 @@ contract Fantium721V1 is ERC721, Ownable, IFantium721V1 {
             collectionFunds = _price - fantiumRevenue_;
         }
 
-         unchecked {
+        unchecked {
             // collectionIdToAdditionalPayeePrimarySalesPercentage is always
             // <=100, so guaranteed to never underflow
             athleteRevenue_ = collectionFunds;
         }
-       
+
         // set addresses from storage
         fantiumAddress_ = fantiumPrimarySalesAddress;
         if (athleteRevenue_ > 0) {

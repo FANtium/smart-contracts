@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -10,13 +9,12 @@ import "./interfaces/IFantium721V1.sol";
 
 /**
  * @title Filtered Minter contract that allows tokens to be minted with ETH
- * for addresses in a Merkle allowlist and/or allowlist.
+ * for addresses in an allowlist.
  * This is designed to be used with IFantium721V1 contracts.
  * @author MTX stuido AG.
  */
 
-contract FantiumMinterMerkleV1 is ReentrancyGuard, FantiumAbstract, Ownable {
-    using MerkleProof for bytes32[];
+contract FantiumMinterV1 is ReentrancyGuard, FantiumAbstract, Ownable {
 
     /// Core contract address this minter interacts with
     address public immutable fantium721Address;
@@ -95,15 +93,13 @@ contract FantiumMinterMerkleV1 is ReentrancyGuard, FantiumAbstract, Ownable {
      * the token's owner to `_to`.
      * @param _to Address to be the new token's owner.
      * @param _collectionId collection ID to mint a token on.
-     * @param _proof Merkle proof.
      * @return tokenId Token ID of minted token
      */
     function purchaseTo(
         address _to,
-        uint256 _collectionId,
-        bytes32[] calldata _proof
+        uint256 _collectionId
     ) external payable returns (uint256 tokenId) {
-        return _purchaseTo(_to, _collectionId, _proof);
+        return _purchaseTo(_to, _collectionId);
     }
 
     /**
@@ -111,23 +107,33 @@ contract FantiumMinterMerkleV1 is ReentrancyGuard, FantiumAbstract, Ownable {
      */
     function _purchaseTo(
         address _to,
-        uint256 _collectionId,
-        bytes32[] calldata _proof
+        uint256 _collectionId
     ) public payable nonReentrant returns (uint256 tokenId) {
         // CHECKS
+        uint24 invocations;
+        uint24 maxInvocations;
+        uint256 priceInWei;
+        (
+            invocations,
+            maxInvocations,
+            priceInWei,
+            ,
+            ,
+            ,
+            ,
+            ,
+            ,
 
-        Collection storage _collection = fantium721Contract.getCollection(
-            _collectionId
-        );
+        ) = fantium721Contract.getCollectionData(_collectionId);
 
         //check if collections invocations is less than max invocations
         require(
-            _collection.invocations < _collection.maxInvocations,
+            invocations < maxInvocations,
             "Maximum number of invocations reached"
         );
 
         // load price of token into memory
-        uint256 _pricePerTokenInWei = _collection.priceInWei;
+        uint256 _pricePerTokenInWei = priceInWei;
 
         // check if msg.value is more or equal to price of token
         require(
@@ -170,9 +176,8 @@ contract FantiumMinterMerkleV1 is ReentrancyGuard, FantiumAbstract, Ownable {
             (
                 uint256 fantiumRevenue_,
                 address payable fantiumAddress_,
-                uint256 artistRevenue_,
-                address payable artistAddress_,
-
+                uint256 athleteRevenue_,
+                address payable athleteAddress_
             ) = fantium721Contract.getPrimaryRevenueSplits(
                     _collectionId,
                     _pricePerTokenInWei
@@ -182,9 +187,9 @@ contract FantiumMinterMerkleV1 is ReentrancyGuard, FantiumAbstract, Ownable {
                 (success_, ) = fantiumAddress_.call{value: fantiumRevenue_}("");
                 require(success_, "FANtium payment failed");
             }
-            // artist payment
-            if (artistRevenue_ > 0) {
-                (success_, ) = artistAddress_.call{value: artistRevenue_}("");
+            // athlete payment
+            if (athleteRevenue_ > 0) {
+                (success_, ) = athleteAddress_.call{value: athleteRevenue_}("");
                 require(success_, "Artist payment failed");
             }
         }
