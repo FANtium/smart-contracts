@@ -9,12 +9,12 @@ async function main() {
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
   // We get the contract to deploy
-  const Fantium721V1 = await ethers.getContractFactory("Fantium721V1");
-  const nftContract = await Fantium721V1.deploy("FANtium", "FAN", 1);
+  const FantiumNFTV1 = await ethers.getContractFactory("FantiumNFTV1");
+  const nftContract = await FantiumNFTV1.deploy("FANtium", "FAN", 1);
 
   await nftContract.deployed();
 
-  console.log("Fantium721V1 deployed to:", nftContract.address);
+  console.log("FantiumNFTV1 deployed to:", nftContract.address);
 
   const FantiumMinterFactory = await ethers.getContractFactory("FantiumMinterV1");
   const minterContract = await FantiumMinterFactory.deploy(nftContract.address);
@@ -24,7 +24,7 @@ async function main() {
   console.log("FantiumMinterV1 deployed to:", minterContract.address);
 
   const data = {
-    "Fantium721V1": nftContract.address,
+    "FantiumNFTV1": nftContract.address,
     "FantiumMinterV1": minterContract.address,
   }
   writeFileSync(join(__dirname, './address/contractAddresses.json'), JSON.stringify(data), {

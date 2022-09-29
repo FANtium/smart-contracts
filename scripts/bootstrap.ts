@@ -1,11 +1,11 @@
 import { ethers } from 'hardhat'
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { Fantium721V1, FantiumMinterV1 } from '../typechain-types';
+import { FantiumNFTV1, FantiumMinterV1 } from '../typechain-types';
 
 async function main() {
 
-    let nftContract: Fantium721V1
+    let nftContract: FantiumNFTV1
     let minterContract: FantiumMinterV1
 
     const [owner] = await ethers.getSigners();
@@ -15,25 +15,25 @@ async function main() {
     console.log(JSON.parse(contents));
     const contractAddresses = JSON.parse(contents)
 
-    nftContract = await ethers.getContractAt("Fantium721V1", contractAddresses.Fantium721V1, owner) as Fantium721V1
+    nftContract = await ethers.getContractAt("FantiumNFTV1", contractAddresses.FantiumNFTV1, owner) as FantiumNFTV1
     minterContract = await ethers.getContractAt("FantiumMinterV1", contractAddresses.FantiumMinterV1, owner) as FantiumMinterV1
 
-    // await nftContract.updateMinterContract(minterContract.address);
+    await nftContract.updateMinterContract(minterContract.address);
 
-    // await nftContract.addCollection(
-    //     "Collection test 1", // Collection name
-    //     "Athlete test 1", // Athlete name
-    //     "https://test.com/", // base URI
-    //     "0x0000000000000000000000000000000000000000", // athlete address
-    //     100, // max supply
-    //     0, // price in wei
-    //     0, // athlete primary sale percentage 0-100
-    //     0, // athlete secondary sale percentage 0-100
-    // );
+    await nftContract.addCollection(
+        "Collection test 1", // Collection name
+        "Athlete test 1", // Athlete name
+        "https://test.com/", // base URI
+        "0x0000000000000000000000000000000000000000", // Athlete address
+        100, // max supply
+        0, // price in wei
+        0, // athlete primary sale percentage 0-100
+        0, // athlete secondary sale percentage 0-100
+    );
 
-    // await nftContract.toggleCollectionIsPaused(1);
+    await nftContract.toggleCollectionIsPaused(1);
 
-    // await minterContract.addAddressToKYC(owner.address);
+    await minterContract.addAddressToKYC(owner.address);
 
     await minterContract.purchaseTo(owner.address, 1)
 

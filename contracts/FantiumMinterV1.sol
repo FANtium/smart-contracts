@@ -5,22 +5,21 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "./FantiumAbstract.sol";
-import "./interfaces/IFantium721V1.sol";
+import "./interfaces/IFantiumNFTV1.sol";
 
 /**
  * @title Filtered Minter contract that allows tokens to be minted with ETH
  * for addresses in an allowlist.
- * This is designed to be used with IFantium721V1 contracts.
+ * This is designed to be used with IFantiumNFTV1 contracts.
  * @author MTX stuido AG.
  */
 
 contract FantiumMinterV1 is ReentrancyGuard, FantiumAbstract, Ownable {
-
     /// Core contract address this minter interacts with
     address public immutable fantium721Address;
 
     /// This contract handles cores with interface
-    IFantium721V1 private immutable fantium721Contract;
+    IFantiumNFTV1 private immutable fantium721Contract;
 
     // List of addresses that are allowed to mint
     address[] public kycedAddresses;
@@ -39,12 +38,12 @@ contract FantiumMinterV1 is ReentrancyGuard, FantiumAbstract, Ownable {
      */
     constructor(address _fantium721Address) ReentrancyGuard() {
         fantium721Address = _fantium721Address;
-        fantium721Contract = IFantium721V1(_fantium721Address);
+        fantium721Contract = IFantiumNFTV1(_fantium721Address);
     }
 
-    /////////////////////////////////////////
-    //////////// KYC FUNCTIONS //////////////
-    /////////////////////////////////////////
+    /*//////////////////////////////////////////////////////////////
+                                 KYC
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Add address to KYC list.
@@ -84,9 +83,9 @@ contract FantiumMinterV1 is ReentrancyGuard, FantiumAbstract, Ownable {
         return false;
     }
 
-    /////////////////////////////////////////
-    ///////// MINTING FUNCTIONS /////////////
-    /////////////////////////////////////////
+    /*//////////////////////////////////////////////////////////////
+                                 MINTING
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Purchases a token from collection `_collectionId` and sets
@@ -95,20 +94,23 @@ contract FantiumMinterV1 is ReentrancyGuard, FantiumAbstract, Ownable {
      * @param _collectionId collection ID to mint a token on.
      * @return tokenId Token ID of minted token
      */
-    function purchaseTo(
-        address _to,
-        uint256 _collectionId
-    ) external payable returns (uint256 tokenId) {
+    function purchaseTo(address _to, uint256 _collectionId)
+        external
+        payable
+        returns (uint256 tokenId)
+    {
         return _purchaseTo(_to, _collectionId);
     }
 
     /**
      * @notice gas-optimized version of purchaseTo(address,uint256,bytes32[]).
      */
-    function _purchaseTo(
-        address _to,
-        uint256 _collectionId
-    ) public payable nonReentrant returns (uint256 tokenId) {
+    function _purchaseTo(address _to, uint256 _collectionId)
+        public
+        payable
+        nonReentrant
+        returns (uint256 tokenId)
+    {
         // CHECKS
         uint24 invocations;
         uint24 maxInvocations;
@@ -195,9 +197,9 @@ contract FantiumMinterV1 is ReentrancyGuard, FantiumAbstract, Ownable {
         }
     }
 
-    ///////////////////////////////////////////
-    ////////////////// EVENTS /////////////////
-    ///////////////////////////////////////////
+    /*//////////////////////////////////////////////////////////////
+                                 EVENTS
+    //////////////////////////////////////////////////////////////*/
 
     event AddressAddedToKYC(address indexed _address);
     event AddressRemovedFromKYC(address indexed _address);
