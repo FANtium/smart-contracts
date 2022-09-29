@@ -23,7 +23,7 @@ describe("FANtium", () => {
 
         // Deploy the FantiumNFTV1 contract
         const FantiumNFTV1 = await ethers.getContractFactory("FantiumNFTV1")
-        nftContract = (await FantiumNFTV1.deploy("FANtium", "FAN", 1))
+        nftContract = (await FantiumNFTV1.deploy("FANtium", "FAN", 1)) as FantiumNFTV1
         await nftContract.deployed()
 
         // Deploy the minter contract

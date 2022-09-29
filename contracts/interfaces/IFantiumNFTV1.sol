@@ -42,5 +42,10 @@ import "hardhat/console.sol";
             address payable athleteAddress_
         );
 
+    function getClaimingStatusForToken(uint256 _tokenId)
+        external
+        view
+        returns (bool);
+
  }
 
