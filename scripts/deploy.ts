@@ -9,23 +9,15 @@ async function main() {
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
   const FantiumNFTV1 = await ethers.getContractFactory("FantiumNFTV1");
-  const nftContract = await FantiumNFTV1.deploy("FANtium", "FAN", 1);
+  const nftContract = await upgrades.deployProxy(FantiumNFTV1, ["FANtium", "FAN", 1], { initializer: 'initialize' })
 
   await nftContract.deployed();
 
   console.log("FantiumNFTV1 deployed to:", nftContract.address);
 
-  const FantiumMinterFactory = await ethers.getContractFactory("FantiumMinterV1")
-  const minterProxyContract = await upgrades.deployProxy(FantiumMinterFactory, [nftContract.address], { initializer: 'initialize' })
-  console.log("Minter proxy address: ", minterProxyContract.address)
-
-  await minterProxyContract.deployed();
-
-  console.log("FantiumMinterV1 deployed to:", minterProxyContract.address);
-
   const data = {
-    "FantiumNFTV1": nftContract.address,
-    "minterProxyContract": minterProxyContract.address,
+    "proxy": nftContract.address,
+    "implementation": upgrades.erc1967.getImplementationAddress(nftContract.address)
   }
   writeFileSync(join(__dirname, './address/contractAddresses.json'), JSON.stringify(data), {
     flag: 'w',

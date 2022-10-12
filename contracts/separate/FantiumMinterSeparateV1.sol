@@ -4,8 +4,8 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import "./abstracts/FantiumAbstract.sol";
-import "./interfaces/IFantiumNFTV1.sol";
+import "../abstracts/FantiumAbstract.sol";
+import "../interfaces/IFantiumNFTV1.sol";
 
 /**
  * @title Filtered Minter contract that allows tokens to be minted with ETH
@@ -14,7 +14,7 @@ import "./interfaces/IFantiumNFTV1.sol";
  * @author MTX stuido AG.
  */
 
-contract FantiumMinterV1 is ReentrancyGuard, FantiumAbstract, Ownable {
+contract FantiumMinterSeparateV1 is ReentrancyGuard, FantiumAbstract, Ownable {
     /// Core contract address this minter interacts with
     address public immutable fantium721Address;
 

@@ -14,7 +14,7 @@ import "../interfaces/IFantiumNFTV1.sol";
  * @author MTX stuido AG.
  */
 
-contract FantiumNFTV1 is ERC721, Ownable, IFantiumNFTV1, FantiumAbstract {
+contract FantiumNFTSeparateV1 is ERC721, Ownable, IFantiumNFTV1, FantiumAbstract {
     using Strings for uint256;
 
     /// single minter allowed for this core contract

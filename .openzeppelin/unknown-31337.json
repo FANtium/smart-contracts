@@ -53,52 +53,52 @@
     },
     {
       "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-      "txHash": "0xb1c6620c9c3555fd4cebd9c3694ead5346a4abb69c5611db4d0aff71aa09e2b0",
+      "txHash": "0x1f0a9f9733dc323b0c1c4334c792223cd9869f42c3632a64df3b77c7dad6a0bb",
       "kind": "uups"
     },
     {
       "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
-      "txHash": "0xb92ed8d1ba5c6ba99bac4368af7601af1d2bea888f0f17d092f0b306233f9b21",
+      "txHash": "0x9b4a338473e27602cad30008524d5834458e65d27fc4c76ff36d8f39cd80789d",
       "kind": "uups"
     },
     {
       "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
-      "txHash": "0x51f1eae39f159d49c54f68a21c11b01894eda163a60ba8375603becf2b43cafe",
+      "txHash": "0xc5467b86500483128e325cceada0b77becbb565055de04eecf2a2e5c20f8fd94",
       "kind": "uups"
     },
     {
       "address": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
-      "txHash": "0xd2c650d590413214f1b3c08530a2f4dff2a7080ba180e68a3975ad2dd4e47caf",
+      "txHash": "0x08d01708c9e61b067a5b0525f822ece8fec00fc70bf29ac76684c2573c441012",
       "kind": "uups"
     },
     {
       "address": "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44",
-      "txHash": "0x4125bc2c49fc1d33ae9ba7373351cacdd4449489c2fdecd47730588c3a0064a2",
+      "txHash": "0x2e97c098eb769bf44e35f8e53140641476762573a531a1a936a8222aefb1d7f2",
       "kind": "uups"
     },
     {
       "address": "0xc5a5C42992dECbae36851359345FE25997F5C42d",
-      "txHash": "0x44b03415d49523f5ad98f537eebd4bea0c68885a438305c18256668357d6eeb1",
+      "txHash": "0x0d18a027d60f0c704f990c74fcd1df0a2f8e4fb5a92c961c259ee4c9b12f0c45",
       "kind": "uups"
     },
     {
       "address": "0xa82fF9aFd8f496c3d6ac40E2a0F282E47488CFc9",
-      "txHash": "0x07c21cd5e06f4a2ab8871fe875eb6f5c9dd726bd1df3f2c8fa7a51633e37490d",
+      "txHash": "0xe711d12177049c8236e33174baa5434943843147449311b525236f6204dc92bd",
       "kind": "uups"
     },
     {
       "address": "0x70e0bA845a1A0F2DA3359C97E0285013525FFC49",
-      "txHash": "0x828f4127bec366a7f290d29f9f3218090743395b8327d024ccdfc91f09efb2f6",
+      "txHash": "0x1ecc193788980889461ee91592765cd500d43680e20b65e26ad16f3b7961a1cf",
       "kind": "uups"
     },
     {
       "address": "0x5eb3Bc0a489C5A8288765d2336659EbCA68FCd00",
-      "txHash": "0xeecc1d4a8e008128cfa76da31106ae4f5ea35478e4274a1c303d87ed829cfbb0",
+      "txHash": "0xfd784e3e20e8a24e518e824d692abfcc081098ac9a75249355ee06734ecc5e8d",
       "kind": "uups"
     },
     {
       "address": "0xb7278A61aa25c888815aFC32Ad3cC52fF24fE575",
-      "txHash": "0xd2b0b0e374862d870f8180daa3254d2af7b308b6849c87d3d9ebad8a37cfa115",
+      "txHash": "0x389f2e4fafc8f7d85030a9b9f131ba11cc5b652aa77f81e1e00ef07b5a5313af",
       "kind": "uups"
     }
   ],
@@ -259,9 +259,9 @@
         }
       }
     },
-    "fbb20ad6837c39afc040c0389224767a4488a631e8dd00bda193b38046d0a282": {
+    "aa2815094a1f357aac85efb6a68fe30d638234fef19bfa4e0f688b0f7590fac6": {
       "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "txHash": "0xf048ccf7e99ff6657c9a3d679324b18ac55f389dc7c64cbe0df8a951e78c359c",
+      "txHash": "0x87a57a2cccd8a9113a0128ddf8d160a7d961b32020cf399fba786bb9c40d28b2",
       "layout": {
         "solcVersion": "0.8.9",
         "storage": [
@@ -406,7 +406,7 @@
             "label": "collections",
             "offset": 0,
             "slot": "303",
-            "type": "t_mapping(t_uint256,t_struct(Collection)7072_storage)",
+            "type": "t_mapping(t_uint256,t_struct(Collection)6689_storage)",
             "contract": "FantiumNFTV1",
             "src": "contracts/FantiumNFTV1.sol:64"
           },
@@ -488,7 +488,7 @@
             "label": "mapping(uint256 => address)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(Collection)7072_storage)": {
+          "t_mapping(t_uint256,t_struct(Collection)6689_storage)": {
             "label": "mapping(uint256 => struct FantiumNFTV1.Collection)",
             "numberOfBytes": "32"
           },
@@ -496,7 +496,7 @@
             "label": "string",
             "numberOfBytes": "32"
           },
-          "t_struct(Collection)7072_storage": {
+          "t_struct(Collection)6689_storage": {
             "label": "struct FantiumNFTV1.Collection",
             "members": [
               {

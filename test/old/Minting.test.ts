@@ -1,11 +1,11 @@
-import { ethers } from 'hardhat'
-import chai, { expect } from 'chai'
-import { beforeEach } from 'mocha'
-import { FantiumMinterV1 } from '../../typechain-types'
-import { FantiumNFTV1 } from '../../typechain-types/contracts/FantiumNFTV1'
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
+// import { ethers } from 'hardhat'
+// import chai, { expect } from 'chai'
+// import { beforeEach } from 'mocha'
+// import { FantiumMinterV1 } from '../../typechain-types'
+// import { FantiumNFTV1 } from '../../typechain-types/contracts/FantiumNFTV1'
+// import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 
-describe("FANtium", () => {
+// describe("FANtium", () => {
 
 //     let nftContract: FantiumNFTV1
 //     let minterContract: FantiumMinterV1
@@ -120,5 +120,5 @@ describe("FANtium", () => {
 
 //         expect(tokenURI).to.equal("https://test.com/1000001")
 //     })
-})
+// })
 

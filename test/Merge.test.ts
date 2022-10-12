@@ -1,8 +1,8 @@
 import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
 import { beforeEach } from 'mocha'
-import { FantiumNFTV1 } from '../typechain-types/contracts/FantiumNFTV1'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
+import { FantiumNFTV1 } from '../typechain-types/contracts/FantiumNFTV1'
 
 describe("FANtium", () => {
 
