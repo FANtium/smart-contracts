@@ -31,8 +31,10 @@ contract FantiumNFTV1 is
     // Mapping from token ID to owner address
     mapping(uint256 => address) internal _owners;
 
-    // List of addresses that are allowed to mint
+    // List of addresses that are kyced
     address[] public kycedAddresses;
+
+    mapping(uint256 => address[]) public collectionIdToAllowList;
 
     uint256 constant ONE_MILLION = 1_000_000;
 
@@ -173,6 +175,63 @@ contract FantiumNFTV1 is
         }
         return false;
     }
+
+    /*//////////////////////////////////////////////////////////////
+                                 Allow List
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Add address to allow list.
+     * @param _collectionId collection ID.
+     * @param _address address to be added to allow list.
+     */
+    function addAddressToAllowList(uint256 _collectionId, address _address)
+        external
+        onlyOwner()
+    {
+        collectionIdToAllowList[_collectionId].push(_address);
+        emit AddressAddedToAllowList(_collectionId, _address);
+    }
+
+    /**
+     * @notice Remove address from allow list.
+     * @param _collectionId collection ID.
+     * @param _address address to be removed from allow list.
+     */
+    function removeAddressFromAllowList(uint256 _collectionId, address _address)
+        external
+        onlyOwner()
+    {
+
+        for (uint256 i = 0; i < collectionIdToAllowList[_collectionId].length; i++) {
+            if (collectionIdToAllowList[_collectionId][i] == _address) {
+                collectionIdToAllowList[_collectionId][i] = collectionIdToAllowList[_collectionId][collectionIdToAllowList[_collectionId].length - 1];
+                collectionIdToAllowList[_collectionId].pop();
+                emit AddressRemovedFromAllowList(_collectionId, _address);
+                return;
+            }
+        }
+    }
+
+    /**
+     * @notice Check if address is on allow list.
+     * @param _collectionId collection ID.
+     * @param _address address to be checked.
+     * @return isOnAllowList true if address is on allow list.
+     */
+    function isAddressOnAllowList(uint256 _collectionId, address _address)
+        public
+        view
+        returns (bool)
+    {   
+        for (uint256 i = 0; i < collectionIdToAllowList[_collectionId].length; i++) {
+            if (collectionIdToAllowList[_collectionId][i] == _address) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     /*//////////////////////////////////////////////////////////////
                                  MINTING
@@ -727,30 +786,12 @@ contract FantiumNFTV1 is
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
 
-    /**
-     * @notice Token ID `_tokenId` minted to `_to`.
-     */
     event Mint(address indexed _to, uint256 indexed _tokenId);
-
-    /**
-     * @notice Collection ID `_collectionId` updated on bytes32-encoded field
-     * `_update`.
-     */
-    event CollectionUpdated(
-        uint256 indexed _collectionId,
-        bytes32 indexed _update
-    );
-
-    /**
-     * @notice Platform updated on bytes32-encoded field `_field`.
-     */
+    event CollectionUpdated(uint256 indexed _collectionId, bytes32 indexed _update);
     event PlatformUpdated(bytes32 indexed _field);
-
-    /**
-     * @notice currentMinter updated to `_currentMinter`.
-     */
     event MinterUpdated(address indexed _currentMinter);
-
     event AddressAddedToKYC(address indexed _address);
     event AddressRemovedFromKYC(address indexed _address);
+    event AddressAddedToWhitelist(uint256 collectionId, address indexed _address);
+    event AddressRemovedFromWhitelist(uint256 collectionId, address indexed _address);
 }
