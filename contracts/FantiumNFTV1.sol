@@ -25,16 +25,11 @@ contract FantiumNFTV1 is
 {
     using Strings for uint256;
 
-    /// single minter allowed for this core contract
-    // address public minterContract;
-
-    // Mapping from token ID to owner address
-    mapping(uint256 => address) internal _owners;
-
-    // List of addresses that are kyced
     address[] public kycedAddresses;
-
+    mapping(uint256 => address) internal _owners;
+    mapping(uint256 => Collection) public collections;
     mapping(uint256 => address[]) public collectionIdToAllowList;
+    mapping(string => Tier) public tiers;
 
     uint256 constant ONE_MILLION = 1_000_000;
 
@@ -62,8 +57,7 @@ contract FantiumNFTV1 is
     bytes32 constant FIELD_COLLECTION_SECONDARY_MARKET_ROYALTY_PERCENTAGE =
         "collection secondary sale %";
     bytes32 constant FIELD_COLLECTION_BASE_URI = "collection base uri";
-
-    mapping(uint256 => Collection) public collections;
+    bytes32 constant FIELD_COLLECTION_TIER = "collection tier";
 
     /// FANtium's payment address for all primary sales revenues (packed)
     address payable public fantiumPrimarySalesAddress;
@@ -78,8 +72,7 @@ contract FantiumNFTV1 is
 
     struct Collection {
         uint24 invocations;
-        uint24 maxInvocations;
-        uint256 priceInWei;
+        Tier tier;
         bool paused;
         string name;
         string athleteName;
@@ -89,6 +82,13 @@ contract FantiumNFTV1 is
         uint8 athletePrimarySalesPercentage;
         // packed uint: max of 100, max uint8 = 255
         uint8 athleteSecondarySalesPercentage;
+    }
+
+    struct Tier {
+        string name;
+        uint256 priceInWei;
+        uint24 maxInvocations;
+        uint8 tournamentEarningPercentage;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -101,6 +101,11 @@ contract FantiumNFTV1 is
                 msg.sender == owner(),
             "Only athlete or admin"
         );
+        _;
+    }
+
+    modifier onlyValidTier(string memory _tierName) {
+        require(bytes(tiers[_tierName].name).length > 0, "Invalid tier");
         _;
     }
 
@@ -122,13 +127,18 @@ contract FantiumNFTV1 is
         string memory _tokenSymbol,
         uint256 _startingCollectionId
     ) public initializer {
-        __ERC721_init(_tokenName, _tokenSymbol);
-        fantiumSecondarySalesBPS = 250;
-        _nextCollectionId = uint248(_startingCollectionId);
-        emit PlatformUpdated(FIELD_NEXT_COLLECTION_ID);
-
         ///@dev as there is no constructor, we need to initialise the OwnableUpgradeable explicitly
+        __ERC721_init(_tokenName, _tokenSymbol);
         __Ownable_init();
+
+        _nextCollectionId = uint248(_startingCollectionId);
+        fantiumSecondarySalesBPS = 250;
+
+        tiers["bronze"] = Tier("bronze", 0.01 ether, 100, 50);
+        tiers["silver"] = Tier("silver", 0.1 ether, 100, 50);
+        tiers["gold"] = Tier("gold", 1 ether, 100, 50);
+
+        emit PlatformUpdated(FIELD_NEXT_COLLECTION_ID);
     }
 
     ///@dev required by the OZ UUPS module
@@ -187,7 +197,7 @@ contract FantiumNFTV1 is
      */
     function addAddressToAllowList(uint256 _collectionId, address _address)
         external
-        onlyOwner()
+        onlyOwner
     {
         collectionIdToAllowList[_collectionId].push(_address);
         emit AddressAddedToAllowList(_collectionId, _address);
@@ -200,12 +210,19 @@ contract FantiumNFTV1 is
      */
     function removeAddressFromAllowList(uint256 _collectionId, address _address)
         external
-        onlyOwner()
+        onlyOwner
     {
-
-        for (uint256 i = 0; i < collectionIdToAllowList[_collectionId].length; i++) {
+        for (
+            uint256 i = 0;
+            i < collectionIdToAllowList[_collectionId].length;
+            i++
+        ) {
             if (collectionIdToAllowList[_collectionId][i] == _address) {
-                collectionIdToAllowList[_collectionId][i] = collectionIdToAllowList[_collectionId][collectionIdToAllowList[_collectionId].length - 1];
+                collectionIdToAllowList[_collectionId][
+                    i
+                ] = collectionIdToAllowList[_collectionId][
+                    collectionIdToAllowList[_collectionId].length - 1
+                ];
                 collectionIdToAllowList[_collectionId].pop();
                 emit AddressRemovedFromAllowList(_collectionId, _address);
                 return;
@@ -223,15 +240,18 @@ contract FantiumNFTV1 is
         public
         view
         returns (bool)
-    {   
-        for (uint256 i = 0; i < collectionIdToAllowList[_collectionId].length; i++) {
+    {
+        for (
+            uint256 i = 0;
+            i < collectionIdToAllowList[_collectionId].length;
+            i++
+        ) {
             if (collectionIdToAllowList[_collectionId][i] == _address) {
                 return true;
             }
         }
         return false;
     }
-
 
     /*//////////////////////////////////////////////////////////////
                                  MINTING
@@ -257,6 +277,8 @@ contract FantiumNFTV1 is
             invocations,
             maxInvocations,
             priceInWei,
+            ,
+            ,
             ,
             ,
             ,
@@ -302,10 +324,10 @@ contract FantiumNFTV1 is
      * @param _to Address to be the minted token's owner.
      * @param _collectionId collection ID to mint a token on.
      */
-    function mint(
-        address _to,
-        uint256 _collectionId
-    ) private returns (uint256 _tokenId) {
+    function mint(address _to, uint256 _collectionId)
+        private
+        returns (uint256 _tokenId)
+    {
         // CHECKS
         Collection storage collection = collections[_collectionId];
         // load invocations into memory
@@ -316,7 +338,7 @@ contract FantiumNFTV1 is
             // 1_000_000 << max uint24, so no possible overflow
             invocationsAfter = invocationsBefore + 1;
         }
-        uint24 maxInvocations = collection.maxInvocations;
+        uint24 maxInvocations = collection.tier.maxInvocations;
 
         require(
             invocationsBefore < maxInvocations,
@@ -373,40 +395,62 @@ contract FantiumNFTV1 is
             );
     }
 
+    /**
+     * @notice Updates the tier mapping for `_name` to `_tier`.
+     * @param _name Name of the tier.
+     * @param _priceInWei Price of the tier.
+     * @param _maxInvocations Max invocations of the tier.
+     * @param _tournamentEarningPercentage Tournament earnings percentage of the tier.
+     */
+    function updateTiers(
+        string memory _name,
+        uint256 _priceInWei,
+        uint24 _maxInvocations,
+        uint8 _tournamentEarningPercentage
+    ) external onlyOwner {
+        tiers[_name] = Tier(
+            _name,
+            _priceInWei,
+            _maxInvocations,
+            _tournamentEarningPercentage
+        );
+    }
+
     /*//////////////////////////////////////////////////////////////
                             COLLECTIONS
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Adds new token `_tokenName` by `_athleteAddress`.
-     * @param _collectionName Token name.
-     * @param _athleteAddress Athlete's address.
-     * @param _maxInvocations Maximum number of times the token can be minted.
-     * @param _priceInWei Price of the token.
+     * @notice Adds new collection.
+     * @param _collectionName Name of the collection.
+     * @param _athleteName Name of the athlete.
+     * @param _collectionBaseURI Base URI of the collection.
+     * @param _athleteAddress Address of the athlete.
+     * @param _athletePrimarySalesPercentage Primary sales percentage of the athlete.
+     * @param _athleteSecondarySalesPercentage Secondary sales percentage of the athlete.
+     * @param _tierName Name of the tier.
      */
     function addCollection(
         string memory _collectionName,
         string memory _athleteName,
         string memory _collectionBaseURI,
         address payable _athleteAddress,
-        uint24 _maxInvocations,
-        uint256 _priceInWei,
         uint8 _athletePrimarySalesPercentage,
-        uint8 _athleteSecondarySalesPercentage
-    ) public onlyOwner {
+        uint8 _athleteSecondarySalesPercentage,
+        string memory _tierName
+    ) public onlyOwner onlyValidTier(_tierName) {
         uint256 collectionId = _nextCollectionId;
         collections[collectionId].name = _collectionName;
         collections[collectionId].athleteName = _athleteName;
         collections[collectionId].collectionBaseURI = _collectionBaseURI;
         collections[collectionId].athleteAddress = _athleteAddress;
         collections[collectionId].paused = true;
-        collections[collectionId].priceInWei = _priceInWei;
-        collections[collectionId].maxInvocations = _maxInvocations;
         collections[collectionId].athleteAddress = _athleteAddress;
         collections[collectionId]
             .athletePrimarySalesPercentage = _athletePrimarySalesPercentage;
         collections[collectionId]
             .athleteSecondarySalesPercentage = _athleteSecondarySalesPercentage;
+        collections[collectionId].tier = tiers[_tierName];
 
         _nextCollectionId = uint248(collectionId) + 1;
         emit CollectionUpdated(collectionId, FIELD_COLLECTION_CREATED);
@@ -452,7 +496,7 @@ contract FantiumNFTV1 is
         external
         onlyOwner
     {
-        collections[_collectionId].priceInWei = _priceInWei;
+        collections[_collectionId].tier.priceInWei = _priceInWei;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_PRICE);
     }
 
@@ -465,8 +509,18 @@ contract FantiumNFTV1 is
         uint256 _collectionId,
         uint24 _maxInvocations
     ) external onlyOwner {
-        collections[_collectionId].maxInvocations = _maxInvocations;
+        collections[_collectionId].tier.maxInvocations = _maxInvocations;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_MAX_INVOCATIONS);
+    }
+
+    //update collection tier
+    function updateCollectionTier(uint256 _collectionId, string memory tierName)
+        external
+        onlyOwner
+        onlyValidTier(tierName)
+    {
+        collections[_collectionId].tier = tiers[tierName];
+        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_TIER);
     }
 
     /**
@@ -705,35 +759,35 @@ contract FantiumNFTV1 is
             string memory collectionBaseURI,
             address payable athleteAddress,
             uint8 athletePrimarySalesPercentage,
-            uint8 athleteSecondarySalesPercentage
+            uint8 athleteSecondarySalesPercentage,
+            string memory tierName,
+            uint8 tournamentEarningPercentage
         )
     {
         Collection memory collection = collections[_collectionId];
         return (
             collection.invocations,
-            collection.maxInvocations,
-            collection.priceInWei,
+            collection.tier.maxInvocations,
+            collection.tier.priceInWei,
             collection.paused,
             collection.name,
             collection.athleteName,
             collection.collectionBaseURI,
             collection.athleteAddress,
             collection.athletePrimarySalesPercentage,
-            collection.athleteSecondarySalesPercentage
+            collection.athleteSecondarySalesPercentage,
+            collection.tier.name,
+            collection.tier.tournamentEarningPercentage
         );
     }
 
     /**
      * @notice View function that returns appropriate revenue splits between
-     * different FANtium, athlete, and athlete's additional primary sales
-     * payee given a sale price of `_price` on collection `_collectionId`.
-     * This always returns three revenue amounts and three addresses, but if a
-     * revenue is zero for either athlete or additional payee, the corresponding
+     * different FANtium, athlete given a sale price of `_price` on collection `_collectionId`.
+     * This always returns two revenue amounts and two addresses, but if a
+     * revenue is zero for athlete, the corresponding
      * address returned will also be null (for gas optimization).
-     * Does not account for refund if user overpays for a token (minter should
-     * handle a refund of the difference, if appropriate).
-     * Some minters may have alternative methods of splitting payments, in
-     * which case they should implement their own payment splitting logic.
+     * Does not account for refund if user overpays for a token
      * @param _collectionId collection ID to be queried.
      * @param _price Sale price of token.
      * @return fantiumRevenue_ amount of revenue to be sent to FANtium
@@ -787,11 +841,20 @@ contract FantiumNFTV1 is
     //////////////////////////////////////////////////////////////*/
 
     event Mint(address indexed _to, uint256 indexed _tokenId);
-    event CollectionUpdated(uint256 indexed _collectionId, bytes32 indexed _update);
+    event CollectionUpdated(
+        uint256 indexed _collectionId,
+        bytes32 indexed _update
+    );
     event PlatformUpdated(bytes32 indexed _field);
     event MinterUpdated(address indexed _currentMinter);
     event AddressAddedToKYC(address indexed _address);
     event AddressRemovedFromKYC(address indexed _address);
-    event AddressAddedToAllowList(uint256 collectionId, address indexed _address);
-    event AddressRemovedFromAllowList(uint256 collectionId, address indexed _address);
+    event AddressAddedToAllowList(
+        uint256 collectionId,
+        address indexed _address
+    );
+    event AddressRemovedFromAllowList(
+        uint256 collectionId,
+        address indexed _address
+    );
 }
