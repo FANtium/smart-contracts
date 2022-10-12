@@ -16,7 +16,7 @@ async function main() {
     const contractAddresses = JSON.parse(contents)
 
     nftContract = await ethers.getContractAt("FantiumNFTV1", contractAddresses.FantiumNFTV1, owner) as FantiumNFTV1
-    minterContract = await ethers.getContractAt("FantiumMinterV1", contractAddresses.FantiumMinterV1, owner) as FantiumMinterV1
+    minterContract = await ethers.getContractAt("FantiumMinterV1", contractAddresses.minterProxyContract, owner) as FantiumMinterV1
 
     await nftContract.updateMinterContract(minterContract.address);
 

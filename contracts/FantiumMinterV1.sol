@@ -4,6 +4,11 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+// Open Zeppelin libraries for controlling upgradability and access.
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import "./FantiumAbstract.sol";
 import "./interfaces/IFantiumNFTV1.sol";
 
@@ -14,12 +19,12 @@ import "./interfaces/IFantiumNFTV1.sol";
  * @author MTX stuido AG.
  */
 
-contract FantiumMinterV1 is ReentrancyGuard, FantiumAbstract, Ownable {
+contract FantiumMinterV1 is Initializable, UUPSUpgradeable, OwnableUpgradeable, FantiumAbstract {
     /// Core contract address this minter interacts with
-    address public immutable fantium721Address;
+    address public fantium721Address;
 
     /// This contract handles cores with interface
-    IFantiumNFTV1 private immutable fantium721Contract;
+    IFantiumNFTV1 private fantium721Contract;
 
     // List of addresses that are allowed to mint
     address[] public kycedAddresses;
@@ -36,10 +41,26 @@ contract FantiumMinterV1 is ReentrancyGuard, FantiumAbstract, Ownable {
      * @param _fantium721Address FANtium core contract address for
      * which this contract will be a minter.
      */
-    constructor(address _fantium721Address) ReentrancyGuard() {
+    // constructor(address _fantium721Address) ReentrancyGuard() {
+    //     fantium721Address = _fantium721Address;
+    //     fantium721Contract = IFantiumNFTV1(_fantium721Address);
+    // }
+
+    /*///////////////////////////////////////////////////////////////
+                            UUPS UPGRADEABLE
+    //////////////////////////////////////////////////////////////*/
+
+    ///@dev no constructor in upgradable contracts. Instead we have initializers
+   function initialize(address _fantium721Address) public initializer {
         fantium721Address = _fantium721Address;
         fantium721Contract = IFantiumNFTV1(_fantium721Address);
-    }
+
+      ///@dev as there is no constructor, we need to initialise the OwnableUpgradeable explicitly
+       __Ownable_init();
+   }
+
+    ///@dev required by the OZ UUPS module
+   function _authorizeUpgrade(address) internal override onlyOwner {}
 
     /*//////////////////////////////////////////////////////////////
                                  KYC
@@ -108,7 +129,6 @@ contract FantiumMinterV1 is ReentrancyGuard, FantiumAbstract, Ownable {
     function _purchaseTo(address _to, uint256 _collectionId)
         public
         payable
-        nonReentrant
         returns (uint256 tokenId)
     {
         // CHECKS
