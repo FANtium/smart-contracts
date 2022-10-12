@@ -19,7 +19,7 @@ import "./interfaces/IFantiumNFTV1.sol";
  * @author MTX stuido AG.
  */
 
-contract FantiumMinterV1 is Initializable, UUPSUpgradeable, OwnableUpgradeable, ReentrancyGuard, FantiumAbstract {
+contract FantiumMinterV1 is Initializable, UUPSUpgradeable, OwnableUpgradeable, FantiumAbstract {
     /// Core contract address this minter interacts with
     address public fantium721Address;
 
@@ -129,7 +129,6 @@ contract FantiumMinterV1 is Initializable, UUPSUpgradeable, OwnableUpgradeable, 
     function _purchaseTo(address _to, uint256 _collectionId)
         public
         payable
-        nonReentrant()
         returns (uint256 tokenId)
     {
         // CHECKS
