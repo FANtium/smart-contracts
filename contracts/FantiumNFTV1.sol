@@ -792,6 +792,6 @@ contract FantiumNFTV1 is
     event MinterUpdated(address indexed _currentMinter);
     event AddressAddedToKYC(address indexed _address);
     event AddressRemovedFromKYC(address indexed _address);
-    event AddressAddedToWhitelist(uint256 collectionId, address indexed _address);
-    event AddressRemovedFromWhitelist(uint256 collectionId, address indexed _address);
+    event AddressAddedToAllowList(uint256 collectionId, address indexed _address);
+    event AddressRemovedFromAllowList(uint256 collectionId, address indexed _address);
 }
