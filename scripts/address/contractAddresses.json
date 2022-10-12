@@ -1,5 +1,1 @@
-{
-    "FantiumNFTV1": "0x558F10BB76e3954711042A07Bbe03c4dbC0E6925",
-    "minterProxyContract": "0xD8f5524641C2f14D19a7Fe1cd39C6Ed5C3Ff7F67",
-    "minterImplementation": "0x2aFBFaFD7D48106CdFE7B9BC503BCF6F88245a19"
-}
+{"proxy":"0xbFa211167e18EB18D3cABf3b326A3A74704b39dc","implementation":{}}

@@ -4,35 +4,24 @@ pragma solidity ^0.8.9;
 // Import this file to use console.log
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-// Open Zeppelin libraries for controlling upgradability and access.
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import "../abstracts/FantiumAbstract.sol";
+import "../interfaces/IFantiumNFTV1.sol";
 
 /**
  * @title FANtium ERC721 contract V1.
  * @author MTX stuido AG.
  */
 
-contract FantiumNFTV1 is
-    ERC721Upgradeable,
-    UUPSUpgradeable,
-    OwnableUpgradeable
-{
+contract FantiumNFTSeparateV1 is ERC721, Ownable, IFantiumNFTV1, FantiumAbstract {
     using Strings for uint256;
 
     /// single minter allowed for this core contract
-    // address public minterContract;
+    address public minterContract;
 
     // Mapping from token ID to owner address
     mapping(uint256 => address) internal _owners;
-
-    // List of addresses that are allowed to mint
-    address[] public kycedAddresses;
 
     uint256 constant ONE_MILLION = 1_000_000;
 
@@ -65,29 +54,15 @@ contract FantiumNFTV1 is
 
     /// FANtium's payment address for all primary sales revenues (packed)
     address payable public fantiumPrimarySalesAddress;
+    /// Percentage of primary sales revenue allocated to FANtium (packed)
 
     /// FANtium payment address for all secondary sales royalty revenues
     address payable public fantiumSecondarySalesAddress;
     /// Basis Points of secondary sales royalties allocated to FANtium
-    uint256 public fantiumSecondarySalesBPS;
+    uint256 public fantiumSecondarySalesBPS = 250;
 
     /// next collection ID to be created
     uint248 private _nextCollectionId;
-
-    struct Collection {
-        uint24 invocations;
-        uint24 maxInvocations;
-        uint256 priceInWei;
-        bool paused;
-        string name;
-        string athleteName;
-        string collectionBaseURI;
-        address payable athleteAddress;
-        // packed uint: max of 100, max uint8 = 255
-        uint8 athletePrimarySalesPercentage;
-        // packed uint: max of 100, max uint8 = 255
-        uint8 athleteSecondarySalesPercentage;
-    }
 
     /*//////////////////////////////////////////////////////////////
                                  MODIFERS
@@ -102,8 +77,8 @@ contract FantiumNFTV1 is
         _;
     }
 
-    /*///////////////////////////////////////////////////////////////
-                            UUPS UPGRADEABLE
+    /*//////////////////////////////////////////////////////////////
+                            CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
     /**
@@ -114,128 +89,18 @@ contract FantiumNFTV1 is
      * @dev _startingcollectionId should be set to a value much, much less than
      * max(uint248) to avoid overflow when adding to it.
      */
-    ///@dev no constructor in upgradable contracts. Instead we have initializers
-    function initialize(
+    constructor(
         string memory _tokenName,
         string memory _tokenSymbol,
         uint256 _startingCollectionId
-    ) public initializer {
-        __ERC721_init(_tokenName, _tokenSymbol);
-        fantiumSecondarySalesBPS = 250;
+    ) ERC721(_tokenName, _tokenSymbol) {
         _nextCollectionId = uint248(_startingCollectionId);
         emit PlatformUpdated(FIELD_NEXT_COLLECTION_ID);
-
-        ///@dev as there is no constructor, we need to initialise the OwnableUpgradeable explicitly
-        __Ownable_init();
-    }
-
-    ///@dev required by the OZ UUPS module
-    function _authorizeUpgrade(address) internal override onlyOwner {}
-
-    /*//////////////////////////////////////////////////////////////
-                                 KYC
-    //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice Add address to KYC list.
-     * @param _address address to be added to KYC list.
-     */
-    function addAddressToKYC(address _address) external onlyOwner {
-        kycedAddresses.push(_address);
-        emit AddressAddedToKYC(_address);
-    }
-
-    /**
-     * @notice Remove address from KYC list.
-     * @param _address address to be removed from KYC list.
-     */
-    function removeAddressFromKYC(address _address) external onlyOwner {
-        for (uint256 i = 0; i < kycedAddresses.length; i++) {
-            if (kycedAddresses[i] == _address) {
-                kycedAddresses[i] = kycedAddresses[kycedAddresses.length - 1];
-                kycedAddresses.pop();
-                emit AddressRemovedFromKYC(_address);
-                return;
-            }
-        }
-    }
-
-    /**
-     * @notice Check if address is KYCed.
-     * @param _address address to be checked.
-     * @return isKYCed true if address is KYCed.
-     */
-    function isAddressKYCed(address _address) public view returns (bool) {
-        for (uint256 i = 0; i < kycedAddresses.length; i++) {
-            if (kycedAddresses[i] == _address) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /*//////////////////////////////////////////////////////////////
-                                 MINTING
+                                 TOKEN
     //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice Purchases a token from collection `_collectionId` and sets
-     * the token's owner to `_to`.
-     * @param _to Address to be the new token's owner.
-     * @param _collectionId collection ID to mint a token on.
-     * @return tokenId Token ID of minted token
-     */
-    function purchaseTo(address _to, uint256 _collectionId)
-        public
-        payable
-        returns (uint256 tokenId)
-    {
-        // CHECKS
-        uint24 invocations;
-        uint24 maxInvocations;
-        uint256 priceInWei;
-        (
-            invocations,
-            maxInvocations,
-            priceInWei,
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-
-        ) = getCollectionData(_collectionId);
-
-        //check if collections invocations is less than max invocations
-        require(
-            invocations < maxInvocations,
-            "Maximum number of invocations reached"
-        );
-
-        // load price of token into memory
-        uint256 _pricePerTokenInWei = priceInWei;
-
-        // check if msg.value is more or equal to price of token
-        require(
-            msg.value >= _pricePerTokenInWei,
-            "Must send minimum value to mint!"
-        );
-
-        /*
-         * Check if address is allowed to mint on collection `_collectionId`.
-         * If not, check if address is KYCed.
-         */
-        require(isAddressKYCed(msg.sender), "Address not KYCed");
-
-        // EFFECTS
-        tokenId = mint(_to, _collectionId);
-
-        // INTERACTIONS
-        _splitFundsETH(_collectionId, _pricePerTokenInWei);
-
-        return tokenId;
-    }
 
     /**
      * @notice Mints a token from collection `_collectionId` and sets the
@@ -243,11 +108,12 @@ contract FantiumNFTV1 is
      * @param _to Address to be the minted token's owner.
      * @param _collectionId collection ID to mint a token on.
      */
-    function mint(
-        address _to,
-        uint256 _collectionId
-    ) private returns (uint256 _tokenId) {
+    function mint(address _to, uint256 _collectionId, address _by)
+        external
+        returns (uint256 _tokenId)
+    {
         // CHECKS
+        require(msg.sender == minterContract, "Must mint from minter contract");
         Collection storage collection = collections[_collectionId];
         // load invocations into memory
         uint24 invocationsBefore = collection.invocations;
@@ -288,10 +154,6 @@ contract FantiumNFTV1 is
         return thisTokenId;
     }
 
-    /*//////////////////////////////////////////////////////////////
-                                 TOKEN
-    //////////////////////////////////////////////////////////////*/
-
     /**
      * @notice Gets token URI for token ID `_tokenId`.
      * @dev token URIs are the concatenation of the collection base URI and the
@@ -305,14 +167,21 @@ contract FantiumNFTV1 is
     {
         string memory _collectionBaseURI = collections[_tokenId / ONE_MILLION]
             .collectionBaseURI;
-        return
-            string(
-                bytes.concat(
-                    bytes(_collectionBaseURI),
-                    bytes(_tokenId.toString())
-                )
-            );
+        return string(bytes.concat(bytes(_collectionBaseURI), bytes(_tokenId.toString())));
     }
+
+    /*//////////////////////////////////////////////////////////////
+                                 STATE
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Updates minter to `_address`.
+     */
+    function updateMinterContract(address _address) external onlyOwner {
+        minterContract = _address;
+        emit MinterUpdated(_address);
+    }
+
 
     /*//////////////////////////////////////////////////////////////
                             COLLECTIONS
@@ -437,42 +306,6 @@ contract FantiumNFTV1 is
     /*//////////////////////////////////////////////////////////////
                                  ROYALTY
     //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @dev splits ETH funds between sender (if refund),
-     * FANtium, and athlete for a token purchased on
-     * collection `_collectionId`.
-     */
-    function _splitFundsETH(uint256 _collectionId, uint256 _pricePerTokenInWei)
-        internal
-    {
-        if (msg.value > 0) {
-            bool success_;
-            // send refund to sender
-            uint256 refund = msg.value - _pricePerTokenInWei;
-            if (refund > 0) {
-                (success_, ) = msg.sender.call{value: refund}("");
-                require(success_, "Refund failed");
-            }
-            // split remaining funds between FANtium and athlete
-            (
-                uint256 fantiumRevenue_,
-                address payable fantiumAddress_,
-                uint256 athleteRevenue_,
-                address payable athleteAddress_
-            ) = getPrimaryRevenueSplits(_collectionId, _pricePerTokenInWei);
-            // FANtium payment
-            if (fantiumRevenue_ > 0) {
-                (success_, ) = fantiumAddress_.call{value: fantiumRevenue_}("");
-                require(success_, "FANtium payment failed");
-            }
-            // athlete payment
-            if (athleteRevenue_ > 0) {
-                (success_, ) = athleteAddress_.call{value: athleteRevenue_}("");
-                require(success_, "Artist payment failed");
-            }
-        }
-    }
 
     /**
      * @notice Updates athlete primary market royalties for collection
@@ -634,7 +467,7 @@ contract FantiumNFTV1 is
 
     // get all collection properties for collectionId
     function getCollectionData(uint256 _collectionId)
-        public
+        external
         view
         returns (
             uint24 invocations,
@@ -688,7 +521,7 @@ contract FantiumNFTV1 is
      * appropriately.
      */
     function getPrimaryRevenueSplits(uint256 _collectionId, uint256 _price)
-        public
+        external
         view
         returns (
             uint256 fantiumRevenue_,
@@ -750,7 +583,4 @@ contract FantiumNFTV1 is
      * @notice currentMinter updated to `_currentMinter`.
      */
     event MinterUpdated(address indexed _currentMinter);
-
-    event AddressAddedToKYC(address indexed _address);
-    event AddressRemovedFromKYC(address indexed _address);
 }
