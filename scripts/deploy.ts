@@ -1,5 +1,5 @@
 import { writeFileSync } from "fs";
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { join } from "path";
 
 async function main() {
@@ -8,7 +8,6 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  // We get the contract to deploy
   const FantiumNFTV1 = await ethers.getContractFactory("FantiumNFTV1");
   const nftContract = await FantiumNFTV1.deploy("FANtium", "FAN", 1);
 
@@ -16,24 +15,23 @@ async function main() {
 
   console.log("FantiumNFTV1 deployed to:", nftContract.address);
 
-  const FantiumMinterFactory = await ethers.getContractFactory("FantiumMinterV1");
-  const minterContract = await FantiumMinterFactory.deploy(nftContract.address);
+  const FantiumMinterFactory = await ethers.getContractFactory("FantiumMinterV1")
+  const minterProxyContract = await upgrades.deployProxy(FantiumMinterFactory, [nftContract.address], { initializer: 'initialize' })
+  console.log("Minter proxy address: ", minterProxyContract.address)
 
-  await minterContract.deployed();
+  await minterProxyContract.deployed();
 
-  console.log("FantiumMinterV1 deployed to:", minterContract.address);
+  console.log("FantiumMinterV1 deployed to:", minterProxyContract.address);
 
   const data = {
     "FantiumNFTV1": nftContract.address,
-    "FantiumMinterV1": minterContract.address,
+    "minterProxyContract": minterProxyContract.address,
   }
   writeFileSync(join(__dirname, './address/contractAddresses.json'), JSON.stringify(data), {
     flag: 'w',
   });
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
