@@ -134,9 +134,9 @@ contract FantiumNFTV1 is
         _nextCollectionId = uint248(_startingCollectionId);
         fantiumSecondarySalesBPS = 250;
 
-        tiers["bronze"] = Tier("bronze", 0.01 ether, 100, 50);
-        tiers["silver"] = Tier("silver", 0.1 ether, 100, 50);
-        tiers["gold"] = Tier("gold", 1 ether, 100, 50);
+        tiers["bronze"] = Tier("bronze", 10, 10000, 10);
+        tiers["silver"] = Tier("silver", 100, 1000, 20);
+        tiers["gold"] = Tier("gold", 1000, 100, 30);
 
         emit PlatformUpdated(FIELD_NEXT_COLLECTION_ID);
     }
@@ -264,7 +264,8 @@ contract FantiumNFTV1 is
      * @param _collectionId collection ID to mint a token on.
      */
     function mint(address _to, uint256 _collectionId)
-        private
+        public
+        payable
         returns (uint256 _tokenId)
     {
         // CHECKS

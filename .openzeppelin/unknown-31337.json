@@ -12,11 +12,6 @@
       "kind": "uups"
     },
     {
-      "address": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
-      "txHash": "0xb6654aa9b0a046f52b93aa5ba23d37fa849bb099dbecb824c65f13801fd12d25",
-      "kind": "uups"
-    },
-    {
       "address": "0x7a2088a1bFc9d81c55368AE168C2C02570cB814F",
       "txHash": "0x8c520417a68f982da87d241bc2e3bc215924e2440f3325ec6b5b6378b916a404",
       "kind": "uups"
@@ -52,53 +47,78 @@
       "kind": "uups"
     },
     {
-      "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-      "txHash": "0x1f0a9f9733dc323b0c1c4334c792223cd9869f42c3632a64df3b77c7dad6a0bb",
-      "kind": "uups"
-    },
-    {
-      "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
-      "txHash": "0x9b4a338473e27602cad30008524d5834458e65d27fc4c76ff36d8f39cd80789d",
-      "kind": "uups"
-    },
-    {
-      "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
-      "txHash": "0xc5467b86500483128e325cceada0b77becbb565055de04eecf2a2e5c20f8fd94",
-      "kind": "uups"
-    },
-    {
       "address": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
-      "txHash": "0x08d01708c9e61b067a5b0525f822ece8fec00fc70bf29ac76684c2573c441012",
-      "kind": "uups"
-    },
-    {
-      "address": "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44",
-      "txHash": "0x2e97c098eb769bf44e35f8e53140641476762573a531a1a936a8222aefb1d7f2",
+      "txHash": "0x362fbe617c1ed9364ff3bd12a4d52d6f343db32975e8e034b7bab446befcb138",
       "kind": "uups"
     },
     {
       "address": "0xc5a5C42992dECbae36851359345FE25997F5C42d",
-      "txHash": "0x0d18a027d60f0c704f990c74fcd1df0a2f8e4fb5a92c961c259ee4c9b12f0c45",
+      "txHash": "0x10d647623d1bd0e1d4575cbcac728533eb7b52bdcdfb8c5c71a17fe88a2d0112",
       "kind": "uups"
     },
     {
       "address": "0xa82fF9aFd8f496c3d6ac40E2a0F282E47488CFc9",
-      "txHash": "0xe711d12177049c8236e33174baa5434943843147449311b525236f6204dc92bd",
+      "txHash": "0xa3751197ded76468b7cb46f4dac25fbea8de36fc8e9b547dc5e824735597ff5c",
       "kind": "uups"
     },
     {
       "address": "0x70e0bA845a1A0F2DA3359C97E0285013525FFC49",
-      "txHash": "0x1ecc193788980889461ee91592765cd500d43680e20b65e26ad16f3b7961a1cf",
+      "txHash": "0xe3594810a5b8889c2eb3b4e81b286744d74ce3d40e90e8e9302e58e4cc4e51c0",
       "kind": "uups"
     },
     {
       "address": "0x5eb3Bc0a489C5A8288765d2336659EbCA68FCd00",
-      "txHash": "0xfd784e3e20e8a24e518e824d692abfcc081098ac9a75249355ee06734ecc5e8d",
+      "txHash": "0x68f6f3138a93bba6d70079e4e8b5064950150dc903c100b7e3b4ea67480aeb36",
       "kind": "uups"
     },
     {
       "address": "0xb7278A61aa25c888815aFC32Ad3cC52fF24fE575",
-      "txHash": "0x389f2e4fafc8f7d85030a9b9f131ba11cc5b652aa77f81e1e00ef07b5a5313af",
+      "txHash": "0x137542700082a944f32dbb549ab17c05163af14224ae5e18ac6d44445485f23f",
+      "kind": "uups"
+    },
+    {
+      "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      "txHash": "0x2d4b63f756e6922fe05c3b79b1ca4a880218c7cfa9d99db7d5de1bbd9352d49d",
+      "kind": "uups"
+    },
+    {
+      "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+      "txHash": "0x7356192b36ceb8e0039438ca7d57de223f7a52bac358136b68adae9ed09206d2",
+      "kind": "uups"
+    },
+    {
+      "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+      "txHash": "0x5e477ff46bd7c18ebd2309e4b327e3f0afe2d9c5f6f9cb38456b28438e2ea65d",
+      "kind": "uups"
+    },
+    {
+      "address": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
+      "txHash": "0x118f3efc849feec4fae842791d5a1b4d2a2e5e03b6fe51b5a9834fb2a081af62",
+      "kind": "uups"
+    },
+    {
+      "address": "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44",
+      "txHash": "0xcad8bc984c3c67cb1efe0be6cc6078eedb20d20f7bc27b9077a5a968cdcace90",
+      "kind": "uups"
+    },
+    {
+      "address": "0x67d269191c92Caf3cD7723F116c85e6E9bf55933",
+      "txHash": "0xd4f05efa6bc62bfe0641be122c8b7df78c83842a94f52a6a49a0c7b770d72e42",
+      "kind": "uups"
+    },
+    {
+      "address": "0x1613beB3B2C4f22Ee086B2b38C1476A3cE7f78E8",
+      "txHash": "0x64bf697a878a89e2e44d2025b1fdbaa8c611fa5d7cb4231a01097cea296b4784",
+      "kind": "uups"
+    },
+    {
+      "address": "0x4826533B4897376654Bb4d4AD88B7faFD0C98528",
+      "txHash": "0x38e581acafc65960e80a57a89fac522e76ad835f6503c9dcef501ba10a680800",
+      "kind": "uups"
+    },
+    {
+      "address": "0x36C02dA8a0983159322a80FFE9F24b1acfF8B570",
+      "txHash": "0x51208bd77c9b0f74eba19ace10afc3e741d1032dd2b9fc482a91ca400486e82b",
       "kind": "uups"
     }
   ],
@@ -259,9 +279,9 @@
         }
       }
     },
-    "aa2815094a1f357aac85efb6a68fe30d638234fef19bfa4e0f688b0f7590fac6": {
+    "eb2557d4a925c560db76c502bf5776ab0d65fde89e5b1aab5841b075df1ae36b": {
       "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "txHash": "0x87a57a2cccd8a9113a0128ddf8d160a7d961b32020cf399fba786bb9c40d28b2",
+      "txHash": "0xef692f5091e61fc04e38b5df71ad092d609a95a68a0b73395f69a435e318ee51",
       "layout": {
         "solcVersion": "0.8.9",
         "storage": [
@@ -387,60 +407,76 @@
             "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
           },
           {
-            "label": "_owners",
-            "offset": 0,
-            "slot": "301",
-            "type": "t_mapping(t_uint256,t_address)",
-            "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:32"
-          },
-          {
             "label": "kycedAddresses",
             "offset": 0,
-            "slot": "302",
+            "slot": "301",
             "type": "t_array(t_address)dyn_storage",
             "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:35"
+            "src": "contracts/FantiumNFTV1.sol:28"
+          },
+          {
+            "label": "_owners",
+            "offset": 0,
+            "slot": "302",
+            "type": "t_mapping(t_uint256,t_address)",
+            "contract": "FantiumNFTV1",
+            "src": "contracts/FantiumNFTV1.sol:29"
           },
           {
             "label": "collections",
             "offset": 0,
             "slot": "303",
-            "type": "t_mapping(t_uint256,t_struct(Collection)6689_storage)",
+            "type": "t_mapping(t_uint256,t_struct(Collection)6700_storage)",
             "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:64"
+            "src": "contracts/FantiumNFTV1.sol:30"
+          },
+          {
+            "label": "collectionIdToAllowList",
+            "offset": 0,
+            "slot": "304",
+            "type": "t_mapping(t_uint256,t_array(t_address)dyn_storage)",
+            "contract": "FantiumNFTV1",
+            "src": "contracts/FantiumNFTV1.sol:31"
+          },
+          {
+            "label": "tiers",
+            "offset": 0,
+            "slot": "305",
+            "type": "t_mapping(t_string_memory_ptr,t_struct(Tier)6709_storage)",
+            "contract": "FantiumNFTV1",
+            "src": "contracts/FantiumNFTV1.sol:32"
           },
           {
             "label": "fantiumPrimarySalesAddress",
             "offset": 0,
-            "slot": "304",
+            "slot": "306",
             "type": "t_address_payable",
             "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:67"
+            "src": "contracts/FantiumNFTV1.sol:63"
           },
           {
             "label": "fantiumSecondarySalesAddress",
             "offset": 0,
-            "slot": "305",
+            "slot": "307",
             "type": "t_address_payable",
             "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:70"
+            "src": "contracts/FantiumNFTV1.sol:66"
           },
           {
             "label": "fantiumSecondarySalesBPS",
             "offset": 0,
-            "slot": "306",
+            "slot": "308",
             "type": "t_uint256",
             "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:72"
+            "src": "contracts/FantiumNFTV1.sol:68"
           },
           {
             "label": "_nextCollectionId",
             "offset": 0,
-            "slot": "307",
+            "slot": "309",
             "type": "t_uint248",
             "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:75"
+            "src": "contracts/FantiumNFTV1.sol:71"
           }
         ],
         "types": {
@@ -484,19 +520,31 @@
             "label": "mapping(address => uint256)",
             "numberOfBytes": "32"
           },
+          "t_mapping(t_string_memory_ptr,t_struct(Tier)6709_storage)": {
+            "label": "mapping(string => struct FantiumNFTV1.Tier)",
+            "numberOfBytes": "32"
+          },
           "t_mapping(t_uint256,t_address)": {
             "label": "mapping(uint256 => address)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(Collection)6689_storage)": {
+          "t_mapping(t_uint256,t_array(t_address)dyn_storage)": {
+            "label": "mapping(uint256 => address[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(Collection)6700_storage)": {
             "label": "mapping(uint256 => struct FantiumNFTV1.Collection)",
+            "numberOfBytes": "32"
+          },
+          "t_string_memory_ptr": {
+            "label": "string",
             "numberOfBytes": "32"
           },
           "t_string_storage": {
             "label": "string",
             "numberOfBytes": "32"
           },
-          "t_struct(Collection)6689_storage": {
+          "t_struct(Collection)6700_storage": {
             "label": "struct FantiumNFTV1.Collection",
             "members": [
               {
@@ -506,9 +554,63 @@
                 "slot": "0"
               },
               {
-                "label": "maxInvocations",
-                "type": "t_uint24",
-                "offset": 3,
+                "label": "tier",
+                "type": "t_struct(Tier)6709_storage",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "paused",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "name",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "athleteName",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "6"
+              },
+              {
+                "label": "collectionBaseURI",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "7"
+              },
+              {
+                "label": "athleteAddress",
+                "type": "t_address_payable",
+                "offset": 0,
+                "slot": "8"
+              },
+              {
+                "label": "athletePrimarySalesPercentage",
+                "type": "t_uint8",
+                "offset": 20,
+                "slot": "8"
+              },
+              {
+                "label": "athleteSecondarySalesPercentage",
+                "type": "t_uint8",
+                "offset": 21,
+                "slot": "8"
+              }
+            ],
+            "numberOfBytes": "288"
+          },
+          "t_struct(Tier)6709_storage": {
+            "label": "struct FantiumNFTV1.Tier",
+            "members": [
+              {
+                "label": "name",
+                "type": "t_string_storage",
+                "offset": 0,
                 "slot": "0"
               },
               {
@@ -518,49 +620,19 @@
                 "slot": "1"
               },
               {
-                "label": "paused",
-                "type": "t_bool",
+                "label": "maxInvocations",
+                "type": "t_uint24",
                 "offset": 0,
                 "slot": "2"
               },
               {
-                "label": "name",
-                "type": "t_string_storage",
-                "offset": 0,
-                "slot": "3"
-              },
-              {
-                "label": "athleteName",
-                "type": "t_string_storage",
-                "offset": 0,
-                "slot": "4"
-              },
-              {
-                "label": "collectionBaseURI",
-                "type": "t_string_storage",
-                "offset": 0,
-                "slot": "5"
-              },
-              {
-                "label": "athleteAddress",
-                "type": "t_address_payable",
-                "offset": 0,
-                "slot": "6"
-              },
-              {
-                "label": "athletePrimarySalesPercentage",
+                "label": "tournamentEarningPercentage",
                 "type": "t_uint8",
-                "offset": 20,
-                "slot": "6"
-              },
-              {
-                "label": "athleteSecondarySalesPercentage",
-                "type": "t_uint8",
-                "offset": 21,
-                "slot": "6"
+                "offset": 3,
+                "slot": "2"
               }
             ],
-            "numberOfBytes": "224"
+            "numberOfBytes": "96"
           },
           "t_uint24": {
             "label": "uint24",
