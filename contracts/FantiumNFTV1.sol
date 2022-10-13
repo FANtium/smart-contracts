@@ -258,67 +258,6 @@ contract FantiumNFTV1 is
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Purchases a token from collection `_collectionId` and sets
-     * the token's owner to `_to`.
-     * @param _to Address to be the new token's owner.
-     * @param _collectionId collection ID to mint a token on.
-     * @return tokenId Token ID of minted token
-     */
-    function purchaseTo(address _to, uint256 _collectionId)
-        public
-        payable
-        returns (uint256 tokenId)
-    {
-        // CHECKS
-        uint24 invocations;
-        uint24 maxInvocations;
-        uint256 priceInWei;
-        (
-            invocations,
-            maxInvocations,
-            priceInWei,
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-
-        ) = getCollectionData(_collectionId);
-
-        //check if collections invocations is less than max invocations
-        require(
-            invocations < maxInvocations,
-            "Maximum number of invocations reached"
-        );
-
-        // load price of token into memory
-        uint256 _pricePerTokenInWei = priceInWei;
-
-        // check if msg.value is more or equal to price of token
-        require(
-            msg.value >= _pricePerTokenInWei,
-            "Must send minimum value to mint!"
-        );
-
-        /*
-         * Check if address is allowed to mint on collection `_collectionId`.
-         * If not, check if address is KYCed.
-         */
-        require(isAddressKYCed(msg.sender), "Address not KYCed");
-
-        // EFFECTS
-        tokenId = mint(_to, _collectionId);
-
-        // INTERACTIONS
-        _splitFundsETH(_collectionId, _pricePerTokenInWei);
-
-        return tokenId;
-    }
-
-    /**
      * @notice Mints a token from collection `_collectionId` and sets the
      * token's owner to `_to`.
      * @param _to Address to be the minted token's owner.
@@ -329,6 +268,8 @@ contract FantiumNFTV1 is
         returns (uint256 _tokenId)
     {
         // CHECKS
+        require(isAddressKYCed(msg.sender), "Address not KYCed");
+        
         Collection storage collection = collections[_collectionId];
         // load invocations into memory
         uint24 invocationsBefore = collection.invocations;
@@ -339,12 +280,20 @@ contract FantiumNFTV1 is
             invocationsAfter = invocationsBefore + 1;
         }
         uint24 maxInvocations = collection.tier.maxInvocations;
-
         require(
             invocationsBefore < maxInvocations,
             "Must not exceed max invocations"
         );
+        
         require(!collection.paused, "Purchases are paused.");
+        
+        // load price of token into memory
+        uint256 _pricePerTokenInWei = collection.tier.priceInWei;
+        // check if msg.value is more or equal to price of token
+        require(
+            msg.value >= _pricePerTokenInWei,
+            "Must send minimum value to mint!"
+        );
 
         // EFFECTS
         // increment collection's invocations
@@ -360,10 +309,8 @@ contract FantiumNFTV1 is
 
         // INTERACTIONS
         _mint(_to, thisTokenId);
+        _splitFundsETH(_collectionId, _pricePerTokenInWei);
 
-        // Do not need to also log `collectionId` in event, as the `collectionId` for
-        // a given token can be derived from the `tokenId` with:
-        //   collectionId = collectionId / 1_000_000
         emit Mint(_to, thisTokenId);
 
         return thisTokenId;
