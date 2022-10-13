@@ -270,7 +270,7 @@ contract FantiumNFTV1 is
     {
         // CHECKS
         require(isAddressKYCed(msg.sender), "Address not KYCed");
-        
+
         Collection storage collection = collections[_collectionId];
         // load invocations into memory
         uint24 invocationsBefore = collection.invocations;
@@ -285,9 +285,9 @@ contract FantiumNFTV1 is
             invocationsBefore < maxInvocations,
             "Must not exceed max invocations"
         );
-        
+
         require(!collection.paused, "Purchases are paused.");
-        
+
         // load price of token into memory
         uint256 _pricePerTokenInWei = collection.tier.priceInWei;
         // check if msg.value is more or equal to price of token
@@ -344,28 +344,14 @@ contract FantiumNFTV1 is
     }
 
     /**
-     * @notice Updates the tier mapping for `_name` to `_tier`.
-     * @param _name Name of the tier.
-     * @param _priceInWei Price of the tier.
-     * @param _maxInvocations Max invocations of the tier.
-     * @param _tournamentEarningPercentage Tournament earnings percentage of the tier.
+    * @notice Returns true if the token is minted.
      */
-    function updateTiers(
-        string memory _name,
-        uint256 _priceInWei,
-        uint24 _maxInvocations,
-        uint8 _tournamentEarningPercentage
-    ) external onlyOwner {
-        tiers[_name] = Tier(
-            _name,
-            _priceInWei,
-            _maxInvocations,
-            _tournamentEarningPercentage
-        );
+    function exists(uint256 _tokenId) public view returns (bool) {
+        return _owners[_tokenId] != address(0);
     }
 
     /*//////////////////////////////////////////////////////////////
-                            COLLECTIONS
+                            ADMIN
     //////////////////////////////////////////////////////////////*/
 
     /**
@@ -680,13 +666,49 @@ contract FantiumNFTV1 is
         return (recipients, bps);
     }
 
+     /**
+     * @notice Updates the tier mapping for `_name` to `_tier`.
+     * @param _name Name of the tier.
+     * @param _priceInWei Price of the tier.
+     * @param _maxInvocations Max invocations of the tier.
+     * @param _tournamentEarningPercentage Tournament earnings percentage of the tier.
+     */
+    function updateTiers(
+        string memory _name,
+        uint256 _priceInWei,
+        uint24 _maxInvocations,
+        uint8 _tournamentEarningPercentage
+    ) external onlyOwner {
+        tiers[_name] = Tier(
+            _name,
+            _priceInWei,
+            _maxInvocations,
+            _tournamentEarningPercentage
+        );
+    }
+
     /*//////////////////////////////////////////////////////////////
                                  VIEWS
     //////////////////////////////////////////////////////////////*/
 
+    /**
+     * @notice Gets the collection ID for token ID `_tokenId`.
+     * @param _tokenId Token ID to be queried.
+     * @return collectionId Collection ID for token ID `_tokenId`.
+     */
+    function getCollectionForTokenId(uint256 _tokenId)
+        external
+        view
+        returns (Collection memory)
+    {
+        uint256 collectionId = _tokenId / ONE_MILLION;
+        Collection memory collection = getCollection(collectionId);
+        return collection;
+    }
+
     // get collection for collectionId
     function getCollection(uint256 _collectionId)
-        external
+        public
         view
         returns (Collection memory)
     {
