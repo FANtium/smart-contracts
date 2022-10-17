@@ -17,6 +17,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
  */
 
 contract FantiumNFTV1 is
+    Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
     OwnableUpgradeable
@@ -450,7 +451,12 @@ contract FantiumNFTV1 is
         uint8 _athletePrimarySalesPercentage,
         uint8 _athleteSecondarySalesPercentage,
         string memory _tierName
-    ) public onlyCollectionsManager onlyInitializedContract onlyValidTier(_tierName) {
+    )
+        public
+        onlyCollectionsManager
+        onlyInitializedContract
+        onlyValidTier(_tierName)
+    {
         uint256 collectionId = nextCollectionId;
         collections[collectionId].name = _collectionName;
         collections[collectionId].athleteName = _athleteName;
