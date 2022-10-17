@@ -111,8 +111,10 @@ contract FantiumNFTV1 is
     }
 
     modifier onlyKycUpdater() {
-        require(msg.sender == kycUpdaterAddress || 
-        msg.sender == owner(), "Only KYC updater");
+        require(
+            msg.sender == kycUpdaterAddress || msg.sender == owner(),
+            "Only KYC updater"
+        );
         _;
     }
 
@@ -283,6 +285,11 @@ contract FantiumNFTV1 is
         require(isAddressKYCed(msg.sender), "Address not KYCed");
 
         Collection storage collection = collections[_collectionId];
+
+        if (!isAddressOnAllowList(_collectionId, msg.sender)) {
+            require(!collection.paused, "Purchases are paused.");
+        }
+
         // load invocations into memory
         uint24 invocationsBefore = collection.invocations;
         uint24 invocationsAfter;
@@ -296,8 +303,6 @@ contract FantiumNFTV1 is
             invocationsBefore < maxInvocations,
             "Must not exceed max invocations"
         );
-
-        require(!collection.paused, "Purchases are paused.");
 
         // load price of token into memory
         uint256 _pricePerTokenInWei = collection.tier.priceInWei;
@@ -355,7 +360,7 @@ contract FantiumNFTV1 is
     }
 
     /**
-    * @notice Returns true if the token is minted.
+     * @notice Returns true if the token is minted.
      */
     function exists(uint256 _tokenId) public view returns (bool) {
         return _owners[_tokenId] != address(0);
@@ -677,7 +682,7 @@ contract FantiumNFTV1 is
         return (recipients, bps);
     }
 
-     /**
+    /**
      * @notice Updates the tier mapping for `_name` to `_tier`.
      * @param _name Name of the tier.
      * @param _priceInWei Price of the tier.
