@@ -30,7 +30,10 @@ contract FantiumNFTV1 is
     mapping(uint256 => Collection) public collections;
     mapping(uint256 => address[]) public collectionIdToAllowList;
     mapping(string => Tier) public tiers;
-    address public kycUpdaterAddress;
+
+    //roles
+    address public kycManagerAddress;
+    address public collectionsManagerAddress;
 
     uint256 constant ONE_MILLION = 1_000_000;
 
@@ -110,10 +113,18 @@ contract FantiumNFTV1 is
         _;
     }
 
-    modifier onlyKycUpdater() {
+    modifier onlyKycManager() {
         require(
-            msg.sender == kycUpdaterAddress || msg.sender == owner(),
+            msg.sender == kycManagerAddress || msg.sender == owner(),
             "Only KYC updater"
+        );
+        _;
+    }
+
+    modifier onlyCollectionsManager() {
+        require(
+            msg.sender == collectionsManagerAddress || msg.sender == owner(),
+            "Only collection updater"
         );
         _;
     }
@@ -165,7 +176,7 @@ contract FantiumNFTV1 is
      * @notice Add address to KYC list.
      * @param _address address to be added to KYC list.
      */
-    function addAddressToKYC(address _address) external onlyKycUpdater {
+    function addAddressToKYC(address _address) external onlyKycManager {
         kycedAddresses.push(_address);
         emit AddressAddedToKYC(_address);
     }
@@ -174,7 +185,7 @@ contract FantiumNFTV1 is
      * @notice Remove address from KYC list.
      * @param _address address to be removed from KYC list.
      */
-    function removeAddressFromKYC(address _address) external onlyKycUpdater {
+    function removeAddressFromKYC(address _address) external onlyKycManager {
         for (uint256 i = 0; i < kycedAddresses.length; i++) {
             if (kycedAddresses[i] == _address) {
                 kycedAddresses[i] = kycedAddresses[kycedAddresses.length - 1];
@@ -367,7 +378,7 @@ contract FantiumNFTV1 is
     }
 
     /*//////////////////////////////////////////////////////////////
-                            ADMIN
+                            MANAGER FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
     /**
@@ -388,7 +399,7 @@ contract FantiumNFTV1 is
         uint8 _athletePrimarySalesPercentage,
         uint8 _athleteSecondarySalesPercentage,
         string memory _tierName
-    ) public onlyOwner onlyValidTier(_tierName) {
+    ) public onlyCollectionsManager onlyValidTier(_tierName) {
         uint256 collectionId = _nextCollectionId;
         collections[collectionId].name = _collectionName;
         collections[collectionId].athleteName = _athleteName;
@@ -412,7 +423,7 @@ contract FantiumNFTV1 is
     function updateCollectionName(
         uint256 _collectionId,
         string memory _collectionName
-    ) external onlyOwner {
+    ) external onlyCollectionsManager {
         collections[_collectionId].name = _collectionName;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_NAME);
     }
@@ -423,7 +434,7 @@ contract FantiumNFTV1 is
     function updateCollectionAthleteAddress(
         uint256 _collectionId,
         address payable _athleteAddress
-    ) external onlyOwner {
+    ) external onlyCollectionsManager {
         collections[_collectionId].athleteAddress = _athleteAddress;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ATHLETE_ADDRESS);
     }
@@ -444,7 +455,7 @@ contract FantiumNFTV1 is
      */
     function updateCollectionPrice(uint256 _collectionId, uint256 _priceInWei)
         external
-        onlyOwner
+        onlyCollectionsManager
     {
         collections[_collectionId].tier.priceInWei = _priceInWei;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_PRICE);
@@ -458,7 +469,7 @@ contract FantiumNFTV1 is
     function updateCollectionMaxInvocations(
         uint256 _collectionId,
         uint24 _maxInvocations
-    ) external onlyOwner {
+    ) external onlyCollectionsManager {
         collections[_collectionId].tier.maxInvocations = _maxInvocations;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_MAX_INVOCATIONS);
     }
@@ -466,7 +477,7 @@ contract FantiumNFTV1 is
     //update collection tier
     function updateCollectionTier(uint256 _collectionId, string memory tierName)
         external
-        onlyOwner
+        onlyCollectionsManager
         onlyValidTier(tierName)
     {
         collections[_collectionId].tier = tiers[tierName];
@@ -480,7 +491,7 @@ contract FantiumNFTV1 is
     function updateCollectionBaseURI(
         uint256 _collectionId,
         string memory _collectionBaseURI
-    ) external onlyOwner {
+    ) external onlyCollectionsManager {
         collections[_collectionId].collectionBaseURI = _collectionBaseURI;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_BASE_URI);
     }
@@ -492,7 +503,7 @@ contract FantiumNFTV1 is
     function updateCollectionAthleteName(
         uint256 _collectionId,
         string memory _collectionAthleteName
-    ) external onlyOwner {
+    ) external onlyCollectionsManager {
         collections[_collectionId].athleteName = _collectionAthleteName;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ATHLETE_NAME);
     }
@@ -551,7 +562,7 @@ contract FantiumNFTV1 is
     function updateCollectionAthletePrimaryMarketRoyaltyPercentage(
         uint256 _collectionId,
         uint256 _primaryMarketRoyalty
-    ) external onlyOwner {
+    ) external onlyCollectionsManager {
         require(_primaryMarketRoyalty <= 95, "Max of 95%");
         collections[_collectionId].athletePrimarySalesPercentage = uint8(
             _primaryMarketRoyalty
@@ -576,7 +587,7 @@ contract FantiumNFTV1 is
     function updateCollectionAthleteSecondaryMarketRoyaltyPercentage(
         uint256 _collectionId,
         uint256 _secondMarketRoyalty
-    ) external onlyOwner {
+    ) external onlyCollectionsManager {
         require(_secondMarketRoyalty <= 95, "Max of 95%");
         collections[_collectionId].athleteSecondarySalesPercentage = uint8(
             _secondMarketRoyalty
