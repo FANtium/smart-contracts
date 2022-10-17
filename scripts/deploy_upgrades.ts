@@ -14,7 +14,7 @@ async function main() {
   const contractAddresses = JSON.parse(contents)
 
   const FantiumNFTV1Factory = await ethers.getContractFactory("FantiumNFTV1");
-  const nftContract = await upgrades.upgradeProxy(contractAddresses.proxy, FantiumNFTV1Factory, ["FANtium", "FAN", 1]);
+  const nftContract = await upgrades.upgradeProxy(contractAddresses.proxy, FantiumNFTV1Factory);
 
   console.log("FantiumNFTV1 deployed to:", nftContract.address);
 
@@ -24,7 +24,7 @@ async function main() {
     "minterImplementation": await upgrades.erc1967.getImplementationAddress(contractAddresses.minterProxyContract)
   }
 
-  writeFileSync(join(__dirname, './address/contractAddresses.json'), JSON.stringify(data), {
+  writeFileSync(join(__dirname, './contractAddresses.json'), JSON.stringify(data), {
     flag: 'w',
   });
 }
