@@ -10,8 +10,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 
 /**
  * @title FANtium ERC721 contract V1.
@@ -165,8 +163,6 @@ contract FantiumNFTV1 is
      * @notice Initializes contract.
      * @param _tokenName Name of token.
      * @param _tokenSymbol Token symbol.
-     * @param _startingCollectionId The initial next collection ID.
-     * @dev _startingcollectionId should be set to a value much, much less than
      * max(uint248) to avoid overflow when adding to it.
      */
     ///@dev no constructor in upgradable contracts. Instead we have initializers
@@ -174,7 +170,6 @@ contract FantiumNFTV1 is
         public
         initializer
     {
-        ///@dev as there is no constructor, we need to initialise the OwnableUpgradeable explicitly
         __ERC721_init(_tokenName, _tokenSymbol);
         __Ownable_init();
         __UUPSUpgradeable_init();
