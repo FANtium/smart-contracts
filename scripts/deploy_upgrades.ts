@@ -9,7 +9,7 @@ async function main() {
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
   // We get the contract to deploy
-  const contents = readFileSync(join(__dirname, './address/contractAddresses.json'), 'utf-8');
+  const contents = readFileSync(join(__dirname, './contractAddresses.json'), 'utf-8');
   console.log(JSON.parse(contents));
   const contractAddresses = JSON.parse(contents)
 
@@ -21,7 +21,7 @@ async function main() {
   const data = {
     "FantiumNFTV1": contractAddresses.FantiumNFTV1,
     "minterProxyContract": contractAddresses.minterProxyContract,
-    "minterImplementation": await upgrades.erc1967.getImplementationAddress(contractAddresses.minterProxyContract)
+    "minterImplementation": await upgrades.erc1967.getImplementationAddress(contractAddresses.proxy)
   }
 
   writeFileSync(join(__dirname, './contractAddresses.json'), JSON.stringify(data), {

@@ -830,8 +830,8 @@ contract FantiumNFTV1 is
         )
     {
         // initialize arrays with maximum potential length
-        recipients = new address payable[](3);
-        bps = new uint256[](3);
+        recipients = new address payable[](2);
+        bps = new uint256[](2);
 
         uint256 collectionId = _tokenId / ONE_MILLION;
         Collection storage collection = collections[collectionId];
