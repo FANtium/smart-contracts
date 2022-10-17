@@ -19,10 +19,18 @@ describe("FANtium", () => {
 
         // Deploy the FantiumNFTV1 contract
         const FantiumNFTV1 = await ethers.getContractFactory("FantiumNFTV1")
-        nftContract = await upgrades.deployProxy(FantiumNFTV1, ["FANtium", "FAN", 1], { initializer: 'initialize' }) as FantiumNFTV1
+        nftContract = await upgrades.deployProxy(FantiumNFTV1, ["FANtium", "FAN"], { initializer: 'initialize' }) as FantiumNFTV1
 
         // Set Fantium address for primary sale
         await nftContract.updateFantiumPrimarySaleAddress(fantium.address)
+        await nftContract.updateFantiumSecondarySaleAddress(fantium.address)
+        await nftContract.updateFantiumSecondaryMarketRoyaltyBPS(250)
+        await nftContract.setNextCollectionId(1)
+
+        await nftContract.updateTiers("bronze", 10, 10000, 10)
+        await nftContract.updateTiers("silver", 100, 1000, 20)
+        await nftContract.updateTiers("gold", 1000, 100, 30)
+
 
         // Add a collection
         await nftContract.addCollection(
@@ -37,12 +45,6 @@ describe("FANtium", () => {
 
         // Add admin to KYC list
         await nftContract.addAddressToKYC(admin.address);
-
-        // Unpause collection
-        await nftContract.toggleCollectionIsPaused(1)
-
-        // Set FANtium primary sale percentage
-        // await nftContract.updateFantiumPrimaryMarketRoyaltyPercentage(50)
     })
 
     it("Checks if contracts are deployed with proper parameters", async () => {
@@ -66,8 +68,8 @@ describe("FANtium", () => {
     })
 
     it("Checks if collection is unpaused", async () => {
-        const collection = await nftContract.collections(1)
-        expect(collection.paused).to.equal(false)
+        await nftContract.toggleCollectionIsPaused(1)
+        expect((await nftContract.collections(1)).paused).to.equal(false)
     })
 
     it("Checks if admin can mint a token", async () => {

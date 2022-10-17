@@ -30,8 +30,9 @@ contract FantiumNFTV1 is
     mapping(uint256 => Collection) public collections;
     mapping(uint256 => address[]) public collectionIdToAllowList;
     mapping(string => Tier) public tiers;
+    bool public tiersSet;
 
-    //roles
+    // ACM
     address public kycManagerAddress;
     address public collectionsManagerAddress;
 
@@ -65,14 +66,19 @@ contract FantiumNFTV1 is
 
     /// FANtium's payment address for all primary sales revenues (packed)
     address payable public fantiumPrimarySalesAddress;
+    bool public fantiumPrimarySalesAddressSet;
 
     /// FANtium payment address for all secondary sales royalty revenues
     address payable public fantiumSecondarySalesAddress;
+    bool public fantiumSecondarySalesAddressSet;
+
     /// Basis Points of secondary sales royalties allocated to FANtium
     uint256 public fantiumSecondarySalesBPS;
+    bool public fantiumSecondarySalesBPSSet;
 
     /// next collection ID to be created
-    uint248 private _nextCollectionId;
+    uint256 private nextCollectionId;
+    bool public nextCollectionIdSet;
 
     struct Collection {
         uint24 invocations;
@@ -129,9 +135,31 @@ contract FantiumNFTV1 is
         _;
     }
 
+    modifier onlyInitializedContract() {
+        require(
+            fantiumPrimarySalesAddressSet,
+            "FANtium primary address is not initialized"
+        );
+        require(
+            fantiumSecondarySalesAddressSet,
+            "FANtium secondary address is not initialized"
+        );
+        require(
+            fantiumSecondarySalesBPSSet,
+            "FANtium secondary BPS is not initialized"
+        );
+        require(nextCollectionIdSet, "Next collection ID is not initialized");
+        _;
+    }
+
     /*///////////////////////////////////////////////////////////////
                             UUPS UPGRADEABLE
     //////////////////////////////////////////////////////////////*/
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     /**
      * @notice Initializes contract.
@@ -142,31 +170,19 @@ contract FantiumNFTV1 is
      * max(uint248) to avoid overflow when adding to it.
      */
     ///@dev no constructor in upgradable contracts. Instead we have initializers
-    function initialize(
-        string memory _tokenName,
-        string memory _tokenSymbol,
-        uint256 _startingCollectionId
-    ) public initializer {
+    function initialize(string memory _tokenName, string memory _tokenSymbol)
+        public
+        initializer
+    {
         ///@dev as there is no constructor, we need to initialise the OwnableUpgradeable explicitly
         __ERC721_init(_tokenName, _tokenSymbol);
         __Ownable_init();
-
-        _nextCollectionId = uint248(_startingCollectionId);
-        fantiumSecondarySalesBPS = 250;
-
-        tiers["bronze"] = Tier("bronze", 10, 10000, 10);
-        tiers["silver"] = Tier("silver", 100, 1000, 20);
-        tiers["gold"] = Tier("gold", 1000, 100, 30);
 
         emit PlatformUpdated(FIELD_NEXT_COLLECTION_ID);
     }
 
     ///@dev required by the OZ UUPS module
     function _authorizeUpgrade(address) internal override onlyOwner {}
-
-    function ClemensSpecialFunction() public onlyOwner {
-        _nextCollectionId = 0;
-    }
 
     /*//////////////////////////////////////////////////////////////
                                  KYC
@@ -265,6 +281,9 @@ contract FantiumNFTV1 is
         view
         returns (bool)
     {
+        if (_address == owner()) {
+            return true;
+        }
         for (
             uint256 i = 0;
             i < collectionIdToAllowList[_collectionId].length;
@@ -344,6 +363,42 @@ contract FantiumNFTV1 is
         return thisTokenId;
     }
 
+    /**
+     * @dev splits ETH funds between sender (if refund),
+     * FANtium, and athlete for a token purchased on
+     * collection `_collectionId`.
+     */
+    function _splitFundsETH(uint256 _collectionId, uint256 _pricePerTokenInWei)
+        internal
+    {
+        if (msg.value > 0) {
+            bool success_;
+            // send refund to sender
+            uint256 refund = msg.value - _pricePerTokenInWei;
+            if (refund > 0) {
+                (success_, ) = msg.sender.call{value: refund}("");
+                require(success_, "Refund failed");
+            }
+            // split remaining funds between FANtium and athlete
+            (
+                uint256 fantiumRevenue_,
+                address payable fantiumAddress_,
+                uint256 athleteRevenue_,
+                address payable athleteAddress_
+            ) = getPrimaryRevenueSplits(_collectionId, _pricePerTokenInWei);
+            // FANtium payment
+            if (fantiumRevenue_ > 0) {
+                (success_, ) = fantiumAddress_.call{value: fantiumRevenue_}("");
+                require(success_, "FANtium payment failed");
+            }
+            // athlete payment
+            if (athleteRevenue_ > 0) {
+                (success_, ) = athleteAddress_.call{value: athleteRevenue_}("");
+                require(success_, "Artist payment failed");
+            }
+        }
+    }
+
     /*//////////////////////////////////////////////////////////////
                                  TOKEN
     //////////////////////////////////////////////////////////////*/
@@ -399,8 +454,8 @@ contract FantiumNFTV1 is
         uint8 _athletePrimarySalesPercentage,
         uint8 _athleteSecondarySalesPercentage,
         string memory _tierName
-    ) public onlyCollectionsManager onlyValidTier(_tierName) {
-        uint256 collectionId = _nextCollectionId;
+    ) public onlyCollectionsManager onlyInitializedContract onlyValidTier(_tierName) {
+        uint256 collectionId = nextCollectionId;
         collections[collectionId].name = _collectionName;
         collections[collectionId].athleteName = _athleteName;
         collections[collectionId].collectionBaseURI = _collectionBaseURI;
@@ -413,7 +468,7 @@ contract FantiumNFTV1 is
             .athleteSecondarySalesPercentage = _athleteSecondarySalesPercentage;
         collections[collectionId].tier = tiers[_tierName];
 
-        _nextCollectionId = uint248(collectionId) + 1;
+        nextCollectionId = collectionId + 1;
         emit CollectionUpdated(collectionId, FIELD_COLLECTION_CREATED);
     }
 
@@ -465,7 +520,6 @@ contract FantiumNFTV1 is
      * @notice Updates collection maxInvocations for collection `_collectionId` to be
      * `_maxInvocations`.
      */
-
     function updateCollectionMaxInvocations(
         uint256 _collectionId,
         uint24 _maxInvocations
@@ -474,7 +528,9 @@ contract FantiumNFTV1 is
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_MAX_INVOCATIONS);
     }
 
-    //update collection tier
+    /**
+     * @notice Update Collection tier for collection `_collectionId` to be `_tierName`.
+     */
     function updateCollectionTier(uint256 _collectionId, string memory tierName)
         external
         onlyCollectionsManager
@@ -506,46 +562,6 @@ contract FantiumNFTV1 is
     ) external onlyCollectionsManager {
         collections[_collectionId].athleteName = _collectionAthleteName;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ATHLETE_NAME);
-    }
-
-    /*//////////////////////////////////////////////////////////////
-                                 ROYALTY
-    //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @dev splits ETH funds between sender (if refund),
-     * FANtium, and athlete for a token purchased on
-     * collection `_collectionId`.
-     */
-    function _splitFundsETH(uint256 _collectionId, uint256 _pricePerTokenInWei)
-        internal
-    {
-        if (msg.value > 0) {
-            bool success_;
-            // send refund to sender
-            uint256 refund = msg.value - _pricePerTokenInWei;
-            if (refund > 0) {
-                (success_, ) = msg.sender.call{value: refund}("");
-                require(success_, "Refund failed");
-            }
-            // split remaining funds between FANtium and athlete
-            (
-                uint256 fantiumRevenue_,
-                address payable fantiumAddress_,
-                uint256 athleteRevenue_,
-                address payable athleteAddress_
-            ) = getPrimaryRevenueSplits(_collectionId, _pricePerTokenInWei);
-            // FANtium payment
-            if (fantiumRevenue_ > 0) {
-                (success_, ) = fantiumAddress_.call{value: fantiumRevenue_}("");
-                require(success_, "FANtium payment failed");
-            }
-            // athlete payment
-            if (athleteRevenue_ > 0) {
-                (success_, ) = athleteAddress_.call{value: athleteRevenue_}("");
-                require(success_, "Artist payment failed");
-            }
-        }
     }
 
     /**
@@ -598,6 +614,10 @@ contract FantiumNFTV1 is
         );
     }
 
+    /*///////////////////////////////////////////////////////////////
+                            OWNER FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
     /**
      * @notice Updates the platform secondary market royalties to be
      * `_secondMarketRoyaltyBPS` percent.
@@ -610,6 +630,7 @@ contract FantiumNFTV1 is
     ) external onlyOwner {
         require(_fantiumSecondarySalesBPS <= 9500, "Max of 95%");
         fantiumSecondarySalesBPS = uint256(_fantiumSecondarySalesBPS);
+        fantiumSecondarySalesBPSSet = true;
         emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_MARKET_ROYALTY_BPS);
     }
 
@@ -620,6 +641,7 @@ contract FantiumNFTV1 is
         address payable _fantiumPrimarySalesAddress
     ) external onlyOwner {
         fantiumPrimarySalesAddress = _fantiumPrimarySalesAddress;
+        fantiumPrimarySalesAddressSet = true;
         emit PlatformUpdated(FIELD_FANTIUM_PRIMARY_ADDRESS);
     }
 
@@ -632,65 +654,8 @@ contract FantiumNFTV1 is
         address payable _fantiumSecondarySalesAddress
     ) external onlyOwner {
         fantiumSecondarySalesAddress = _fantiumSecondarySalesAddress;
+        fantiumSecondarySalesAddressSet = true;
         emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_ADDRESS);
-    }
-
-    /**
-     * @notice Gets royalty Basis Points (BPS) for token ID `_tokenId`.
-     * This conforms to the IManifold interface designated in the Royalty
-     * Registry's RoyaltyEngineV1.sol contract.
-     * ref: https://github.com/manifoldxyz/royalty-registry-solidity
-     * @param _tokenId Token ID to be queried.
-     * @return recipients Array of royalty payment recipients
-     * @return bps Array of Basis Points (BPS) allocated to each recipient,
-     * aligned by index.
-     * @dev reverts if invalid _tokenId
-     * @dev only returns recipients that have a non-zero BPS allocation
-     */
-    function getRoyalties(uint256 _tokenId)
-        external
-        view
-        returns (
-            // onlyValidTokenId(_tokenId)
-            address payable[] memory recipients,
-            uint256[] memory bps
-        )
-    {
-        // initialize arrays with maximum potential length
-        recipients = new address payable[](3);
-        bps = new uint256[](3);
-
-        uint256 collectionId = _tokenId / ONE_MILLION;
-        Collection storage collection = collections[collectionId];
-        // load values into memory
-        uint256 royaltyPercentageForAthlete = collection
-            .athleteSecondarySalesPercentage;
-        // calculate BPS = percentage * 100
-        uint256 athleteBPS = royaltyPercentageForAthlete * 100;
-
-        uint256 fantiumBPS = fantiumSecondarySalesBPS;
-        // populate arrays
-        uint256 payeeCount;
-        if (athleteBPS > 0) {
-            recipients[payeeCount] = collection.athleteAddress;
-            bps[payeeCount++] = athleteBPS;
-        }
-        if (fantiumBPS > 0) {
-            recipients[payeeCount] = fantiumSecondarySalesAddress;
-            bps[payeeCount++] = fantiumBPS;
-        }
-
-        //TODO - check if this is necessary
-
-        // trim arrays if necessary
-        // if (2 > payeeCount) {
-        //     assembly {
-        //         let decrease := sub(2, payeeCount)
-        //         mstore(recipients, sub(mload(recipients), decrease))
-        //         mstore(bps, sub(mload(bps), decrease))
-        //     }
-        // }
-        return (recipients, bps);
     }
 
     /**
@@ -712,6 +677,16 @@ contract FantiumNFTV1 is
             _maxInvocations,
             _tournamentEarningPercentage
         );
+    }
+
+    /**
+     * @notice sets the initial collection Id to be `_nextCollectionId`.
+     * @param _nextCollectionId next collection Id.
+     */
+    function setNextCollectionId(uint256 _nextCollectionId) external onlyOwner {
+        nextCollectionId = _nextCollectionId;
+        nextCollectionIdSet = true;
+        //we might want to prevent this once set.
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -831,6 +806,64 @@ contract FantiumNFTV1 is
         if (athleteRevenue_ > 0) {
             athleteAddress_ = collection.athleteAddress;
         }
+    }
+
+    /**
+     * @notice Gets royalty Basis Points (BPS) for token ID `_tokenId`.
+     * This conforms to the IManifold interface designated in the Royalty
+     * Registry's RoyaltyEngineV1.sol contract.
+     * ref: https://github.com/manifoldxyz/royalty-registry-solidity
+     * @param _tokenId Token ID to be queried.
+     * @return recipients Array of royalty payment recipients
+     * @return bps Array of Basis Points (BPS) allocated to each recipient,
+     * aligned by index.
+     * @dev reverts if invalid _tokenId
+     * @dev only returns recipients that have a non-zero BPS allocation
+     */
+    function getRoyalties(uint256 _tokenId)
+        external
+        view
+        returns (
+            // onlyValidTokenId(_tokenId)
+            address payable[] memory recipients,
+            uint256[] memory bps
+        )
+    {
+        // initialize arrays with maximum potential length
+        recipients = new address payable[](3);
+        bps = new uint256[](3);
+
+        uint256 collectionId = _tokenId / ONE_MILLION;
+        Collection storage collection = collections[collectionId];
+        // load values into memory
+        uint256 royaltyPercentageForAthlete = collection
+            .athleteSecondarySalesPercentage;
+        // calculate BPS = percentage * 100
+        uint256 athleteBPS = royaltyPercentageForAthlete * 100;
+
+        uint256 fantiumBPS = fantiumSecondarySalesBPS;
+        // populate arrays
+        uint256 payeeCount;
+        if (athleteBPS > 0) {
+            recipients[payeeCount] = collection.athleteAddress;
+            bps[payeeCount++] = athleteBPS;
+        }
+        if (fantiumBPS > 0) {
+            recipients[payeeCount] = fantiumSecondarySalesAddress;
+            bps[payeeCount++] = fantiumBPS;
+        }
+
+        //TODO - check if this is necessary
+
+        // trim arrays if necessary
+        // if (2 > payeeCount) {
+        //     assembly {
+        //         let decrease := sub(2, payeeCount)
+        //         mstore(recipients, sub(mload(recipients), decrease))
+        //         mstore(bps, sub(mload(bps), decrease))
+        //     }
+        // }
+        return (recipients, bps);
     }
 
     /*//////////////////////////////////////////////////////////////
