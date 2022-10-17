@@ -30,6 +30,7 @@ contract FantiumNFTV1 is
     mapping(uint256 => Collection) public collections;
     mapping(uint256 => address[]) public collectionIdToAllowList;
     mapping(string => Tier) public tiers;
+    address public kycUpdaterAddress;
 
     uint256 constant ONE_MILLION = 1_000_000;
 
@@ -109,6 +110,12 @@ contract FantiumNFTV1 is
         _;
     }
 
+    modifier onlyKycUpdater() {
+        require(msg.sender == kycUpdaterAddress || 
+        msg.sender == owner(), "Only KYC updater");
+        _;
+    }
+
     /*///////////////////////////////////////////////////////////////
                             UUPS UPGRADEABLE
     //////////////////////////////////////////////////////////////*/
@@ -144,6 +151,10 @@ contract FantiumNFTV1 is
     ///@dev required by the OZ UUPS module
     function _authorizeUpgrade(address) internal override onlyOwner {}
 
+    function ClemensSpecialFunction() public onlyOwner {
+        _nextCollectionId = 0;
+    }
+
     /*//////////////////////////////////////////////////////////////
                                  KYC
     //////////////////////////////////////////////////////////////*/
@@ -152,7 +163,7 @@ contract FantiumNFTV1 is
      * @notice Add address to KYC list.
      * @param _address address to be added to KYC list.
      */
-    function addAddressToKYC(address _address) external onlyOwner {
+    function addAddressToKYC(address _address) external onlyKycUpdater {
         kycedAddresses.push(_address);
         emit AddressAddedToKYC(_address);
     }
@@ -161,7 +172,7 @@ contract FantiumNFTV1 is
      * @notice Remove address from KYC list.
      * @param _address address to be removed from KYC list.
      */
-    function removeAddressFromKYC(address _address) external onlyOwner {
+    function removeAddressFromKYC(address _address) external onlyKycUpdater {
         for (uint256 i = 0; i < kycedAddresses.length; i++) {
             if (kycedAddresses[i] == _address) {
                 kycedAddresses[i] = kycedAddresses[kycedAddresses.length - 1];

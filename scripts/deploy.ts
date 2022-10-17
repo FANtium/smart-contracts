@@ -17,7 +17,7 @@ async function main() {
 
   const data = {
     "proxy": nftContract.address,
-    "implementation": upgrades.erc1967.getImplementationAddress(nftContract.address)
+    "implementation": await upgrades.erc1967.getImplementationAddress(nftContract.address)
   }
   writeFileSync(join(__dirname, './address/contractAddresses.json'), JSON.stringify(data), {
     flag: 'w',

@@ -13,10 +13,10 @@ async function main() {
   console.log(JSON.parse(contents));
   const contractAddresses = JSON.parse(contents)
 
-  const FantiumMinterFactory = await ethers.getContractFactory("FantiumMinterV2");
-  const minterContract = await upgrades.upgradeProxy(contractAddresses.minterProxyContract, FantiumMinterFactory);
+  const FantiumNFTV1Factory = await ethers.getContractFactory("FantiumNFTV1");
+  const nftContract = await upgrades.upgradeProxy(contractAddresses.proxy, FantiumNFTV1Factory, ["FANtium", "FAN", 1]);
 
-  console.log("FantiumMinterV1 deployed to:", minterContract.address);
+  console.log("FantiumNFTV1 deployed to:", nftContract.address);
 
   const data = {
     "FantiumNFTV1": contractAddresses.FantiumNFTV1,
