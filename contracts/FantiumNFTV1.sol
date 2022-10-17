@@ -177,6 +177,7 @@ contract FantiumNFTV1 is
         ///@dev as there is no constructor, we need to initialise the OwnableUpgradeable explicitly
         __ERC721_init(_tokenName, _tokenSymbol);
         __Ownable_init();
+        __UUPSUpgradeable_init();
 
         emit PlatformUpdated(FIELD_NEXT_COLLECTION_ID);
     }
