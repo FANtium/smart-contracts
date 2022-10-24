@@ -24,10 +24,10 @@ contract FantiumNFTV1 is
 {
     using Strings for uint256;
 
-    address[] public kycedAddresses;
+    mapping (address => bool) public kycedAddresses;
     mapping(uint256 => address) internal _owners;
     mapping(uint256 => Collection) public collections;
-    mapping(uint256 => address[]) public collectionIdToAllowList;
+    mapping(uint256 => mapping (address => bool)) public collectionIdToAllowList;
     mapping(string => Tier) public tiers;
     bool public tiersSet;
 
@@ -190,7 +190,7 @@ contract FantiumNFTV1 is
      * @param _address address to be added to KYC list.
      */
     function addAddressToKYC(address _address) external onlyKycManager {
-        kycedAddresses.push(_address);
+        kycedAddresses[_address] = true;
         emit AddressAddedToKYC(_address);
     }
 
@@ -199,14 +199,8 @@ contract FantiumNFTV1 is
      * @param _address address to be removed from KYC list.
      */
     function removeAddressFromKYC(address _address) external onlyKycManager {
-        for (uint256 i = 0; i < kycedAddresses.length; i++) {
-            if (kycedAddresses[i] == _address) {
-                kycedAddresses[i] = kycedAddresses[kycedAddresses.length - 1];
-                kycedAddresses.pop();
-                emit AddressRemovedFromKYC(_address);
-                return;
-            }
-        }
+        kycedAddresses[_address] = false;
+        emit AddressRemovedFromKYC(_address);
     }
 
     /**
@@ -215,12 +209,7 @@ contract FantiumNFTV1 is
      * @return isKYCed true if address is KYCed.
      */
     function isAddressKYCed(address _address) public view returns (bool) {
-        for (uint256 i = 0; i < kycedAddresses.length; i++) {
-            if (kycedAddresses[i] == _address) {
-                return true;
-            }
-        }
-        return false;
+        return kycedAddresses[_address] || _address == owner();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -233,10 +222,10 @@ contract FantiumNFTV1 is
      * @param _address address to be added to allow list.
      */
     function addAddressToAllowList(uint256 _collectionId, address _address)
-        external
+        public
         onlyOwner
     {
-        collectionIdToAllowList[_collectionId].push(_address);
+        collectionIdToAllowList[_collectionId][_address] = true;
         emit AddressAddedToAllowList(_collectionId, _address);
     }
 
@@ -246,25 +235,11 @@ contract FantiumNFTV1 is
      * @param _address address to be removed from allow list.
      */
     function removeAddressFromAllowList(uint256 _collectionId, address _address)
-        external
+        public
         onlyOwner
     {
-        for (
-            uint256 i = 0;
-            i < collectionIdToAllowList[_collectionId].length;
-            i++
-        ) {
-            if (collectionIdToAllowList[_collectionId][i] == _address) {
-                collectionIdToAllowList[_collectionId][
-                    i
-                ] = collectionIdToAllowList[_collectionId][
-                    collectionIdToAllowList[_collectionId].length - 1
-                ];
-                collectionIdToAllowList[_collectionId].pop();
-                emit AddressRemovedFromAllowList(_collectionId, _address);
-                return;
-            }
-        }
+        collectionIdToAllowList[_collectionId][_address] = false;
+        emit AddressRemovedFromAllowList(_collectionId, _address);
     }
 
     /**
@@ -278,19 +253,7 @@ contract FantiumNFTV1 is
         view
         returns (bool)
     {
-        if (_address == owner()) {
-            return true;
-        }
-        for (
-            uint256 i = 0;
-            i < collectionIdToAllowList[_collectionId].length;
-            i++
-        ) {
-            if (collectionIdToAllowList[_collectionId][i] == _address) {
-                return true;
-            }
-        }
-        return false;
+        return collectionIdToAllowList[_collectionId][_address] || _address == owner();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -314,7 +277,7 @@ contract FantiumNFTV1 is
         Collection storage collection = collections[_collectionId];
 
         if (!isAddressOnAllowList(_collectionId, msg.sender)) {
-            require(!collection.paused, "Purchases are paused.");
+            require(!collection.paused, "Purchases are paused and not on allow list");
         }
 
         // load invocations into memory
@@ -354,6 +317,8 @@ contract FantiumNFTV1 is
         // INTERACTIONS
         _mint(_to, thisTokenId);
         _splitFundsETH(_collectionId, _pricePerTokenInWei);
+        //set allowlist to false
+        collectionIdToAllowList[_collectionId][_to] = false;
 
         emit Mint(_to, thisTokenId);
 

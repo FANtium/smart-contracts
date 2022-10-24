@@ -10,12 +10,14 @@ describe("FANtium", () => {
     let admin: SignerWithAddress
     let fantium: SignerWithAddress
     let athlete: SignerWithAddress
+    let fan: SignerWithAddress
 
     beforeEach(async () => {
-        const [_admin, _fantium, _athlete] = await ethers.getSigners()
+        const [_admin, _fantium, _athlete, _fan] = await ethers.getSigners()
         admin = _admin
         fantium = _fantium
         athlete = _athlete
+        fan = _fan
 
         // Deploy the FantiumNFTV1 contract
         const FantiumNFTV1 = await ethers.getContractFactory("FantiumNFTV1")
@@ -31,7 +33,6 @@ describe("FANtium", () => {
         await nftContract.updateTiers("silver", 100, 1000, 20)
         await nftContract.updateTiers("gold", 1000, 100, 30)
 
-
         // Add a collection
         await nftContract.addCollection(
             "Test Collection",
@@ -42,12 +43,9 @@ describe("FANtium", () => {
             5,
             "silver",
         )
-
-        // Add admin to KYC list
-        await nftContract.addAddressToKYC(admin.address);
     })
 
-    it("Checks if contracts are deployed with proper parameters", async () => {
+    it("1. Checks if contracts are deployed with proper parameters", async () => {
         expect(await nftContract.name()).to.equal("FANtium")
         expect(await nftContract.symbol()).to.equal("FAN")
 
@@ -57,32 +55,55 @@ describe("FANtium", () => {
         expect(collection.tier.tournamentEarningPercentage).to.equal(20)
     })
 
-    it("Checks if admin address is in KYC list", async () => {
-        expect(await nftContract.isAddressKYCed(admin.address)).to.equal(true)
+    it("2. Checks if KYC funtionality works", async () => {
+        expect(await nftContract.isAddressKYCed(fan.address)).to.equal(false)
+        await nftContract.addAddressToKYC(fan.address)
+        expect(await nftContract.isAddressKYCed(fan.address)).to.equal(true)
+
+        expect(await nftContract.balanceOf(fan.address)).to.equal(0)
+        
+        await nftContract.toggleCollectionIsPaused(1)
+        await nftContract.connect(fan).mint(fan.address, 1, { value: 100000000000000 })
+        
+        expect(await nftContract.balanceOf(fan.address)).to.equal(1)
     })
 
-    it("Check if removing address from KYC list disables minting capability", async () => {
-        await nftContract.removeAddressFromKYC(admin.address);
-        expect(await nftContract.isAddressKYCed(admin.address)).to.equal(false)
-        await expect(nftContract.mint(admin.address, 1, { value: 100000000000000 })).to.be.revertedWith("Address not KYCed")
+    it("3. Checks if Allowlist functionality works", async () => {
+        expect(await nftContract.isAddressKYCed(fan.address)).to.equal(false)
+        await nftContract.addAddressToKYC(fan.address) 
+        expect(await nftContract.isAddressKYCed(fan.address)).to.equal(true)
+        
+        expect(await nftContract.isAddressOnAllowList(1, fan.address)).to.equal(false)
+        await nftContract.addAddressToAllowList(1, fan.address)
+        expect(await nftContract.isAddressOnAllowList(1, fan.address)).to.equal(true)
+        
+        expect(await nftContract.balanceOf(fan.address)).to.equal(0)
+        await nftContract.connect(fan).mint(fan.address, 1, { value: 100000000000000 })
+        expect(await nftContract.balanceOf(fan.address)).to.equal(1)
     })
 
-    it("Checks if collection is unpaused", async () => {
+    it("4. Checks if pausing works", async () => {
+        await nftContract.addAddressToKYC(fan.address)
+        
+        expect((await nftContract.collections(1)).paused).to.equal(true)
+        expect(nftContract.connect(fan).mint(fan.address, 1)).to.be.revertedWith("Purchases are paused and not on allow list")
+       
         await nftContract.toggleCollectionIsPaused(1)
         expect((await nftContract.collections(1)).paused).to.equal(false)
     })
 
-    it("Checks if admin can mint a token", async () => {
+    it("5. Checks if admin can mint a token without being KYCed or Allowlisted", async () => {
+        await nftContract.toggleCollectionIsPaused(1)
         await nftContract.mint(admin.address, 1, { value: 100 })
         expect(await nftContract.balanceOf(admin.address)).to.equal(1)
     })
 
-    it("Checks that admin cannot mint more than the max supply", async () => {
+    it("6. Checks that admin cannot mint more than the max supply", async () => {
         await nftContract.mint(admin.address, 1, { value: 100 })
         expect(await nftContract.balanceOf(admin.address)).to.be.revertedWith("Maximum number of invocations reached")
     })
 
-    it("Checks if fee is paid to Fantium", async () => {
+    it("7. Checks if fee is paid to Fantium", async () => {
         const balanceBefore = await fantium.getBalance()
         console.log("Balance before minting:", balanceBefore.toString())
         await nftContract.mint(admin.address, 1, { value: 100 })
@@ -91,7 +112,7 @@ describe("FANtium", () => {
         expect(balanceAfter.sub(balanceBefore)).to.equal(10)
     })
 
-    it("Checks if fee is paid to athlete", async () => {
+    it("8. Checks if fee is paid to athlete", async () => {
         const balanceBefore = await athlete.getBalance()
         console.log("Balance before minting:", balanceBefore.toString())
         await nftContract.mint(admin.address, 1, { value: 100000000000000 })
@@ -100,7 +121,7 @@ describe("FANtium", () => {
         expect(balanceAfter.sub(balanceBefore)).to.equal(90)
     })
 
-    it("Checks if token URI is correct", async () => {
+    it("9. Checks if token URI is correct", async () => {
         await nftContract.mint(admin.address, 1, { value: 100000000000000 })
         const tokenURI = await nftContract.tokenURI(1000001)
         console.log("Token URI:", tokenURI)
