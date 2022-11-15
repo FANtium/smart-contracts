@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity 0.8.13;
 
-// Import this file to use console.log
-import "hardhat/console.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-
-// Open Zeppelin libraries for controlling upgradability and access.
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+
+import {DefaultOperatorFilterer721, OperatorFilterer721} from "./filter/DefaultOperatorFilterer721.sol";
 
 /**
  * @title FANtium ERC721 contract V1.
@@ -20,25 +19,30 @@ contract FantiumNFTV1 is
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
-    OwnableUpgradeable
+    DefaultOperatorFilterer721,
+    AccessControlUpgradeable
 {
-    using Strings for uint256;
+    using StringsUpgradeable for uint256;
 
-    mapping (address => bool) public kycedAddresses;
+    mapping(address => bool) public kycedAddresses;
     mapping(uint256 => address) internal _owners;
     mapping(uint256 => Collection) public collections;
-    mapping(uint256 => mapping (address => bool)) public collectionIdToAllowList;
+    mapping(uint256 => mapping(address => bool)) public collectionIdToAllowList;
     mapping(string => Tier) public tiers;
     bool public tiersSet;
+    string public baseURI;
 
     // ACM
-    address public kycManagerAddress;
-    address public collectionsManagerAddress;
+    bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
+    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
+    bytes32 public constant COLLECTIONS_MANAGER_ROLE =
+        keccak256("COLLECTIONS_MANAGER_ROLE");
+    bytes32 public constant PLATFORM_MANAGER_ROLE =
+        keccak256("PLATFORM_MANAGER_ROLE");
 
     uint256 constant ONE_MILLION = 1_000_000;
 
-    // generic platform event fields
-    bytes32 constant FIELD_NEXT_COLLECTION_ID = "nextCollectionId";
+    // generic event fields
     bytes32 constant FIELD_FANTIUM_PRIMARY_MARKET_ROYALTY_PERCENTAGE =
         "fantium primary royalty %";
     bytes32 constant FIELD_FANTIUM_SECONDARY_MARKET_ROYALTY_BPS =
@@ -47,8 +51,6 @@ contract FantiumNFTV1 is
         "fantium primary sale address";
     bytes32 constant FIELD_FANTIUM_SECONDARY_ADDRESS =
         "fantium secondary sale address";
-
-    // generic collection event fields
     bytes32 constant FIELD_COLLECTION_CREATED = "created";
     bytes32 constant FIELD_COLLECTION_NAME = "name";
     bytes32 constant FIELD_COLLECTION_ATHLETE_NAME = "name";
@@ -62,22 +64,19 @@ contract FantiumNFTV1 is
         "collection secondary sale %";
     bytes32 constant FIELD_COLLECTION_BASE_URI = "collection base uri";
     bytes32 constant FIELD_COLLECTION_TIER = "collection tier";
+    bytes32 constant FILED_FANTIUM_BASE_URI = "fantium base uri";
 
     /// FANtium's payment address for all primary sales revenues (packed)
     address payable public fantiumPrimarySalesAddress;
-    bool public fantiumPrimarySalesAddressSet;
 
-    /// FANtium payment address for all secondary sales royalty revenues
+    /// FANtium's payment address for all secondary sales royalty revenues
     address payable public fantiumSecondarySalesAddress;
-    bool public fantiumSecondarySalesAddressSet;
 
     /// Basis Points of secondary sales royalties allocated to FANtium
     uint256 public fantiumSecondarySalesBPS;
-    bool public fantiumSecondarySalesBPSSet;
 
     /// next collection ID to be created
     uint256 private nextCollectionId;
-    bool public nextCollectionIdSet;
 
     struct Collection {
         uint24 invocations;
@@ -101,13 +100,66 @@ contract FantiumNFTV1 is
     }
 
     /*//////////////////////////////////////////////////////////////
+                                 EVENTS
+    //////////////////////////////////////////////////////////////*/
+
+    event Mint(address indexed _to, uint256 indexed _tokenId);
+    event CollectionUpdated(
+        uint256 indexed _collectionId,
+        bytes32 indexed _update
+    );
+    event PlatformUpdated(bytes32 indexed _field);
+    event MinterUpdated(address indexed _currentMinter);
+    event AddressAddedToKYC(address indexed _address);
+    event AddressRemovedFromKYC(address indexed _address);
+    event AddressAddedToAllowList(
+        uint256 collectionId,
+        address indexed _address
+    );
+    event AddressRemovedFromAllowList(
+        uint256 collectionId,
+        address indexed _address
+    );
+
+    /*//////////////////////////////////////////////////////////////
                                  MODIFERS
     //////////////////////////////////////////////////////////////*/
+
+    modifier onlyPlatformManager() {
+        require(
+            hasRole(PLATFORM_MANAGER_ROLE, msg.sender) ||
+                hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Only platform manager"
+        );
+        _;
+    }
+
+    modifier onlyKycManager() {
+        require(
+            hasRole(KYC_MANAGER_ROLE, msg.sender) ||
+                hasRole(PLATFORM_MANAGER_ROLE, msg.sender) ||
+                hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Only KYC updater"
+        );
+        _;
+    }
+
+    modifier onlyCollectionsManager() {
+        require(
+            hasRole(COLLECTIONS_MANAGER_ROLE, msg.sender) ||
+                hasRole(PLATFORM_MANAGER_ROLE, msg.sender) ||
+                hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Only collection updater"
+        );
+        _;
+    }
 
     modifier onlyAthlete(uint256 _collectionId) {
         require(
             msg.sender == collections[_collectionId].athleteAddress ||
-                msg.sender == owner(),
+                hasRole(PLATFORM_MANAGER_ROLE, msg.sender) ||
+                hasRole(COLLECTIONS_MANAGER_ROLE, msg.sender) ||
+                hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "Only athlete or admin"
         );
         _;
@@ -118,47 +170,21 @@ contract FantiumNFTV1 is
         _;
     }
 
-    modifier onlyKycManager() {
+    modifier onlyRoyaltySetContract() {
         require(
-            msg.sender == kycManagerAddress || msg.sender == owner(),
-            "Only KYC updater"
-        );
-        _;
-    }
-
-    modifier onlyCollectionsManager() {
-        require(
-            msg.sender == collectionsManagerAddress || msg.sender == owner(),
-            "Only collection updater"
-        );
-        _;
-    }
-
-    modifier onlyInitializedContract() {
-        require(
-            fantiumPrimarySalesAddressSet,
+            fantiumPrimarySalesAddress != address(0),
             "FANtium primary address is not initialized"
         );
         require(
-            fantiumSecondarySalesAddressSet,
+            fantiumSecondarySalesAddress != address(0),
             "FANtium secondary address is not initialized"
         );
-        require(
-            fantiumSecondarySalesBPSSet,
-            "FANtium secondary BPS is not initialized"
-        );
-        require(nextCollectionIdSet, "Next collection ID is not initialized");
         _;
     }
 
     /*///////////////////////////////////////////////////////////////
                             UUPS UPGRADEABLE
     //////////////////////////////////////////////////////////////*/
-
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
 
     /**
      * @notice Initializes contract.
@@ -174,12 +200,23 @@ contract FantiumNFTV1 is
         __ERC721_init(_tokenName, _tokenSymbol);
         __Ownable_init();
         __UUPSUpgradeable_init();
+        __AccessControl_init();
 
-        emit PlatformUpdated(FIELD_NEXT_COLLECTION_ID);
+        _grantRole(PLATFORM_MANAGER_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(UPGRADER_ROLE, msg.sender);
+
+        nextCollectionId = 1;
     }
 
-    ///@dev required by the OZ UUPS module
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+    /// @notice upgrade authorization logic
+    /// @dev required by the OZ UUPS module
+    /// @dev adds onlyRole(UPGRADER_ROLE) requirement
+    function _authorizeUpgrade(address)
+        internal
+        override
+        onlyRole(UPGRADER_ROLE)
+    {}
 
     /*//////////////////////////////////////////////////////////////
                                  KYC
@@ -223,7 +260,6 @@ contract FantiumNFTV1 is
      */
     function addAddressToAllowList(uint256 _collectionId, address _address)
         public
-        onlyOwner
     {
         collectionIdToAllowList[_collectionId][_address] = true;
         emit AddressAddedToAllowList(_collectionId, _address);
@@ -253,7 +289,9 @@ contract FantiumNFTV1 is
         view
         returns (bool)
     {
-        return collectionIdToAllowList[_collectionId][_address] || _address == owner();
+        return
+            collectionIdToAllowList[_collectionId][_address] ||
+            _address == owner();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -277,7 +315,10 @@ contract FantiumNFTV1 is
         Collection storage collection = collections[_collectionId];
 
         if (!isAddressOnAllowList(_collectionId, msg.sender)) {
-            require(!collection.paused, "Purchases are paused and not on allow list");
+            require(
+                !collection.paused,
+                "Purchases are paused and not on allow list"
+            );
         }
 
         // load invocations into memory
@@ -376,12 +417,16 @@ contract FantiumNFTV1 is
         override
         returns (string memory)
     {
-        string memory _collectionBaseURI = collections[_tokenId / ONE_MILLION]
+        string memory _baseURI = collections[_tokenId / ONE_MILLION]
             .collectionBaseURI;
+
+        if (bytes(_baseURI).length == 0) {
+            _baseURI = baseURI;
+        }
         return
             string(
                 bytes.concat(
-                    bytes(_collectionBaseURI),
+                    bytes(_baseURI),
                     bytes(_tokenId.toString())
                 )
             );
@@ -419,7 +464,7 @@ contract FantiumNFTV1 is
     )
         public
         onlyCollectionsManager
-        onlyInitializedContract
+        onlyRoyaltySetContract
         onlyValidTier(_tierName)
     {
         uint256 collectionId = nextCollectionId;
@@ -581,8 +626,17 @@ contract FantiumNFTV1 is
         );
     }
 
+    //update baseURI only platform manager
+    function updateBaseURI(string memory _baseURI)
+        external
+        onlyPlatformManager
+    {
+        baseURI = _baseURI;
+        emit PlatformUpdated(FILED_FANTIUM_BASE_URI);
+    }
+
     /*///////////////////////////////////////////////////////////////
-                            OWNER FUNCTIONS
+                        PLATFORM FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
     /**
@@ -594,10 +648,9 @@ contract FantiumNFTV1 is
      */
     function updateFantiumSecondaryMarketRoyaltyBPS(
         uint256 _fantiumSecondarySalesBPS
-    ) external onlyOwner {
+    ) external onlyPlatformManager {
         require(_fantiumSecondarySalesBPS <= 9500, "Max of 95%");
         fantiumSecondarySalesBPS = uint256(_fantiumSecondarySalesBPS);
-        fantiumSecondarySalesBPSSet = true;
         emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_MARKET_ROYALTY_BPS);
     }
 
@@ -606,9 +659,8 @@ contract FantiumNFTV1 is
      */
     function updateFantiumPrimarySaleAddress(
         address payable _fantiumPrimarySalesAddress
-    ) external onlyOwner {
+    ) external onlyPlatformManager {
         fantiumPrimarySalesAddress = _fantiumPrimarySalesAddress;
-        fantiumPrimarySalesAddressSet = true;
         emit PlatformUpdated(FIELD_FANTIUM_PRIMARY_ADDRESS);
     }
 
@@ -619,9 +671,8 @@ contract FantiumNFTV1 is
     // update fantium secondary sales address
     function updateFantiumSecondarySaleAddress(
         address payable _fantiumSecondarySalesAddress
-    ) external onlyOwner {
+    ) external onlyPlatformManager {
         fantiumSecondarySalesAddress = _fantiumSecondarySalesAddress;
-        fantiumSecondarySalesAddressSet = true;
         emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_ADDRESS);
     }
 
@@ -637,23 +688,13 @@ contract FantiumNFTV1 is
         uint256 _priceInWei,
         uint24 _maxInvocations,
         uint8 _tournamentEarningPercentage
-    ) external onlyOwner {
+    ) external onlyPlatformManager {
         tiers[_name] = Tier(
             _name,
             _priceInWei,
             _maxInvocations,
             _tournamentEarningPercentage
         );
-    }
-
-    /**
-     * @notice sets the initial collection Id to be `_nextCollectionId`.
-     * @param _nextCollectionId next collection Id.
-     */
-    function setNextCollectionId(uint256 _nextCollectionId) external onlyOwner {
-        nextCollectionId = _nextCollectionId;
-        nextCollectionIdSet = true;
-        //we might want to prevent this once set.
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -820,38 +861,35 @@ contract FantiumNFTV1 is
             bps[payeeCount++] = fantiumBPS;
         }
 
-        //TODO - check if this is necessary
-
-        // trim arrays if necessary
-        // if (2 > payeeCount) {
-        //     assembly {
-        //         let decrease := sub(2, payeeCount)
-        //         mstore(recipients, sub(mload(recipients), decrease))
-        //         mstore(bps, sub(mload(bps), decrease))
-        //     }
-        // }
         return (recipients, bps);
     }
 
     /*//////////////////////////////////////////////////////////////
-                                 EVENTS
+                            OS FILTER
     //////////////////////////////////////////////////////////////*/
 
-    event Mint(address indexed _to, uint256 indexed _tokenId);
-    event CollectionUpdated(
-        uint256 indexed _collectionId,
-        bytes32 indexed _update
-    );
-    event PlatformUpdated(bytes32 indexed _field);
-    event MinterUpdated(address indexed _currentMinter);
-    event AddressAddedToKYC(address indexed _address);
-    event AddressRemovedFromKYC(address indexed _address);
-    event AddressAddedToAllowList(
-        uint256 collectionId,
-        address indexed _address
-    );
-    event AddressRemovedFromAllowList(
-        uint256 collectionId,
-        address indexed _address
-    );
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public override onlyAllowedOperator(from) {
+        super.transferFrom(from, to, tokenId);
+    }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public override onlyAllowedOperator(from) {
+        super.safeTransferFrom(from, to, tokenId);
+    }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes memory data
+    ) public override onlyAllowedOperator(from) {
+        super.safeTransferFrom(from, to, tokenId, data);
+    }
 }

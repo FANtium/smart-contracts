@@ -2,6 +2,7 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomiclabs/hardhat-ethers";
 import "@openzeppelin/hardhat-upgrades";
+import "hardhat-abi-exporter";
 
 import { config as dotenvConfig } from 'dotenv'
 import { resolve } from 'path'
@@ -15,7 +16,7 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: '0.8.9',
+        version: '0.8.13',
         settings: {
           optimizer: {
             enabled: true,
@@ -39,6 +40,19 @@ const config: HardhatUserConfig = {
   mocha: {
     timeout: 100000000
   },
+  abiExporter: {
+    path: './data/abi',
+    runOnCompile: false,
+    clear: false,
+    flat: false,
+    only: [],
+    except: [],
+    spacing: 2,
+    pretty: false,
+    format: "json",
+    filter: () => true,
+    rename: undefined
+  }
 };
 
 export default config;

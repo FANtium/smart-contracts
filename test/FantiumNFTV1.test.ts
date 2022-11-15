@@ -27,7 +27,6 @@ describe("FANtium", () => {
         await nftContract.updateFantiumPrimarySaleAddress(fantium.address)
         await nftContract.updateFantiumSecondarySaleAddress(fantium.address)
         await nftContract.updateFantiumSecondaryMarketRoyaltyBPS(250)
-        await nftContract.setNextCollectionId(1)
 
         await nftContract.updateTiers("bronze", 10, 10000, 10)
         await nftContract.updateTiers("silver", 100, 1000, 20)
