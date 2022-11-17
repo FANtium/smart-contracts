@@ -4,6 +4,7 @@ import "@nomiclabs/hardhat-ethers";
 import "@openzeppelin/hardhat-upgrades";
 import "hardhat-abi-exporter";
 import "hardhat-contract-sizer";
+import "hardhat-interface-generator";
 
 import { config as dotenvConfig } from 'dotenv'
 import { resolve } from 'path'
