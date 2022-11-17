@@ -42,23 +42,8 @@
       "kind": "uups"
     },
     {
-      "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
-      "txHash": "0x31552d9d097ee50dd7a859cc09bc8c8df3a97e93e2260348e76a52ef8641618e",
-      "kind": "uups"
-    },
-    {
-      "address": "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
-      "txHash": "0xa3e7b73ebfd67aab6937ee6d4f4ba807f8dfc5222e737514f8f7586963bf8f3f",
-      "kind": "uups"
-    },
-    {
       "address": "0x09635F643e140090A9A8Dcd712eD6285858ceBef",
       "txHash": "0x1a39eb77e43da6cceb0a2a217e90e2e7cf524a961d73cb7bdcc71fe8ca455da7",
-      "kind": "uups"
-    },
-    {
-      "address": "0x1613beB3B2C4f22Ee086B2b38C1476A3cE7f78E8",
-      "txHash": "0x5fe9c0e02eb8bb6d3c1add41783f0707cce4bd887914848da85e745988bbaf1a",
       "kind": "uups"
     },
     {
@@ -242,11 +227,6 @@
       "kind": "uups"
     },
     {
-      "address": "0xD8a5a9b31c3C0232E196d518E89Fd8bF83AcAd43",
-      "txHash": "0x0819bde91733e9a39e6b6248769cf78c3db56c94f50ea4c16b53a4df8fc31546",
-      "kind": "uups"
-    },
-    {
       "address": "0xBEc49fA140aCaA83533fB00A2BB19bDdd0290f25",
       "txHash": "0x248c8af55780203916cb13514fb7ef2fef762beab3df3da336c1d95b833be0f2",
       "kind": "uups"
@@ -272,11 +252,6 @@
       "kind": "uups"
     },
     {
-      "address": "0x162A433068F51e18b7d13932F27e66a3f99E6890",
-      "txHash": "0x12713a49c85dfd3eee7dfa9391af4c211b83ac438a11e40ded6586e1e8eb2362",
-      "kind": "uups"
-    },
-    {
       "address": "0xDC11f7E700A4c898AE5CAddB1082cFfa76512aDD",
       "txHash": "0x6e1562d71fc8a4da64653f30ac3874daa9d53e6c66802ab5304f7bf1c0c581c5",
       "kind": "uups"
@@ -284,11 +259,6 @@
     {
       "address": "0xD84379CEae14AA33C123Af12424A37803F885889",
       "txHash": "0xdba1bf4d63378b6fd6cfa49810eb22f1c512206b668a494704e3fad0e16167f2",
-      "kind": "uups"
-    },
-    {
-      "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-      "txHash": "0x4ae0077c5a885b631b29dd4fc7688fd75f8977857e122d179b0240f7782f0adb",
       "kind": "uups"
     },
     {
@@ -312,11 +282,6 @@
       "kind": "uups"
     },
     {
-      "address": "0x82e01223d51Eb87e16A03E24687EDF0F294da6f1",
-      "txHash": "0xf70e8be4e91da122fa8ee820dab23e583a610e74daace86d84ea05af3bae38ee",
-      "kind": "uups"
-    },
-    {
       "address": "0x922D6956C99E12DFeB3224DEA977D0939758A1Fe",
       "txHash": "0x14f535b27f1b987802f7d0d869f6905587c63c1dc7b94fdac13d11d8bd31e831",
       "kind": "uups"
@@ -329,6 +294,51 @@
     {
       "address": "0x2B0d36FACD61B71CC05ab8F3D2355ec3631C0dd5",
       "txHash": "0x0f11e413f6c89a3778d0bd0e34d6085a4ce766250070cd45a30bd2fe599bb2af",
+      "kind": "uups"
+    },
+    {
+      "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      "txHash": "0x312976deb58bb7e957d8ffd03b69ac0c879cf22d0bedafa71b80fdf9ca00b85a",
+      "kind": "uups"
+    },
+    {
+      "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+      "txHash": "0xac79652de18d87b5a969f9a7c8a5fc4bfefaca87c67574eeb9e967ce2013b2f1",
+      "kind": "uups"
+    },
+    {
+      "address": "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
+      "txHash": "0xdc2da6e7d18836529171fb1482af5c16051296da20d26d4a71e14a7aede03281",
+      "kind": "uups"
+    },
+    {
+      "address": "0x4A679253410272dd5232B3Ff7cF5dbB88f295319",
+      "txHash": "0x2109d1c16dd237fb465ecf27d132a9a2e34dae6f41caa57f8352a1128eb0ea45",
+      "kind": "uups"
+    },
+    {
+      "address": "0x1613beB3B2C4f22Ee086B2b38C1476A3cE7f78E8",
+      "txHash": "0xab8f91c5ac4d4c307b329e43af6a7612cbb0e6f378670428d45557408416332b",
+      "kind": "uups"
+    },
+    {
+      "address": "0x9d4454B023096f34B160D6B654540c56A1F81688",
+      "txHash": "0xa1abc90ecb66cf6c5f552c33858ae8f9ce2077cfa6d51625144e9ec0c6b5484d",
+      "kind": "uups"
+    },
+    {
+      "address": "0x82e01223d51Eb87e16A03E24687EDF0F294da6f1",
+      "txHash": "0x7bd4eda407d24982d4b70568463a5149de7ecf7bd2f9a0b6d8043a5f368f173d",
+      "kind": "uups"
+    },
+    {
+      "address": "0x162A433068F51e18b7d13932F27e66a3f99E6890",
+      "txHash": "0xf6c5db9dbf4c04bfbebd8720ddb4fbcd7317de694d31e58b0f97615124c8b4fc",
+      "kind": "uups"
+    },
+    {
+      "address": "0xD8a5a9b31c3C0232E196d518E89Fd8bF83AcAd43",
+      "txHash": "0xc86e0fca78828776b6561e06629457586310169443bc9f5f5ec8cc1b99984d2c",
       "kind": "uups"
     }
   ],
@@ -489,11 +499,11 @@
         }
       }
     },
-    "06384168270d2feddf8d899d282219dfe0a04261df65379e8fd8f806373bff15": {
+    "4a952a2ed5f8ae4af79a87040342acce045e8279b3b68b16eb6a1d82d3199150": {
       "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "txHash": "0x826c562704d08646cd5862ec89f7814d11d109d5dddca70541e94d5793518ae2",
+      "txHash": "0x5e537e12dc5c18a7994136a18541ba1f66c9d5c32fe0b010c6a2459a0ada337e",
       "layout": {
-        "solcVersion": "0.8.9",
+        "solcVersion": "0.8.13",
         "storage": [
           {
             "label": "_initialized",
@@ -582,7 +592,7 @@
             "slot": "107",
             "type": "t_array(t_uint256)44_storage",
             "contract": "ERC721Upgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:532"
+            "src": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol:514"
           },
           {
             "label": "__gap",
@@ -601,20 +611,20 @@
             "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:107"
           },
           {
-            "label": "_owner",
+            "label": "_roles",
             "offset": 0,
             "slot": "251",
-            "type": "t_address",
-            "contract": "OwnableUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)34_storage)",
+            "contract": "AccessControlUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61"
           },
           {
             "label": "__gap",
             "offset": 0,
             "slot": "252",
             "type": "t_array(t_uint256)49_storage",
-            "contract": "OwnableUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+            "contract": "AccessControlUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:259"
           },
           {
             "label": "kycedAddresses",
@@ -636,7 +646,7 @@
             "label": "collections",
             "offset": 0,
             "slot": "303",
-            "type": "t_mapping(t_uint256,t_struct(Collection)6231_storage)",
+            "type": "t_mapping(t_uint256,t_struct(Collection)5838_storage)",
             "contract": "FantiumNFTV1",
             "src": "contracts/FantiumNFTV1.sol:29"
           },
@@ -652,7 +662,7 @@
             "label": "tiers",
             "offset": 0,
             "slot": "305",
-            "type": "t_mapping(t_string_memory_ptr,t_struct(Tier)6240_storage)",
+            "type": "t_mapping(t_string_memory_ptr,t_struct(Tier)5847_storage)",
             "contract": "FantiumNFTV1",
             "src": "contracts/FantiumNFTV1.sol:31"
           },
@@ -665,20 +675,12 @@
             "src": "contracts/FantiumNFTV1.sol:32"
           },
           {
-            "label": "kycManagerAddress",
-            "offset": 1,
-            "slot": "306",
-            "type": "t_address",
-            "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:35"
-          },
-          {
-            "label": "collectionsManagerAddress",
+            "label": "baseURI",
             "offset": 0,
             "slot": "307",
-            "type": "t_address",
+            "type": "t_string_storage",
             "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:36"
+            "src": "contracts/FantiumNFTV1.sol:33"
           },
           {
             "label": "fantiumPrimarySalesAddress",
@@ -686,15 +688,7 @@
             "slot": "308",
             "type": "t_address_payable",
             "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:67"
-          },
-          {
-            "label": "fantiumPrimarySalesAddressSet",
-            "offset": 20,
-            "slot": "308",
-            "type": "t_bool",
-            "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:68"
+            "src": "contracts/FantiumNFTV1.sol:70"
           },
           {
             "label": "fantiumSecondarySalesAddress",
@@ -702,15 +696,7 @@
             "slot": "309",
             "type": "t_address_payable",
             "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:71"
-          },
-          {
-            "label": "fantiumSecondarySalesAddressSet",
-            "offset": 20,
-            "slot": "309",
-            "type": "t_bool",
-            "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:72"
+            "src": "contracts/FantiumNFTV1.sol:73"
           },
           {
             "label": "fantiumSecondarySalesBPS",
@@ -718,31 +704,15 @@
             "slot": "310",
             "type": "t_uint256",
             "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:75"
-          },
-          {
-            "label": "fantiumSecondarySalesBPSSet",
-            "offset": 0,
-            "slot": "311",
-            "type": "t_bool",
-            "contract": "FantiumNFTV1",
             "src": "contracts/FantiumNFTV1.sol:76"
           },
           {
             "label": "nextCollectionId",
             "offset": 0,
-            "slot": "312",
+            "slot": "311",
             "type": "t_uint256",
             "contract": "FantiumNFTV1",
             "src": "contracts/FantiumNFTV1.sol:79"
-          },
-          {
-            "label": "nextCollectionIdSet",
-            "offset": 0,
-            "slot": "313",
-            "type": "t_bool",
-            "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:80"
           }
         ],
         "types": {
@@ -770,6 +740,10 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
           "t_mapping(t_address,t_bool)": {
             "label": "mapping(address => bool)",
             "numberOfBytes": "32"
@@ -782,7 +756,11 @@
             "label": "mapping(address => uint256)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_string_memory_ptr,t_struct(Tier)6240_storage)": {
+          "t_mapping(t_bytes32,t_struct(RoleData)34_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_string_memory_ptr,t_struct(Tier)5847_storage)": {
             "label": "mapping(string => struct FantiumNFTV1.Tier)",
             "numberOfBytes": "32"
           },
@@ -794,7 +772,7 @@
             "label": "mapping(uint256 => mapping(address => bool))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(Collection)6231_storage)": {
+          "t_mapping(t_uint256,t_struct(Collection)5838_storage)": {
             "label": "mapping(uint256 => struct FantiumNFTV1.Collection)",
             "numberOfBytes": "32"
           },
@@ -806,7 +784,7 @@
             "label": "string",
             "numberOfBytes": "32"
           },
-          "t_struct(Collection)6231_storage": {
+          "t_struct(Collection)5838_storage": {
             "label": "struct FantiumNFTV1.Collection",
             "members": [
               {
@@ -817,7 +795,7 @@
               },
               {
                 "label": "tier",
-                "type": "t_struct(Tier)6240_storage",
+                "type": "t_struct(Tier)5847_storage",
                 "offset": 0,
                 "slot": "1"
               },
@@ -866,7 +844,25 @@
             ],
             "numberOfBytes": "288"
           },
-          "t_struct(Tier)6240_storage": {
+          "t_struct(RoleData)34_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "members",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(Tier)5847_storage": {
             "label": "struct FantiumNFTV1.Tier",
             "members": [
               {

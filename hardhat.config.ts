@@ -3,6 +3,7 @@ import "@nomicfoundation/hardhat-toolbox";
 import "@nomiclabs/hardhat-ethers";
 import "@openzeppelin/hardhat-upgrades";
 import "hardhat-abi-exporter";
+import "hardhat-contract-sizer";
 
 import { config as dotenvConfig } from 'dotenv'
 import { resolve } from 'path'
@@ -52,6 +53,13 @@ const config: HardhatUserConfig = {
     format: "json",
     filter: () => true,
     rename: undefined
+  },
+  contractSizer: {
+    alphaSort: true,
+    disambiguatePaths: false,
+    runOnCompile: true,
+    strict: true,
+    only: [],
   }
 };
 

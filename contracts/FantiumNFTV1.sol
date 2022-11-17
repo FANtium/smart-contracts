@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
-import {DefaultOperatorFilterer721, OperatorFilterer721} from "./filter/DefaultOperatorFilterer721.sol";
+import {DefaultOperatorFiltererUpgradeable} from "./filterUpgradeable/DefaultOperatorFiltererUpgradeable.sol";
 
 /**
  * @title FANtium ERC721 contract V1.
@@ -19,8 +19,8 @@ contract FantiumNFTV1 is
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
-    DefaultOperatorFilterer721,
-    AccessControlUpgradeable
+    AccessControlUpgradeable,
+    DefaultOperatorFiltererUpgradeable
 {
     using StringsUpgradeable for uint256;
 
@@ -122,6 +122,20 @@ contract FantiumNFTV1 is
     );
 
     /*//////////////////////////////////////////////////////////////
+                            INTERFACE
+    //////////////////////////////////////////////////////////////*/
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(AccessControlUpgradeable, ERC721Upgradeable)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
+
+    /*//////////////////////////////////////////////////////////////
                                  MODIFERS
     //////////////////////////////////////////////////////////////*/
 
@@ -198,7 +212,6 @@ contract FantiumNFTV1 is
         initializer
     {
         __ERC721_init(_tokenName, _tokenSymbol);
-        __Ownable_init();
         __UUPSUpgradeable_init();
         __AccessControl_init();
 
@@ -246,11 +259,14 @@ contract FantiumNFTV1 is
      * @return isKYCed true if address is KYCed.
      */
     function isAddressKYCed(address _address) public view returns (bool) {
-        return kycedAddresses[_address] || _address == owner();
+        return
+            kycedAddresses[_address] ||
+            hasRole(PLATFORM_MANAGER_ROLE, msg.sender) ||
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     /*//////////////////////////////////////////////////////////////
-                                 Allow List
+                            ALLOW LIST
     //////////////////////////////////////////////////////////////*/
 
     /**
@@ -260,6 +276,7 @@ contract FantiumNFTV1 is
      */
     function addAddressToAllowList(uint256 _collectionId, address _address)
         public
+        onlyPlatformManager
     {
         collectionIdToAllowList[_collectionId][_address] = true;
         emit AddressAddedToAllowList(_collectionId, _address);
@@ -272,7 +289,7 @@ contract FantiumNFTV1 is
      */
     function removeAddressFromAllowList(uint256 _collectionId, address _address)
         public
-        onlyOwner
+        onlyPlatformManager
     {
         collectionIdToAllowList[_collectionId][_address] = false;
         emit AddressRemovedFromAllowList(_collectionId, _address);
@@ -291,7 +308,9 @@ contract FantiumNFTV1 is
     {
         return
             collectionIdToAllowList[_collectionId][_address] ||
-            _address == owner();
+            hasRole(PLATFORM_MANAGER_ROLE, msg.sender) ||
+            hasRole(COLLECTIONS_MANAGER_ROLE, msg.sender) ||
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -424,12 +443,7 @@ contract FantiumNFTV1 is
             _baseURI = baseURI;
         }
         return
-            string(
-                bytes.concat(
-                    bytes(_baseURI),
-                    bytes(_tokenId.toString())
-                )
-            );
+            string(bytes.concat(bytes(_baseURI), bytes(_tokenId.toString())));
     }
 
     /**
