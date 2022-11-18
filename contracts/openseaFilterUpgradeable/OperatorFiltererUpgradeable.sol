@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import {IOperatorFilterRegistry} from "../filter/IOperatorFilterRegistry.sol";
+import {IOperatorFilterRegistry} from "../openseaFilter/IOperatorFilterRegistry.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 abstract contract OperatorFiltererUpgradeable is Initializable {

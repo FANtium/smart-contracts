@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-import "./FantiumNFTV1.sol";
+import "../FantiumNFTV1.sol";
 
 /**
  * @title Claiming contract that allows payout tokens to be claimed
@@ -15,7 +15,7 @@ import "./FantiumNFTV1.sol";
  * @author MTX stuido AG.
  */
 
-contract FantiumClaimingV1 is UUPSUpgradeable, OwnableUpgradeable {
+contract FantiumClaimingV1 is UUPSUpgradeable, Ownable {
     IERC20 public payoutToken;
 
     FantiumNFTV1 public fantiumNFTContract;
@@ -61,10 +61,10 @@ contract FantiumClaimingV1 is UUPSUpgradeable, OwnableUpgradeable {
         );
 
         //check if msg.sender is KYCed
-        require(
-            fantiumNFTContract.isAddressKYCed(msg.sender),
-            "FantiumClaimingV1: You are not KYCed"
-        );
+        // require(
+        //     fantiumNFTContract.isAddressKYCed(msg.sender),
+        //     "FantiumClaimingV1: You are not KYCed"
+        // );
 
         //check if payouts were claimed for this token
         require(
