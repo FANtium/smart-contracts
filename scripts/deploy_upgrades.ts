@@ -16,10 +16,14 @@ async function main() {
   const FantiumNFTV1Factory = await ethers.getContractFactory("FantiumNFTV1");
   const nftContract = await upgrades.upgradeProxy(contractAddresses.proxy, FantiumNFTV1Factory);
 
-  console.log("FantiumNFTV1 deployed to:", nftContract.address);
+  const FantiumMinterV1Factory = await ethers.getContractFactory("FantiumMinterV1");
+  const minterContract = await upgrades.upgradeProxy(contractAddresses.proxy, FantiumMinterV1Factory);
 
+  console.log("FantiumNFTV1 deployed to:", nftContract.address);
+  console.log("FantiumMinterV1 deployed to:", minterContract.address);
+  
   const data = {
-    "FantiumNFTV1": contractAddresses.FantiumNFTV1,
+    "FantiumNFTV": contractAddresses.FantiumNFTV1,
     "minterProxyContract": contractAddresses.minterProxyContract,
     "minterImplementation": await upgrades.erc1967.getImplementationAddress(contractAddresses.proxy)
   }
