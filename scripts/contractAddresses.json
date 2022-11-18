@@ -1,0 +1,6 @@
+{
+    "nft-proxy": "0x6eB4dBE9A83Ca69b8191b7c5CBC08a1ed6C13F4f",
+    "nft-implementation": "0xb7Dee90E0a9FD3788EB327D9Af8967282C187988",
+    "minter-proxy": "0x864Dbc522e74f36A116e25B3F9141F53dFD3D852",
+    "minter-implementation": "0x8366C48e01CE0589fEC7762ac9dC220d2E8B1f43"
+}
