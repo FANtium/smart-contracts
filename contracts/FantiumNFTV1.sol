@@ -127,16 +127,6 @@ contract FantiumNFTV1 is
         _;
     }
 
-    modifier onlyKycManager() {
-        require(
-            hasRole(KYC_MANAGER_ROLE, msg.sender) ||
-                hasRole(PLATFORM_MANAGER_ROLE, msg.sender) ||
-                hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "Only KYC updater"
-        );
-        _;
-    }
-
     modifier onlyAthlete(uint256 _collectionId) {
         require(
             msg.sender == collections[_collectionId].athleteAddress ||
@@ -215,7 +205,7 @@ contract FantiumNFTV1 is
      */
     function mintTo(address _to, uint256 _tokenId) public payable {
         // CHECKS
-        require(fantiumMinterAddress != address(0), "Minter not set");
+        require(fantiumMinterAddress != address(0), "Fantium Minter not set");
         require(msg.sender == fantiumMinterAddress, "Only assigned minter");
 
         // INTERACTIONS

@@ -93,6 +93,8 @@ contract FantiumMinterV1 is
         __AccessControl_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(KYC_MANAGER_ROLE, msg.sender);
+        _grantRole(PLATFORM_MANAGER_ROLE, msg.sender);
         _grantRole(UPGRADER_ROLE, msg.sender);
     }
 
@@ -118,7 +120,7 @@ contract FantiumMinterV1 is
      * @notice Add address to KYC list.
      * @param _address address to be added to KYC list.
      */
-    function addAddressToKYC(address _address) external {
+    function addAddressToKYC(address _address) external onlyKycManager {
         kycedAddresses[_address] = true;
         emit AddressAddedToKYC(_address);
     }
@@ -138,10 +140,7 @@ contract FantiumMinterV1 is
      * @return isKYCed true if address is KYCed.
      */
     function isAddressKYCed(address _address) public view returns (bool) {
-        return
-            kycedAddresses[_address] ||
-            hasRole(PLATFORM_MANAGER_ROLE, msg.sender) ||
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        return kycedAddresses[_address];
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -185,10 +184,7 @@ contract FantiumMinterV1 is
         view
         returns (bool)
     {
-        return
-            collectionIdToAllowList[_collectionId][_address] ||
-            hasRole(PLATFORM_MANAGER_ROLE, msg.sender) ||
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        return collectionIdToAllowList[_collectionId][_address];
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -206,15 +202,29 @@ contract FantiumMinterV1 is
         payable
         returns (uint256 tokenId_)
     {
-        // CHECKS
+        /// CHECKS
+        // nft contract address must be set
         require(fantiumNFTContractAddress != address(0), "Fantium NFT not set");
-        require(isAddressKYCed(msg.sender), "Address not KYCed");
 
-        IFantiumNFT.Collection memory collection = fantiumNFTContract.getCollection(_collectionId);
+        // sender must be KYCed or Admin or Manager
+        if (
+            !hasRole(PLATFORM_MANAGER_ROLE, msg.sender) ||
+            !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)
+        ) {
+            require(isAddressKYCed(msg.sender), "Address not KYCed");
+        }
 
-        if (!isAddressOnAllowList(_collectionId, msg.sender)) {
+        IFantiumNFT.Collection memory collection = fantiumNFTContract
+            .getCollection(_collectionId);
+        
+        // sender must be on allow list or Admin or Manager if collection is paused
+        if (
+            !hasRole(PLATFORM_MANAGER_ROLE, msg.sender) &&
+            !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)
+        ) {
             require(
-                !collection.paused,
+                !collection.paused ||
+                    isAddressOnAllowList(_collectionId, msg.sender),
                 "Purchases are paused and not on allow list"
             );
         }
@@ -241,7 +251,7 @@ contract FantiumMinterV1 is
             "Must send minimum value to mint!"
         );
 
-        // EFFECTS
+        /// EFFECTS
         // increment collection's invocations
         collection.invocations = invocationsAfter;
         uint256 thisTokenId;
@@ -252,12 +262,12 @@ contract FantiumMinterV1 is
             // Therefore, no risk of overflow
             thisTokenId = (_collectionId * ONE_MILLION) + invocationsBefore;
         }
+        //set allowlist to false
         collectionIdToAllowList[_collectionId][_to] = false;
 
         // INTERACTIONS
         fantiumNFTContract.mintTo(msg.sender, thisTokenId);
         _splitFundsETH(_collectionId, _pricePerTokenInWei);
-        //set allowlist to false
 
         return thisTokenId;
     }
@@ -309,7 +319,7 @@ contract FantiumMinterV1 is
      * @notice Set FANtium NFT contract address.
      * @param _fantiumNFTContractAddress FANtium NFT contract address.
      */
-    function setFantiumNFTContractAddress(address _fantiumNFTContractAddress)
+    function updateFantiumNFTAddress(address _fantiumNFTContractAddress)
         public
         onlyPlatformManager
     {
