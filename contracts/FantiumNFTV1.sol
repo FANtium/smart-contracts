@@ -104,7 +104,9 @@ contract FantiumNFTV1 is
                             INTERFACE
     //////////////////////////////////////////////////////////////*/
 
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(
+        bytes4 interfaceId
+    )
         public
         view
         virtual
@@ -154,6 +156,19 @@ contract FantiumNFTV1 is
         _;
     }
 
+    modifier onlyValidCollectionId(uint256 _collectionId) {
+        require(
+            collections[_collectionId].exists == true,
+            "Collection does not exist"
+        );
+        _;
+    }
+
+    modifier onlyValidTokenId(uint256 _tokenId) {
+        require(_exists(_tokenId), "Token does not exist");
+        _;
+    }
+
     /*///////////////////////////////////////////////////////////////
                             UUPS UPGRADEABLE
     //////////////////////////////////////////////////////////////*/
@@ -165,10 +180,10 @@ contract FantiumNFTV1 is
      * max(uint248) to avoid overflow when adding to it.
      */
     ///@dev no constructor in upgradable contracts. Instead we have initializers
-    function initialize(string memory _tokenName, string memory _tokenSymbol)
-        public
-        initializer
-    {
+    function initialize(
+        string memory _tokenName,
+        string memory _tokenSymbol
+    ) public initializer {
         __ERC721_init(_tokenName, _tokenSymbol);
         __UUPSUpgradeable_init();
         __AccessControl_init();
@@ -183,11 +198,9 @@ contract FantiumNFTV1 is
     /// @notice upgrade authorization logic
     /// @dev required by the OZ UUPS module
     /// @dev adds onlyRole(UPGRADER_ROLE) requirement
-    function _authorizeUpgrade(address)
-        internal
-        override
-        onlyRole(UPGRADER_ROLE)
-    {}
+    function _authorizeUpgrade(
+        address
+    ) internal override onlyRole(UPGRADER_ROLE) {}
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -223,12 +236,9 @@ contract FantiumNFTV1 is
      * @dev token URIs are the concatenation of the collection base URI and the
      * token ID.
      */
-    function tokenURI(uint256 _tokenId)
-        public
-        view
-        override
-        returns (string memory)
-    {
+    function tokenURI(
+        uint256 _tokenId
+    ) public view override onlyValidTokenId(_tokenId) returns (string memory) {
         string memory _baseURI = collections[_tokenId / ONE_MILLION]
             .collectionBaseURI;
 
@@ -275,6 +285,7 @@ contract FantiumNFTV1 is
         onlyValidTier(_tierName)
     {
         uint256 collectionId = nextCollectionId;
+        collections[collectionId].exists = true;
         collections[collectionId].name = _collectionName;
         collections[collectionId].athleteName = _athleteName;
         collections[collectionId].collectionBaseURI = _collectionBaseURI;
@@ -297,7 +308,7 @@ contract FantiumNFTV1 is
     function updateCollectionName(
         uint256 _collectionId,
         string memory _collectionName
-    ) external onlyPlatformManager {
+    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
         collections[_collectionId].name = _collectionName;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_NAME);
     }
@@ -308,7 +319,7 @@ contract FantiumNFTV1 is
     function updateCollectionAthleteAddress(
         uint256 _collectionId,
         address payable _athleteAddress
-    ) external onlyPlatformManager {
+    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
         collections[_collectionId].athleteAddress = _athleteAddress;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ATHLETE_ADDRESS);
     }
@@ -316,10 +327,9 @@ contract FantiumNFTV1 is
     /**
      * @notice Toggles paused state of collection `_collectionId`.
      */
-    function toggleCollectionIsPaused(uint256 _collectionId)
-        external
-        onlyAthlete(_collectionId)
-    {
+    function toggleCollectionIsPaused(
+        uint256 _collectionId
+    ) external onlyValidCollectionId(_collectionId) onlyAthlete(_collectionId) {
         collections[_collectionId].paused = !collections[_collectionId].paused;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_PAUSED);
     }
@@ -327,10 +337,10 @@ contract FantiumNFTV1 is
     /**
      * @notice Updates price of collection `_collectionId` to be `_priceInWei`.
      */
-    function updateCollectionPrice(uint256 _collectionId, uint256 _priceInWei)
-        external
-        onlyPlatformManager
-    {
+    function updateCollectionPrice(
+        uint256 _collectionId,
+        uint256 _priceInWei
+    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
         collections[_collectionId].tier.priceInWei = _priceInWei;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_PRICE);
     }
@@ -342,7 +352,7 @@ contract FantiumNFTV1 is
     function updateCollectionMaxInvocations(
         uint256 _collectionId,
         uint24 _maxInvocations
-    ) external onlyPlatformManager {
+    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
         collections[_collectionId].tier.maxInvocations = _maxInvocations;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_MAX_INVOCATIONS);
     }
@@ -350,11 +360,10 @@ contract FantiumNFTV1 is
     /**
      * @notice Update Collection tier for collection `_collectionId` to be `_tierName`.
      */
-    function updateCollectionTier(uint256 _collectionId, string memory tierName)
-        external
-        onlyPlatformManager
-        onlyValidTier(tierName)
-    {
+    function updateCollectionTier(
+        uint256 _collectionId,
+        string memory tierName
+    ) external onlyValidCollectionId(_collectionId) onlyValidTier(tierName) onlyPlatformManager {
         collections[_collectionId].tier = tiers[tierName];
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_TIER);
     }
@@ -366,7 +375,7 @@ contract FantiumNFTV1 is
     function updateCollectionBaseURI(
         uint256 _collectionId,
         string memory _collectionBaseURI
-    ) external onlyPlatformManager {
+    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
         collections[_collectionId].collectionBaseURI = _collectionBaseURI;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_BASE_URI);
     }
@@ -378,7 +387,7 @@ contract FantiumNFTV1 is
     function updateCollectionAthleteName(
         uint256 _collectionId,
         string memory _collectionAthleteName
-    ) external onlyPlatformManager {
+    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
         collections[_collectionId].athleteName = _collectionAthleteName;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ATHLETE_NAME);
     }
@@ -397,7 +406,7 @@ contract FantiumNFTV1 is
     function updateCollectionAthletePrimaryMarketRoyaltyPercentage(
         uint256 _collectionId,
         uint256 _primaryMarketRoyalty
-    ) external onlyPlatformManager {
+    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
         require(_primaryMarketRoyalty <= 95, "Max of 95%");
         collections[_collectionId].athletePrimarySalesPercentage = uint8(
             _primaryMarketRoyalty
@@ -422,7 +431,7 @@ contract FantiumNFTV1 is
     function updateCollectionAthleteSecondaryMarketRoyaltyPercentage(
         uint256 _collectionId,
         uint256 _secondMarketRoyalty
-    ) external onlyPlatformManager {
+    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
         require(_secondMarketRoyalty <= 95, "Max of 95%");
         collections[_collectionId].athleteSecondarySalesPercentage = uint8(
             _secondMarketRoyalty
@@ -434,10 +443,9 @@ contract FantiumNFTV1 is
     }
 
     //update baseURI only platform manager
-    function updateBaseURI(string memory _baseURI)
-        external
-        onlyPlatformManager
-    {
+    function updateBaseURI(
+        string memory _baseURI
+    ) external onlyPlatformManager {
         baseURI = _baseURI;
         emit PlatformUpdated(FILED_FANTIUM_BASE_URI);
     }
@@ -505,14 +513,12 @@ contract FantiumNFTV1 is
     }
 
     // update fantium minter address
-    function updateFantiumMinterAddress(address _fantiumMinterAddress)
-        external
-        onlyPlatformManager
-    {
+    function updateFantiumMinterAddress(
+        address _fantiumMinterAddress
+    ) external onlyPlatformManager {
         fantiumMinterAddress = _fantiumMinterAddress;
         emit PlatformUpdated(FIELD_FANTIUM_MINTER_ADDRESS);
     }
-
 
     /*//////////////////////////////////////////////////////////////
                                  VIEWS
@@ -523,27 +529,25 @@ contract FantiumNFTV1 is
      * @param _tokenId Token ID to be queried.
      * @return collectionId Collection ID for token ID `_tokenId`.
      */
-    function getCollectionForTokenId(uint256 _tokenId)
-        external
-        view
-        returns (Collection memory)
-    {
+    function getCollectionForTokenId(
+        uint256 _tokenId
+    ) external view returns (Collection memory) {
         uint256 collectionId = _tokenId / ONE_MILLION;
         Collection memory collection = getCollection(collectionId);
         return collection;
     }
 
     // get collection for collectionId
-    function getCollection(uint256 _collectionId)
-        public
-        view
-        returns (Collection memory)
-    {
+    function getCollection(
+        uint256 _collectionId
+    ) public view returns (Collection memory) {
         return collections[_collectionId];
     }
 
     // get all collection properties for collectionId
-    function getCollectionData(uint256 _collectionId)
+    function getCollectionData(
+        uint256 _collectionId
+    )
         public
         view
         returns (
@@ -597,7 +601,10 @@ contract FantiumNFTV1 is
      * to the contract performing the revenue split to handle this
      * appropriately.
      */
-    function getPrimaryRevenueSplits(uint256 _collectionId, uint256 _price)
+    function getPrimaryRevenueSplits(
+        uint256 _collectionId,
+        uint256 _price
+    )
         public
         view
         returns (
@@ -645,20 +652,20 @@ contract FantiumNFTV1 is
      * @dev reverts if invalid _tokenId
      * @dev only returns recipients that have a non-zero BPS allocation
      */
-    function getRoyalties(uint256 _tokenId)
+    function getRoyalties(
+        uint256 _tokenId
+    )
         external
         view
-        returns (
-            // onlyValidTokenId(_tokenId)
-            address payable[] memory recipients,
-            uint256[] memory bps
-        )
+        onlyValidTokenId(_tokenId)
+        returns (address payable[] memory recipients, uint256[] memory bps)
     {
         // initialize arrays with maximum potential length
         recipients = new address payable[](2);
         bps = new uint256[](2);
 
         uint256 collectionId = _tokenId / ONE_MILLION;
+
         Collection storage collection = collections[collectionId];
         // load values into memory
         uint256 royaltyPercentageForAthlete = collection

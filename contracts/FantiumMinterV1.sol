@@ -216,6 +216,9 @@ contract FantiumMinterV1 is
 
         IFantiumNFT.Collection memory collection = fantiumNFTContract
             .getCollection(_collectionId);
+
+        // collection must exist
+        require(collection.exists == true, "Collection does not exist");
         
         // sender must be on allow list or Admin or Manager if collection is paused
         if (
@@ -266,7 +269,7 @@ contract FantiumMinterV1 is
         collectionIdToAllowList[_collectionId][_to] = false;
 
         // INTERACTIONS
-        fantiumNFTContract.mintTo(msg.sender, thisTokenId);
+        fantiumNFTContract.mintTo(_to, thisTokenId);
         _splitFundsETH(_collectionId, _pricePerTokenInWei);
 
         return thisTokenId;

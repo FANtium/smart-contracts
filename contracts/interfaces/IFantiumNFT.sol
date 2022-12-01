@@ -12,6 +12,7 @@ interface IFantiumNFT {
     struct Collection {
         uint24 invocations;
         Tier tier;
+        bool exists;
         bool paused;
         string name;
         string athleteName;
