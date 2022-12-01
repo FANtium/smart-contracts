@@ -27,7 +27,6 @@ contract FantiumNFTV1 is
 
     address public fantiumMinterAddress;
 
-    mapping(uint256 => address) internal _owners;
     mapping(uint256 => Collection) public collections;
     mapping(string => Tier) public tiers;
     bool public tiersSet;
@@ -247,13 +246,6 @@ contract FantiumNFTV1 is
         }
         return
             string(bytes.concat(bytes(_baseURI), bytes(_tokenId.toString())));
-    }
-
-    /**
-     * @notice Returns true if the token is minted.
-     */
-    function exists(uint256 _tokenId) public view returns (bool) {
-        return _owners[_tokenId] != address(0);
     }
 
     /*//////////////////////////////////////////////////////////////
