@@ -116,6 +116,12 @@ contract FantiumNFTV1 is
     }
 
     /*//////////////////////////////////////////////////////////////
+                                    ACM
+    //////////////////////////////////////////////////////////////*/
+
+    /// TODO
+
+    /*//////////////////////////////////////////////////////////////
                                  MODIFERS
     //////////////////////////////////////////////////////////////*/
 
@@ -165,6 +171,11 @@ contract FantiumNFTV1 is
 
     modifier onlyValidTokenId(uint256 _tokenId) {
         require(_exists(_tokenId), "Token does not exist");
+        _;
+    }
+
+    modifier onlyValidAddress(address _address) {
+        require(_address != address(0), "Invalid address");
         _;
     }
 
@@ -249,7 +260,7 @@ contract FantiumNFTV1 is
     }
 
     /*//////////////////////////////////////////////////////////////
-                            MANAGER FUNCTIONS
+                        COLLECTION FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
     /**
@@ -311,7 +322,7 @@ contract FantiumNFTV1 is
     function updateCollectionAthleteAddress(
         uint256 _collectionId,
         address payable _athleteAddress
-    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
+    ) external onlyValidCollectionId(_collectionId) onlyValidAddress(_athleteAddress) onlyPlatformManager {
         collections[_collectionId].athleteAddress = _athleteAddress;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ATHLETE_ADDRESS);
     }
@@ -345,6 +356,7 @@ contract FantiumNFTV1 is
         uint256 _collectionId,
         uint24 _maxInvocations
     ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
+        require(_maxInvocations <= ONE_MILLION, "invocation cannot be more than 1_000_000");
         collections[_collectionId].tier.maxInvocations = _maxInvocations;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_MAX_INVOCATIONS);
     }
@@ -355,7 +367,12 @@ contract FantiumNFTV1 is
     function updateCollectionTier(
         uint256 _collectionId,
         string memory tierName
-    ) external onlyValidCollectionId(_collectionId) onlyValidTier(tierName) onlyPlatformManager {
+    )
+        external
+        onlyValidCollectionId(_collectionId)
+        onlyValidTier(tierName)
+        onlyPlatformManager
+    {
         collections[_collectionId].tier = tiers[tierName];
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_TIER);
     }
@@ -466,7 +483,7 @@ contract FantiumNFTV1 is
      */
     function updateFantiumPrimarySaleAddress(
         address payable _fantiumPrimarySalesAddress
-    ) external onlyPlatformManager {
+    ) external onlyPlatformManager onlyValidAddress(_fantiumPrimarySalesAddress) {
         fantiumPrimarySalesAddress = _fantiumPrimarySalesAddress;
         emit PlatformUpdated(FIELD_FANTIUM_PRIMARY_ADDRESS);
     }
@@ -478,7 +495,7 @@ contract FantiumNFTV1 is
     // update fantium secondary sales address
     function updateFantiumSecondarySaleAddress(
         address payable _fantiumSecondarySalesAddress
-    ) external onlyPlatformManager {
+    ) external onlyPlatformManager onlyValidAddress(_fantiumSecondarySalesAddress) {
         fantiumSecondarySalesAddress = _fantiumSecondarySalesAddress;
         emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_ADDRESS);
     }
@@ -496,6 +513,8 @@ contract FantiumNFTV1 is
         uint24 _maxInvocations,
         uint8 _tournamentEarningPercentage
     ) external onlyPlatformManager {
+        require(_maxInvocations < ONE_MILLION, "max invocation ");
+        
         tiers[_name] = Tier(
             _name,
             _priceInWei,
@@ -507,7 +526,7 @@ contract FantiumNFTV1 is
     // update fantium minter address
     function updateFantiumMinterAddress(
         address _fantiumMinterAddress
-    ) external onlyPlatformManager {
+    ) external onlyPlatformManager onlyValidAddress(_fantiumMinterAddress) {
         fantiumMinterAddress = _fantiumMinterAddress;
         emit PlatformUpdated(FIELD_FANTIUM_MINTER_ADDRESS);
     }
