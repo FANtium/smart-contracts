@@ -101,11 +101,9 @@ contract FantiumMinterV1 is
     /// @notice upgrade authorization logic
     /// @dev required by the OZ UUPS module
     /// @dev adds onlyRole(UPGRADER_ROLE) requirement
-    function _authorizeUpgrade(address)
-        internal
-        override
-        onlyRole(UPGRADER_ROLE)
-    {}
+    function _authorizeUpgrade(
+        address
+    ) internal override onlyRole(UPGRADER_ROLE) {}
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -152,10 +150,10 @@ contract FantiumMinterV1 is
      * @param _collectionId collection ID.
      * @param _address address to be added to allow list.
      */
-    function addAddressToAllowList(uint256 _collectionId, address _address)
-        public
-        onlyPlatformManager
-    {
+    function addAddressToAllowList(
+        uint256 _collectionId,
+        address _address
+    ) public onlyPlatformManager {
         collectionIdToAllowList[_collectionId][_address] = true;
         emit AddressAddedToAllowList(_collectionId, _address);
     }
@@ -165,10 +163,10 @@ contract FantiumMinterV1 is
      * @param _collectionId collection ID.
      * @param _address address to be removed from allow list.
      */
-    function removeAddressFromAllowList(uint256 _collectionId, address _address)
-        public
-        onlyPlatformManager
-    {
+    function removeAddressFromAllowList(
+        uint256 _collectionId,
+        address _address
+    ) public onlyPlatformManager {
         collectionIdToAllowList[_collectionId][_address] = false;
         emit AddressRemovedFromAllowList(_collectionId, _address);
     }
@@ -179,11 +177,10 @@ contract FantiumMinterV1 is
      * @param _address address to be checked.
      * @return isOnAllowList true if address is on allow list.
      */
-    function isAddressOnAllowList(uint256 _collectionId, address _address)
-        public
-        view
-        returns (bool)
-    {
+    function isAddressOnAllowList(
+        uint256 _collectionId,
+        address _address
+    ) public view returns (bool) {
         return collectionIdToAllowList[_collectionId][_address];
     }
 
@@ -197,11 +194,10 @@ contract FantiumMinterV1 is
      * @param _to Address to be the minted token's owner.
      * @param _collectionId collection ID to mint a token on.
      */
-    function mint(address _to, uint256 _collectionId)
-        public
-        payable
-        returns (uint256 tokenId_)
-    {
+    function mint(
+        address _to,
+        uint256 _collectionId
+    ) public payable returns (uint256 tokenId_) {
         /// CHECKS
         // nft contract address must be set
         require(fantiumNFTContractAddress != address(0), "Fantium NFT not set");
@@ -219,7 +215,7 @@ contract FantiumMinterV1 is
 
         // collection must exist
         require(collection.exists == true, "Collection does not exist");
-        
+
         // sender must be on allow list or Admin or Manager if collection is paused
         if (
             !hasRole(PLATFORM_MANAGER_ROLE, msg.sender) &&
@@ -235,11 +231,8 @@ contract FantiumMinterV1 is
         // load invocations into memory
         uint24 invocationsBefore = collection.invocations;
         uint24 invocationsAfter;
-        unchecked {
-            // invocationsBefore guaranteed <= maxInvocations <= 1_000_000,
-            // 1_000_000 << max uint24, so no possible overflow
-            invocationsAfter = invocationsBefore + 1;
-        }
+        invocationsAfter = invocationsBefore + 1;
+
         uint24 maxInvocations = collection.tier.maxInvocations;
         require(
             invocationsBefore < maxInvocations,
@@ -258,13 +251,8 @@ contract FantiumMinterV1 is
         // increment collection's invocations
         collection.invocations = invocationsAfter;
         uint256 thisTokenId;
-        unchecked {
-            // invocationsBefore is uint24 << max uint256. In production use,
-            // _collectionId * ONE_MILLION must be << max uint256, otherwise
-            // tokenIdTocollectionId function become invalid.
-            // Therefore, no risk of overflow
-            thisTokenId = (_collectionId * ONE_MILLION) + invocationsBefore;
-        }
+
+        thisTokenId = (_collectionId * ONE_MILLION) + invocationsBefore;
         //set allowlist to false
         collectionIdToAllowList[_collectionId][_to] = false;
 
@@ -280,16 +268,15 @@ contract FantiumMinterV1 is
      * FANtium, and athlete for a token purchased on
      * collection `_collectionId`.
      */
-    function _splitFundsETH(uint256 _collectionId, uint256 _pricePerTokenInWei)
-        internal
-    {
+    function _splitFundsETH(
+        uint256 _collectionId,
+        uint256 _pricePerTokenInWei
+    ) internal {
         if (msg.value > 0) {
-            bool success_;
             // send refund to sender
             uint256 refund = msg.value - _pricePerTokenInWei;
             if (refund > 0) {
-                (success_, ) = msg.sender.call{value: refund}("");
-                require(success_, "Refund failed");
+                payable(msg.sender).transfer(refund);
             }
             // split remaining funds between FANtium and athlete
             (
@@ -303,13 +290,11 @@ contract FantiumMinterV1 is
                 );
             // FANtium payment
             if (fantiumRevenue_ > 0) {
-                (success_, ) = fantiumAddress_.call{value: fantiumRevenue_}("");
-                require(success_, "FANtium payment failed");
+                payable(fantiumAddress_).transfer(fantiumRevenue_);
             }
             // athlete payment
             if (athleteRevenue_ > 0) {
-                (success_, ) = athleteAddress_.call{value: athleteRevenue_}("");
-                require(success_, "Artist payment failed");
+                payable(athleteAddress_).transfer(athleteRevenue_);
             }
         }
     }
@@ -322,10 +307,9 @@ contract FantiumMinterV1 is
      * @notice Set FANtium NFT contract address.
      * @param _fantiumNFTContractAddress FANtium NFT contract address.
      */
-    function updateFantiumNFTAddress(address _fantiumNFTContractAddress)
-        public
-        onlyPlatformManager
-    {
+    function updateFantiumNFTAddress(
+        address _fantiumNFTContractAddress
+    ) public onlyPlatformManager {
         fantiumNFTContractAddress = _fantiumNFTContractAddress;
         fantiumNFTContract = IFantiumNFT(_fantiumNFTContractAddress);
         emit FantiumNFTContractUpdated(_fantiumNFTContractAddress);

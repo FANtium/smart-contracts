@@ -728,7 +728,7 @@
             "label": "fantiumNFTContract",
             "offset": 0,
             "slot": "254",
-            "type": "t_contract(IFantiumNFT)7609",
+            "type": "t_contract(IFantiumNFT)3374",
             "contract": "FantiumMinterV1",
             "src": "contracts/FantiumMinterV1.sol:35"
           }
@@ -754,7 +754,7 @@
             "label": "bytes32",
             "numberOfBytes": "32"
           },
-          "t_contract(IFantiumNFT)7609": {
+          "t_contract(IFantiumNFT)3374": {
             "label": "contract IFantiumNFT",
             "numberOfBytes": "20"
           },
@@ -946,7 +946,7 @@
             "label": "collections",
             "offset": 0,
             "slot": "303",
-            "type": "t_mapping(t_uint256,t_struct(Collection)7578_storage)",
+            "type": "t_mapping(t_uint256,t_struct(Collection)5019_storage)",
             "contract": "FantiumNFTV1",
             "src": "contracts/FantiumNFTV1.sol:31"
           },
@@ -954,7 +954,7 @@
             "label": "tiers",
             "offset": 0,
             "slot": "304",
-            "type": "t_mapping(t_string_memory_ptr,t_struct(Tier)7558_storage)",
+            "type": "t_mapping(t_string_memory_ptr,t_struct(Tier)4999_storage)",
             "contract": "FantiumNFTV1",
             "src": "contracts/FantiumNFTV1.sol:32"
           },
@@ -1052,7 +1052,7 @@
             "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_string_memory_ptr,t_struct(Tier)7558_storage)": {
+          "t_mapping(t_string_memory_ptr,t_struct(Tier)4999_storage)": {
             "label": "mapping(string => struct IFantiumNFT.Tier)",
             "numberOfBytes": "32"
           },
@@ -1060,7 +1060,7 @@
             "label": "mapping(uint256 => address)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(Collection)7578_storage)": {
+          "t_mapping(t_uint256,t_struct(Collection)5019_storage)": {
             "label": "mapping(uint256 => struct IFantiumNFT.Collection)",
             "numberOfBytes": "32"
           },
@@ -1072,7 +1072,7 @@
             "label": "string",
             "numberOfBytes": "32"
           },
-          "t_struct(Collection)7578_storage": {
+          "t_struct(Collection)5019_storage": {
             "label": "struct IFantiumNFT.Collection",
             "members": [
               {
@@ -1083,7 +1083,7 @@
               },
               {
                 "label": "tier",
-                "type": "t_struct(Tier)7558_storage",
+                "type": "t_struct(Tier)4999_storage",
                 "offset": 0,
                 "slot": "1"
               },
@@ -1150,7 +1150,7 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(Tier)7558_storage": {
+          "t_struct(Tier)4999_storage": {
             "label": "struct IFantiumNFT.Tier",
             "members": [
               {

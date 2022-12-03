@@ -6,8 +6,8 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol";
 
-import {DefaultOperatorFiltererUpgradeable} from "./openseaFilterUpgradeable/DefaultOperatorFiltererUpgradeable.sol";
 import {IFantiumNFT} from "./interfaces/IFantiumNFT.sol";
 
 /**
@@ -197,6 +197,7 @@ contract FantiumNFTV1 is
         __ERC721_init(_tokenName, _tokenSymbol);
         __UUPSUpgradeable_init();
         __AccessControl_init();
+        __DefaultOperatorFilterer_init();
 
         _grantRole(PLATFORM_MANAGER_ROLE, msg.sender);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -322,7 +323,12 @@ contract FantiumNFTV1 is
     function updateCollectionAthleteAddress(
         uint256 _collectionId,
         address payable _athleteAddress
-    ) external onlyValidCollectionId(_collectionId) onlyValidAddress(_athleteAddress) onlyPlatformManager {
+    )
+        external
+        onlyValidCollectionId(_collectionId)
+        onlyValidAddress(_athleteAddress)
+        onlyPlatformManager
+    {
         collections[_collectionId].athleteAddress = _athleteAddress;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ATHLETE_ADDRESS);
     }
@@ -356,7 +362,10 @@ contract FantiumNFTV1 is
         uint256 _collectionId,
         uint24 _maxInvocations
     ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
-        require(_maxInvocations <= ONE_MILLION, "invocation cannot be more than 1_000_000");
+        require(
+            _maxInvocations <= ONE_MILLION,
+            "invocation cannot be more than 1_000_000"
+        );
         collections[_collectionId].tier.maxInvocations = _maxInvocations;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_MAX_INVOCATIONS);
     }
@@ -483,7 +492,11 @@ contract FantiumNFTV1 is
      */
     function updateFantiumPrimarySaleAddress(
         address payable _fantiumPrimarySalesAddress
-    ) external onlyPlatformManager onlyValidAddress(_fantiumPrimarySalesAddress) {
+    )
+        external
+        onlyPlatformManager
+        onlyValidAddress(_fantiumPrimarySalesAddress)
+    {
         fantiumPrimarySalesAddress = _fantiumPrimarySalesAddress;
         emit PlatformUpdated(FIELD_FANTIUM_PRIMARY_ADDRESS);
     }
@@ -495,7 +508,11 @@ contract FantiumNFTV1 is
     // update fantium secondary sales address
     function updateFantiumSecondarySaleAddress(
         address payable _fantiumSecondarySalesAddress
-    ) external onlyPlatformManager onlyValidAddress(_fantiumSecondarySalesAddress) {
+    )
+        external
+        onlyPlatformManager
+        onlyValidAddress(_fantiumSecondarySalesAddress)
+    {
         fantiumSecondarySalesAddress = _fantiumSecondarySalesAddress;
         emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_ADDRESS);
     }
@@ -514,7 +531,7 @@ contract FantiumNFTV1 is
         uint8 _tournamentEarningPercentage
     ) external onlyPlatformManager {
         require(_maxInvocations < ONE_MILLION, "max invocation ");
-        
+
         tiers[_name] = Tier(
             _name,
             _priceInWei,
@@ -633,16 +650,13 @@ contract FantiumNFTV1 is
             (_price * uint256(collection.athletePrimarySalesPercentage)) /
             100;
         uint256 collectionFunds;
-        unchecked {
-            // fantiumRevenue_ is always <=25, so guaranteed to never underflow
-            collectionFunds = _price - athleteRevenue_;
-        }
 
-        unchecked {
-            // collectionIdToAdditionalPayeePrimarySalesPercentage is always
-            // <=100, so guaranteed to never underflow
-            fantiumRevenue_ = collectionFunds;
-        }
+        // fantiumRevenue_ is always <=25, so guaranteed to never underflow
+        collectionFunds = _price - athleteRevenue_;
+
+        // collectionIdToAdditionalPayeePrimarySalesPercentage is always
+        // <=100, so guaranteed to never underflow
+        fantiumRevenue_ = collectionFunds;
 
         // set addresses from storage
         fantiumAddress_ = fantiumPrimarySalesAddress;
@@ -702,6 +716,20 @@ contract FantiumNFTV1 is
     /*//////////////////////////////////////////////////////////////
                             OS FILTER
     //////////////////////////////////////////////////////////////*/
+
+    function setApprovalForAll(
+        address operator,
+        bool approved
+    ) public override onlyAllowedOperatorApproval(operator) {
+        super.setApprovalForAll(operator, approved);
+    }
+
+    function approve(
+        address operator,
+        uint256 tokenId
+    ) public override onlyAllowedOperatorApproval(operator) {
+        super.approve(operator, tokenId);
+    }
 
     function transferFrom(
         address from,

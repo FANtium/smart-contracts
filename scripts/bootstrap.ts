@@ -1,39 +1,45 @@
 import { ethers } from 'hardhat'
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { FantiumNFTV1 } from '../typechain-types';
+import { FantiumNFTV1, FantiumMinterV1 } from '../typechain-types';
 
 async function main() {
 
-    let nftContract: FantiumNFTV1
-
-    const [owner, fantium, athlete] = await ethers.getSigners();
+    const [owner] = await ethers.getSigners();
     console.log("Account balance:", (await owner.getBalance()).toString());
 
     const contents = readFileSync(join(__dirname, './contractAddresses.json'), 'utf-8');
     console.log(JSON.parse(contents));
     const contractAddresses = JSON.parse(contents)
 
-    nftContract = await ethers.getContractAt("FantiumNFTV1", contractAddresses.proxy, owner) as FantiumNFTV1
+    const nftContract = await ethers.getContractAt("FantiumNFTV1", contractAddresses.nftProxy, owner) as FantiumNFTV1
+    const minterContract = await ethers.getContractAt("FantiumMinterV1", contractAddresses.minterProxy, owner) as FantiumMinterV1
 
-    await nftContract.updateFantiumPrimarySaleAddress(owner.address)
-    await nftContract.updateFantiumSecondarySaleAddress(owner.address)
+    // Set the FantiumMinterV1 contract as the minter for the FantiumNFTV1 contract
+    await nftContract.updateFantiumMinterAddress(minterContract.address)
+
+    // Set the FantiumNFTV1 contract as the nft contract for the FantiumMinterV1 contract
+    await minterContract.updateFantiumNFTAddress(nftContract.address)
+
+    // Set Fantium address for primary sale
+    await nftContract.updateFantiumPrimarySaleAddress('0x0EA1ceeE6832573766790d6c1E1D297DE5136D61')
+    await nftContract.updateFantiumSecondarySaleAddress('0x0EA1ceeE6832573766790d6c1E1D297DE5136D61')
     await nftContract.updateFantiumSecondaryMarketRoyaltyBPS(250)
-    await nftContract.setNextCollectionId(1)
 
     await nftContract.updateTiers("bronze", 10, 10000, 10)
     await nftContract.updateTiers("silver", 100, 1000, 20)
     await nftContract.updateTiers("gold", 1000, 100, 30)
 
+    // Add a collection
     await nftContract.addCollection(
-        "Collection test 1", // Collection name
-        "Athlete test 1", // Athlete name
-        "https://test.com/", // base URI
-        "0x0000000000000000000000000000000000000000", // Athlete address
-        100, // max supply
-        0, // athlete primary sale percentage 0-100
-        "silver", // athlete secondary sale percentage 0-100
-    );
+        "Test Collection Name",
+        "Test Athlete Name",
+        "ipfs://QmdFhYU62LXSY51LSQLV2dHJwXNBNdn9nwBYkCMbkbyeSn/",
+        '0x87C9D699cabB94720Aaf0bC1416a5114fcC0D928',
+        90, // athlete primary sale percentage
+        5, // athlete secondary sale percentage
+        "silver",
+    )
 
 }
 
