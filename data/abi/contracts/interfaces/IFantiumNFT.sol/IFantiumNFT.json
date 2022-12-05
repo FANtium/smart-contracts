@@ -17,35 +17,18 @@
             "type": "uint24"
           },
           {
-            "components": [
-              {
-                "internalType": "string",
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "internalType": "uint256",
-                "name": "priceInWei",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint24",
-                "name": "maxInvocations",
-                "type": "uint24"
-              },
-              {
-                "internalType": "uint8",
-                "name": "tournamentEarningPercentage",
-                "type": "uint8"
-              }
-            ],
-            "internalType": "struct IFantiumNFT.Tier",
-            "name": "tier",
-            "type": "tuple"
+            "internalType": "string",
+            "name": "tierName",
+            "type": "string"
           },
           {
             "internalType": "bool",
-            "name": "paused",
+            "name": "exists",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "isMintingPaused",
             "type": "bool"
           },
           {
@@ -121,6 +104,47 @@
         "internalType": "address payable",
         "name": "athleteAddress_",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_name",
+        "type": "string"
+      }
+    ],
+    "name": "getTier",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "priceInWei",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint24",
+            "name": "maxInvocations",
+            "type": "uint24"
+          },
+          {
+            "internalType": "uint8",
+            "name": "tournamentEarningPercentage",
+            "type": "uint8"
+          }
+        ],
+        "internalType": "struct IFantiumNFT.Tier",
+        "name": "",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",

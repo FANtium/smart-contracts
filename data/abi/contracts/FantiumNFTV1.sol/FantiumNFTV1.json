@@ -366,19 +366,6 @@
   },
   {
     "inputs": [],
-    "name": "KYC_MANAGER_ROLE",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "PLATFORM_MANAGER_ROLE",
     "outputs": [
       {
@@ -401,31 +388,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "__DefaultOperatorFilterer_init",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "subscriptionOrRegistrantToCopy",
-        "type": "address"
-      },
-      {
-        "internalType": "bool",
-        "name": "subscribe",
-        "type": "bool"
-      }
-    ],
-    "name": "__OperatorFilterer_init",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -475,7 +437,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "to",
+        "name": "operator",
         "type": "address"
       },
       {
@@ -537,35 +499,18 @@
         "type": "uint24"
       },
       {
-        "components": [
-          {
-            "internalType": "string",
-            "name": "name",
-            "type": "string"
-          },
-          {
-            "internalType": "uint256",
-            "name": "priceInWei",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint24",
-            "name": "maxInvocations",
-            "type": "uint24"
-          },
-          {
-            "internalType": "uint8",
-            "name": "tournamentEarningPercentage",
-            "type": "uint8"
-          }
-        ],
-        "internalType": "struct IFantiumNFT.Tier",
-        "name": "tier",
-        "type": "tuple"
+        "internalType": "string",
+        "name": "tierName",
+        "type": "string"
       },
       {
         "internalType": "bool",
-        "name": "paused",
+        "name": "exists",
+        "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "isMintingPaused",
         "type": "bool"
       },
       {
@@ -597,25 +542,6 @@
         "internalType": "uint8",
         "name": "athleteSecondarySalesPercentage",
         "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_tokenId",
-        "type": "uint256"
-      }
-    ],
-    "name": "exists",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -710,35 +636,18 @@
             "type": "uint24"
           },
           {
-            "components": [
-              {
-                "internalType": "string",
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "internalType": "uint256",
-                "name": "priceInWei",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint24",
-                "name": "maxInvocations",
-                "type": "uint24"
-              },
-              {
-                "internalType": "uint8",
-                "name": "tournamentEarningPercentage",
-                "type": "uint8"
-              }
-            ],
-            "internalType": "struct IFantiumNFT.Tier",
-            "name": "tier",
-            "type": "tuple"
+            "internalType": "string",
+            "name": "tierName",
+            "type": "string"
           },
           {
             "internalType": "bool",
-            "name": "paused",
+            "name": "exists",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "isMintingPaused",
             "type": "bool"
           },
           {
@@ -784,80 +693,6 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_collectionId",
-        "type": "uint256"
-      }
-    ],
-    "name": "getCollectionData",
-    "outputs": [
-      {
-        "internalType": "uint24",
-        "name": "invocations",
-        "type": "uint24"
-      },
-      {
-        "internalType": "uint24",
-        "name": "maxInvocations",
-        "type": "uint24"
-      },
-      {
-        "internalType": "uint256",
-        "name": "priceInWei",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "paused",
-        "type": "bool"
-      },
-      {
-        "internalType": "string",
-        "name": "name",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "athleteName",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "collectionBaseURI",
-        "type": "string"
-      },
-      {
-        "internalType": "address payable",
-        "name": "athleteAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "uint8",
-        "name": "athletePrimarySalesPercentage",
-        "type": "uint8"
-      },
-      {
-        "internalType": "uint8",
-        "name": "athleteSecondarySalesPercentage",
-        "type": "uint8"
-      },
-      {
-        "internalType": "string",
-        "name": "tierName",
-        "type": "string"
-      },
-      {
-        "internalType": "uint8",
-        "name": "tournamentEarningPercentage",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
         "name": "_tokenId",
         "type": "uint256"
       }
@@ -872,35 +707,18 @@
             "type": "uint24"
           },
           {
-            "components": [
-              {
-                "internalType": "string",
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "internalType": "uint256",
-                "name": "priceInWei",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint24",
-                "name": "maxInvocations",
-                "type": "uint24"
-              },
-              {
-                "internalType": "uint8",
-                "name": "tournamentEarningPercentage",
-                "type": "uint8"
-              }
-            ],
-            "internalType": "struct IFantiumNFT.Tier",
-            "name": "tier",
-            "type": "tuple"
+            "internalType": "string",
+            "name": "tierName",
+            "type": "string"
           },
           {
             "internalType": "bool",
-            "name": "paused",
+            "name": "exists",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "isMintingPaused",
             "type": "bool"
           },
           {
@@ -1019,6 +837,47 @@
         "internalType": "uint256[]",
         "name": "bps",
         "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_tierName",
+        "type": "string"
+      }
+    ],
+    "name": "getTier",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "priceInWei",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint24",
+            "name": "maxInvocations",
+            "type": "uint24"
+          },
+          {
+            "internalType": "uint8",
+            "name": "tournamentEarningPercentage",
+            "type": "uint8"
+          }
+        ],
+        "internalType": "struct IFantiumNFT.Tier",
+        "name": "",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",
@@ -1343,19 +1202,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "tiersSet",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -1521,24 +1367,6 @@
         "type": "uint256"
       },
       {
-        "internalType": "uint24",
-        "name": "_maxInvocations",
-        "type": "uint24"
-      }
-    ],
-    "name": "updateCollectionMaxInvocations",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_collectionId",
-        "type": "uint256"
-      },
-      {
         "internalType": "string",
         "name": "_collectionName",
         "type": "string"
@@ -1557,26 +1385,8 @@
         "type": "uint256"
       },
       {
-        "internalType": "uint256",
-        "name": "_priceInWei",
-        "type": "uint256"
-      }
-    ],
-    "name": "updateCollectionPrice",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_collectionId",
-        "type": "uint256"
-      },
-      {
         "internalType": "string",
-        "name": "tierName",
+        "name": "_tierName",
         "type": "string"
       }
     ],
