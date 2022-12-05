@@ -35,6 +35,7 @@
     "@openzeppelin/contracts": "4.8.0",
     "@openzeppelin/contracts-upgradeable": "4.8.0",
     "@openzeppelin/hardhat-upgrades": "1.21.0",
-    "hardhat-interface-generator": "^0.0.6"
+    "hardhat-interface-generator": "^0.0.6",
+    "operator-filter-registry": "^1.3.1"
   }
 }

@@ -92,19 +92,19 @@ contract FantiumClaimingV1 is UUPSUpgradeable, Ownable {
         // CHECKS
 
         //check if _tokenId exists
-        require(
-            fantiumNFTContract.exists(_tokenId),
-            "FantiumClaimingV1: Token does not exist"
-        );
+        // require(
+        //     fantiumNFTContract.exists(_tokenId),
+        //     "FantiumClaimingV1: Token does not exist"
+        // );
 
         //check if msg.sender is the collection's athlete
-        require(
-            msg.sender ==
-                fantiumNFTContract
-                    .getCollectionForTokenId(_tokenId)
-                    .athleteAddress,
-            "FantiumClaimingV1: You are not FantiumNFT contract"
-        );
+        // require(
+        //     msg.sender ==
+        //         fantiumNFTContract
+        //             .getCollectionForTokenId(_tokenId)
+        //             .athleteAddress,
+        //     "FantiumClaimingV1: You are not FantiumNFT contract"
+        // );
         
         require(payoutToken.transferFrom(msg.sender, address(this), _amount), "FantiumClaimingV1: transferFrom failed");
 

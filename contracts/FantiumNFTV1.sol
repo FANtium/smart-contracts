@@ -6,9 +6,8 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-
-import {DefaultOperatorFiltererUpgradeable} from "./openseaFilterUpgradeable/DefaultOperatorFiltererUpgradeable.sol";
-import {IFantiumNFT} from "./interfaces/IFantiumNFT.sol";
+import "operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 /**
  * @title FANtium ERC721 contract V1.
@@ -16,30 +15,33 @@ import {IFantiumNFT} from "./interfaces/IFantiumNFT.sol";
  */
 
 contract FantiumNFTV1 is
-    IFantiumNFT,
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
-    DefaultOperatorFiltererUpgradeable
+    DefaultOperatorFiltererUpgradeable,
+    PausableUpgradeable
 {
     using StringsUpgradeable for uint256;
 
     address public fantiumMinterAddress;
-
-    mapping(uint256 => address) internal _owners;
     mapping(uint256 => Collection) public collections;
     mapping(string => Tier) public tiers;
-    bool public tiersSet;
     string public baseURI;
+    mapping(uint256 => mapping(address => uint256))
+        public collectionIdToAllowList;
+    mapping(address => bool) public kycedAddresses;
+
+    uint256 constant ONE_MILLION = 1_000_000;
+
+    bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
+    bytes4 private constant _INTERFACE_ID_ERC2981_OVERRIDE = 0xbb3bafd6;
 
     /// ACM
-    bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant PLATFORM_MANAGER_ROLE =
         keccak256("PLATFORM_MANAGER_ROLE");
-
-    uint256 constant ONE_MILLION = 1_000_000;
+    bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
 
     /// generic event fields
     bytes32 constant FIELD_FANTIUM_PRIMARY_MARKET_ROYALTY_PERCENTAGE =
@@ -54,7 +56,7 @@ contract FantiumNFTV1 is
     bytes32 constant FIELD_COLLECTION_NAME = "name";
     bytes32 constant FIELD_COLLECTION_ATHLETE_NAME = "name";
     bytes32 constant FIELD_COLLECTION_ATHLETE_ADDRESS = "athlete address";
-    bytes32 constant FIELD_COLLECTION_PAUSED = "paused";
+    bytes32 constant FIELD_COLLECTION_PAUSED = "isMintingPaused";
     bytes32 constant FIELD_COLLECTION_PRICE = "price";
     bytes32 constant FIELD_COLLECTION_MAX_INVOCATIONS = "max invocations";
     bytes32 constant FIELD_COLLECTION_PRIMARY_MARKET_ROYALTY_PERCENTAGE =
@@ -77,6 +79,28 @@ contract FantiumNFTV1 is
 
     /// next collection ID to be created
     uint256 private nextCollectionId;
+
+    struct Tier {
+        string name;
+        uint256 priceInWei;
+        uint24 maxInvocations;
+        uint8 tournamentEarningPercentage;
+    }
+
+    struct Collection {
+        uint24 invocations;
+        string tierName;
+        bool exists;
+        bool isMintingPaused;
+        string name;
+        string athleteName;
+        string collectionBaseURI;
+        address payable athleteAddress;
+        // packed uint: max of 100, max uint8 = 255
+        uint8 athletePrimarySalesPercentage;
+        // packed uint: max of 100, max uint8 = 255
+        uint8 athleteSecondarySalesPercentage;
+    }
 
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
@@ -104,35 +128,30 @@ contract FantiumNFTV1 is
                             INTERFACE
     //////////////////////////////////////////////////////////////*/
 
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(
+        bytes4 interfaceId
+    )
         public
         view
         virtual
         override(AccessControlUpgradeable, ERC721Upgradeable)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId);
+        return
+            interfaceId == _INTERFACE_ID_ERC2981 ||
+            interfaceId == _INTERFACE_ID_ERC2981_OVERRIDE ||
+            super.supportsInterface(interfaceId);
     }
 
     /*//////////////////////////////////////////////////////////////
                                  MODIFERS
     //////////////////////////////////////////////////////////////*/
 
-    modifier onlyPlatformManager() {
-        require(
-            hasRole(PLATFORM_MANAGER_ROLE, msg.sender) ||
-                hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "Only platform manager"
-        );
-        _;
-    }
-
     modifier onlyAthlete(uint256 _collectionId) {
         require(
             msg.sender == collections[_collectionId].athleteAddress ||
-                hasRole(PLATFORM_MANAGER_ROLE, msg.sender) ||
-                hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "Only athlete or admin"
+                hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
+            "Only athlete"
         );
         _;
     }
@@ -154,6 +173,29 @@ contract FantiumNFTV1 is
         _;
     }
 
+    modifier onlyValidCollectionId(uint256 _collectionId) {
+        require(
+            collections[_collectionId].exists == true,
+            "Invalid collectionId"
+        );
+        _;
+    }
+
+    modifier onlyValidTokenId(uint256 _tokenId) {
+        require(_exists(_tokenId), "Invalid tokenId");
+        _;
+    }
+
+    modifier onlyValidAddress(address _address) {
+        require(_address != address(0), "Invalid address");
+        _;
+    }
+
+    modifier onlyKycManager() {
+        require(hasRole(KYC_MANAGER_ROLE, msg.sender), "Only KYC updater");
+        _;
+    }
+
     /*///////////////////////////////////////////////////////////////
                             UUPS UPGRADEABLE
     //////////////////////////////////////////////////////////////*/
@@ -165,16 +207,18 @@ contract FantiumNFTV1 is
      * max(uint248) to avoid overflow when adding to it.
      */
     ///@dev no constructor in upgradable contracts. Instead we have initializers
-    function initialize(string memory _tokenName, string memory _tokenSymbol)
-        public
-        initializer
-    {
+    function initialize(
+        string memory _tokenName,
+        string memory _tokenSymbol,
+        address _defaultAdmin
+    ) public initializer {
         __ERC721_init(_tokenName, _tokenSymbol);
         __UUPSUpgradeable_init();
         __AccessControl_init();
+        __DefaultOperatorFilterer_init();
+        __Pausable_init();
 
-        _grantRole(PLATFORM_MANAGER_ROLE, msg.sender);
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _grantRole(UPGRADER_ROLE, msg.sender);
 
         nextCollectionId = 1;
@@ -183,15 +227,85 @@ contract FantiumNFTV1 is
     /// @notice upgrade authorization logic
     /// @dev required by the OZ UUPS module
     /// @dev adds onlyRole(UPGRADER_ROLE) requirement
-    function _authorizeUpgrade(address)
-        internal
-        override
-        onlyRole(UPGRADER_ROLE)
-    {}
+    function _authorizeUpgrade(
+        address
+    ) internal override onlyRole(UPGRADER_ROLE) {}
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                                 KYC
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Add address to KYC list.
+     * @param _address address to be added to KYC list.
+     */
+    function addAddressToKYC(
+        address _address
+    ) external whenNotPaused onlyKycManager {
+        kycedAddresses[_address] = true;
+        emit AddressAddedToKYC(_address);
+    }
+
+    /**
+     * @notice Remove address from KYC list.
+     * @param _address address to be removed from KYC list.
+     */
+    function removeAddressFromKYC(
+        address _address
+    ) external whenNotPaused onlyKycManager {
+        kycedAddresses[_address] = false;
+        emit AddressRemovedFromKYC(_address);
+    }
+
+    /**
+     * @notice Check if address is KYCed.
+     * @param _address address to be checked.
+     * @return isKYCed true if address is KYCed.
+     */
+    function isAddressKYCed(address _address) public view returns (bool) {
+        return kycedAddresses[_address];
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            ALLOW LIST
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Add address to allow list.
+     * @param _collectionId collection ID.
+     * @param _address address to be added to allow list.
+     * @param _allocation allocation to the address.
+     */
+    function addAddressToAllowListWithAllocation(
+        uint256 _collectionId,
+        address _address,
+        uint256 _allocation
+    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
+        collectionIdToAllowList[_collectionId][_address] = _allocation;
+        emit AddressAddedToAllowList(_collectionId, _address);
+    }
+
+    /**
+     * @notice Remove address from allow list.
+     * @param _collectionId collection ID.
+     * @param _address address to be removed from allow list.
+     */
+    function reduceAllowListAllocation(
+        uint256 _collectionId,
+        address _address,
+        bool _completely
+    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
+        if (_completely) {
+            collectionIdToAllowList[_collectionId][_address] = 0;
+        } else {
+            collectionIdToAllowList[_collectionId][_address]--;
+        }
+        emit AddressRemovedFromAllowList(_collectionId, _address);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -200,18 +314,74 @@ contract FantiumNFTV1 is
 
     /**
      * @notice Mints a token
-     * token's owner to `_to`.
-     * @param _to Address to be the minted token's owner.
+     * @param _collectionId Collection ID.
      */
-    function mintTo(address _to, uint256 _tokenId) public payable {
+    function mint(uint256 _collectionId) public payable whenNotPaused {
         // CHECKS
-        require(fantiumMinterAddress != address(0), "Fantium Minter not set");
-        require(msg.sender == fantiumMinterAddress, "Only assigned minter");
+        require(isAddressKYCed(msg.sender), "Address is not KYCed");
+        Collection storage collection = collections[_collectionId];
+        require(collection.exists, "Collection does not exist");
+        if (collection.isMintingPaused) {
+            // if minting is paused, require address to be on allowlist
+            require(
+                collectionIdToAllowList[_collectionId][msg.sender] > 0,
+                "Minting is paused"
+            );
+        }
+        Tier storage tier = tiers[collection.tierName];
+        require(
+            collection.invocations < tier.maxInvocations,
+            "Max invocations reached"
+        );
+        require(tier.priceInWei <= msg.value, "Incorrect amount sent");
+
+        uint256 tokenId = (_collectionId * ONE_MILLION) +
+            collection.invocations;
+
+        // EFFECTS
+        collection.invocations++;
+        if (collection.isMintingPaused) {
+            collectionIdToAllowList[_collectionId][msg.sender]--;
+        }
 
         // INTERACTIONS
-        _mint(_to, _tokenId);
+        _mint(msg.sender, tokenId);
+        _splitFundsETH(_collectionId, tier.priceInWei);
 
-        emit Mint(_to, _tokenId);
+        emit Mint(msg.sender, tokenId);
+    }
+
+    /**
+     * @dev splits ETH funds between sender (if refund),
+     * FANtium, and athlete for a token purchased on
+     * collection `_collectionId`.
+     */
+    function _splitFundsETH(
+        uint256 _collectionId,
+        uint256 _pricePerTokenInWei
+    ) internal {
+        if (msg.value > 0) {
+            // send refund to sender
+            uint256 refund = msg.value - _pricePerTokenInWei;
+            if (refund > 0) {
+                payable(msg.sender).transfer(refund);
+            }
+            // split remaining funds between FANtium and athlete
+            (
+                uint256 fantiumRevenue_,
+                address fantiumAddress_,
+                uint256 athleteRevenue_,
+                address athleteAddress_
+            ) = getPrimaryRevenueSplits(_collectionId, _pricePerTokenInWei);
+            // FANtium payment
+            if (fantiumRevenue_ > 0) {
+                payable(fantiumAddress_).transfer(fantiumRevenue_);
+            }
+            // athlete payment
+            if (athleteRevenue_ > 0) {
+                payable(athleteAddress_).transfer(athleteRevenue_);
+            }
+        }
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -223,31 +393,28 @@ contract FantiumNFTV1 is
      * @dev token URIs are the concatenation of the collection base URI and the
      * token ID.
      */
-    function tokenURI(uint256 _tokenId)
-        public
-        view
-        override
-        returns (string memory)
-    {
-        string memory _baseURI = collections[_tokenId / ONE_MILLION]
-            .collectionBaseURI;
+    function tokenURI(
+        uint256 _tokenId
+    ) public view override onlyValidTokenId(_tokenId) returns (string memory) {
+        bytes memory collectionBaseURI = bytes(
+            collections[_tokenId / ONE_MILLION].collectionBaseURI
+        );
 
-        if (bytes(_baseURI).length == 0) {
-            _baseURI = baseURI;
+        if (collectionBaseURI.length != 0) {
+            return
+                string(
+                    bytes.concat(
+                        bytes(collectionBaseURI),
+                        bytes(_tokenId.toString())
+                    )
+                );
         }
-        return
-            string(bytes.concat(bytes(_baseURI), bytes(_tokenId.toString())));
-    }
 
-    /**
-     * @notice Returns true if the token is minted.
-     */
-    function exists(uint256 _tokenId) public view returns (bool) {
-        return _owners[_tokenId] != address(0);
+        return string(bytes.concat(bytes(baseURI), bytes(_tokenId.toString())));
     }
 
     /*//////////////////////////////////////////////////////////////
-                            MANAGER FUNCTIONS
+                        COLLECTION FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
     /**
@@ -269,23 +436,26 @@ contract FantiumNFTV1 is
         uint8 _athleteSecondarySalesPercentage,
         string memory _tierName
     )
-        public
-        onlyPlatformManager
+        external
+        whenNotPaused
+        onlyRole(PLATFORM_MANAGER_ROLE)
         onlyRoyaltySetContract
         onlyValidTier(_tierName)
+        onlyValidAddress(_athleteAddress)
     {
         uint256 collectionId = nextCollectionId;
+        collections[collectionId].exists = true;
         collections[collectionId].name = _collectionName;
         collections[collectionId].athleteName = _athleteName;
         collections[collectionId].collectionBaseURI = _collectionBaseURI;
         collections[collectionId].athleteAddress = _athleteAddress;
-        collections[collectionId].paused = true;
-        collections[collectionId].athleteAddress = _athleteAddress;
+        collections[collectionId].isMintingPaused = true;
         collections[collectionId]
             .athletePrimarySalesPercentage = _athletePrimarySalesPercentage;
         collections[collectionId]
             .athleteSecondarySalesPercentage = _athleteSecondarySalesPercentage;
-        collections[collectionId].tier = tiers[_tierName];
+        collections[collectionId].tierName = _tierName;
+        collections[collectionId].invocations = 1;
 
         nextCollectionId = collectionId + 1;
         emit CollectionUpdated(collectionId, FIELD_COLLECTION_CREATED);
@@ -297,7 +467,12 @@ contract FantiumNFTV1 is
     function updateCollectionName(
         uint256 _collectionId,
         string memory _collectionName
-    ) external onlyPlatformManager {
+    )
+        external
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
+        onlyRole(PLATFORM_MANAGER_ROLE)
+    {
         collections[_collectionId].name = _collectionName;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_NAME);
     }
@@ -308,54 +483,47 @@ contract FantiumNFTV1 is
     function updateCollectionAthleteAddress(
         uint256 _collectionId,
         address payable _athleteAddress
-    ) external onlyPlatformManager {
+    )
+        external
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
+        onlyValidAddress(_athleteAddress)
+        onlyRole(PLATFORM_MANAGER_ROLE)
+    {
         collections[_collectionId].athleteAddress = _athleteAddress;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ATHLETE_ADDRESS);
     }
 
     /**
-     * @notice Toggles paused state of collection `_collectionId`.
+     * @notice Toggles isMintingPaused state of collection `_collectionId`.
      */
-    function toggleCollectionIsPaused(uint256 _collectionId)
+    function toggleCollectionIsPaused(
+        uint256 _collectionId
+    )
         external
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
         onlyAthlete(_collectionId)
     {
-        collections[_collectionId].paused = !collections[_collectionId].paused;
+        collections[_collectionId].isMintingPaused = !collections[_collectionId]
+            .isMintingPaused;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_PAUSED);
-    }
-
-    /**
-     * @notice Updates price of collection `_collectionId` to be `_priceInWei`.
-     */
-    function updateCollectionPrice(uint256 _collectionId, uint256 _priceInWei)
-        external
-        onlyPlatformManager
-    {
-        collections[_collectionId].tier.priceInWei = _priceInWei;
-        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_PRICE);
-    }
-
-    /**
-     * @notice Updates collection maxInvocations for collection `_collectionId` to be
-     * `_maxInvocations`.
-     */
-    function updateCollectionMaxInvocations(
-        uint256 _collectionId,
-        uint24 _maxInvocations
-    ) external onlyPlatformManager {
-        collections[_collectionId].tier.maxInvocations = _maxInvocations;
-        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_MAX_INVOCATIONS);
     }
 
     /**
      * @notice Update Collection tier for collection `_collectionId` to be `_tierName`.
      */
-    function updateCollectionTier(uint256 _collectionId, string memory tierName)
+    function updateCollectionTier(
+        uint256 _collectionId,
+        string memory _tierName
+    )
         external
-        onlyPlatformManager
-        onlyValidTier(tierName)
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
+        onlyValidTier(_tierName)
+        onlyRole(PLATFORM_MANAGER_ROLE)
     {
-        collections[_collectionId].tier = tiers[tierName];
+        collections[_collectionId].tierName = _tierName;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_TIER);
     }
 
@@ -366,7 +534,12 @@ contract FantiumNFTV1 is
     function updateCollectionBaseURI(
         uint256 _collectionId,
         string memory _collectionBaseURI
-    ) external onlyPlatformManager {
+    )
+        external
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
+        onlyRole(PLATFORM_MANAGER_ROLE)
+    {
         collections[_collectionId].collectionBaseURI = _collectionBaseURI;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_BASE_URI);
     }
@@ -378,7 +551,12 @@ contract FantiumNFTV1 is
     function updateCollectionAthleteName(
         uint256 _collectionId,
         string memory _collectionAthleteName
-    ) external onlyPlatformManager {
+    )
+        external
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
+        onlyRole(PLATFORM_MANAGER_ROLE)
+    {
         collections[_collectionId].athleteName = _collectionAthleteName;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ATHLETE_NAME);
     }
@@ -397,7 +575,12 @@ contract FantiumNFTV1 is
     function updateCollectionAthletePrimaryMarketRoyaltyPercentage(
         uint256 _collectionId,
         uint256 _primaryMarketRoyalty
-    ) external onlyPlatformManager {
+    )
+        external
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
+        onlyRole(PLATFORM_MANAGER_ROLE)
+    {
         require(_primaryMarketRoyalty <= 95, "Max of 95%");
         collections[_collectionId].athletePrimarySalesPercentage = uint8(
             _primaryMarketRoyalty
@@ -422,7 +605,12 @@ contract FantiumNFTV1 is
     function updateCollectionAthleteSecondaryMarketRoyaltyPercentage(
         uint256 _collectionId,
         uint256 _secondMarketRoyalty
-    ) external onlyPlatformManager {
+    )
+        external
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
+        onlyRole(PLATFORM_MANAGER_ROLE)
+    {
         require(_secondMarketRoyalty <= 95, "Max of 95%");
         collections[_collectionId].athleteSecondarySalesPercentage = uint8(
             _secondMarketRoyalty
@@ -434,10 +622,9 @@ contract FantiumNFTV1 is
     }
 
     //update baseURI only platform manager
-    function updateBaseURI(string memory _baseURI)
-        external
-        onlyPlatformManager
-    {
+    function updateBaseURI(
+        string memory _baseURI
+    ) external whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
         baseURI = _baseURI;
         emit PlatformUpdated(FILED_FANTIUM_BASE_URI);
     }
@@ -447,26 +634,16 @@ contract FantiumNFTV1 is
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Updates the platform secondary market royalties to be
-     * `_secondMarketRoyaltyBPS` percent.
-     * @param _fantiumSecondarySalesBPS Percent of secondary sales revenue that will
-     * be sent to the platform. This must be less than
-     * or equal to 95 percent.
-     */
-    function updateFantiumSecondaryMarketRoyaltyBPS(
-        uint256 _fantiumSecondarySalesBPS
-    ) external onlyPlatformManager {
-        require(_fantiumSecondarySalesBPS <= 9500, "Max of 95%");
-        fantiumSecondarySalesBPS = uint256(_fantiumSecondarySalesBPS);
-        emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_MARKET_ROYALTY_BPS);
-    }
-
-    /**
      * @notice Updates the platform address to be `_fantiumPrimarySalesAddress`.
      */
     function updateFantiumPrimarySaleAddress(
         address payable _fantiumPrimarySalesAddress
-    ) external onlyPlatformManager {
+    )
+        external
+        whenNotPaused
+        onlyRole(PLATFORM_MANAGER_ROLE)
+        onlyValidAddress(_fantiumPrimarySalesAddress)
+    {
         fantiumPrimarySalesAddress = _fantiumPrimarySalesAddress;
         emit PlatformUpdated(FIELD_FANTIUM_PRIMARY_ADDRESS);
     }
@@ -478,9 +655,29 @@ contract FantiumNFTV1 is
     // update fantium secondary sales address
     function updateFantiumSecondarySaleAddress(
         address payable _fantiumSecondarySalesAddress
-    ) external onlyPlatformManager {
+    )
+        external
+        whenNotPaused
+        onlyRole(PLATFORM_MANAGER_ROLE)
+        onlyValidAddress(_fantiumSecondarySalesAddress)
+    {
         fantiumSecondarySalesAddress = _fantiumSecondarySalesAddress;
         emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_ADDRESS);
+    }
+
+    /**
+     * @notice Updates the platform secondary market royalties to be
+     * `_secondMarketRoyaltyBPS` percent.
+     * @param _fantiumSecondarySalesBPS Percent of secondary sales revenue that will
+     * be sent to the platform. This must be less than
+     * or equal to 95 percent.
+     */
+    function updateFantiumSecondaryMarketRoyaltyBPS(
+        uint256 _fantiumSecondarySalesBPS
+    ) external whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
+        require(_fantiumSecondarySalesBPS <= 9500, "Max of 95%");
+        fantiumSecondarySalesBPS = uint256(_fantiumSecondarySalesBPS);
+        emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_MARKET_ROYALTY_BPS);
     }
 
     /**
@@ -495,7 +692,9 @@ contract FantiumNFTV1 is
         uint256 _priceInWei,
         uint24 _maxInvocations,
         uint8 _tournamentEarningPercentage
-    ) external onlyPlatformManager {
+    ) external whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
+        require(_maxInvocations < ONE_MILLION, "max invocation ");
+
         tiers[_name] = Tier(
             _name,
             _priceInWei,
@@ -504,79 +703,23 @@ contract FantiumNFTV1 is
         );
     }
 
-    // update fantium minter address
-    function updateFantiumMinterAddress(address _fantiumMinterAddress)
-        external
-        onlyPlatformManager
-    {
-        fantiumMinterAddress = _fantiumMinterAddress;
-        emit PlatformUpdated(FIELD_FANTIUM_MINTER_ADDRESS);
-    }
+    /**
+     * @notice Update contract pause status to `_paused`.
+     */
 
+    function updateContractPaused(
+        bool _paused
+    ) external onlyRole(PLATFORM_MANAGER_ROLE) {
+        if (_paused) {
+            _pause();
+        } else {
+            _unpause();
+        }
+    }
 
     /*//////////////////////////////////////////////////////////////
                                  VIEWS
     //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice Gets the collection ID for token ID `_tokenId`.
-     * @param _tokenId Token ID to be queried.
-     * @return collectionId Collection ID for token ID `_tokenId`.
-     */
-    function getCollectionForTokenId(uint256 _tokenId)
-        external
-        view
-        returns (Collection memory)
-    {
-        uint256 collectionId = _tokenId / ONE_MILLION;
-        Collection memory collection = getCollection(collectionId);
-        return collection;
-    }
-
-    // get collection for collectionId
-    function getCollection(uint256 _collectionId)
-        public
-        view
-        returns (Collection memory)
-    {
-        return collections[_collectionId];
-    }
-
-    // get all collection properties for collectionId
-    function getCollectionData(uint256 _collectionId)
-        public
-        view
-        returns (
-            uint24 invocations,
-            uint24 maxInvocations,
-            uint256 priceInWei,
-            bool paused,
-            string memory name,
-            string memory athleteName,
-            string memory collectionBaseURI,
-            address payable athleteAddress,
-            uint8 athletePrimarySalesPercentage,
-            uint8 athleteSecondarySalesPercentage,
-            string memory tierName,
-            uint8 tournamentEarningPercentage
-        )
-    {
-        Collection memory collection = collections[_collectionId];
-        return (
-            collection.invocations,
-            collection.tier.maxInvocations,
-            collection.tier.priceInWei,
-            collection.paused,
-            collection.name,
-            collection.athleteName,
-            collection.collectionBaseURI,
-            collection.athleteAddress,
-            collection.athletePrimarySalesPercentage,
-            collection.athleteSecondarySalesPercentage,
-            collection.tier.name,
-            collection.tier.tournamentEarningPercentage
-        );
-    }
 
     /**
      * @notice View function that returns appropriate revenue splits between
@@ -597,7 +740,10 @@ contract FantiumNFTV1 is
      * to the contract performing the revenue split to handle this
      * appropriately.
      */
-    function getPrimaryRevenueSplits(uint256 _collectionId, uint256 _price)
+    function getPrimaryRevenueSplits(
+        uint256 _collectionId,
+        uint256 _price
+    )
         public
         view
         returns (
@@ -615,16 +761,13 @@ contract FantiumNFTV1 is
             (_price * uint256(collection.athletePrimarySalesPercentage)) /
             100;
         uint256 collectionFunds;
-        unchecked {
-            // fantiumRevenue_ is always <=25, so guaranteed to never underflow
-            collectionFunds = _price - athleteRevenue_;
-        }
 
-        unchecked {
-            // collectionIdToAdditionalPayeePrimarySalesPercentage is always
-            // <=100, so guaranteed to never underflow
-            fantiumRevenue_ = collectionFunds;
-        }
+        // fantiumRevenue_ is always <=25, so guaranteed to never underflow
+        collectionFunds = _price - athleteRevenue_;
+
+        // collectionIdToAdditionalPayeePrimarySalesPercentage is always
+        // <=100, so guaranteed to never underflow
+        fantiumRevenue_ = collectionFunds;
 
         // set addresses from storage
         fantiumAddress_ = fantiumPrimarySalesAddress;
@@ -645,20 +788,20 @@ contract FantiumNFTV1 is
      * @dev reverts if invalid _tokenId
      * @dev only returns recipients that have a non-zero BPS allocation
      */
-    function getRoyalties(uint256 _tokenId)
+    function getRoyalties(
+        uint256 _tokenId
+    )
         external
         view
-        returns (
-            // onlyValidTokenId(_tokenId)
-            address payable[] memory recipients,
-            uint256[] memory bps
-        )
+        onlyValidTokenId(_tokenId)
+        returns (address payable[] memory recipients, uint256[] memory bps)
     {
         // initialize arrays with maximum potential length
         recipients = new address payable[](2);
         bps = new uint256[](2);
 
         uint256 collectionId = _tokenId / ONE_MILLION;
+
         Collection storage collection = collections[collectionId];
         // load values into memory
         uint256 royaltyPercentageForAthlete = collection
@@ -685,11 +828,25 @@ contract FantiumNFTV1 is
                             OS FILTER
     //////////////////////////////////////////////////////////////*/
 
+    function setApprovalForAll(
+        address operator,
+        bool approved
+    ) public override whenNotPaused onlyAllowedOperatorApproval(operator) {
+        super.setApprovalForAll(operator, approved);
+    }
+
+    function approve(
+        address operator,
+        uint256 tokenId
+    ) public override whenNotPaused onlyAllowedOperatorApproval(operator) {
+        super.approve(operator, tokenId);
+    }
+
     function transferFrom(
         address from,
         address to,
         uint256 tokenId
-    ) public override onlyAllowedOperator(from) {
+    ) public override whenNotPaused onlyAllowedOperator(from) {
         super.transferFrom(from, to, tokenId);
     }
 
@@ -697,7 +854,7 @@ contract FantiumNFTV1 is
         address from,
         address to,
         uint256 tokenId
-    ) public override onlyAllowedOperator(from) {
+    ) public override whenNotPaused onlyAllowedOperator(from) {
         super.safeTransferFrom(from, to, tokenId);
     }
 
@@ -706,7 +863,7 @@ contract FantiumNFTV1 is
         address to,
         uint256 tokenId,
         bytes memory data
-    ) public override onlyAllowedOperator(from) {
+    ) public override whenNotPaused onlyAllowedOperator(from) {
         super.safeTransferFrom(from, to, tokenId, data);
     }
 }

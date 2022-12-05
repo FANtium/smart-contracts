@@ -1,5 +1,10 @@
 [
   {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -225,18 +230,12 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "address",
-        "name": "previousOwner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
+        "internalType": "bytes32",
+        "name": "_field",
+        "type": "bytes32"
       }
     ],
-    "name": "OwnershipTransferred",
+    "name": "PlatformUpdated",
     "type": "event"
   },
   {
@@ -245,11 +244,73 @@
       {
         "indexed": true,
         "internalType": "bytes32",
-        "name": "_field",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "previousAdminRole",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "newAdminRole",
         "type": "bytes32"
       }
     ],
-    "name": "PlatformUpdated",
+    "name": "RoleAdminChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "RoleGranted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "RoleRevoked",
     "type": "event"
   },
   {
@@ -291,34 +352,42 @@
     "type": "event"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "DEFAULT_ADMIN_ROLE",
+    "outputs": [
       {
-        "internalType": "uint256",
-        "name": "_collectionId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_address",
-        "type": "address"
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
       }
     ],
-    "name": "addAddressToAllowList",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "PLATFORM_MANAGER_ROLE",
+    "outputs": [
       {
-        "internalType": "address",
-        "name": "_address",
-        "type": "address"
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
       }
     ],
-    "name": "addAddressToKYC",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "UPGRADER_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -368,7 +437,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "to",
+        "name": "operator",
         "type": "address"
       },
       {
@@ -402,24 +471,13 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "collectionIdToAllowList",
+    "inputs": [],
+    "name": "baseURI",
     "outputs": [
       {
-        "internalType": "bool",
+        "internalType": "string",
         "name": "",
-        "type": "bool"
+        "type": "string"
       }
     ],
     "stateMutability": "view",
@@ -441,35 +499,18 @@
         "type": "uint24"
       },
       {
-        "components": [
-          {
-            "internalType": "string",
-            "name": "name",
-            "type": "string"
-          },
-          {
-            "internalType": "uint256",
-            "name": "priceInWei",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint24",
-            "name": "maxInvocations",
-            "type": "uint24"
-          },
-          {
-            "internalType": "uint8",
-            "name": "tournamentEarningPercentage",
-            "type": "uint8"
-          }
-        ],
-        "internalType": "struct FantiumNFTV1.Tier",
-        "name": "tier",
-        "type": "tuple"
+        "internalType": "string",
+        "name": "tierName",
+        "type": "string"
       },
       {
         "internalType": "bool",
-        "name": "paused",
+        "name": "exists",
+        "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "isMintingPaused",
         "type": "bool"
       },
       {
@@ -508,31 +549,12 @@
   },
   {
     "inputs": [],
-    "name": "collectionsManagerAddress",
+    "name": "fantiumMinterAddress",
     "outputs": [
       {
         "internalType": "address",
         "name": "",
         "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_tokenId",
-        "type": "uint256"
-      }
-    ],
-    "name": "exists",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -614,35 +636,18 @@
             "type": "uint24"
           },
           {
-            "components": [
-              {
-                "internalType": "string",
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "internalType": "uint256",
-                "name": "priceInWei",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint24",
-                "name": "maxInvocations",
-                "type": "uint24"
-              },
-              {
-                "internalType": "uint8",
-                "name": "tournamentEarningPercentage",
-                "type": "uint8"
-              }
-            ],
-            "internalType": "struct FantiumNFTV1.Tier",
-            "name": "tier",
-            "type": "tuple"
+            "internalType": "string",
+            "name": "tierName",
+            "type": "string"
           },
           {
             "internalType": "bool",
-            "name": "paused",
+            "name": "exists",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "isMintingPaused",
             "type": "bool"
           },
           {
@@ -676,83 +681,9 @@
             "type": "uint8"
           }
         ],
-        "internalType": "struct FantiumNFTV1.Collection",
+        "internalType": "struct IFantiumNFT.Collection",
         "name": "",
         "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_collectionId",
-        "type": "uint256"
-      }
-    ],
-    "name": "getCollectionData",
-    "outputs": [
-      {
-        "internalType": "uint24",
-        "name": "invocations",
-        "type": "uint24"
-      },
-      {
-        "internalType": "uint24",
-        "name": "maxInvocations",
-        "type": "uint24"
-      },
-      {
-        "internalType": "uint256",
-        "name": "priceInWei",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "paused",
-        "type": "bool"
-      },
-      {
-        "internalType": "string",
-        "name": "name",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "athleteName",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "collectionBaseURI",
-        "type": "string"
-      },
-      {
-        "internalType": "address payable",
-        "name": "athleteAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "uint8",
-        "name": "athletePrimarySalesPercentage",
-        "type": "uint8"
-      },
-      {
-        "internalType": "uint8",
-        "name": "athleteSecondarySalesPercentage",
-        "type": "uint8"
-      },
-      {
-        "internalType": "string",
-        "name": "tierName",
-        "type": "string"
-      },
-      {
-        "internalType": "uint8",
-        "name": "tournamentEarningPercentage",
-        "type": "uint8"
       }
     ],
     "stateMutability": "view",
@@ -776,35 +707,18 @@
             "type": "uint24"
           },
           {
-            "components": [
-              {
-                "internalType": "string",
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "internalType": "uint256",
-                "name": "priceInWei",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint24",
-                "name": "maxInvocations",
-                "type": "uint24"
-              },
-              {
-                "internalType": "uint8",
-                "name": "tournamentEarningPercentage",
-                "type": "uint8"
-              }
-            ],
-            "internalType": "struct FantiumNFTV1.Tier",
-            "name": "tier",
-            "type": "tuple"
+            "internalType": "string",
+            "name": "tierName",
+            "type": "string"
           },
           {
             "internalType": "bool",
-            "name": "paused",
+            "name": "exists",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "isMintingPaused",
             "type": "bool"
           },
           {
@@ -838,7 +752,7 @@
             "type": "uint8"
           }
         ],
-        "internalType": "struct FantiumNFTV1.Collection",
+        "internalType": "struct IFantiumNFT.Collection",
         "name": "",
         "type": "tuple"
       }
@@ -888,6 +802,25 @@
   {
     "inputs": [
       {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getRoleAdmin",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "_tokenId",
         "type": "uint256"
@@ -904,6 +837,89 @@
         "internalType": "uint256[]",
         "name": "bps",
         "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_tierName",
+        "type": "string"
+      }
+    ],
+    "name": "getTier",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "priceInWei",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint24",
+            "name": "maxInvocations",
+            "type": "uint24"
+          },
+          {
+            "internalType": "uint8",
+            "name": "tournamentEarningPercentage",
+            "type": "uint8"
+          }
+        ],
+        "internalType": "struct IFantiumNFT.Tier",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "grantRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "hasRole",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -931,49 +947,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_address",
-        "type": "address"
-      }
-    ],
-    "name": "isAddressKYCed",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_collectionId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_address",
-        "type": "address"
-      }
-    ],
-    "name": "isAddressOnAllowList",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "owner",
         "type": "address"
       },
@@ -995,38 +968,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "kycManagerAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "kycedAddresses",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -1035,18 +976,12 @@
       },
       {
         "internalType": "uint256",
-        "name": "_collectionId",
-        "type": "uint256"
-      }
-    ],
-    "name": "mint",
-    "outputs": [
-      {
-        "internalType": "uint256",
         "name": "_tokenId",
         "type": "uint256"
       }
     ],
+    "name": "mintTo",
+    "outputs": [],
     "stateMutability": "payable",
     "type": "function"
   },
@@ -1058,19 +993,6 @@
         "internalType": "string",
         "name": "",
         "type": "string"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "owner",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -1111,17 +1033,17 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_collectionId",
-        "type": "uint256"
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
       },
       {
         "internalType": "address",
-        "name": "_address",
+        "name": "account",
         "type": "address"
       }
     ],
-    "name": "removeAddressFromAllowList",
+    "name": "renounceRole",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1129,19 +1051,17 @@
   {
     "inputs": [
       {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
         "internalType": "address",
-        "name": "_address",
+        "name": "account",
         "type": "address"
       }
     ],
-    "name": "removeAddressFromKYC",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "renounceOwnership",
+    "name": "revokeRole",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1282,19 +1202,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "tiersSet",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -1352,12 +1259,12 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
+        "internalType": "string",
+        "name": "_baseURI",
+        "type": "string"
       }
     ],
-    "name": "transferOwnership",
+    "name": "updateBaseURI",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1460,24 +1367,6 @@
         "type": "uint256"
       },
       {
-        "internalType": "uint24",
-        "name": "_maxInvocations",
-        "type": "uint24"
-      }
-    ],
-    "name": "updateCollectionMaxInvocations",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_collectionId",
-        "type": "uint256"
-      },
-      {
         "internalType": "string",
         "name": "_collectionName",
         "type": "string"
@@ -1496,12 +1385,12 @@
         "type": "uint256"
       },
       {
-        "internalType": "uint256",
-        "name": "_priceInWei",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "_tierName",
+        "type": "string"
       }
     ],
-    "name": "updateCollectionPrice",
+    "name": "updateCollectionTier",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1509,17 +1398,12 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_collectionId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "string",
-        "name": "tierName",
-        "type": "string"
+        "internalType": "address",
+        "name": "_fantiumMinterAddress",
+        "type": "address"
       }
     ],
-    "name": "updateCollectionTier",
+    "name": "updateFantiumMinterAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
