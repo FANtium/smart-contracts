@@ -244,7 +244,9 @@ contract FantiumNFTV1 is
      * @notice Add address to KYC list.
      * @param _address address to be added to KYC list.
      */
-    function addAddressToKYC(address _address) external onlyKycManager {
+    function addAddressToKYC(
+        address _address
+    ) external whenNotPaused onlyKycManager {
         kycedAddresses[_address] = true;
         emit AddressAddedToKYC(_address);
     }
@@ -253,7 +255,9 @@ contract FantiumNFTV1 is
      * @notice Remove address from KYC list.
      * @param _address address to be removed from KYC list.
      */
-    function removeAddressFromKYC(address _address) external onlyKycManager {
+    function removeAddressFromKYC(
+        address _address
+    ) external whenNotPaused onlyKycManager {
         kycedAddresses[_address] = false;
         emit AddressRemovedFromKYC(_address);
     }
@@ -281,7 +285,7 @@ contract FantiumNFTV1 is
         uint256 _collectionId,
         address _address,
         uint256 _allocation
-    ) public onlyRole(PLATFORM_MANAGER_ROLE) {
+    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
         collectionIdToAllowList[_collectionId][_address] = _allocation;
         emit AddressAddedToAllowList(_collectionId, _address);
     }
@@ -295,7 +299,7 @@ contract FantiumNFTV1 is
         uint256 _collectionId,
         address _address,
         bool _completely
-    ) public onlyRole(PLATFORM_MANAGER_ROLE) {
+    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
         if (_completely) {
             collectionIdToAllowList[_collectionId][_address] = 0;
         } else {
@@ -703,7 +707,9 @@ contract FantiumNFTV1 is
      * @notice Update contract pause status to `_paused`.
      */
 
-    function updateContractPaused(bool _paused) external onlyRole(PLATFORM_MANAGER_ROLE) {
+    function updateContractPaused(
+        bool _paused
+    ) external onlyRole(PLATFORM_MANAGER_ROLE) {
         if (_paused) {
             _pause();
         } else {

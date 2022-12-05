@@ -82,9 +82,6 @@ describe("FANtiumNFT", () => {
     /// CONTRACT PAUSING
 
     it("checks that PLATFORM MANAGER can pause contract", async () => {
-        // check contract is not paused
-        expect(await nftContract.paused()).to.equal(false)
-
         // pause contract
         await nftContract.connect(platformManager).updateContractPaused(true)
 
