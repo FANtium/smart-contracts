@@ -86,8 +86,8 @@ contract FantiumNFTV1 is
 
     struct Collection {
         bool exists;
-        bool isActivated;
-        bool isMintingPaused;
+        bool isMintable;
+        bool isPaused;
         uint24 invocations;
         uint256 priceInWei;
         uint256 maxInvocations;
@@ -314,12 +314,12 @@ contract FantiumNFTV1 is
         require(isAddressKYCed(msg.sender), "Address is not KYCed");
         Collection storage collection = collections[_collectionId];
         require(collection.exists, "Collection does not exist");
-        require(collection.isActivated, "Collection is paused");
-        if (collection.isMintingPaused) {
+        require(collection.isMintable, "Collection is not mintable");
+        if (collection.isPaused) {
             // if minting is paused, require address to be on allowlist
             require(
                 collectionIdToAllowList[_collectionId][msg.sender] > 0,
-                "Minting is paused"
+                "Collection is paused"
             );
         }
         require(
@@ -336,13 +336,19 @@ contract FantiumNFTV1 is
 
         // EFFECTS
         collection.invocations++;
-        if (collection.isMintingPaused) {
+        if (collection.isPaused) {
             collectionIdToAllowList[_collectionId][msg.sender]--;
         }
 
         // INTERACTIONS
+        bool success = _splitFunds(
+            collection.priceInWei,
+            _collectionId,
+            _paymentAmount,
+            msg.sender
+        );
+        require(success, "Splitting funds failed");
         _mint(msg.sender, tokenId);
-        _splitFunds(collection.priceInWei, _collectionId, _paymentAmount);
 
         emit Mint(msg.sender, tokenId);
     }
@@ -355,39 +361,38 @@ contract FantiumNFTV1 is
     function _splitFunds(
         uint256 _pricePerTokenInWei,
         uint256 _collectionId,
-        uint256 _amount
-    ) internal {
-        if (msg.value > 0) {
-            // send refund to sender
-            if (_amount >= _pricePerTokenInWei) {
-                // split funds between FANtium and athlete
-                (
-                    uint256 fantiumRevenue_,
-                    address fantiumAddress_,
-                    uint256 athleteRevenue_,
-                    address athleteAddress_
-                ) = getPrimaryRevenueSplits(_collectionId, _pricePerTokenInWei);
-                // FANtium payment
-                if (fantiumRevenue_ > 0) {
-                    IERC20(erc20PaymentToken).transferFrom(
-                        msg.sender,
-                        fantiumAddress_,
-                        fantiumRevenue_
-                    );
-                }
-                // athlete payment
-                if (athleteRevenue_ > 0) {
-                    IERC20(erc20PaymentToken).transferFrom(
-                        msg.sender,
-                        athleteAddress_,
-                        athleteRevenue_
-                    );
-                }
+        uint256 _amount,
+        address _sender
+    ) internal returns (bool success_) {
+        if (_amount >= _pricePerTokenInWei) {
+            // split funds between FANtium and athlete
+            (
+                uint256 fantiumRevenue_,
+                address fantiumAddress_,
+                uint256 athleteRevenue_,
+                address athleteAddress_
+            ) = getPrimaryRevenueSplits(_collectionId, _pricePerTokenInWei);
+            // FANtium payment
+            if (fantiumRevenue_ > 0) {
+                success_ = IERC20(erc20PaymentToken).transferFrom(
+                    _sender,
+                    fantiumAddress_,
+                    fantiumRevenue_
+                );
             }
+            // athlete payment
+            if (athleteRevenue_ > 0) {
+                success_ = IERC20(erc20PaymentToken).transferFrom(
+                    _sender,
+                    athleteAddress_,
+                    athleteRevenue_
+                );
+            }
+            return success_;
         }
     }
 
-     /**
+    /**
      * @notice View function that returns appropriate revenue splits between
      * different FANtium, athlete given a sale price of `_price` on collection `_collectionId`.
      * This always returns two revenue amounts and two addresses, but if a
@@ -504,8 +509,8 @@ contract FantiumNFTV1 is
 
         collections[collectionId].invocations = 1;
         collections[collectionId].exists = true;
-        collections[collectionId].isActivated = false;
-        collections[collectionId].isMintingPaused = true;
+        collections[collectionId].isMintable = false;
+        collections[collectionId].isPaused = true;
 
         nextCollectionId = collectionId + 1;
         emit CollectionUpdated(collectionId, FIELD_COLLECTION_CREATED);
@@ -531,7 +536,7 @@ contract FantiumNFTV1 is
     /**
      * @notice Toggles isMintingPaused state of collection `_collectionId`.
      */
-    function toggleCollectionIsPaused(
+    function toggleCollectionPaused(
         uint256 _collectionId
     )
         external
@@ -539,9 +544,25 @@ contract FantiumNFTV1 is
         onlyValidCollectionId(_collectionId)
         onlyAthlete(_collectionId)
     {
-        collections[_collectionId].isMintingPaused = !collections[_collectionId]
-            .isMintingPaused;
+        collections[_collectionId].isPaused = !collections[_collectionId]
+            .isPaused;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_PAUSED);
+    }
+
+    /**
+     * @notice Toggles isMintingPaused state of collection `_collectionId`.
+     */
+    function toggleCollectionMintable(
+        uint256 _collectionId
+    )
+        external
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
+        onlyAthlete(_collectionId)
+    {
+        collections[_collectionId].isMintable = !collections[_collectionId]
+            .isMintable;
+        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ACTIVATED);
     }
 
     /**
@@ -633,22 +654,6 @@ contract FantiumNFTV1 is
         emit PlatformUpdated(FILED_FANTIUM_BASE_URI);
     }
 
-    /**
-     * @notice Toggles isMintingPaused state of collection `_collectionId`.
-     */
-    function toggleCollectionActivated(
-        uint256 _collectionId
-    )
-        external
-        whenNotPaused
-        onlyValidCollectionId(_collectionId)
-        onlyAthlete(_collectionId)
-    {
-        collections[_collectionId].isActivated = !collections[_collectionId]
-            .isActivated;
-        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ACTIVATED);
-    }
-
     /*///////////////////////////////////////////////////////////////
                         PLATFORM FUNCTIONS
     //////////////////////////////////////////////////////////////*/
@@ -712,6 +717,15 @@ contract FantiumNFTV1 is
         } else {
             _unpause();
         }
+    }
+
+    /**---------PAYMENT------------ */
+
+    /**
+     * @notice approves the contract to spend the payment token
+     */
+    function approvePaymentToken() external {
+        IERC20(erc20PaymentToken).approve(msg.sender, type(uint256).max);
     }
 
     /**
