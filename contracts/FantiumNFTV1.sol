@@ -272,8 +272,8 @@ contract FantiumNFTV1 is
         uint256 _collectionId,
         address _address,
         uint256 _allocation
-    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
-        collectionIdToAllowList[_collectionId][_address] = _allocation;
+    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) onlyValidCollectionId(_collectionId) {
+        collectionIdToAllowList[_collectionId][_address] += _allocation;
         emit AddressAddedToAllowList(_collectionId, _address);
     }
 
@@ -286,7 +286,7 @@ contract FantiumNFTV1 is
         uint256 _collectionId,
         address _address,
         bool _completely
-    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
+    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) onlyValidCollectionId(_collectionId) {
         if (_completely) {
             collectionIdToAllowList[_collectionId][_address] = 0;
         } else {
