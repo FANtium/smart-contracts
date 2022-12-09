@@ -35,6 +35,10 @@ const config: HardhatUserConfig = {
       accounts: ["0x" + PRIVATE_KEY],
       url: POLYGON_MUMBAI_RPC_PROVIDER,
     },
+    goerli: {
+      url: "https://goerli.infura.io/v3/3c43c6fdb9c94a0ebd60ba9479abde96",
+      accounts: ["0x" + PRIVATE_KEY]
+    }
   },
   etherscan: {
     apiKey: {

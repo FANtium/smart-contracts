@@ -1,6 +1,1 @@
-{
-    "nftProxy": "0x6eB4dBE9A83Ca69b8191b7c5CBC08a1ed6C13F4f",
-    "nftImplementation": "0xb7Dee90E0a9FD3788EB327D9Af8967282C187988",
-    "minterProxy": "0x864Dbc522e74f36A116e25B3F9141F53dFD3D852",
-    "minterImplementation": "0x8366C48e01CE0589fEC7762ac9dC220d2E8B1f43"
-}
+{"nftProxy":"0xef905d0B903D8394De3b88fe1d157DB3d94fe1DD","nftImplementation":"0xFE6b915BaC132AE0D7960Ea99661e7d6BD8ad9Bd"}
