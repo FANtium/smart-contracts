@@ -92,7 +92,6 @@ contract FantiumNFTV1 is
         uint256 priceInWei;
         uint256 maxInvocations;
         uint8 tournamentEarningPercentage;
-        string collectionBaseURI;
         address payable athleteAddress;
         uint8 athletePrimarySalesPercentage;
         uint8 athleteSecondarySalesPercentage;
@@ -388,6 +387,61 @@ contract FantiumNFTV1 is
         }
     }
 
+     /**
+     * @notice View function that returns appropriate revenue splits between
+     * different FANtium, athlete given a sale price of `_price` on collection `_collectionId`.
+     * This always returns two revenue amounts and two addresses, but if a
+     * revenue is zero for athlete, the corresponding
+     * address returned will also be null (for gas optimization).
+     * Does not account for refund if user overpays for a token
+     * @param _collectionId collection ID to be queried.
+     * @param _price Sale price of token.
+     * @return fantiumRevenue_ amount of revenue to be sent to FANtium
+     * @return fantiumAddress_ address to send FANtium revenue to
+     * @return athleteRevenue_ amount of revenue to be sent to athlete
+     * @return athleteAddress_ address to send athlete revenue to. Will be null
+     * if no revenue is due to athlete (gas optimization).
+     * @dev this always returns 2 addresses and 2 revenues, but if the
+     * revenue is zero, the corresponding address will be address(0). It is up
+     * to the contract performing the revenue split to handle this
+     * appropriately.
+     */
+    function getPrimaryRevenueSplits(
+        uint256 _collectionId,
+        uint256 _price
+    )
+        public
+        view
+        returns (
+            uint256 fantiumRevenue_,
+            address payable fantiumAddress_,
+            uint256 athleteRevenue_,
+            address payable athleteAddress_
+        )
+    {
+        // get athlete address & revenue from collection
+        Collection memory collection = collections[_collectionId];
+
+        // calculate revenues
+        athleteRevenue_ =
+            (_price * uint256(collection.athletePrimarySalesPercentage)) /
+            100;
+        uint256 collectionFunds;
+
+        // fantiumRevenue_ is always <=25, so guaranteed to never underflow
+        collectionFunds = _price - athleteRevenue_;
+
+        // collectionIdToAdditionalPayeePrimarySalesPercentage is always
+        // <=100, so guaranteed to never underflow
+        fantiumRevenue_ = collectionFunds;
+
+        // set addresses from storage
+        fantiumAddress_ = fantiumPrimarySalesAddress;
+        if (athleteRevenue_ > 0) {
+            athleteAddress_ = collection.athleteAddress;
+        }
+    }
+
     /*//////////////////////////////////////////////////////////////
                                  TOKEN
     //////////////////////////////////////////////////////////////*/
@@ -400,21 +454,14 @@ contract FantiumNFTV1 is
     function tokenURI(
         uint256 _tokenId
     ) public view override onlyValidTokenId(_tokenId) returns (string memory) {
-        bytes memory collectionBaseURI = bytes(
-            collections[_tokenId / ONE_MILLION].collectionBaseURI
-        );
-
-        if (collectionBaseURI.length != 0) {
-            return
-                string(
-                    bytes.concat(
-                        bytes(collectionBaseURI),
-                        bytes(_tokenId.toString())
-                    )
-                );
-        }
-
-        return string(bytes.concat(bytes(baseURI), bytes(_tokenId.toString())));
+        return
+            string(
+                bytes.concat(
+                    bytes(baseURI),
+                    bytes(_tokenId.toString()),
+                    bytes(".json")
+                )
+            );
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -423,7 +470,6 @@ contract FantiumNFTV1 is
 
     /**
      * @notice Adds new collection.
-     * @param _collectionBaseURI Base URI of the collection.
      * @param _athleteAddress Address of the athlete.
      * @param _athletePrimarySalesPercentage Primary sales percentage of the athlete.
      * @param _athleteSecondarySalesPercentage Secondary sales percentage of the athlete.
@@ -432,7 +478,6 @@ contract FantiumNFTV1 is
      * @param _tournamentEarningPercentage Tournament earning percentage.
      */
     function addCollection(
-        string memory _collectionBaseURI,
         address payable _athleteAddress,
         uint8 _athletePrimarySalesPercentage,
         uint8 _athleteSecondarySalesPercentage,
@@ -447,7 +492,6 @@ contract FantiumNFTV1 is
         onlyValidAddress(_athleteAddress)
     {
         uint256 collectionId = nextCollectionId;
-        collections[collectionId].collectionBaseURI = _collectionBaseURI;
         collections[collectionId].athleteAddress = _athleteAddress;
         collections[collectionId]
             .athletePrimarySalesPercentage = _athletePrimarySalesPercentage;
@@ -498,23 +542,6 @@ contract FantiumNFTV1 is
         collections[_collectionId].isMintingPaused = !collections[_collectionId]
             .isMintingPaused;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_PAUSED);
-    }
-
-    /**
-     * @notice Updates collection baseURI for collection `_collectionId` to be
-     * `_collectionBaseURI`.
-     */
-    function updateCollectionBaseURI(
-        uint256 _collectionId,
-        string memory _collectionBaseURI
-    )
-        external
-        whenNotPaused
-        onlyValidCollectionId(_collectionId)
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
-        collections[_collectionId].collectionBaseURI = _collectionBaseURI;
-        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_BASE_URI);
     }
 
     /**
@@ -606,6 +633,22 @@ contract FantiumNFTV1 is
         emit PlatformUpdated(FILED_FANTIUM_BASE_URI);
     }
 
+    /**
+     * @notice Toggles isMintingPaused state of collection `_collectionId`.
+     */
+    function toggleCollectionActivated(
+        uint256 _collectionId
+    )
+        external
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
+        onlyAthlete(_collectionId)
+    {
+        collections[_collectionId].isActivated = !collections[_collectionId]
+            .isActivated;
+        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ACTIVATED);
+    }
+
     /*///////////////////////////////////////////////////////////////
                         PLATFORM FUNCTIONS
     //////////////////////////////////////////////////////////////*/
@@ -672,22 +715,6 @@ contract FantiumNFTV1 is
     }
 
     /**
-     * @notice Toggles isMintingPaused state of collection `_collectionId`.
-     */
-    function toggleCollectionActivated(
-        uint256 _collectionId
-    )
-        external
-        whenNotPaused
-        onlyValidCollectionId(_collectionId)
-        onlyAthlete(_collectionId)
-    {
-        collections[_collectionId].isActivated = !collections[_collectionId]
-            .isActivated;
-        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ACTIVATED);
-    }
-
-    /**
      * @notice Updates the erc20 Payment Token
      * @param _address address of ERC20 payment token
      */
@@ -701,61 +728,6 @@ contract FantiumNFTV1 is
     /*//////////////////////////////////////////////////////////////
                                  VIEWS
     //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice View function that returns appropriate revenue splits between
-     * different FANtium, athlete given a sale price of `_price` on collection `_collectionId`.
-     * This always returns two revenue amounts and two addresses, but if a
-     * revenue is zero for athlete, the corresponding
-     * address returned will also be null (for gas optimization).
-     * Does not account for refund if user overpays for a token
-     * @param _collectionId collection ID to be queried.
-     * @param _price Sale price of token.
-     * @return fantiumRevenue_ amount of revenue to be sent to FANtium
-     * @return fantiumAddress_ address to send FANtium revenue to
-     * @return athleteRevenue_ amount of revenue to be sent to athlete
-     * @return athleteAddress_ address to send athlete revenue to. Will be null
-     * if no revenue is due to athlete (gas optimization).
-     * @dev this always returns 2 addresses and 2 revenues, but if the
-     * revenue is zero, the corresponding address will be address(0). It is up
-     * to the contract performing the revenue split to handle this
-     * appropriately.
-     */
-    function getPrimaryRevenueSplits(
-        uint256 _collectionId,
-        uint256 _price
-    )
-        public
-        view
-        returns (
-            uint256 fantiumRevenue_,
-            address payable fantiumAddress_,
-            uint256 athleteRevenue_,
-            address payable athleteAddress_
-        )
-    {
-        // get athlete address & revenue from collection
-        Collection memory collection = collections[_collectionId];
-
-        // calculate revenues
-        athleteRevenue_ =
-            (_price * uint256(collection.athletePrimarySalesPercentage)) /
-            100;
-        uint256 collectionFunds;
-
-        // fantiumRevenue_ is always <=25, so guaranteed to never underflow
-        collectionFunds = _price - athleteRevenue_;
-
-        // collectionIdToAdditionalPayeePrimarySalesPercentage is always
-        // <=100, so guaranteed to never underflow
-        fantiumRevenue_ = collectionFunds;
-
-        // set addresses from storage
-        fantiumAddress_ = fantiumPrimarySalesAddress;
-        if (athleteRevenue_ > 0) {
-            athleteAddress_ = collection.athleteAddress;
-        }
-    }
 
     /**
      * @notice Gets royalty Basis Points (BPS) for token ID `_tokenId`.
