@@ -8,27 +8,20 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
+  const Mock20 = await ethers.getContractFactory("Mock20");
+  const mock20 = await Mock20.deploy();
+  await mock20.deployed();
+
   const FantiumNFTV1 = await ethers.getContractFactory("FantiumNFTV1");
-  const nftContract = await upgrades.deployProxy(FantiumNFTV1, ["FANtium", "FAN"], { initializer: 'initialize', kind: 'uups' })
+  const nftContract = await upgrades.deployProxy(FantiumNFTV1, ["FANtium", "FAN", deployer.address], { initializer: 'initialize', kind: 'uups'})
   await nftContract.deployed();
-
-  const FantiumMinterV1 = await ethers.getContractFactory("FantiumMinterV1");
-  const minterContract = await upgrades.deployProxy(FantiumMinterV1, [], { initializer: 'initialize', kind: 'uups' })
-  await minterContract.deployed();
-
-  // // Set the FantiumMinterV1 contract as the minter for the FantiumNFTV1 contract
-  // await nftContract.updateFantiumMinterAddress(minterContract.address)
-
-  // // Set the FantiumNFTV1 contract as the nft contract for the FantiumMinterV1 contract
-  // await minterContract.updateFantiumNFTAddress(nftContract.address)
 
   console.log("FantiumNFTV1 deployed to:", nftContract.address);
 
   const data = {
     "nftProxy": nftContract.address,
     "nftImplementation": await upgrades.erc1967.getImplementationAddress(nftContract.address),
-    "minterProxy": minterContract.address,
-    "minterImplementation": await upgrades.erc1967.getImplementationAddress(minterContract.address)
+    "mock20": mock20.address
   }
   writeFileSync(join(__dirname, './contractAddresses.json'), JSON.stringify(data), {
     flag: 'w',

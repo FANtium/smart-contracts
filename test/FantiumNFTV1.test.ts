@@ -3,10 +3,12 @@ import { expect } from 'chai'
 import { beforeEach } from 'mocha'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { FantiumNFTV1 } from '../typechain-types/contracts/FantiumNFTV1'
+import { Mock20 } from '../typechain-types/contracts/Mock20'
 
 describe("FANtiumNFT", () => {
 
     let nftContract: FantiumNFTV1
+    let erc20Contract: Mock20
     let defaultAdmin: SignerWithAddress
     let platformManager: SignerWithAddress
     let kycManager: SignerWithAddress
@@ -14,6 +16,12 @@ describe("FANtiumNFT", () => {
     let athlete: SignerWithAddress
     let fan: SignerWithAddress
     let other: SignerWithAddress
+
+    const primarySalePercentage = 90
+    const secondarySalePercentage = 5
+    const maxInvocations = 100
+    const priceInWei = 100
+    const earningsSplit = 10
 
     beforeEach(async () => {
         const [_defaultAdmin, _platformManager, _kycManager, _fantium, _athlete, _fan, _other] = await ethers.getSigners()
@@ -24,6 +32,9 @@ describe("FANtiumNFT", () => {
         athlete = _athlete
         fan = _fan
         other = _other
+
+        const Mock20 = await ethers.getContractFactory("Mock20")
+        erc20Contract = await Mock20.connect(fan).deploy() as Mock20
 
         const FantiumNFTV1 = await ethers.getContractFactory("FantiumNFTV1")
         nftContract = await upgrades.deployProxy(FantiumNFTV1, ["FANtium", "FAN", defaultAdmin.address], { initializer: 'initialize' }) as FantiumNFTV1
@@ -37,24 +48,24 @@ describe("FANtiumNFT", () => {
         await nftContract.connect(platformManager).updateFantiumSecondarySaleAddress(fantium.address)
         await nftContract.connect(platformManager).updateFantiumSecondaryMarketRoyaltyBPS(250)
 
-        // set Tiers
-        await nftContract.connect(platformManager).updateTiers("bronze", 10, 10000, 10)
-        await nftContract.connect(platformManager).updateTiers("silver", 100, 1000, 20)
-        await nftContract.connect(platformManager).updateTiers("gold", 1000, 100, 30)
+        // set payment token
+        await nftContract.connect(platformManager).updatePaymentToken(erc20Contract.address)
 
         // add first collection
         await nftContract.connect(platformManager).addCollection(
-            "Test Collection",
-            "Test Athlete Name",
-            "https://test.com/",
             athlete.address,
-            90,
-            5,
-            "silver",
+            primarySalePercentage,
+            secondarySalePercentage,
+            maxInvocations,
+            priceInWei,
+            earningsSplit
         )
 
         // set contract base URI
         await nftContract.connect(platformManager).updateBaseURI("https://contract.com/")
+
+        // set erc20 token address
+        await nftContract.connect(platformManager).updatePaymentToken(erc20Contract.address)
     })
 
 
@@ -153,25 +164,27 @@ describe("FANtiumNFT", () => {
         expect(await nftContract.isAddressKYCed(fan.address)).to.equal(false)
 
         // ty to mint
-        await expect(nftContract.connect(fan).mint(1)).to.be.revertedWith("Address is not KYCed");
+        await expect(nftContract.connect(fan).mint(1, priceInWei)).to.be.revertedWith("Address is not KYCed");
     })
 
-    it("checks that FAN cannot mint if kyced & NOT on allowlist & collection minting paused", async () => {
+    it("checks that FAN cannot mint if kyced & NOT on allowlist & collection is not activated", async () => {
         // add fan address to KYC
         await nftContract.connect(kycManager).addAddressToKYC(fan.address)
 
         // check if fan can mint
-        await expect(nftContract.connect(fan).mint(1)).to.be.revertedWith("Minting is paused");
+        await expect(nftContract.connect(fan).mint(1, priceInWei)).to.be.revertedWith("Collection is not mintable");
     })
 
-    it("checks that FAN cannot mint if kyced & on allowlist & collection minting paused & price is NOT correct (too low)", async () => {
+    it("checks that FAN cannot mint if kyced & on allowlist & collection activated and collection minting paused & price is NOT correct (too low)", async () => {
         // add fan address to KYC
         await nftContract.connect(kycManager).addAddressToKYC(fan.address)
         // add fan address to allowlist with 1 allocations
         await nftContract.connect(platformManager).addAddressToAllowListWithAllocation(1, fan.address, 1)
+        // activate collection
+        await nftContract.connect(platformManager).toggleCollectionMintable(1)
 
         // check if fan can mint
-        await expect(nftContract.connect(fan).mint(1, { value: 10 })).to.be.revertedWith("Incorrect amount sent");
+        await expect(nftContract.connect(fan).mint(1, priceInWei/2)).to.be.revertedWith("Incorrect amount sent");
     })
 
     it("checks that FAN can mint if kyced & on allowlist & collection minting paused & price is correct", async () => {
@@ -179,8 +192,10 @@ describe("FANtiumNFT", () => {
         await nftContract.connect(kycManager).addAddressToKYC(fan.address)
         // add fan address to allowlist with 1 allocation
         await nftContract.connect(platformManager).addAddressToAllowListWithAllocation(1, fan.address, 1)
+        await nftContract.connect(platformManager).toggleCollectionMintable(1)
         // // check if fan can mint
-        await nftContract.connect(fan).mint(1, { value: 100000000000000 });
+        await erc20Contract.connect(fan).approve(nftContract.address, priceInWei)
+        await nftContract.connect(fan).mint(1, priceInWei);
 
         // // check fan balance
         expect(await nftContract.balanceOf(fan.address)).to.equal(1);
@@ -191,22 +206,29 @@ describe("FANtiumNFT", () => {
         await nftContract.connect(kycManager).addAddressToKYC(fan.address)
         // add fan address to allowlist with 1 allocation
         await nftContract.connect(platformManager).addAddressToAllowListWithAllocation(1, fan.address, 1)
+
+        // activate collection
+        await nftContract.connect(platformManager).toggleCollectionMintable(1)
+
         // // check if fan can mint
-        await nftContract.connect(fan).mint(1, { value: 100000000000000 });
+        await erc20Contract.connect(fan).approve(nftContract.address, 2*priceInWei)
+        await nftContract.connect(fan).mint(1, priceInWei);
 
         // // check fan balance
         expect(await nftContract.balanceOf(fan.address)).to.equal(1);
         // // check if fan can mint again
-        await expect(nftContract.connect(fan).mint(1, { value: 100000000000000 })).to.be.revertedWith("Minting is paused");
+        await expect(nftContract.connect(fan).mint(1, priceInWei)).to.be.revertedWith("Collection is paused");
     })
 
     it("checks that FAN CAN mint if kyced & collection minting is & price is correct", async () => {
         // add fan address to KYC
         await nftContract.connect(kycManager).addAddressToKYC(fan.address)
         // unpause collection minting
-        await nftContract.connect(platformManager).toggleCollectionIsPaused(1)
+        await nftContract.connect(platformManager).toggleCollectionPaused(1)
+        await nftContract.connect(platformManager).toggleCollectionMintable(1)
         // check if fan can mint
-        await nftContract.connect(fan).mint(1, { value: 100000000000000 });
+        await erc20Contract.connect(fan).approve(nftContract.address, priceInWei)
+        await nftContract.connect(fan).mint(1, priceInWei);
 
         // check fan balance
         expect(await nftContract.balanceOf(fan.address)).to.equal(1);
@@ -216,27 +238,37 @@ describe("FANtiumNFT", () => {
 
     it("checks that ATHLETE primary sales split is correct", async () => {
         // check athlete balance
-        const balanceBefore = await athlete.getBalance()
+        const balanceBefore = await erc20Contract.balanceOf(athlete.address)//await athlete.getBalance()
+
+        // approve nft contract to spend Mock20
+        await erc20Contract.connect(fan).approve(nftContract.address, priceInWei)
+
         // mint NFT
         await nftContract.connect(kycManager).addAddressToKYC(fan.address)
-        await nftContract.connect(platformManager).toggleCollectionIsPaused(1)
-        await nftContract.connect(fan).mint(1, { value: 100000000000000 });
+        await nftContract.connect(platformManager).toggleCollectionMintable(1)
+        await nftContract.connect(platformManager).toggleCollectionPaused(1)
+        await nftContract.connect(fan).mint(1, priceInWei);
+        
         // check athlete balance after mint
-        const balanceAfter = await athlete.getBalance()
-
+        const balanceAfter = await erc20Contract.balanceOf(athlete.address)
         expect(balanceAfter.sub(balanceBefore)).to.equal(90)
     })
 
     it("checks that FANtium primary sales split is correct", async () => {
         // check FANtium balance
-        const balanceBefore = await fantium.getBalance()
+        const balanceBefore = await erc20Contract.balanceOf(fantium.address)
+
+        // approve nft contract to spend Mock20
+        await erc20Contract.connect(fan).approve(nftContract.address, priceInWei)
+
         // mint NFT
         await nftContract.connect(kycManager).addAddressToKYC(fan.address)
-        await nftContract.connect(platformManager).toggleCollectionIsPaused(1)
-        await nftContract.connect(fan).mint(1, { value: 100000000000000 });
-        // check FANtium balance after mint
-        const balanceAfter = await fantium.getBalance()
+        await nftContract.connect(platformManager).toggleCollectionMintable(1)
+        await nftContract.connect(platformManager).toggleCollectionPaused(1)
+        await nftContract.connect(fan).mint(1, priceInWei);
 
+        // check FANtium balance after mint
+        const balanceAfter = await erc20Contract.balanceOf(fantium.address)
         expect(balanceAfter.sub(balanceBefore)).to.equal(10)
     })
 
@@ -246,50 +278,28 @@ describe("FANtiumNFT", () => {
     it("checks that OTHER cannot add collection if NOT PLATFORM MANAGER", async () => {
         await expect(nftContract.connect(other)
             .addCollection(
-                "Test Collection",
-                "Test",
-                "https://test.com/",
                 athlete.address,
                 90,
                 5,
-                "silver"
+                100,
+                10000,
+                10
             )).to.be.revertedWith('AccessControl: account 0x976ea74026e726554db657fa54763abd0c3a0aa9 is missing role 0xab538675bf961a344c31ab0f84b867b850736e871cc7bf3055ce65100abe02ea')
-    })
-
-    it("checks that PLATFORM MANAGER cannot add collections with invalid tier name", async () => {
-        await expect(nftContract.connect(platformManager)
-            .addCollection(
-                "Test Collection",
-                "Test",
-                "https://test.com/",
-                athlete.address,
-                90,
-                5,
-                "invalidTier"
-            )).to.be.revertedWith('Invalid tier')
     })
 
     it("checks that PLATFORM MANAGER cannot add collections with 0x0 athlete address", async () => {
         await expect(nftContract.connect(platformManager)
             .addCollection(
-                "Test Collection",
-                "Test",
-                "https://test.com/",
                 ethers.constants.AddressZero,
                 90,
                 5,
-                "silver")).to.be.revertedWith('Invalid address')
+                100,
+                10000,
+                10
+            )).to.be.revertedWith('Invalid address')
     })
 
     /// COLLECTION UPDATES
-
-    it("checks that PLATFORM MANAGER can update collection name", async () => {
-        // update collection name
-        await nftContract.connect(platformManager).updateCollectionName(1, "New Collection Name")
-
-        // check collection name
-        expect(await (await nftContract.collections(1)).name).to.equal("New Collection Name")
-    })
 
     it("checks that PLATFORM MANAGER cannot update athlete address with 0x0 address", async () => {
         // try to update collection athlete address
@@ -298,59 +308,43 @@ describe("FANtiumNFT", () => {
 
     it("checks that PLATFORM MANAGER can toggle collection isMintingPause", async () => {
         // check collection is paused
-        expect(await (await nftContract.collections(1)).isMintingPaused).to.equal(true)
+        expect(await (await nftContract.collections(1)).isPaused).to.equal(true)
 
         // toggle collection  paused
-        await nftContract.connect(platformManager).toggleCollectionIsPaused(1)
+        await nftContract.connect(platformManager).toggleCollectionPaused(1)
         // check collection minting is unPaused
-        expect(await (await nftContract.collections(1)).isMintingPaused).to.equal(false)
+        expect(await (await nftContract.collections(1)).isPaused).to.equal(false)
 
         // toggle collection is paused
-        await nftContract.connect(platformManager).toggleCollectionIsPaused(1)
+        await nftContract.connect(platformManager).toggleCollectionPaused(1)
         // check collection is paused
-        expect(await (await nftContract.collections(1)).isMintingPaused).to.equal(true)
+        expect(await (await nftContract.collections(1)).isPaused).to.equal(true)
+    })
+
+    it("checks that PLATFORM MANAGER can toggle isActivated", async () => {
+        // check collection is paused
+        expect(await (await nftContract.collections(1)).isMintable).to.equal(false)
+
+        // update collection pause status
+        await nftContract.connect(platformManager).toggleCollectionMintable(1)
+
+        // check collection is unPaused
+        expect(await (await nftContract.collections(1)).isMintable).to.equal(true)
     })
 
     it("checks that ATHLETE can toggle their collection isMintingPause", async () => {
         // check collection is paused
-        expect(await (await nftContract.collections(1)).isMintingPaused).to.equal(true)
+        expect(await (await nftContract.collections(1)).isPaused).to.equal(true)
 
         // toggle collection  paused
-        await nftContract.connect(athlete).toggleCollectionIsPaused(1)
+        await nftContract.connect(athlete).toggleCollectionPaused(1)
         // check collection minting is unPaused
-        expect(await (await nftContract.collections(1)).isMintingPaused).to.equal(false)
+        expect(await (await nftContract.collections(1)).isPaused).to.equal(false)
 
         // toggle collection is paused
-        await nftContract.connect(athlete).toggleCollectionIsPaused(1)
+        await nftContract.connect(athlete).toggleCollectionPaused(1)
         // check collection is paused
-        expect(await (await nftContract.collections(1)).isMintingPaused).to.equal(true)
-    })
-
-    it("checks that PLATFORM MANAGER cannot update collection tier with invalid tier name", async () => {
-        // try to update collection tier
-        await expect(nftContract.connect(platformManager).updateCollectionTier(1, "invalidTier")).to.be.revertedWith("Invalid tier");
-    })
-
-    it("checks that PLATFORM MANAGER can update collection base URI", async () => {
-        // check collection base URI
-        expect(await (await nftContract.collections(1)).collectionBaseURI).to.equal("https://test.com/")
-
-        // update collection base URI
-        await nftContract.connect(platformManager).updateCollectionBaseURI(1, "https://new.com/")
-
-        // check collection base URI
-        expect(await (await nftContract.collections(1)).collectionBaseURI).to.equal("https://new.com/")
-    })
-
-    it("checks that PLATFORM MANAGER can update collection athlete name", async () => {
-        // check collection athlete name
-        expect(await (await nftContract.collections(1)).athleteName).to.equal("Test Athlete Name")
-
-        // update collection athlete name
-        await nftContract.connect(platformManager).updateCollectionAthleteName(1, "New Athlete Name")
-
-        // check collection athlete name
-        expect(await (await nftContract.collections(1)).athleteName).to.equal("New Athlete Name")
+        expect(await (await nftContract.collections(1)).isPaused).to.equal(true)
     })
 
     it("checks that PLATFORM MANAGER can update collection athlete address", async () => {
@@ -406,7 +400,7 @@ describe("FANtiumNFT", () => {
 
         // update platform secondary market address
         await nftContract.connect(platformManager).updateFantiumSecondarySaleAddress(other.address)
-        
+
         // check platform secondary market address
         expect(await (await nftContract.fantiumSecondarySalesAddress())).to.equal(other.address)
     })
@@ -420,43 +414,6 @@ describe("FANtiumNFT", () => {
 
         // check platform secondary market royalty percentage
         expect(await (await nftContract.fantiumSecondarySalesBPS())).to.equal(100)
-    })
-
-    /// TOKEN
-
-    it("checks that if the collection base URI is set, collection base URI takes precedence over contract base URI", async () => {
-        // check collection base URI
-        expect(await (await nftContract.collections(1)).collectionBaseURI).to.equal("https://test.com/")
-
-        // mint token
-        await nftContract.connect(kycManager).addAddressToKYC(fan.address)
-        await nftContract.connect(platformManager).toggleCollectionIsPaused(1)
-        await nftContract.connect(fan).mint(1, { value: 100000000000000 });
-        const tokenURI = await nftContract.tokenURI(1000001)
-
-        expect(tokenURI).to.equal("https://test.com/1000001")
-    })
-
-    it("checks that if collection base URI is not set, token URI takes contract base URI", async () => {
-        // check collection base URI
-        expect(await (await nftContract.collections(1)).collectionBaseURI).to.equal("https://test.com/")
-
-        // update collection base URI
-        await nftContract.connect(platformManager).updateCollectionBaseURI(1, "")
-
-        // check collection base URI
-        expect(await (await nftContract.collections(1)).collectionBaseURI).to.equal("")
-
-        // check contract base URI
-        expect(await (await nftContract.baseURI())).to.equal("https://contract.com/")
-
-        // mint token
-        await nftContract.connect(kycManager).addAddressToKYC(fan.address)
-        await nftContract.connect(platformManager).toggleCollectionIsPaused(1)
-        await nftContract.connect(fan).mint(1, { value: 100000000000000 });
-        const tokenURI = await nftContract.tokenURI(1000001)
-
-        expect(tokenURI).to.equal("https://contract.com/1000001")
     })
 })
 

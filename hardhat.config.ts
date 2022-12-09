@@ -13,6 +13,7 @@ dotenvConfig({ path: resolve(__dirname, './.env') })
 const POLYGON_MUMBAI_RPC_PROVIDER = process.env.POLYGON_MUMBAI_RPC_PROVIDER || ''
 const PRIVATE_KEY = process.env.PRIVATE_KEY || ''
 const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY || ''
+const GOERLISCAN_API_KEY = process.env.GOERLISCAN_API_KEY || ''
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -35,10 +36,15 @@ const config: HardhatUserConfig = {
       accounts: ["0x" + PRIVATE_KEY],
       url: POLYGON_MUMBAI_RPC_PROVIDER,
     },
+    goerli: {
+      url: "https://goerli.infura.io/v3/3c43c6fdb9c94a0ebd60ba9479abde96",
+      accounts: ["0x" + PRIVATE_KEY]
+    }
   },
   etherscan: {
     apiKey: {
       polygonMumbai: POLYGONSCAN_API_KEY,
+      goerli: GOERLISCAN_API_KEY
     }
   },
   mocha: {

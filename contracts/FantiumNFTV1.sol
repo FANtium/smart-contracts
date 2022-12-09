@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title FANtium ERC721 contract V1.
@@ -24,13 +25,26 @@ contract FantiumNFTV1 is
 {
     using StringsUpgradeable for uint256;
 
-    address public fantiumMinterAddress;
     mapping(uint256 => Collection) public collections;
-    mapping(string => Tier) public tiers;
     string public baseURI;
     mapping(uint256 => mapping(address => uint256))
         public collectionIdToAllowList;
     mapping(address => bool) public kycedAddresses;
+
+    /// FANtium's payment address for all primary sales revenues (packed)
+    address payable public fantiumPrimarySalesAddress;
+
+    /// FANtium's payment address for all secondary sales royalty revenues
+    address payable public fantiumSecondarySalesAddress;
+
+    /// Basis Points of secondary sales royalties allocated to FANtium
+    uint256 public fantiumSecondarySalesBPS;
+
+    /// next collection ID to be created
+    uint256 private nextCollectionId;
+
+    /// ERC20 Payable Token
+    address public erc20PaymentToken;
 
     uint256 constant ONE_MILLION = 1_000_000;
 
@@ -44,8 +58,6 @@ contract FantiumNFTV1 is
     bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
 
     /// generic event fields
-    bytes32 constant FIELD_FANTIUM_PRIMARY_MARKET_ROYALTY_PERCENTAGE =
-        "fantium primary royalty %";
     bytes32 constant FIELD_FANTIUM_SECONDARY_MARKET_ROYALTY_BPS =
         "fantium secondary royalty BPS";
     bytes32 constant FIELD_FANTIUM_PRIMARY_ADDRESS =
@@ -67,38 +79,18 @@ contract FantiumNFTV1 is
     bytes32 constant FIELD_COLLECTION_TIER = "collection tier";
     bytes32 constant FILED_FANTIUM_BASE_URI = "fantium base uri";
     bytes32 constant FIELD_FANTIUM_MINTER_ADDRESS = "fantium minter address";
-
-    /// FANtium's payment address for all primary sales revenues (packed)
-    address payable public fantiumPrimarySalesAddress;
-
-    /// FANtium's payment address for all secondary sales royalty revenues
-    address payable public fantiumSecondarySalesAddress;
-
-    /// Basis Points of secondary sales royalties allocated to FANtium
-    uint256 public fantiumSecondarySalesBPS;
-
-    /// next collection ID to be created
-    uint256 private nextCollectionId;
-
-    struct Tier {
-        string name;
-        uint256 priceInWei;
-        uint24 maxInvocations;
-        uint8 tournamentEarningPercentage;
-    }
+    bytes32 constant FIELD_COLLECTION_ACTIVATED = "isActivated";
 
     struct Collection {
-        uint24 invocations;
-        string tierName;
         bool exists;
-        bool isMintingPaused;
-        string name;
-        string athleteName;
-        string collectionBaseURI;
+        bool isMintable;
+        bool isPaused;
+        uint24 invocations;
+        uint256 priceInWei;
+        uint256 maxInvocations;
+        uint8 tournamentEarningPercentage;
         address payable athleteAddress;
-        // packed uint: max of 100, max uint8 = 255
         uint8 athletePrimarySalesPercentage;
-        // packed uint: max of 100, max uint8 = 255
         uint8 athleteSecondarySalesPercentage;
     }
 
@@ -153,11 +145,6 @@ contract FantiumNFTV1 is
                 hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
             "Only athlete"
         );
-        _;
-    }
-
-    modifier onlyValidTier(string memory _tierName) {
-        require(bytes(tiers[_tierName].name).length > 0, "Invalid tier");
         _;
     }
 
@@ -285,8 +272,8 @@ contract FantiumNFTV1 is
         uint256 _collectionId,
         address _address,
         uint256 _allocation
-    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
-        collectionIdToAllowList[_collectionId][_address] = _allocation;
+    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) onlyValidCollectionId(_collectionId) {
+        collectionIdToAllowList[_collectionId][_address] += _allocation;
         emit AddressAddedToAllowList(_collectionId, _address);
     }
 
@@ -299,7 +286,7 @@ contract FantiumNFTV1 is
         uint256 _collectionId,
         address _address,
         bool _completely
-    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
+    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) onlyValidCollectionId(_collectionId) {
         if (_completely) {
             collectionIdToAllowList[_collectionId][_address] = 0;
         } else {
@@ -316,71 +303,140 @@ contract FantiumNFTV1 is
      * @notice Mints a token
      * @param _collectionId Collection ID.
      */
-    function mint(uint256 _collectionId) public payable whenNotPaused {
+    function mint(
+        uint256 _collectionId,
+        uint256 _paymentAmount
+    ) public payable whenNotPaused {
         // CHECKS
         require(isAddressKYCed(msg.sender), "Address is not KYCed");
         Collection storage collection = collections[_collectionId];
         require(collection.exists, "Collection does not exist");
-        if (collection.isMintingPaused) {
+        require(collection.isMintable, "Collection is not mintable");
+        if (collection.isPaused) {
             // if minting is paused, require address to be on allowlist
             require(
                 collectionIdToAllowList[_collectionId][msg.sender] > 0,
-                "Minting is paused"
+                "Collection is paused"
             );
         }
-        Tier storage tier = tiers[collection.tierName];
         require(
-            collection.invocations < tier.maxInvocations,
+            collection.invocations < collection.maxInvocations,
             "Max invocations reached"
         );
-        require(tier.priceInWei <= msg.value, "Incorrect amount sent");
+        require(
+            collection.priceInWei == _paymentAmount,
+            "Incorrect amount sent"
+        );
 
         uint256 tokenId = (_collectionId * ONE_MILLION) +
             collection.invocations;
 
         // EFFECTS
         collection.invocations++;
-        if (collection.isMintingPaused) {
+        if (collection.isPaused) {
             collectionIdToAllowList[_collectionId][msg.sender]--;
         }
 
         // INTERACTIONS
+        bool success = _splitFunds(
+            collection.priceInWei,
+            _collectionId,
+            msg.sender
+        );
+        require(success, "Splitting funds failed");
         _mint(msg.sender, tokenId);
-        _splitFundsETH(_collectionId, tier.priceInWei);
 
         emit Mint(msg.sender, tokenId);
     }
 
     /**
-     * @dev splits ETH funds between sender (if refund),
+     * @dev splits funds between sender (if refund),
      * FANtium, and athlete for a token purchased on
      * collection `_collectionId`.
      */
-    function _splitFundsETH(
+    function _splitFunds(
+        uint256 _pricePerTokenInWei,
         uint256 _collectionId,
-        uint256 _pricePerTokenInWei
-    ) internal {
-        if (msg.value > 0) {
-            // send refund to sender
-            uint256 refund = msg.value - _pricePerTokenInWei;
-            if (refund > 0) {
-                payable(msg.sender).transfer(refund);
-            }
-            // split remaining funds between FANtium and athlete
-            (
-                uint256 fantiumRevenue_,
-                address fantiumAddress_,
-                uint256 athleteRevenue_,
-                address athleteAddress_
-            ) = getPrimaryRevenueSplits(_collectionId, _pricePerTokenInWei);
-            // FANtium payment
-            if (fantiumRevenue_ > 0) {
-                payable(fantiumAddress_).transfer(fantiumRevenue_);
-            }
-            // athlete payment
-            if (athleteRevenue_ > 0) {
-                payable(athleteAddress_).transfer(athleteRevenue_);
-            }
+        address _sender
+    ) internal returns (bool success_) {
+        // split funds between FANtium and athlete
+        (
+            uint256 fantiumRevenue_,
+            address fantiumAddress_,
+            uint256 athleteRevenue_,
+            address athleteAddress_
+        ) = getPrimaryRevenueSplits(_collectionId, _pricePerTokenInWei);
+        // FANtium payment
+        if (fantiumRevenue_ > 0) {
+            success_ = IERC20(erc20PaymentToken).transferFrom(
+                _sender,
+                fantiumAddress_,
+                fantiumRevenue_
+            );
+        }
+        // athlete payment
+        if (athleteRevenue_ > 0) {
+            success_ = IERC20(erc20PaymentToken).transferFrom(
+                _sender,
+                athleteAddress_,
+                athleteRevenue_
+            );
+        }
+        return success_;
+    }
+
+    /**
+     * @notice View function that returns appropriate revenue splits between
+     * different FANtium, athlete given a sale price of `_price` on collection `_collectionId`.
+     * This always returns two revenue amounts and two addresses, but if a
+     * revenue is zero for athlete, the corresponding
+     * address returned will also be null (for gas optimization).
+     * Does not account for refund if user overpays for a token
+     * @param _collectionId collection ID to be queried.
+     * @param _price Sale price of token.
+     * @return fantiumRevenue_ amount of revenue to be sent to FANtium
+     * @return fantiumAddress_ address to send FANtium revenue to
+     * @return athleteRevenue_ amount of revenue to be sent to athlete
+     * @return athleteAddress_ address to send athlete revenue to. Will be null
+     * if no revenue is due to athlete (gas optimization).
+     * @dev this always returns 2 addresses and 2 revenues, but if the
+     * revenue is zero, the corresponding address will be address(0). It is up
+     * to the contract performing the revenue split to handle this
+     * appropriately.
+     */
+    function getPrimaryRevenueSplits(
+        uint256 _collectionId,
+        uint256 _price
+    )
+        public
+        view
+        returns (
+            uint256 fantiumRevenue_,
+            address payable fantiumAddress_,
+            uint256 athleteRevenue_,
+            address payable athleteAddress_
+        )
+    {
+        // get athlete address & revenue from collection
+        Collection memory collection = collections[_collectionId];
+
+        // calculate revenues
+        athleteRevenue_ =
+            (_price * uint256(collection.athletePrimarySalesPercentage)) /
+            100;
+        uint256 collectionFunds;
+
+        // fantiumRevenue_ is always <=25, so guaranteed to never underflow
+        collectionFunds = _price - athleteRevenue_;
+
+        // collectionIdToAdditionalPayeePrimarySalesPercentage is always
+        // <=100, so guaranteed to never underflow
+        fantiumRevenue_ = collectionFunds;
+
+        // set addresses from storage
+        fantiumAddress_ = fantiumPrimarySalesAddress;
+        if (athleteRevenue_ > 0) {
+            athleteAddress_ = collection.athleteAddress;
         }
     }
 
@@ -396,21 +452,14 @@ contract FantiumNFTV1 is
     function tokenURI(
         uint256 _tokenId
     ) public view override onlyValidTokenId(_tokenId) returns (string memory) {
-        bytes memory collectionBaseURI = bytes(
-            collections[_tokenId / ONE_MILLION].collectionBaseURI
-        );
-
-        if (collectionBaseURI.length != 0) {
-            return
-                string(
-                    bytes.concat(
-                        bytes(collectionBaseURI),
-                        bytes(_tokenId.toString())
-                    )
-                );
-        }
-
-        return string(bytes.concat(bytes(baseURI), bytes(_tokenId.toString())));
+        return
+            string(
+                bytes.concat(
+                    bytes(baseURI),
+                    bytes(_tokenId.toString()),
+                    bytes(".json")
+                )
+            );
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -419,62 +468,45 @@ contract FantiumNFTV1 is
 
     /**
      * @notice Adds new collection.
-     * @param _collectionName Name of the collection.
-     * @param _athleteName Name of the athlete.
-     * @param _collectionBaseURI Base URI of the collection.
      * @param _athleteAddress Address of the athlete.
      * @param _athletePrimarySalesPercentage Primary sales percentage of the athlete.
      * @param _athleteSecondarySalesPercentage Secondary sales percentage of the athlete.
-     * @param _tierName Name of the tier.
+     * @param _maxInvocations Maximum number of invocations.
+     * @param _priceInWei Price of the token in wei.
+     * @param _tournamentEarningPercentage Tournament earning percentage.
      */
     function addCollection(
-        string memory _collectionName,
-        string memory _athleteName,
-        string memory _collectionBaseURI,
         address payable _athleteAddress,
         uint8 _athletePrimarySalesPercentage,
         uint8 _athleteSecondarySalesPercentage,
-        string memory _tierName
+        uint256 _maxInvocations,
+        uint256 _priceInWei,
+        uint8 _tournamentEarningPercentage
     )
         external
         whenNotPaused
         onlyRole(PLATFORM_MANAGER_ROLE)
         onlyRoyaltySetContract
-        onlyValidTier(_tierName)
         onlyValidAddress(_athleteAddress)
     {
         uint256 collectionId = nextCollectionId;
-        collections[collectionId].exists = true;
-        collections[collectionId].name = _collectionName;
-        collections[collectionId].athleteName = _athleteName;
-        collections[collectionId].collectionBaseURI = _collectionBaseURI;
         collections[collectionId].athleteAddress = _athleteAddress;
-        collections[collectionId].isMintingPaused = true;
         collections[collectionId]
             .athletePrimarySalesPercentage = _athletePrimarySalesPercentage;
         collections[collectionId]
             .athleteSecondarySalesPercentage = _athleteSecondarySalesPercentage;
-        collections[collectionId].tierName = _tierName;
+        collections[collectionId].maxInvocations = _maxInvocations;
+        collections[collectionId].priceInWei = _priceInWei;
+        collections[collectionId]
+            .tournamentEarningPercentage = _tournamentEarningPercentage;
+
         collections[collectionId].invocations = 1;
+        collections[collectionId].exists = true;
+        collections[collectionId].isMintable = false;
+        collections[collectionId].isPaused = true;
 
         nextCollectionId = collectionId + 1;
         emit CollectionUpdated(collectionId, FIELD_COLLECTION_CREATED);
-    }
-
-    /**
-     * @notice Updates name of collection `_collectionId` to be `_collectionName`.
-     */
-    function updateCollectionName(
-        uint256 _collectionId,
-        string memory _collectionName
-    )
-        external
-        whenNotPaused
-        onlyValidCollectionId(_collectionId)
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
-        collections[_collectionId].name = _collectionName;
-        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_NAME);
     }
 
     /**
@@ -497,7 +529,7 @@ contract FantiumNFTV1 is
     /**
      * @notice Toggles isMintingPaused state of collection `_collectionId`.
      */
-    function toggleCollectionIsPaused(
+    function toggleCollectionPaused(
         uint256 _collectionId
     )
         external
@@ -505,60 +537,25 @@ contract FantiumNFTV1 is
         onlyValidCollectionId(_collectionId)
         onlyAthlete(_collectionId)
     {
-        collections[_collectionId].isMintingPaused = !collections[_collectionId]
-            .isMintingPaused;
+        collections[_collectionId].isPaused = !collections[_collectionId]
+            .isPaused;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_PAUSED);
     }
 
     /**
-     * @notice Update Collection tier for collection `_collectionId` to be `_tierName`.
+     * @notice Toggles isMintingPaused state of collection `_collectionId`.
      */
-    function updateCollectionTier(
-        uint256 _collectionId,
-        string memory _tierName
+    function toggleCollectionMintable(
+        uint256 _collectionId
     )
         external
         whenNotPaused
         onlyValidCollectionId(_collectionId)
-        onlyValidTier(_tierName)
-        onlyRole(PLATFORM_MANAGER_ROLE)
+        onlyAthlete(_collectionId)
     {
-        collections[_collectionId].tierName = _tierName;
-        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_TIER);
-    }
-
-    /**
-     * @notice Updates collection baseURI for collection `_collectionId` to be
-     * `_collectionBaseURI`.
-     */
-    function updateCollectionBaseURI(
-        uint256 _collectionId,
-        string memory _collectionBaseURI
-    )
-        external
-        whenNotPaused
-        onlyValidCollectionId(_collectionId)
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
-        collections[_collectionId].collectionBaseURI = _collectionBaseURI;
-        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_BASE_URI);
-    }
-
-    /**
-     * @notice Updates Athlete name for collection `_collectionId` to be
-     * `_collectionAthleteName`.
-     */
-    function updateCollectionAthleteName(
-        uint256 _collectionId,
-        string memory _collectionAthleteName
-    )
-        external
-        whenNotPaused
-        onlyValidCollectionId(_collectionId)
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
-        collections[_collectionId].athleteName = _collectionAthleteName;
-        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ATHLETE_NAME);
+        collections[_collectionId].isMintable = !collections[_collectionId]
+            .isMintable;
+        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ACTIVATED);
     }
 
     /**
@@ -621,6 +618,27 @@ contract FantiumNFTV1 is
         );
     }
 
+    /**
+     * @notice Update Collection tier for collection `_collectionId` to be `_tierName`.
+     */
+    function updateCollectionTier(
+        uint256 _collectionId,
+        uint256 _maxInvocations,
+        uint256 _priceInWei,
+        uint8 tournamentEarningPercentage
+    )
+        external
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
+        onlyRole(PLATFORM_MANAGER_ROLE)
+    {
+        collections[_collectionId].maxInvocations = _maxInvocations;
+        collections[_collectionId].priceInWei = _priceInWei;
+        collections[_collectionId]
+            .tournamentEarningPercentage = tournamentEarningPercentage;
+        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_TIER);
+    }
+
     //update baseURI only platform manager
     function updateBaseURI(
         string memory _baseURI
@@ -681,29 +699,6 @@ contract FantiumNFTV1 is
     }
 
     /**
-     * @notice Updates the tier mapping for `_name` to `_tier`.
-     * @param _name Name of the tier.
-     * @param _priceInWei Price of the tier.
-     * @param _maxInvocations Max invocations of the tier.
-     * @param _tournamentEarningPercentage Tournament earnings percentage of the tier.
-     */
-    function updateTiers(
-        string memory _name,
-        uint256 _priceInWei,
-        uint24 _maxInvocations,
-        uint8 _tournamentEarningPercentage
-    ) external whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
-        require(_maxInvocations < ONE_MILLION, "max invocation ");
-
-        tiers[_name] = Tier(
-            _name,
-            _priceInWei,
-            _maxInvocations,
-            _tournamentEarningPercentage
-        );
-    }
-
-    /**
      * @notice Update contract pause status to `_paused`.
      */
 
@@ -717,64 +712,29 @@ contract FantiumNFTV1 is
         }
     }
 
+    /**---------PAYMENT------------ */
+
+    /**
+     * @notice approves the contract to spend the payment token
+     */
+    function approvePaymentToken() external {
+        IERC20(erc20PaymentToken).approve(msg.sender, type(uint256).max);
+    }
+
+    /**
+     * @notice Updates the erc20 Payment Token
+     * @param _address address of ERC20 payment token
+     */
+    function updatePaymentToken(
+        address _address
+    ) external onlyRole(PLATFORM_MANAGER_ROLE) {
+        require(_address != address(0));
+        erc20PaymentToken = _address;
+    }
+
     /*//////////////////////////////////////////////////////////////
                                  VIEWS
     //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice View function that returns appropriate revenue splits between
-     * different FANtium, athlete given a sale price of `_price` on collection `_collectionId`.
-     * This always returns two revenue amounts and two addresses, but if a
-     * revenue is zero for athlete, the corresponding
-     * address returned will also be null (for gas optimization).
-     * Does not account for refund if user overpays for a token
-     * @param _collectionId collection ID to be queried.
-     * @param _price Sale price of token.
-     * @return fantiumRevenue_ amount of revenue to be sent to FANtium
-     * @return fantiumAddress_ address to send FANtium revenue to
-     * @return athleteRevenue_ amount of revenue to be sent to athlete
-     * @return athleteAddress_ address to send athlete revenue to. Will be null
-     * if no revenue is due to athlete (gas optimization).
-     * @dev this always returns 2 addresses and 2 revenues, but if the
-     * revenue is zero, the corresponding address will be address(0). It is up
-     * to the contract performing the revenue split to handle this
-     * appropriately.
-     */
-    function getPrimaryRevenueSplits(
-        uint256 _collectionId,
-        uint256 _price
-    )
-        public
-        view
-        returns (
-            uint256 fantiumRevenue_,
-            address payable fantiumAddress_,
-            uint256 athleteRevenue_,
-            address payable athleteAddress_
-        )
-    {
-        // get athlete address & revenue from collection
-        Collection memory collection = collections[_collectionId];
-
-        // calculate revenues
-        athleteRevenue_ =
-            (_price * uint256(collection.athletePrimarySalesPercentage)) /
-            100;
-        uint256 collectionFunds;
-
-        // fantiumRevenue_ is always <=25, so guaranteed to never underflow
-        collectionFunds = _price - athleteRevenue_;
-
-        // collectionIdToAdditionalPayeePrimarySalesPercentage is always
-        // <=100, so guaranteed to never underflow
-        fantiumRevenue_ = collectionFunds;
-
-        // set addresses from storage
-        fantiumAddress_ = fantiumPrimarySalesAddress;
-        if (athleteRevenue_ > 0) {
-            athleteAddress_ = collection.athleteAddress;
-        }
-    }
 
     /**
      * @notice Gets royalty Basis Points (BPS) for token ID `_tokenId`.
