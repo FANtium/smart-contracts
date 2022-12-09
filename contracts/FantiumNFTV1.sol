@@ -25,7 +25,6 @@ contract FantiumNFTV1 is
 {
     using StringsUpgradeable for uint256;
 
-    address public fantiumMinterAddress;
     mapping(uint256 => Collection) public collections;
     string public baseURI;
     mapping(uint256 => mapping(address => uint256))
@@ -59,8 +58,6 @@ contract FantiumNFTV1 is
     bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
 
     /// generic event fields
-    bytes32 constant FIELD_FANTIUM_PRIMARY_MARKET_ROYALTY_PERCENTAGE =
-        "fantium primary royalty %";
     bytes32 constant FIELD_FANTIUM_SECONDARY_MARKET_ROYALTY_BPS =
         "fantium secondary royalty BPS";
     bytes32 constant FIELD_FANTIUM_PRIMARY_ADDRESS =
@@ -327,7 +324,7 @@ contract FantiumNFTV1 is
             "Max invocations reached"
         );
         require(
-            collection.priceInWei <= _paymentAmount,
+            collection.priceInWei == _paymentAmount,
             "Incorrect amount sent"
         );
 
@@ -344,7 +341,6 @@ contract FantiumNFTV1 is
         bool success = _splitFunds(
             collection.priceInWei,
             _collectionId,
-            _paymentAmount,
             msg.sender
         );
         require(success, "Splitting funds failed");
@@ -361,35 +357,32 @@ contract FantiumNFTV1 is
     function _splitFunds(
         uint256 _pricePerTokenInWei,
         uint256 _collectionId,
-        uint256 _amount,
         address _sender
     ) internal returns (bool success_) {
-        if (_amount >= _pricePerTokenInWei) {
-            // split funds between FANtium and athlete
-            (
-                uint256 fantiumRevenue_,
-                address fantiumAddress_,
-                uint256 athleteRevenue_,
-                address athleteAddress_
-            ) = getPrimaryRevenueSplits(_collectionId, _pricePerTokenInWei);
-            // FANtium payment
-            if (fantiumRevenue_ > 0) {
-                success_ = IERC20(erc20PaymentToken).transferFrom(
-                    _sender,
-                    fantiumAddress_,
-                    fantiumRevenue_
-                );
-            }
-            // athlete payment
-            if (athleteRevenue_ > 0) {
-                success_ = IERC20(erc20PaymentToken).transferFrom(
-                    _sender,
-                    athleteAddress_,
-                    athleteRevenue_
-                );
-            }
-            return success_;
+        // split funds between FANtium and athlete
+        (
+            uint256 fantiumRevenue_,
+            address fantiumAddress_,
+            uint256 athleteRevenue_,
+            address athleteAddress_
+        ) = getPrimaryRevenueSplits(_collectionId, _pricePerTokenInWei);
+        // FANtium payment
+        if (fantiumRevenue_ > 0) {
+            success_ = IERC20(erc20PaymentToken).transferFrom(
+                _sender,
+                fantiumAddress_,
+                fantiumRevenue_
+            );
         }
+        // athlete payment
+        if (athleteRevenue_ > 0) {
+            success_ = IERC20(erc20PaymentToken).transferFrom(
+                _sender,
+                athleteAddress_,
+                athleteRevenue_
+            );
+        }
+        return success_;
     }
 
     /**
