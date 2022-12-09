@@ -3,10 +3,12 @@ import { expect } from 'chai'
 import { beforeEach } from 'mocha'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { FantiumNFTV1 } from '../typechain-types/contracts/FantiumNFTV1'
+import { Mock20 } from '../typechain-types/contracts/Mock20'
 
 describe("FANtiumNFT", () => {
 
     let nftContract: FantiumNFTV1
+    let erc20Contract: Mock20
     let defaultAdmin: SignerWithAddress
     let platformManager: SignerWithAddress
     let kycManager: SignerWithAddress
@@ -14,6 +16,16 @@ describe("FANtiumNFT", () => {
     let athlete: SignerWithAddress
     let fan: SignerWithAddress
     let other: SignerWithAddress
+
+    const collectionName = "Test Collection"
+    const athleteName = "Test Athlete Name"
+    const collectionBaseURI = "https://test.com/"
+    const primarySalePercentage = 90
+    const secondarySalePercentage = 5
+    const tierName = "silver"
+    const maxInvocations = 100
+    const priceInWei = 100
+    const earningsSplit = 10
 
     beforeEach(async () => {
         const [_defaultAdmin, _platformManager, _kycManager, _fantium, _athlete, _fan, _other] = await ethers.getSigners()
@@ -24,6 +36,9 @@ describe("FANtiumNFT", () => {
         athlete = _athlete
         fan = _fan
         other = _other
+
+        const Mock20 = await ethers.getContractFactory("Mock20")
+        erc20Contract = await Mock20.connect(fan).deploy() as Mock20
 
         const FantiumNFTV1 = await ethers.getContractFactory("FantiumNFTV1")
         nftContract = await upgrades.deployProxy(FantiumNFTV1, ["FANtium", "FAN", defaultAdmin.address], { initializer: 'initialize' }) as FantiumNFTV1
@@ -37,24 +52,22 @@ describe("FANtiumNFT", () => {
         await nftContract.connect(platformManager).updateFantiumSecondarySaleAddress(fantium.address)
         await nftContract.connect(platformManager).updateFantiumSecondaryMarketRoyaltyBPS(250)
 
-        // set Tiers
-        await nftContract.connect(platformManager).updateTiers("bronze", 10, 10000, 10)
-        await nftContract.connect(platformManager).updateTiers("silver", 100, 1000, 20)
-        await nftContract.connect(platformManager).updateTiers("gold", 1000, 100, 30)
-
         // add first collection
         await nftContract.connect(platformManager).addCollection(
-            "Test Collection",
-            "Test Athlete Name",
-            "https://test.com/",
+            collectionBaseURI,
             athlete.address,
-            90,
-            5,
-            "silver",
+            primarySalePercentage,
+            secondarySalePercentage,
+            maxInvocations,
+            priceInWei,
+            earningsSplit
         )
 
         // set contract base URI
         await nftContract.connect(platformManager).updateBaseURI("https://contract.com/")
+
+        // set erc20 token address
+        await nftContract.connect(platformManager).updatePaymentToken(erc20Contract.address)
     })
 
 
@@ -252,7 +265,10 @@ describe("FANtiumNFT", () => {
                 athlete.address,
                 90,
                 5,
-                "silver"
+                "silver",
+                100,
+                10000,
+                10
             )).to.be.revertedWith('AccessControl: account 0x976ea74026e726554db657fa54763abd0c3a0aa9 is missing role 0xab538675bf961a344c31ab0f84b867b850736e871cc7bf3055ce65100abe02ea')
     })
 
@@ -265,7 +281,10 @@ describe("FANtiumNFT", () => {
                 athlete.address,
                 90,
                 5,
-                "invalidTier"
+                "silver",
+                100,
+                10000,
+                10
             )).to.be.revertedWith('Invalid tier')
     })
 
@@ -278,7 +297,10 @@ describe("FANtiumNFT", () => {
                 ethers.constants.AddressZero,
                 90,
                 5,
-                "silver")).to.be.revertedWith('Invalid address')
+                "silver",
+                100,
+                10000,
+                10)).to.be.revertedWith('Invalid address')
     })
 
     /// COLLECTION UPDATES
@@ -324,11 +346,6 @@ describe("FANtiumNFT", () => {
         await nftContract.connect(athlete).toggleCollectionIsPaused(1)
         // check collection is paused
         expect(await (await nftContract.collections(1)).isMintingPaused).to.equal(true)
-    })
-
-    it("checks that PLATFORM MANAGER cannot update collection tier with invalid tier name", async () => {
-        // try to update collection tier
-        await expect(nftContract.connect(platformManager).updateCollectionTier(1, "invalidTier")).to.be.revertedWith("Invalid tier");
     })
 
     it("checks that PLATFORM MANAGER can update collection base URI", async () => {
@@ -406,7 +423,7 @@ describe("FANtiumNFT", () => {
 
         // update platform secondary market address
         await nftContract.connect(platformManager).updateFantiumSecondarySaleAddress(other.address)
-        
+
         // check platform secondary market address
         expect(await (await nftContract.fantiumSecondarySalesAddress())).to.equal(other.address)
     })
@@ -453,7 +470,7 @@ describe("FANtiumNFT", () => {
         // mint token
         await nftContract.connect(kycManager).addAddressToKYC(fan.address)
         await nftContract.connect(platformManager).toggleCollectionIsPaused(1)
-        await nftContract.connect(fan).mint(1, { value: 100000000000000 });
+        await nftContract.connect(fan).mint(1, );
         const tokenURI = await nftContract.tokenURI(1000001)
 
         expect(tokenURI).to.equal("https://contract.com/1000001")

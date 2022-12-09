@@ -92,13 +92,9 @@ contract FantiumNFTV1 is
         uint256 priceInWei;
         uint256 maxInvocations;
         uint8 tournamentEarningPercentage;
-        // string name;
-        // string athleteName;
         string collectionBaseURI;
         address payable athleteAddress;
-        // packed uint: max of 100, max uint8 = 255
         uint8 athletePrimarySalesPercentage;
-        // packed uint: max of 100, max uint8 = 255
         uint8 athleteSecondarySalesPercentage;
     }
 
@@ -427,22 +423,19 @@ contract FantiumNFTV1 is
 
     /**
      * @notice Adds new collection.
-     * @param _collectionName Name of the collection.
-     * @param _athleteName Name of the athlete.
      * @param _collectionBaseURI Base URI of the collection.
      * @param _athleteAddress Address of the athlete.
      * @param _athletePrimarySalesPercentage Primary sales percentage of the athlete.
      * @param _athleteSecondarySalesPercentage Secondary sales percentage of the athlete.
-     * @param _tierName Name of the tier.
+     * @param _maxInvocations Maximum number of invocations.
+     * @param _priceInWei Price of the token in wei.
+     * @param _tournamentEarningPercentage Tournament earning percentage.
      */
     function addCollection(
-        string memory _collectionName,
-        string memory _athleteName,
         string memory _collectionBaseURI,
         address payable _athleteAddress,
         uint8 _athletePrimarySalesPercentage,
         uint8 _athleteSecondarySalesPercentage,
-        string memory _tierName,
         uint256 _maxInvocations,
         uint256 _priceInWei,
         uint8 _tournamentEarningPercentage
@@ -454,15 +447,12 @@ contract FantiumNFTV1 is
         onlyValidAddress(_athleteAddress)
     {
         uint256 collectionId = nextCollectionId;
-        // collections[collectionId].name = _collectionName;
-        // collections[collectionId].athleteName = _athleteName;
         collections[collectionId].collectionBaseURI = _collectionBaseURI;
         collections[collectionId].athleteAddress = _athleteAddress;
         collections[collectionId]
             .athletePrimarySalesPercentage = _athletePrimarySalesPercentage;
         collections[collectionId]
             .athleteSecondarySalesPercentage = _athleteSecondarySalesPercentage;
-        // collections[collectionId].tierName = _tierName;
         collections[collectionId].maxInvocations = _maxInvocations;
         collections[collectionId].priceInWei = _priceInWei;
         collections[collectionId]
