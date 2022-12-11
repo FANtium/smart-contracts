@@ -30,33 +30,24 @@ contract FantiumNFTV1 is
     mapping(uint256 => mapping(address => uint256))
         public collectionIdToAllowList;
     mapping(address => bool) public kycedAddresses;
-
     /// FANtium's payment address for all primary sales revenues (packed)
     address payable public fantiumPrimarySalesAddress;
-
     /// FANtium's payment address for all secondary sales royalty revenues
     address payable public fantiumSecondarySalesAddress;
-
     /// Basis Points of secondary sales royalties allocated to FANtium
     uint256 public fantiumSecondarySalesBPS;
-
     /// next collection ID to be created
     uint256 private nextCollectionId;
-
     /// ERC20 Payable Token
     address public erc20PaymentToken;
-
     uint256 constant ONE_MILLION = 1_000_000;
-
     bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
     bytes4 private constant _INTERFACE_ID_ERC2981_OVERRIDE = 0xbb3bafd6;
-
     /// ACM
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant PLATFORM_MANAGER_ROLE =
         keccak256("PLATFORM_MANAGER_ROLE");
     bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
-
     /// generic event fields
     bytes32 constant FIELD_FANTIUM_SECONDARY_MARKET_ROYALTY_BPS =
         "fantium secondary royalty BPS";
@@ -80,6 +71,7 @@ contract FantiumNFTV1 is
     bytes32 constant FILED_FANTIUM_BASE_URI = "fantium base uri";
     bytes32 constant FIELD_FANTIUM_MINTER_ADDRESS = "fantium minter address";
     bytes32 constant FIELD_COLLECTION_ACTIVATED = "isActivated";
+    uint256[49] __gap;
 
     struct Collection {
         bool exists;
