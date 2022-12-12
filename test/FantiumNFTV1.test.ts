@@ -421,23 +421,6 @@ describe("FANtiumNFT", () => {
         // check platform secondary market royalty percentage
         expect(await (await nftContract.fantiumSecondarySalesBPS())).to.equal(100)
     })
-
-    /// Royalties
-
-    it("checks that royalty information is correct", async () => {
-
-        // mint NFT
-        await erc20Contract.connect(fan).approve(nftContract.address, priceInWei)
-        await nftContract.connect(kycManager).addAddressToKYC(fan.address)
-        await nftContract.connect(platformManager).toggleCollectionMintable(1)
-        await nftContract.connect(platformManager).toggleCollectionPaused(1)
-        await nftContract.connect(fan).mint(1, priceInWei);
-
-        // check royalty information
-        expect(await nftContract.getRoyaltyData(1000001)).to.deep.equal([
-            [{recipients: [athlete.address, fantium.address] }
-            , { bps: [500, 250] }
-        ]])
-    })
+    
 })
 
