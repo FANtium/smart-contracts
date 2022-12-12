@@ -2,9 +2,8 @@
 
 ## License
 
-The FANtium `fantium-smart-contracts` repo is open source software licensed under the GNU Lesser General Public License v3.0. 
-
-<!-- For full license text, please see our [LICENSE](https://github.com/ArtBlocks/artblocks-contracts/blob/main/LICENSE) declaration file. -->
+The FANtium `fantium-smart-contracts` repo is open source software licensed under Apache License, Version 2.0. 
+For full license text, please see our [LICENSE](https://www.apache.org/licenses/LICENSE-2.0) declaration file.
 
 ## Initial Setup
 
