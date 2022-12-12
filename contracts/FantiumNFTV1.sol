@@ -41,7 +41,6 @@ contract FantiumNFTV1 is
     /// ERC20 Payable Token
     address public erc20PaymentToken;
     uint256 constant ONE_MILLION = 1_000_000;
-    bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
     bytes4 private constant _INTERFACE_ID_ERC2981_OVERRIDE = 0xbb3bafd6;
     /// ACM
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -122,7 +121,6 @@ contract FantiumNFTV1 is
         returns (bool)
     {
         return
-            interfaceId == _INTERFACE_ID_ERC2981 ||
             interfaceId == _INTERFACE_ID_ERC2981_OVERRIDE ||
             super.supportsInterface(interfaceId);
     }
@@ -264,7 +262,12 @@ contract FantiumNFTV1 is
         uint256 _collectionId,
         address _address,
         uint256 _allocation
-    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) onlyValidCollectionId(_collectionId) {
+    )
+        public
+        whenNotPaused
+        onlyRole(PLATFORM_MANAGER_ROLE)
+        onlyValidCollectionId(_collectionId)
+    {
         collectionIdToAllowList[_collectionId][_address] += _allocation;
         emit AddressAddedToAllowList(_collectionId, _address);
     }
@@ -278,7 +281,12 @@ contract FantiumNFTV1 is
         uint256 _collectionId,
         address _address,
         bool _completely
-    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) onlyValidCollectionId(_collectionId) {
+    )
+        public
+        whenNotPaused
+        onlyRole(PLATFORM_MANAGER_ROLE)
+        onlyValidCollectionId(_collectionId)
+    {
         if (_completely) {
             collectionIdToAllowList[_collectionId][_address] = 0;
         } else {
@@ -692,6 +700,7 @@ contract FantiumNFTV1 is
 
     /**
      * @notice Update contract pause status to `_paused`.
+     * @param _paused true if contract should be paused, false otherwise.
      */
 
     function updateContractPaused(
@@ -704,14 +713,9 @@ contract FantiumNFTV1 is
         }
     }
 
-    /**---------PAYMENT------------ */
-
-    /**
-     * @notice approves the contract to spend the payment token
-     */
-    function approvePaymentToken() external {
-        IERC20(erc20PaymentToken).approve(msg.sender, type(uint256).max);
-    }
+    /*//////////////////////////////////////////////////////////////
+                            PAYMENT TOKEN
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Updates the erc20 Payment Token

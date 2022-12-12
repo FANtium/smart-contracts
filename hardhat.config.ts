@@ -33,12 +33,14 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {},
     mumbai: {
-      accounts: ["0x" + PRIVATE_KEY],
+      accounts: ["0x" + "337313ea79efc6f5d8e582908cee2dca5ebb5d894be7a56327d8352956772b16"],
       url: POLYGON_MUMBAI_RPC_PROVIDER,
+      gasPrice: 3000000000000,
+      // gas: 8000000,
     },
     goerli: {
       url: "https://goerli.infura.io/v3/3c43c6fdb9c94a0ebd60ba9479abde96",
-      accounts: ["0x" + PRIVATE_KEY]
+      accounts: ["0x" + "337313ea79efc6f5d8e582908cee2dca5ebb5d894be7a56327d8352956772b16"]
     }
   },
   etherscan: {

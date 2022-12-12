@@ -28,36 +28,10 @@ async function main() {
     // await nftContract.updateFantiumSecondaryMarketRoyaltyBPS(250)
     // await nftContract.updateBaseURI("https://algobits.mypinata.cloud/ipfs/QmWa6KxjWcS7krEpHEjz5n1WPBnLLaaVWiHWfior3FtVH4/")
     // await nftContract.addAddressToKYC(owner.address)
-    // await nftContract.updatePaymentToken(contractAddresses.mock20)
+    // await nftContract.updatePaymentToken("0x07865c6E87B9F70255377e024ace6630C1Eaa37F")
 
-    // // add a collection
-    // await nftContract.addCollection(
-    //     '0x87C9D699cabB94720Aaf0bC1416a5114fcC0D928',
-    //     primarySalePercentage,
-    //     secondarySalePercentage,
-    //     maxInvocations,
-    //     priceInWei,
-    //     earningsSplit
-    // )
-
-    // await nftContract.addCollection(
-    //     '0x87C9D699cabB94720Aaf0bC1416a5114fcC0D928',
-    //     primarySalePercentage,
-    //     secondarySalePercentage,
-    //     maxInvocations,
-    //     priceInWei,
-    //     earningsSplit
-    // )
-
-    // await nftContract.addCollection(
-    //     '0x87C9D699cabB94720Aaf0bC1416a5114fcC0D928',
-    //     primarySalePercentage,
-    //     secondarySalePercentage,
-    //     maxInvocations,
-    //     priceInWei,
-    //     earningsSplit
-    // )
-
+    await nftContract.updateCollectionTier(2, 100, 1, 10)
+    // add a collection
     // await nftContract.addCollection(
     //     '0x87C9D699cabB94720Aaf0bC1416a5114fcC0D928',
     //     primarySalePercentage,
@@ -77,10 +51,10 @@ async function main() {
     // await nftContract.mint(
     //     1, priceInWei)
 
-    await nftContract.mint(
-        2, priceInWei)
-    await nftContract.mint(
-        2, priceInWei)
+    // await nftContract.mint(
+    //     2, priceInWei)
+    // await nftContract.mint(
+    //     2, priceInWei)
 
     // await nftContract.mint(
     //     3, priceInWei)
