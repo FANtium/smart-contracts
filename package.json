@@ -5,6 +5,13 @@
   "main": "index.js",
   "license": "MIT",
   "private": true,
+  "scripts": {
+    "test": "npx hardhat test",
+    "compile": "npx hardhat compile",
+    "coverage": "npx hardhat coverage",
+    "abi": "npx hardhat abi",
+    "typechain": "npx hardhat typechain"
+  },
   "devDependencies": {
     "@ethersproject/abi": "5.7.0",
     "@ethersproject/providers": "5.7.0",
