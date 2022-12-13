@@ -70,7 +70,6 @@ contract FantiumNFTV1 is
     bytes32 constant FILED_FANTIUM_BASE_URI = "fantium base uri";
     bytes32 constant FIELD_FANTIUM_MINTER_ADDRESS = "fantium minter address";
     bytes32 constant FIELD_COLLECTION_ACTIVATED = "isActivated";
-    uint256[49] __gap;
 
     struct Collection {
         bool exists;
