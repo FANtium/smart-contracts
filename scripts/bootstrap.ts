@@ -6,7 +6,7 @@ import { FantiumNFTV1 } from '../typechain-types';
 const primarySalePercentage = 90
 const secondarySalePercentage = 5
 const maxInvocations = 100
-const priceInWei = 100
+const priceInWei = 1
 const earningsSplit = 10
 
 async function main() {
@@ -28,9 +28,10 @@ async function main() {
     // await nftContract.updateFantiumSecondaryMarketRoyaltyBPS(250)
     // await nftContract.updateBaseURI("https://algobits.mypinata.cloud/ipfs/QmWa6KxjWcS7krEpHEjz5n1WPBnLLaaVWiHWfior3FtVH4/")
     // await nftContract.addAddressToKYC(owner.address)
-    // await nftContract.updatePaymentToken(contractAddresses.mock20)
+    // await nftContract.updatePaymentToken("0x07865c6E87B9F70255377e024ace6630C1Eaa37F")
 
-    // // add a collection
+    // await nftContract.updateCollectionTier(2, 100, 1, 10)
+    // add a collection
     // await nftContract.addCollection(
     //     '0x87C9D699cabB94720Aaf0bC1416a5114fcC0D928',
     //     primarySalePercentage,
@@ -40,33 +41,8 @@ async function main() {
     //     earningsSplit
     // )
 
-    // await nftContract.addCollection(
-    //     '0x87C9D699cabB94720Aaf0bC1416a5114fcC0D928',
-    //     primarySalePercentage,
-    //     secondarySalePercentage,
-    //     maxInvocations,
-    //     priceInWei,
-    //     earningsSplit
-    // )
-
-    // await nftContract.addCollection(
-    //     '0x87C9D699cabB94720Aaf0bC1416a5114fcC0D928',
-    //     primarySalePercentage,
-    //     secondarySalePercentage,
-    //     maxInvocations,
-    //     priceInWei,
-    //     earningsSplit
-    // )
-
-    // await nftContract.addCollection(
-    //     '0x87C9D699cabB94720Aaf0bC1416a5114fcC0D928',
-    //     primarySalePercentage,
-    //     secondarySalePercentage,
-    //     maxInvocations,
-    //     priceInWei,
-    //     earningsSplit
-    // )
-
+    // await nftContract.toggleCollectionMintable(1)
+    // await nftContract.toggleCollectionPaused(1)
     // await nftContract.toggleCollectionMintable(2)
     // await nftContract.toggleCollectionPaused(2)
 
@@ -77,33 +53,7 @@ async function main() {
     // await nftContract.mint(
     //     1, priceInWei)
 
-    await nftContract.mint(
-        2, priceInWei)
-    await nftContract.mint(
-        2, priceInWei)
 
-    // await nftContract.mint(
-    //     3, priceInWei)
-    // await nftContract.mint(
-    //     3, priceInWei)    await nftContract.mint(
-    //         3, priceInWei)
-    // await nftContract.mint(
-    //     3, priceInWei)
-
-    // await nftContract.mint(
-    //     4, priceInWei)
-    // await nftContract.mint(
-    //     4, priceInWei)
-    // await nftContract.mint(
-    //     4, priceInWei)
-    // await nftContract.mint(
-    //     4, priceInWei)
-
-
-}
-
-function sleep(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 main().catch((error) => {

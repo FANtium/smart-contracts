@@ -66,6 +66,12 @@ describe("FANtiumNFT", () => {
 
         // set erc20 token address
         await nftContract.connect(platformManager).updatePaymentToken(erc20Contract.address)
+
+        // pause the contract
+        await nftContract.connect(platformManager).updateContractPaused(true)
+
+        // unpause contract
+        await nftContract.connect(platformManager).updateContractPaused(false)
     })
 
 
@@ -175,7 +181,7 @@ describe("FANtiumNFT", () => {
         await expect(nftContract.connect(fan).mint(1, priceInWei)).to.be.revertedWith("Collection is not mintable");
     })
 
-    it("checks that FAN cannot mint if kyced & on allowlist & collection activated and collection minting paused & price is NOT correct (too low)", async () => {
+    it("checks that FAN cannot mint if kyced & on allowlist & collection mintable & collection paused & Allowance is too low", async () => {
         // add fan address to KYC
         await nftContract.connect(kycManager).addAddressToKYC(fan.address)
         // add fan address to allowlist with 1 allocations
@@ -184,7 +190,7 @@ describe("FANtiumNFT", () => {
         await nftContract.connect(platformManager).toggleCollectionMintable(1)
 
         // check if fan can mint
-        await expect(nftContract.connect(fan).mint(1, priceInWei/2)).to.be.revertedWith("Incorrect amount sent");
+        await expect(nftContract.connect(fan).mint(1, priceInWei * 2)).to.be.revertedWith("ERC20 allowance too low");
     })
 
     it("checks that FAN can mint if kyced & on allowlist & collection minting paused & price is correct", async () => {
@@ -211,7 +217,7 @@ describe("FANtiumNFT", () => {
         await nftContract.connect(platformManager).toggleCollectionMintable(1)
 
         // // check if fan can mint
-        await erc20Contract.connect(fan).approve(nftContract.address, 2*priceInWei)
+        await erc20Contract.connect(fan).approve(nftContract.address, 2 * priceInWei)
         await nftContract.connect(fan).mint(1, priceInWei);
 
         // // check fan balance
@@ -248,7 +254,7 @@ describe("FANtiumNFT", () => {
         await nftContract.connect(platformManager).toggleCollectionMintable(1)
         await nftContract.connect(platformManager).toggleCollectionPaused(1)
         await nftContract.connect(fan).mint(1, priceInWei);
-        
+
         // check athlete balance after mint
         const balanceAfter = await erc20Contract.balanceOf(athlete.address)
         expect(balanceAfter.sub(balanceBefore)).to.equal(90)
@@ -415,5 +421,6 @@ describe("FANtiumNFT", () => {
         // check platform secondary market royalty percentage
         expect(await (await nftContract.fantiumSecondarySalesBPS())).to.equal(100)
     })
+    
 })
 

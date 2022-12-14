@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: Apache 2.0
 pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -30,33 +30,23 @@ contract FantiumNFTV1 is
     mapping(uint256 => mapping(address => uint256))
         public collectionIdToAllowList;
     mapping(address => bool) public kycedAddresses;
-
     /// FANtium's payment address for all primary sales revenues (packed)
     address payable public fantiumPrimarySalesAddress;
-
     /// FANtium's payment address for all secondary sales royalty revenues
     address payable public fantiumSecondarySalesAddress;
-
     /// Basis Points of secondary sales royalties allocated to FANtium
     uint256 public fantiumSecondarySalesBPS;
-
     /// next collection ID to be created
     uint256 private nextCollectionId;
-
     /// ERC20 Payable Token
     address public erc20PaymentToken;
-
     uint256 constant ONE_MILLION = 1_000_000;
-
-    bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
     bytes4 private constant _INTERFACE_ID_ERC2981_OVERRIDE = 0xbb3bafd6;
-
     /// ACM
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant PLATFORM_MANAGER_ROLE =
         keccak256("PLATFORM_MANAGER_ROLE");
     bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
-
     /// generic event fields
     bytes32 constant FIELD_FANTIUM_SECONDARY_MARKET_ROYALTY_BPS =
         "fantium secondary royalty BPS";
@@ -130,7 +120,6 @@ contract FantiumNFTV1 is
         returns (bool)
     {
         return
-            interfaceId == _INTERFACE_ID_ERC2981 ||
             interfaceId == _INTERFACE_ID_ERC2981_OVERRIDE ||
             super.supportsInterface(interfaceId);
     }
@@ -272,7 +261,12 @@ contract FantiumNFTV1 is
         uint256 _collectionId,
         address _address,
         uint256 _allocation
-    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) onlyValidCollectionId(_collectionId) {
+    )
+        public
+        whenNotPaused
+        onlyRole(PLATFORM_MANAGER_ROLE)
+        onlyValidCollectionId(_collectionId)
+    {
         collectionIdToAllowList[_collectionId][_address] += _allocation;
         emit AddressAddedToAllowList(_collectionId, _address);
     }
@@ -286,7 +280,12 @@ contract FantiumNFTV1 is
         uint256 _collectionId,
         address _address,
         bool _completely
-    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) onlyValidCollectionId(_collectionId) {
+    )
+        public
+        whenNotPaused
+        onlyRole(PLATFORM_MANAGER_ROLE)
+        onlyValidCollectionId(_collectionId)
+    {
         if (_completely) {
             collectionIdToAllowList[_collectionId][_address] = 0;
         } else {
@@ -306,12 +305,14 @@ contract FantiumNFTV1 is
     function mint(
         uint256 _collectionId,
         uint256 _paymentAmount
-    ) public payable whenNotPaused {
+    ) public whenNotPaused {
         // CHECKS
         require(isAddressKYCed(msg.sender), "Address is not KYCed");
         Collection storage collection = collections[_collectionId];
         require(collection.exists, "Collection does not exist");
         require(collection.isMintable, "Collection is not mintable");
+        require(erc20PaymentToken == address(0), "ERC20 payment token not set");
+        require(IERC20(erc20PaymentToken).allowance(msg.sender, address(this)) >= collection.priceInWei, "ERC20 allowance too low");
         if (collection.isPaused) {
             // if minting is paused, require address to be on allowlist
             require(
@@ -338,12 +339,11 @@ contract FantiumNFTV1 is
         }
 
         // INTERACTIONS
-        bool success = _splitFunds(
+        _splitFunds(
             collection.priceInWei,
             _collectionId,
             msg.sender
         );
-        require(success, "Splitting funds failed");
         _mint(msg.sender, tokenId);
 
         emit Mint(msg.sender, tokenId);
@@ -358,7 +358,7 @@ contract FantiumNFTV1 is
         uint256 _pricePerTokenInWei,
         uint256 _collectionId,
         address _sender
-    ) internal returns (bool success_) {
+    ) internal {
         // split funds between FANtium and athlete
         (
             uint256 fantiumRevenue_,
@@ -368,7 +368,7 @@ contract FantiumNFTV1 is
         ) = getPrimaryRevenueSplits(_collectionId, _pricePerTokenInWei);
         // FANtium payment
         if (fantiumRevenue_ > 0) {
-            success_ = IERC20(erc20PaymentToken).transferFrom(
+            IERC20(erc20PaymentToken).transferFrom(
                 _sender,
                 fantiumAddress_,
                 fantiumRevenue_
@@ -376,13 +376,12 @@ contract FantiumNFTV1 is
         }
         // athlete payment
         if (athleteRevenue_ > 0) {
-            success_ = IERC20(erc20PaymentToken).transferFrom(
+            IERC20(erc20PaymentToken).transferFrom(
                 _sender,
                 athleteAddress_,
                 athleteRevenue_
             );
         }
-        return success_;
     }
 
     /**
@@ -456,8 +455,7 @@ contract FantiumNFTV1 is
             string(
                 bytes.concat(
                     bytes(baseURI),
-                    bytes(_tokenId.toString()),
-                    bytes(".json")
+                    bytes(_tokenId.toString())
                 )
             );
     }
@@ -700,6 +698,7 @@ contract FantiumNFTV1 is
 
     /**
      * @notice Update contract pause status to `_paused`.
+     * @param _paused true if contract should be paused, false otherwise.
      */
 
     function updateContractPaused(
@@ -712,14 +711,9 @@ contract FantiumNFTV1 is
         }
     }
 
-    /**---------PAYMENT------------ */
-
-    /**
-     * @notice approves the contract to spend the payment token
-     */
-    function approvePaymentToken() external {
-        IERC20(erc20PaymentToken).approve(msg.sender, type(uint256).max);
-    }
+    /*//////////////////////////////////////////////////////////////
+                            PAYMENT TOKEN
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Updates the erc20 Payment Token
