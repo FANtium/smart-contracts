@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: Apache 2.0
 pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -305,12 +305,13 @@ contract FantiumNFTV1 is
     function mint(
         uint256 _collectionId,
         uint256 _paymentAmount
-    ) public payable whenNotPaused {
+    ) public whenNotPaused {
         // CHECKS
         require(isAddressKYCed(msg.sender), "Address is not KYCed");
         Collection storage collection = collections[_collectionId];
         require(collection.exists, "Collection does not exist");
         require(collection.isMintable, "Collection is not mintable");
+        require(IERC20(erc20PaymentToken).allowance(msg.sender, address(this)) >= collection.priceInWei, "ERC20 allowance too low");
         if (collection.isPaused) {
             // if minting is paused, require address to be on allowlist
             require(
@@ -337,12 +338,11 @@ contract FantiumNFTV1 is
         }
 
         // INTERACTIONS
-        bool success = _splitFunds(
+        _splitFunds(
             collection.priceInWei,
             _collectionId,
             msg.sender
         );
-        require(success, "Splitting funds failed");
         _mint(msg.sender, tokenId);
 
         emit Mint(msg.sender, tokenId);
@@ -357,7 +357,7 @@ contract FantiumNFTV1 is
         uint256 _pricePerTokenInWei,
         uint256 _collectionId,
         address _sender
-    ) internal returns (bool success_) {
+    ) internal {
         // split funds between FANtium and athlete
         (
             uint256 fantiumRevenue_,
@@ -367,7 +367,7 @@ contract FantiumNFTV1 is
         ) = getPrimaryRevenueSplits(_collectionId, _pricePerTokenInWei);
         // FANtium payment
         if (fantiumRevenue_ > 0) {
-            success_ = IERC20(erc20PaymentToken).transferFrom(
+            IERC20(erc20PaymentToken).transferFrom(
                 _sender,
                 fantiumAddress_,
                 fantiumRevenue_
@@ -375,13 +375,12 @@ contract FantiumNFTV1 is
         }
         // athlete payment
         if (athleteRevenue_ > 0) {
-            success_ = IERC20(erc20PaymentToken).transferFrom(
+            IERC20(erc20PaymentToken).transferFrom(
                 _sender,
                 athleteAddress_,
                 athleteRevenue_
             );
         }
-        return success_;
     }
 
     /**
@@ -455,8 +454,7 @@ contract FantiumNFTV1 is
             string(
                 bytes.concat(
                     bytes(baseURI),
-                    bytes(_tokenId.toString()),
-                    bytes(".json")
+                    bytes(_tokenId.toString())
                 )
             );
     }

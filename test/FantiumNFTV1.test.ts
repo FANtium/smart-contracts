@@ -181,7 +181,7 @@ describe("FANtiumNFT", () => {
         await expect(nftContract.connect(fan).mint(1, priceInWei)).to.be.revertedWith("Collection is not mintable");
     })
 
-    it("checks that FAN cannot mint if kyced & on allowlist & collection mintable & collection paused & price is NOT correct", async () => {
+    it("checks that FAN cannot mint if kyced & on allowlist & collection mintable & collection paused & Allowance is too low", async () => {
         // add fan address to KYC
         await nftContract.connect(kycManager).addAddressToKYC(fan.address)
         // add fan address to allowlist with 1 allocations
@@ -190,7 +190,7 @@ describe("FANtiumNFT", () => {
         await nftContract.connect(platformManager).toggleCollectionMintable(1)
 
         // check if fan can mint
-        await expect(nftContract.connect(fan).mint(1, priceInWei * 2)).to.be.revertedWith("Incorrect amount sent");
+        await expect(nftContract.connect(fan).mint(1, priceInWei * 2)).to.be.revertedWith("ERC20 allowance too low");
     })
 
     it("checks that FAN can mint if kyced & on allowlist & collection minting paused & price is correct", async () => {
