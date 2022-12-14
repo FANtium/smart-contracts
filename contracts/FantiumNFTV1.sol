@@ -311,6 +311,7 @@ contract FantiumNFTV1 is
         Collection storage collection = collections[_collectionId];
         require(collection.exists, "Collection does not exist");
         require(collection.isMintable, "Collection is not mintable");
+        require(erc20PaymentToken == address(0), "ERC20 payment token not set");
         require(IERC20(erc20PaymentToken).allowance(msg.sender, address(this)) >= collection.priceInWei, "ERC20 allowance too low");
         if (collection.isPaused) {
             // if minting is paused, require address to be on allowlist
