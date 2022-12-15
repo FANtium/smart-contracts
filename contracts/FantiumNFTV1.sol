@@ -255,19 +255,19 @@ contract FantiumNFTV1 is
      * @notice Add address to allow list.
      * @param _collectionId collection ID.
      * @param _address address to be added to allow list.
-     * @param _allocation allocation to the address.
+     * @param _increaseAllocation allocation to the address.
      */
-    function addAddressToAllowListWithAllocation(
+    function increaseAllowListAllocation(
         uint256 _collectionId,
         address _address,
-        uint256 _allocation
+        uint256 _increaseAllocation
     )
         public
         whenNotPaused
         onlyRole(PLATFORM_MANAGER_ROLE)
         onlyValidCollectionId(_collectionId)
     {
-        collectionIdToAllowList[_collectionId][_address] += _allocation;
+        collectionIdToAllowList[_collectionId][_address] += _increaseAllocation;
         emit AddressAddedToAllowList(_collectionId, _address);
     }
 
@@ -275,22 +275,23 @@ contract FantiumNFTV1 is
      * @notice Remove address from allow list.
      * @param _collectionId collection ID.
      * @param _address address to be removed from allow list.
+     * @param _reduceAllocation allocation to the address.
      */
     function reduceAllowListAllocation(
         uint256 _collectionId,
         address _address,
-        bool _completely
+        uint256 _reduceAllocation
     )
         public
         whenNotPaused
         onlyRole(PLATFORM_MANAGER_ROLE)
         onlyValidCollectionId(_collectionId)
     {
-        if (_completely) {
-            collectionIdToAllowList[_collectionId][_address] = 0;
-        } else {
-            collectionIdToAllowList[_collectionId][_address]--;
-        }
+        collectionIdToAllowList[_collectionId][_address] > _reduceAllocation
+            ? collectionIdToAllowList[_collectionId][
+                _address
+            ] -= _reduceAllocation
+            : collectionIdToAllowList[_collectionId][_address] = 0;
         emit AddressRemovedFromAllowList(_collectionId, _address);
     }
 
@@ -311,8 +312,12 @@ contract FantiumNFTV1 is
         Collection storage collection = collections[_collectionId];
         require(collection.exists, "Collection does not exist");
         require(collection.isMintable, "Collection is not mintable");
-        require(erc20PaymentToken == address(0), "ERC20 payment token not set");
-        require(IERC20(erc20PaymentToken).allowance(msg.sender, address(this)) >= collection.priceInWei, "ERC20 allowance too low");
+        require(erc20PaymentToken != address(0), "ERC20 payment token not set");
+        require(
+            IERC20(erc20PaymentToken).allowance(msg.sender, address(this)) >=
+                collection.priceInWei,
+            "ERC20 allowance too low"
+        );
         if (collection.isPaused) {
             // if minting is paused, require address to be on allowlist
             require(
@@ -339,11 +344,7 @@ contract FantiumNFTV1 is
         }
 
         // INTERACTIONS
-        _splitFunds(
-            collection.priceInWei,
-            _collectionId,
-            msg.sender
-        );
+        _splitFunds(collection.priceInWei, _collectionId, msg.sender);
         _mint(msg.sender, tokenId);
 
         emit Mint(msg.sender, tokenId);
@@ -451,13 +452,7 @@ contract FantiumNFTV1 is
     function tokenURI(
         uint256 _tokenId
     ) public view override onlyValidTokenId(_tokenId) returns (string memory) {
-        return
-            string(
-                bytes.concat(
-                    bytes(baseURI),
-                    bytes(_tokenId.toString())
-                )
-            );
+        return string(bytes.concat(bytes(baseURI), bytes(_tokenId.toString())));
     }
 
     /*//////////////////////////////////////////////////////////////

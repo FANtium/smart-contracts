@@ -93,6 +93,9 @@ describe("FANtiumNFT", () => {
 
         // royalties
         expect(await nftContract.fantiumSecondarySalesBPS()).to.equal(250)
+
+        // contract payment token
+        expect(await nftContract.erc20PaymentToken()).to.equal(erc20Contract.address)
     })
 
 
@@ -136,29 +139,29 @@ describe("FANtiumNFT", () => {
 
     it("checks that PLATFORM MANAGER can add to Allowlist", async () => {
         expect(await nftContract.collectionIdToAllowList(1, fan.address)).to.equal(0)
-        await nftContract.connect(platformManager).addAddressToAllowListWithAllocation(1, fan.address, 1)
+        await nftContract.connect(platformManager).increaseAllowListAllocation(1, fan.address, 1)
         expect(await nftContract.collectionIdToAllowList(1, fan.address)).to.equal(1)
     })
 
     it("checks that PLATFORM MANAGER can remove completely from Allowlist", async () => {
         expect(await nftContract.collectionIdToAllowList(1, fan.address)).to.equal(0)
         // add fan address to allowlist with 2 allocations
-        await nftContract.connect(platformManager).addAddressToAllowListWithAllocation(1, fan.address, 2)
+        await nftContract.connect(platformManager).increaseAllowListAllocation(1, fan.address, 2)
         expect(await nftContract.collectionIdToAllowList(1, fan.address)).to.equal(2)
 
         // remove fan address from allowlist completely
-        await nftContract.connect(platformManager).reduceAllowListAllocation(1, fan.address, true)
+        await nftContract.connect(platformManager).reduceAllowListAllocation(1, fan.address, 100)
         expect(await nftContract.collectionIdToAllowList(1, fan.address)).to.equal(0)
     })
 
     it("checks that PLATFORM MANAGER can remove partially from Allowlist", async () => {
         expect(await nftContract.collectionIdToAllowList(1, fan.address)).to.equal(0)
         // add fan address to allowlist with 2 allocations
-        await nftContract.connect(platformManager).addAddressToAllowListWithAllocation(1, fan.address, 2)
+        await nftContract.connect(platformManager).increaseAllowListAllocation(1, fan.address, 2)
         expect(await nftContract.collectionIdToAllowList(1, fan.address)).to.equal(2)
 
         // reduce fan address allocation by 1
-        await nftContract.connect(platformManager).reduceAllowListAllocation(1, fan.address, false)
+        await nftContract.connect(platformManager).reduceAllowListAllocation(1, fan.address, 1)
         expect(await nftContract.collectionIdToAllowList(1, fan.address)).to.equal(1)
     })
 
@@ -185,7 +188,7 @@ describe("FANtiumNFT", () => {
         // add fan address to KYC
         await nftContract.connect(kycManager).addAddressToKYC(fan.address)
         // add fan address to allowlist with 1 allocations
-        await nftContract.connect(platformManager).addAddressToAllowListWithAllocation(1, fan.address, 1)
+        await nftContract.connect(platformManager).increaseAllowListAllocation(1, fan.address, 1)
         // activate collection
         await nftContract.connect(platformManager).toggleCollectionMintable(1)
 
@@ -197,7 +200,7 @@ describe("FANtiumNFT", () => {
         // add fan address to KYC
         await nftContract.connect(kycManager).addAddressToKYC(fan.address)
         // add fan address to allowlist with 1 allocation
-        await nftContract.connect(platformManager).addAddressToAllowListWithAllocation(1, fan.address, 1)
+        await nftContract.connect(platformManager).increaseAllowListAllocation(1, fan.address, 1)
         await nftContract.connect(platformManager).toggleCollectionMintable(1)
         // // check if fan can mint
         await erc20Contract.connect(fan).approve(nftContract.address, priceInWei)
@@ -211,7 +214,7 @@ describe("FANtiumNFT", () => {
         // add fan address to KYC
         await nftContract.connect(kycManager).addAddressToKYC(fan.address)
         // add fan address to allowlist with 1 allocation
-        await nftContract.connect(platformManager).addAddressToAllowListWithAllocation(1, fan.address, 1)
+        await nftContract.connect(platformManager).increaseAllowListAllocation(1, fan.address, 1)
 
         // activate collection
         await nftContract.connect(platformManager).toggleCollectionMintable(1)
