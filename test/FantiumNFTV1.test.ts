@@ -22,6 +22,7 @@ describe("FANtiumNFT", () => {
     const maxInvocations = 100
     const priceInWei = 100
     const earningsSplit = 10
+    let timestamp = 0
 
     beforeEach(async () => {
         const [_defaultAdmin, _platformManager, _kycManager, _fantium, _athlete, _fan, _other] = await ethers.getSigners()
@@ -51,6 +52,9 @@ describe("FANtiumNFT", () => {
         // set payment token
         await nftContract.connect(platformManager).updatePaymentToken(erc20Contract.address)
 
+        // get timestamp
+        timestamp = (await ethers.provider.getBlock("latest")).timestamp + 1
+
         // add first collection
         await nftContract.connect(platformManager).addCollection(
             athlete.address,
@@ -58,7 +62,8 @@ describe("FANtiumNFT", () => {
             secondarySalePercentage,
             maxInvocations,
             priceInWei,
-            earningsSplit
+            earningsSplit,
+            timestamp
         )
 
         // set contract base URI
@@ -292,7 +297,8 @@ describe("FANtiumNFT", () => {
                 5,
                 100,
                 10000,
-                10
+                10,
+                timestamp
             )).to.be.revertedWith('AccessControl: account 0x976ea74026e726554db657fa54763abd0c3a0aa9 is missing role 0xab538675bf961a344c31ab0f84b867b850736e871cc7bf3055ce65100abe02ea')
     })
 
@@ -304,7 +310,8 @@ describe("FANtiumNFT", () => {
                 5,
                 100,
                 10000,
-                10
+                10,
+                timestamp
             )).to.be.revertedWith('Invalid address')
     })
 

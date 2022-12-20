@@ -393,42 +393,42 @@
     },
     {
       "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-      "txHash": "0x5eb4145b47c2986e3a108a6a6240715ede06800c81a89f36474033608c758574",
+      "txHash": "0x8774ffeaa4f7e6367eeaad06695b3625eff8374919c0cbb473fe12fac584733b",
       "kind": "uups"
     },
     {
       "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
-      "txHash": "0x94b772df762cfa77c201e81a416a1892e1c8a2c6d5fa6998bdd55a3805ffedd9",
+      "txHash": "0x2797e38af82b25c0beba6e1a5427eaee7856c6dab838b0292dfb47bd11545609",
       "kind": "uups"
     },
     {
       "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
-      "txHash": "0xda61020a104c59abdff8bc533443a4030c2a839f28cbcf2bb594462b1ad5e5d1",
+      "txHash": "0x839066907a1762fc882df05b075af558e4a10f23a0f2d6b54fae8a7f2b7344c2",
       "kind": "uups"
     },
     {
       "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
-      "txHash": "0x8bf05e4821e54f1f2dbff55527efe87ec05f40368dfa439a22abb81c29ee1a31",
+      "txHash": "0xce830f1c902d5013d336051ed977fb1d6bea9116badd731191b34b63746a22ab",
       "kind": "uups"
     },
     {
       "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
-      "txHash": "0xef4f362d73d3d1bba7f4f17ffd4202361aeb6d43d54fb3ee92e85ca7471a0670",
+      "txHash": "0xe5a4064f4e568f1df664d06b18c3fc1744b6a8576c9ed32bdeb54c37d25d3ac7",
       "kind": "uups"
     },
     {
       "address": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
-      "txHash": "0xeb308541a300ec540e8dd9c8ac24156a4cc36453be88d7037d0664171f526010",
+      "txHash": "0xb0bbf23b3cdb0832d4a9fd304607add957b78f3f582b1d3c0585c62f4376d6c6",
       "kind": "uups"
     },
     {
       "address": "0x3Aa5ebB10DC797CAC828524e59A333d0A371443c",
-      "txHash": "0x9c84080d0c716e820c9160cb63949a7d23ec09b93e5f6e77e22c9f096b713321",
+      "txHash": "0x05f80f37bceba792c1c4d02c988a98d355dfa91dd75b3d328fc4beb1bed1d513",
       "kind": "uups"
     },
     {
       "address": "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1",
-      "txHash": "0x5ebc508fae77743cef1faaa2ba63d1ae78529e10df98f85030ff6b861004fdaa",
+      "txHash": "0x4c187331d842392488aa6049c2cb008118af904cb830b456d2338e2ac9493052",
       "kind": "uups"
     },
     {
@@ -854,9 +854,9 @@
         }
       }
     },
-    "e512bb3f9518b8c7ac904848bfd4bc35ea2b0ecd78963d243e536924d9b5b858": {
+    "5253c06c2d84b46bac1399dd3a5c61972bcf5ff10f2a0d7cbbfa3ccc81d3d230": {
       "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "txHash": "0x49078d7127cab3036e89c753a1ebf85c6d9c53283578f5c9c492a1de684b45f4",
+      "txHash": "0x394cb180f7773a7729ae633f782f72a8ffc3715af77a613ba2cfd24bb38b94b8",
       "layout": {
         "solcVersion": "0.8.13",
         "storage": [
@@ -1001,7 +1001,7 @@
             "label": "collections",
             "offset": 0,
             "slot": "351",
-            "type": "t_mapping(t_uint256,t_struct(Collection)4948_storage)",
+            "type": "t_mapping(t_uint256,t_struct(Collection)4953_storage)",
             "contract": "FantiumNFTV1",
             "src": "contracts/FantiumNFTV1.sol:28"
           },
@@ -1123,7 +1123,7 @@
             "label": "mapping(uint256 => mapping(address => uint256))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(Collection)4948_storage)": {
+          "t_mapping(t_uint256,t_struct(Collection)4953_storage)": {
             "label": "mapping(uint256 => struct FantiumNFTV1.Collection)",
             "numberOfBytes": "32"
           },
@@ -1131,7 +1131,7 @@
             "label": "string",
             "numberOfBytes": "32"
           },
-          "t_struct(Collection)4948_storage": {
+          "t_struct(Collection)4953_storage": {
             "label": "struct FantiumNFTV1.Collection",
             "members": [
               {
@@ -1141,61 +1141,67 @@
                 "slot": "0"
               },
               {
-                "label": "isMintable",
-                "type": "t_bool",
-                "offset": 1,
-                "slot": "0"
-              },
-              {
-                "label": "isPaused",
-                "type": "t_bool",
-                "offset": 2,
-                "slot": "0"
-              },
-              {
-                "label": "invocations",
-                "type": "t_uint24",
-                "offset": 3,
-                "slot": "0"
-              },
-              {
-                "label": "priceInWei",
+                "label": "launchTimestamp",
                 "type": "t_uint256",
                 "offset": 0,
                 "slot": "1"
               },
               {
+                "label": "isMintable",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "isPaused",
+                "type": "t_bool",
+                "offset": 1,
+                "slot": "2"
+              },
+              {
+                "label": "invocations",
+                "type": "t_uint24",
+                "offset": 2,
+                "slot": "2"
+              },
+              {
+                "label": "priceInWei",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
                 "label": "maxInvocations",
                 "type": "t_uint256",
                 "offset": 0,
-                "slot": "2"
+                "slot": "4"
               },
               {
                 "label": "tournamentEarningPercentage",
                 "type": "t_uint8",
                 "offset": 0,
-                "slot": "3"
+                "slot": "5"
               },
               {
                 "label": "athleteAddress",
                 "type": "t_address_payable",
                 "offset": 1,
-                "slot": "3"
+                "slot": "5"
               },
               {
                 "label": "athletePrimarySalesPercentage",
                 "type": "t_uint8",
                 "offset": 21,
-                "slot": "3"
+                "slot": "5"
               },
               {
                 "label": "athleteSecondarySalesPercentage",
                 "type": "t_uint8",
                 "offset": 22,
-                "slot": "3"
+                "slot": "5"
               }
             ],
-            "numberOfBytes": "128"
+            "numberOfBytes": "192"
           },
           "t_struct(RoleData)34_storage": {
             "label": "struct AccessControlUpgradeable.RoleData",

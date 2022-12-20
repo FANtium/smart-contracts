@@ -70,11 +70,13 @@ contract FantiumNFTV1 is
     bytes32 constant FILED_FANTIUM_BASE_URI = "fantium base uri";
     bytes32 constant FIELD_FANTIUM_MINTER_ADDRESS = "fantium minter address";
     bytes32 constant FIELD_COLLECTION_ACTIVATED = "isActivated";
+    bytes32 constant FIELD_COLLECTION_LAUNCH_TIMESTAMP = "launch timestamp";
 
     struct Collection {
         bool exists;
-        bool isMintable;
-        bool isPaused;
+        uint launchTimestamp; // 
+        bool isMintable; // isApproved
+        bool isPaused; // onlyAllowed
         uint24 invocations;
         uint256 priceInWei;
         uint256 maxInvocations;
@@ -304,13 +306,13 @@ contract FantiumNFTV1 is
      * @param _collectionId Collection ID.
      */
     function mint(
-        uint256 _collectionId,
-        uint256 _paymentAmount
+        uint256 _collectionId
     ) public whenNotPaused {
         // CHECKS
         require(isAddressKYCed(msg.sender), "Address is not KYCed");
         Collection storage collection = collections[_collectionId];
         require(collection.exists, "Collection does not exist");
+        require(collection.launchTimestamp <= block.timestamp, "Collection not launched");
         require(collection.isMintable, "Collection is not mintable");
         require(erc20PaymentToken != address(0), "ERC20 payment token not set");
         require(
@@ -328,10 +330,6 @@ contract FantiumNFTV1 is
         require(
             collection.invocations < collection.maxInvocations,
             "Max invocations reached"
-        );
-        require(
-            collection.priceInWei == _paymentAmount,
-            "Incorrect amount sent"
         );
 
         uint256 tokenId = (_collectionId * ONE_MILLION) +
@@ -467,6 +465,7 @@ contract FantiumNFTV1 is
      * @param _maxInvocations Maximum number of invocations.
      * @param _priceInWei Price of the token in wei.
      * @param _tournamentEarningPercentage Tournament earning percentage.
+     * @param _launchTimestamp Launch timestamp.
      */
     function addCollection(
         address payable _athleteAddress,
@@ -474,7 +473,8 @@ contract FantiumNFTV1 is
         uint8 _athleteSecondarySalesPercentage,
         uint256 _maxInvocations,
         uint256 _priceInWei,
-        uint8 _tournamentEarningPercentage
+        uint8 _tournamentEarningPercentage,
+        uint _launchTimestamp
     )
         external
         whenNotPaused
@@ -492,6 +492,7 @@ contract FantiumNFTV1 is
         collections[collectionId].priceInWei = _priceInWei;
         collections[collectionId]
             .tournamentEarningPercentage = _tournamentEarningPercentage;
+        collections[collectionId].launchTimestamp = _launchTimestamp;
 
         collections[collectionId].invocations = 1;
         collections[collectionId].exists = true;
@@ -632,7 +633,29 @@ contract FantiumNFTV1 is
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_TIER);
     }
 
-    //update baseURI only platform manager
+    /**
+     * @notice Updates the launch timestamp of collection `_collectionId` to be
+     * `_launchTimestamp`.
+     */
+    function updateCollectionLaunchTimestamp(
+        uint256 _collectionId,
+        uint256 _launchTimestamp
+    )
+        external
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
+        onlyRole(PLATFORM_MANAGER_ROLE)
+    {
+        collections[_collectionId].launchTimestamp = _launchTimestamp;
+        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_LAUNCH_TIMESTAMP);
+    }
+
+
+    /*///////////////////////////////////////////////////////////////
+                        PLATFORM FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+     //update baseURI only platform manager
     function updateBaseURI(
         string memory _baseURI
     ) external whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
@@ -640,9 +663,6 @@ contract FantiumNFTV1 is
         emit PlatformUpdated(FILED_FANTIUM_BASE_URI);
     }
 
-    /*///////////////////////////////////////////////////////////////
-                        PLATFORM FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Updates the platform address to be `_fantiumPrimarySalesAddress`.
