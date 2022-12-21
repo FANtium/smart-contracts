@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @title FANtium ERC721 contract V1.
@@ -78,7 +78,7 @@ contract FantiumNFTV1 is
         bool isMintable; // isApproved
         bool isPaused; // onlyAllowed
         uint24 invocations;
-        uint256 priceInWei;
+        uint256 price;
         uint256 maxInvocations;
         uint8 tournamentEarningPercentage;
         address payable athleteAddress;
@@ -127,7 +127,7 @@ contract FantiumNFTV1 is
     }
 
     /*//////////////////////////////////////////////////////////////
-                                 MODIFERS
+                            MODIFERS
     //////////////////////////////////////////////////////////////*/
 
     modifier onlyAthlete(uint256 _collectionId) {
@@ -315,9 +315,10 @@ contract FantiumNFTV1 is
         require(collection.launchTimestamp <= block.timestamp, "Collection not launched");
         require(collection.isMintable, "Collection is not mintable");
         require(erc20PaymentToken != address(0), "ERC20 payment token not set");
+        uint256 tokenPrice = collection.price * 10**ERC20(erc20PaymentToken).decimals();
         require(
-            IERC20(erc20PaymentToken).allowance(msg.sender, address(this)) >=
-                collection.priceInWei,
+            ERC20(erc20PaymentToken).allowance(msg.sender, address(this)) >=
+                tokenPrice,
             "ERC20 allowance too low"
         );
         if (collection.isPaused) {
@@ -342,7 +343,7 @@ contract FantiumNFTV1 is
         }
 
         // INTERACTIONS
-        _splitFunds(collection.priceInWei, _collectionId, msg.sender);
+        _splitFunds(tokenPrice, _collectionId, msg.sender);
         _mint(msg.sender, tokenId);
 
         emit Mint(msg.sender, tokenId);
@@ -354,7 +355,7 @@ contract FantiumNFTV1 is
      * collection `_collectionId`.
      */
     function _splitFunds(
-        uint256 _pricePerTokenInWei,
+        uint256 _price,
         uint256 _collectionId,
         address _sender
     ) internal {
@@ -364,7 +365,7 @@ contract FantiumNFTV1 is
             address fantiumAddress_,
             uint256 athleteRevenue_,
             address athleteAddress_
-        ) = getPrimaryRevenueSplits(_collectionId, _pricePerTokenInWei);
+        ) = getPrimaryRevenueSplits(_collectionId, _price);
         // FANtium payment
         if (fantiumRevenue_ > 0) {
             IERC20(erc20PaymentToken).transferFrom(
@@ -463,7 +464,7 @@ contract FantiumNFTV1 is
      * @param _athletePrimarySalesPercentage Primary sales percentage of the athlete.
      * @param _athleteSecondarySalesPercentage Secondary sales percentage of the athlete.
      * @param _maxInvocations Maximum number of invocations.
-     * @param _priceInWei Price of the token in wei.
+     * @param _price Price of the token.
      * @param _tournamentEarningPercentage Tournament earning percentage.
      * @param _launchTimestamp Launch timestamp.
      */
@@ -472,7 +473,7 @@ contract FantiumNFTV1 is
         uint8 _athletePrimarySalesPercentage,
         uint8 _athleteSecondarySalesPercentage,
         uint256 _maxInvocations,
-        uint256 _priceInWei,
+        uint256 _price,
         uint8 _tournamentEarningPercentage,
         uint _launchTimestamp
     )
@@ -489,7 +490,7 @@ contract FantiumNFTV1 is
         collections[collectionId]
             .athleteSecondarySalesPercentage = _athleteSecondarySalesPercentage;
         collections[collectionId].maxInvocations = _maxInvocations;
-        collections[collectionId].priceInWei = _priceInWei;
+        collections[collectionId].price = _price;
         collections[collectionId]
             .tournamentEarningPercentage = _tournamentEarningPercentage;
         collections[collectionId].launchTimestamp = _launchTimestamp;
@@ -618,7 +619,7 @@ contract FantiumNFTV1 is
     function updateCollectionTier(
         uint256 _collectionId,
         uint256 _maxInvocations,
-        uint256 _priceInWei,
+        uint256 _price,
         uint8 tournamentEarningPercentage
     )
         external
@@ -627,7 +628,7 @@ contract FantiumNFTV1 is
         onlyRole(PLATFORM_MANAGER_ROLE)
     {
         collections[_collectionId].maxInvocations = _maxInvocations;
-        collections[_collectionId].priceInWei = _priceInWei;
+        collections[_collectionId].price = _price;
         collections[_collectionId]
             .tournamentEarningPercentage = tournamentEarningPercentage;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_TIER);
