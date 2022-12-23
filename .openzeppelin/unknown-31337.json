@@ -398,17 +398,17 @@
     },
     {
       "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
-      "txHash": "0x72c6dcac5a6ea069668761bd069f782c94e1deb43c070945746986d457abd815",
+      "txHash": "0xc5b40c96039c0ece85a57959e43a86dc8fc1ad7aae6eb77c9cbb03eed1771749",
       "kind": "uups"
     },
     {
       "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
-      "txHash": "0xf348ad2a51fce6489936ba66cabbbfa98d55e53315418cf1c4361cfaeef9016b",
+      "txHash": "0x383107352d3cef045168287e045be1263d5f35331ef5794c4fbf4176b18b28c3",
       "kind": "uups"
     },
     {
       "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
-      "txHash": "0x86fa212b1d0d00276b8f8a5f70ba01734e8ec794ff74f4b1b4adf0b8ed341b0a",
+      "txHash": "0xaa7779660cdc9ea87a3241e7c76da9a06f5956e42da5782b143fddc584a1060c",
       "kind": "uups"
     },
     {
