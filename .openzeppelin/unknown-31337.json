@@ -387,48 +387,43 @@
       "kind": "uups"
     },
     {
-      "address": "0xBEc49fA140aCaA83533fB00A2BB19bDdd0290f25",
-      "txHash": "0xa069d2151829bafd2fffa59cb09518e0325f8a3bd5ae58af4260efb792fba73b",
-      "kind": "uups"
-    },
-    {
       "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-      "txHash": "0xf886ebc7df760cb1f31ae355e9a843b3ad7b3c6e91293bb67a6016b7bb5f63a8",
+      "txHash": "0x9283cd120d38b3dbf8ef9dc8903470c52e120437abbff98eb758e77b96b20194",
       "kind": "uups"
     },
     {
       "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
-      "txHash": "0xc5b40c96039c0ece85a57959e43a86dc8fc1ad7aae6eb77c9cbb03eed1771749",
+      "txHash": "0x692b9e0e588539e231ba793532dccaab1f4f985501a80f8ee0ca428ec2be10b5",
       "kind": "uups"
     },
     {
       "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
-      "txHash": "0x383107352d3cef045168287e045be1263d5f35331ef5794c4fbf4176b18b28c3",
+      "txHash": "0x285b44326537fbc034ce7aa52583f9a591024ac17d6addcda1dc44305c867bc9",
       "kind": "uups"
     },
     {
       "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
-      "txHash": "0xaa7779660cdc9ea87a3241e7c76da9a06f5956e42da5782b143fddc584a1060c",
+      "txHash": "0xabb850710fef5c6b4b821037522d39a1ad5f87e4872712b4eaa57169af4f8c50",
       "kind": "uups"
     },
     {
       "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
-      "txHash": "0xee9809467176921c402e9ee36b9f46f8f91d39fa17beac146a529df3008604a4",
+      "txHash": "0xa03d3f91ea9df2dea78302c3124142bad722d38e8918b51b2923ff3834d7d118",
       "kind": "uups"
     },
     {
       "address": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
-      "txHash": "0x96a5dac568db21756211b6e9c5953c744f0ec7550a6c484cd57195af669d1a70",
+      "txHash": "0x2db9a0b6ce00f6af8dda2d4bf9cc134f5da4643890bb06a455cf9e9b6a9feb6b",
       "kind": "uups"
     },
     {
       "address": "0x3Aa5ebB10DC797CAC828524e59A333d0A371443c",
-      "txHash": "0x5b993a8862e52d9695ca0f5d9b413e2673fc34461141ef80ff3c985500fc6ba6",
+      "txHash": "0x7f7f0b0a7dbdc577b609dad75d07f68b5c0c1fa2326eb8c9ac03df10dbeb4168",
       "kind": "uups"
     },
     {
       "address": "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1",
-      "txHash": "0x9d3019f19d058ff30c5c84e0e52aad2ef8f12975215f27fa333472686ae172bb",
+      "txHash": "0x61dfa3acf60b1f239bbf1b63f145ad623830badd9c41284649d993846b6bf400",
       "kind": "uups"
     },
     {
@@ -524,6 +519,11 @@
     {
       "address": "0xf4B146FbA71F41E0592668ffbF264F1D186b2Ca8",
       "txHash": "0x8e802a2960c58041ee3e17ca52bdf963d671d924dace989b7e9ed05ef9a9d7d5",
+      "kind": "uups"
+    },
+    {
+      "address": "0xBEc49fA140aCaA83533fB00A2BB19bDdd0290f25",
+      "txHash": "0xa069d2151829bafd2fffa59cb09518e0325f8a3bd5ae58af4260efb792fba73b",
       "kind": "uups"
     }
   ],
@@ -854,9 +854,9 @@
         }
       }
     },
-    "1b28ae98abdd06e200907cd3af5b9cf4850d3c8ab938923428439604fb432a04": {
+    "9263c9802aa73eb118a912291bf6dfda7f84c52d36d4edac88a1b3fcfe67ab20": {
       "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "txHash": "0x880af70950a387533e29c1d28740a465f8c93ba9d42c5d9db06fef9e35047c10",
+      "txHash": "0x426d950789a0756f0fa9e020200a5b509e00c5371f6c5509b83dcaf47711d741",
       "layout": {
         "solcVersion": "0.8.13",
         "storage": [
@@ -1001,73 +1001,73 @@
             "label": "collections",
             "offset": 0,
             "slot": "351",
-            "type": "t_mapping(t_uint256,t_struct(Collection)4967_storage)",
-            "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:28"
+            "type": "t_mapping(t_uint256,t_struct(Collection)4707_storage)",
+            "contract": "FantiumNFT",
+            "src": "contracts/FantiumNFT.sol:28"
           },
           {
             "label": "baseURI",
             "offset": 0,
             "slot": "352",
             "type": "t_string_storage",
-            "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:29"
+            "contract": "FantiumNFT",
+            "src": "contracts/FantiumNFT.sol:29"
           },
           {
             "label": "collectionIdToAllowList",
             "offset": 0,
             "slot": "353",
             "type": "t_mapping(t_uint256,t_mapping(t_address,t_uint256))",
-            "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:30"
+            "contract": "FantiumNFT",
+            "src": "contracts/FantiumNFT.sol:30"
           },
           {
             "label": "kycedAddresses",
             "offset": 0,
             "slot": "354",
             "type": "t_mapping(t_address,t_bool)",
-            "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:32"
+            "contract": "FantiumNFT",
+            "src": "contracts/FantiumNFT.sol:32"
           },
           {
             "label": "fantiumPrimarySalesAddress",
             "offset": 0,
             "slot": "355",
             "type": "t_address_payable",
-            "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:34"
+            "contract": "FantiumNFT",
+            "src": "contracts/FantiumNFT.sol:33"
           },
           {
             "label": "fantiumSecondarySalesAddress",
             "offset": 0,
             "slot": "356",
             "type": "t_address_payable",
-            "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:36"
+            "contract": "FantiumNFT",
+            "src": "contracts/FantiumNFT.sol:34"
           },
           {
             "label": "fantiumSecondarySalesBPS",
             "offset": 0,
             "slot": "357",
             "type": "t_uint256",
-            "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:38"
+            "contract": "FantiumNFT",
+            "src": "contracts/FantiumNFT.sol:35"
           },
           {
             "label": "nextCollectionId",
             "offset": 0,
             "slot": "358",
             "type": "t_uint256",
-            "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:40"
+            "contract": "FantiumNFT",
+            "src": "contracts/FantiumNFT.sol:36"
           },
           {
             "label": "erc20PaymentToken",
             "offset": 0,
             "slot": "359",
             "type": "t_address",
-            "contract": "FantiumNFTV1",
-            "src": "contracts/FantiumNFTV1.sol:42"
+            "contract": "FantiumNFT",
+            "src": "contracts/FantiumNFT.sol:37"
           }
         ],
         "types": {
@@ -1123,16 +1123,16 @@
             "label": "mapping(uint256 => mapping(address => uint256))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(Collection)4967_storage)": {
-            "label": "mapping(uint256 => struct FantiumNFTV1.Collection)",
+          "t_mapping(t_uint256,t_struct(Collection)4707_storage)": {
+            "label": "mapping(uint256 => struct FantiumNFT.Collection)",
             "numberOfBytes": "32"
           },
           "t_string_storage": {
             "label": "string",
             "numberOfBytes": "32"
           },
-          "t_struct(Collection)4967_storage": {
-            "label": "struct FantiumNFTV1.Collection",
+          "t_struct(Collection)4707_storage": {
+            "label": "struct FantiumNFT.Collection",
             "members": [
               {
                 "label": "exists",
@@ -1177,31 +1177,31 @@
                 "slot": "4"
               },
               {
-                "label": "tournamentEarningPercentage",
-                "type": "t_uint8",
+                "label": "tournamentEarningShare1e7",
+                "type": "t_uint256",
                 "offset": 0,
                 "slot": "5"
               },
               {
                 "label": "athleteAddress",
                 "type": "t_address_payable",
-                "offset": 1,
-                "slot": "5"
+                "offset": 0,
+                "slot": "6"
               },
               {
-                "label": "athletePrimarySalesPercentage",
-                "type": "t_uint8",
-                "offset": 21,
-                "slot": "5"
+                "label": "athletePrimarySalesBPS",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "7"
               },
               {
-                "label": "athleteSecondarySalesPercentage",
-                "type": "t_uint8",
-                "offset": 22,
-                "slot": "5"
+                "label": "athleteSecondarySalesBPS",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "8"
               }
             ],
-            "numberOfBytes": "192"
+            "numberOfBytes": "288"
           },
           "t_struct(RoleData)34_storage": {
             "label": "struct AccessControlUpgradeable.RoleData",

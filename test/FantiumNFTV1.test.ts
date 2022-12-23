@@ -2,12 +2,12 @@ import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
 import { beforeEach } from 'mocha'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
-import { FantiumNFTV1 } from '../typechain-types/contracts/FantiumNFTV1'
+import { FantiumNFT } from '../typechain-types/contracts/FantiumNFT'
 import { Mock20 } from '../typechain-types/contracts/Mock20'
 
 describe("FANtiumNFT", () => {
 
-    let nftContract: FantiumNFTV1
+    let nftContract: FantiumNFT
     let erc20Contract: Mock20
     let defaultAdmin: SignerWithAddress
     let platformManager: SignerWithAddress
@@ -17,8 +17,8 @@ describe("FANtiumNFT", () => {
     let fan: SignerWithAddress
     let other: SignerWithAddress
 
-    const primarySalePercentage = 90
-    const secondarySalePercentage = 5
+    const primarySalePercentage = 9000
+    const secondarySalePercentage = 500
     const maxInvocations = 100
     const price = 100
     const earningsSplit = 10
@@ -38,8 +38,8 @@ describe("FANtiumNFT", () => {
         const Mock20 = await ethers.getContractFactory("Mock20")
         erc20Contract = await Mock20.connect(fan).deploy() as Mock20
 
-        const FantiumNFTV1 = await ethers.getContractFactory("FantiumNFTV1")
-        nftContract = await upgrades.deployProxy(FantiumNFTV1, ["FANtium", "FAN", defaultAdmin.address], { initializer: 'initialize' }) as FantiumNFTV1
+        const FantiumNFT = await ethers.getContractFactory("FantiumNFT")
+        nftContract = await upgrades.deployProxy(FantiumNFT, ["FANtium", "FAN", defaultAdmin.address], { initializer: 'initialize' }) as FantiumNFT
 
         // set Roles
         await nftContract.connect(defaultAdmin).grantRole(await nftContract.PLATFORM_MANAGER_ROLE(), platformManager.address)
@@ -74,10 +74,10 @@ describe("FANtiumNFT", () => {
         await nftContract.connect(platformManager).updatePaymentToken(erc20Contract.address)
 
         // pause the contract
-        await nftContract.connect(platformManager).updateContractPaused(true)
+        await nftContract.connect(platformManager).pause()
 
         // unpause contract
-        await nftContract.connect(platformManager).updateContractPaused(false)
+        await nftContract.connect(platformManager).unpause()
 
         // set decoimals
         decimals = await erc20Contract.decimals()
@@ -112,7 +112,7 @@ describe("FANtiumNFT", () => {
 
     it("checks that PLATFORM MANAGER can pause contract", async () => {
         // pause contract
-        await nftContract.connect(platformManager).updateContractPaused(true)
+        await nftContract.connect(platformManager).pause()
 
         // check contract is paused
         expect(await nftContract.paused()).to.equal(true)
@@ -274,7 +274,7 @@ describe("FANtiumNFT", () => {
         // check athlete balance after mint
         const balanceAfter = await erc20Contract.balanceOf(athlete.address)
 
-        console.log("balanceAfter", balanceAfter.toString())
+        console.log("balanceAfter", balanceAfter.toNumber()/10**decimals)
         
         expect(balanceAfter.sub(balanceBefore)).to.equal(90 * 10**decimals)
     })
@@ -385,26 +385,26 @@ describe("FANtiumNFT", () => {
         expect(await (await nftContract.collections(1)).athleteAddress).to.equal(other.address)
     })
 
-    it("checks that PLATFROM MANAGER can update athlete primary market royalty percentage", async () => {
+    it("checks that PLATFROM MANAGER can update athlete primary market royalty BPS", async () => {
         // check athlete primary market royalty percentage
-        expect(await (await nftContract.collections(1)).athletePrimarySalesPercentage).to.equal(90)
+        expect(await (await nftContract.collections(1)).athletePrimarySalesBPS).to.equal(9000)
 
         // update athlete primary market royalty percentage
-        await nftContract.connect(platformManager).updateCollectionAthletePrimaryMarketRoyaltyPercentage(1, 50)
+        await nftContract.connect(platformManager).updateCollectionAthletePrimaryMarketRoyaltyBPS(1, 5000)
 
         // check athlete primary market royalty percentage
-        expect(await (await nftContract.collections(1)).athletePrimarySalesPercentage).to.equal(50)
+        expect(await (await nftContract.collections(1)).athletePrimarySalesBPS).to.equal(5000)
     })
 
-    it("checks that PLATFROM MANAGER can update athlete secondary market royalty percentage", async () => {
+    it("checks that PLATFROM MANAGER can update athlete secondary market royalty BPS", async () => {
         // check athlete secondary market royalty percentage
-        expect(await (await nftContract.collections(1)).athleteSecondarySalesPercentage).to.equal(5)
+        expect(await (await nftContract.collections(1)).athleteSecondarySalesBPS).to.equal(500)
 
         // update athlete secondary market royalty percentage
-        await nftContract.connect(platformManager).updateCollectionAthleteSecondaryMarketRoyaltyPercentage(1, 10)
+        await nftContract.connect(platformManager).updateCollectionAthleteSecondaryMarketRoyaltyBPS(1, 10)
 
         // check athlete secondary market royalty percentage
-        expect(await (await nftContract.collections(1)).athleteSecondarySalesPercentage).to.equal(10)
+        expect(await (await nftContract.collections(1)).athleteSecondarySalesBPS).to.equal(10)
     })
 
 
@@ -441,6 +441,10 @@ describe("FANtiumNFT", () => {
 
         // check platform secondary market royalty percentage
         expect(await (await nftContract.fantiumSecondarySalesBPS())).to.equal(100)
+    })
+
+    it("checks that PLATFROM MANAGER can update collection sales parameters", async () => {
+        await nftContract.connect(platformManager).updateCollectionSales(1, 100, 10000, 10)
     })
     
 })

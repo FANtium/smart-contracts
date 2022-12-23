@@ -15,7 +15,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * @author MTX stuido AG.
  */
 
-contract FantiumNFTV1 is
+contract FantiumNFT is
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
@@ -30,16 +30,12 @@ contract FantiumNFTV1 is
     mapping(uint256 => mapping(address => uint256))
         public collectionIdToAllowList;
     mapping(address => bool) public kycedAddresses;
-    /// FANtium's payment address for all primary sales revenues (packed)
     address payable public fantiumPrimarySalesAddress;
-    /// FANtium's payment address for all secondary sales royalty revenues
     address payable public fantiumSecondarySalesAddress;
-    /// Basis Points of secondary sales royalties allocated to FANtium
     uint256 public fantiumSecondarySalesBPS;
-    /// next collection ID to be created
     uint256 private nextCollectionId;
-    /// ERC20 Payable Token
     address public erc20PaymentToken;
+
     uint256 constant ONE_MILLION = 1_000_000;
     bytes4 private constant _INTERFACE_ID_ERC2981_OVERRIDE = 0xbb3bafd6;
     /// ACM
@@ -74,16 +70,16 @@ contract FantiumNFTV1 is
 
     struct Collection {
         bool exists;
-        uint launchTimestamp; // 
-        bool isMintable; // isApproved
-        bool isPaused; // onlyAllowed
+        uint launchTimestamp; //
+        bool isMintable;
+        bool isPaused;
         uint24 invocations;
         uint256 price;
         uint256 maxInvocations;
-        uint8 tournamentEarningPercentage;
+        uint256 tournamentEarningShare1e7;
         address payable athleteAddress;
-        uint8 athletePrimarySalesPercentage;
-        uint8 athleteSecondarySalesPercentage;
+        uint256 athletePrimarySalesBPS;
+        uint256 athleteSecondarySalesBPS;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -305,17 +301,19 @@ contract FantiumNFTV1 is
      * @notice Mints a token
      * @param _collectionId Collection ID.
      */
-    function mint(
-        uint256 _collectionId
-    ) public whenNotPaused {
+    function mint(uint256 _collectionId) public whenNotPaused {
         // CHECKS
         require(isAddressKYCed(msg.sender), "Address is not KYCed");
         Collection storage collection = collections[_collectionId];
         require(collection.exists, "Collection does not exist");
-        require(collection.launchTimestamp <= block.timestamp, "Collection not launched");
+        require(
+            collection.launchTimestamp <= block.timestamp,
+            "Collection not launched"
+        );
         require(collection.isMintable, "Collection is not mintable");
         require(erc20PaymentToken != address(0), "ERC20 payment token not set");
-        uint256 tokenPrice = collection.price * 10**ERC20(erc20PaymentToken).decimals();
+        uint256 tokenPrice = collection.price *
+            10 ** ERC20(erc20PaymentToken).decimals();
         require(
             ERC20(erc20PaymentToken).allowance(msg.sender, address(this)) >=
                 tokenPrice,
@@ -421,8 +419,8 @@ contract FantiumNFTV1 is
 
         // calculate revenues
         athleteRevenue_ =
-            (_price * uint256(collection.athletePrimarySalesPercentage)) /
-            100;
+            (_price * uint256(collection.athletePrimarySalesBPS)) /
+            10000;
         uint256 collectionFunds;
 
         // fantiumRevenue_ is always <=25, so guaranteed to never underflow
@@ -461,20 +459,20 @@ contract FantiumNFTV1 is
     /**
      * @notice Adds new collection.
      * @param _athleteAddress Address of the athlete.
-     * @param _athletePrimarySalesPercentage Primary sales percentage of the athlete.
-     * @param _athleteSecondarySalesPercentage Secondary sales percentage of the athlete.
+     * @param _athletePrimarySalesBPS Primary sales percentage of the athlete.
+     * @param _athleteSecondarySalesBPS Secondary sales percentage of the athlete.
      * @param _maxInvocations Maximum number of invocations.
      * @param _price Price of the token.
-     * @param _tournamentEarningPercentage Tournament earning percentage.
+     * @param _tournamentEarningShare1e7 Tournament earning share.
      * @param _launchTimestamp Launch timestamp.
      */
     function addCollection(
         address payable _athleteAddress,
-        uint8 _athletePrimarySalesPercentage,
-        uint8 _athleteSecondarySalesPercentage,
+        uint256 _athletePrimarySalesBPS,
+        uint256 _athleteSecondarySalesBPS,
         uint256 _maxInvocations,
         uint256 _price,
-        uint8 _tournamentEarningPercentage,
+        uint256 _tournamentEarningShare1e7,
         uint _launchTimestamp
     )
         external
@@ -486,13 +484,13 @@ contract FantiumNFTV1 is
         uint256 collectionId = nextCollectionId;
         collections[collectionId].athleteAddress = _athleteAddress;
         collections[collectionId]
-            .athletePrimarySalesPercentage = _athletePrimarySalesPercentage;
+            .athletePrimarySalesBPS = _athletePrimarySalesBPS;
         collections[collectionId]
-            .athleteSecondarySalesPercentage = _athleteSecondarySalesPercentage;
+            .athleteSecondarySalesBPS = _athleteSecondarySalesBPS;
         collections[collectionId].maxInvocations = _maxInvocations;
         collections[collectionId].price = _price;
         collections[collectionId]
-            .tournamentEarningPercentage = _tournamentEarningPercentage;
+            .tournamentEarningShare1e7 = _tournamentEarningShare1e7;
         collections[collectionId].launchTimestamp = _launchTimestamp;
 
         collections[collectionId].invocations = 1;
@@ -564,7 +562,7 @@ contract FantiumNFTV1 is
      * be sent to the athlete. This must be less than
      * or equal to 95 percent.
      */
-    function updateCollectionAthletePrimaryMarketRoyaltyPercentage(
+    function updateCollectionAthletePrimaryMarketRoyaltyBPS(
         uint256 _collectionId,
         uint256 _primaryMarketRoyalty
     )
@@ -573,10 +571,9 @@ contract FantiumNFTV1 is
         onlyValidCollectionId(_collectionId)
         onlyRole(PLATFORM_MANAGER_ROLE)
     {
-        require(_primaryMarketRoyalty <= 95, "Max of 95%");
-        collections[_collectionId].athletePrimarySalesPercentage = uint8(
-            _primaryMarketRoyalty
-        );
+        require(_primaryMarketRoyalty <= 9500, "Max of 95%");
+        collections[_collectionId]
+            .athletePrimarySalesBPS = _primaryMarketRoyalty;
         emit CollectionUpdated(
             _collectionId,
             FIELD_COLLECTION_PRIMARY_MARKET_ROYALTY_PERCENTAGE
@@ -594,7 +591,7 @@ contract FantiumNFTV1 is
      * be sent to the athlete. This must be less than
      * or equal to 95 percent.
      */
-    function updateCollectionAthleteSecondaryMarketRoyaltyPercentage(
+    function updateCollectionAthleteSecondaryMarketRoyaltyBPS(
         uint256 _collectionId,
         uint256 _secondMarketRoyalty
     )
@@ -603,10 +600,9 @@ contract FantiumNFTV1 is
         onlyValidCollectionId(_collectionId)
         onlyRole(PLATFORM_MANAGER_ROLE)
     {
-        require(_secondMarketRoyalty <= 95, "Max of 95%");
-        collections[_collectionId].athleteSecondarySalesPercentage = uint8(
-            _secondMarketRoyalty
-        );
+        require(_secondMarketRoyalty <= 9500, "Max of 95%");
+        collections[_collectionId]
+            .athleteSecondarySalesBPS = _secondMarketRoyalty;
         emit CollectionUpdated(
             _collectionId,
             FIELD_COLLECTION_SECONDARY_MARKET_ROYALTY_PERCENTAGE
@@ -616,21 +612,22 @@ contract FantiumNFTV1 is
     /**
      * @notice Update Collection tier for collection `_collectionId` to be `_tierName`.
      */
-    function updateCollectionTier(
+    function updateCollectionSales(
         uint256 _collectionId,
         uint256 _maxInvocations,
         uint256 _price,
-        uint8 tournamentEarningPercentage
+        uint256 _tournamentEarningShare1e7
     )
         external
         whenNotPaused
         onlyValidCollectionId(_collectionId)
         onlyRole(PLATFORM_MANAGER_ROLE)
     {
+        require(_maxInvocations > 0 && _price  > 0 && _tournamentEarningShare1e7 > 0 , "all parameters must be greater than 0");
         collections[_collectionId].maxInvocations = _maxInvocations;
         collections[_collectionId].price = _price;
         collections[_collectionId]
-            .tournamentEarningPercentage = tournamentEarningPercentage;
+            .tournamentEarningShare1e7 = _tournamentEarningShare1e7;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_TIER);
     }
 
@@ -648,22 +645,23 @@ contract FantiumNFTV1 is
         onlyRole(PLATFORM_MANAGER_ROLE)
     {
         collections[_collectionId].launchTimestamp = _launchTimestamp;
-        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_LAUNCH_TIMESTAMP);
+        emit CollectionUpdated(
+            _collectionId,
+            FIELD_COLLECTION_LAUNCH_TIMESTAMP
+        );
     }
-
 
     /*///////////////////////////////////////////////////////////////
                         PLATFORM FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-     //update baseURI only platform manager
+    //update baseURI only platform manager
     function updateBaseURI(
         string memory _baseURI
     ) external whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
         baseURI = _baseURI;
         emit PlatformUpdated(FILED_FANTIUM_BASE_URI);
     }
-
 
     /**
      * @notice Updates the platform address to be `_fantiumPrimarySalesAddress`.
@@ -714,17 +712,18 @@ contract FantiumNFTV1 is
 
     /**
      * @notice Update contract pause status to `_paused`.
-     * @param _paused true if contract should be paused, false otherwise.
      */
 
-    function updateContractPaused(
-        bool _paused
-    ) external onlyRole(PLATFORM_MANAGER_ROLE) {
-        if (_paused) {
-            _pause();
-        } else {
-            _unpause();
-        }
+    function pause() external onlyRole(PLATFORM_MANAGER_ROLE) {
+        _pause();
+    }
+
+    /**
+     * @notice Unpauses contract
+     */
+
+    function unpause() external onlyRole(PLATFORM_MANAGER_ROLE) {
+        _unpause();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -774,11 +773,7 @@ contract FantiumNFTV1 is
 
         Collection storage collection = collections[collectionId];
         // load values into memory
-        uint256 royaltyPercentageForAthlete = collection
-            .athleteSecondarySalesPercentage;
-        // calculate BPS = percentage * 100
-        uint256 athleteBPS = royaltyPercentageForAthlete * 100;
-
+        uint256 athleteBPS = collection.athleteSecondarySalesBPS;
         uint256 fantiumBPS = fantiumSecondarySalesBPS;
         // populate arrays
         uint256 payeeCount;
