@@ -5,6 +5,7 @@ import "@openzeppelin/hardhat-upgrades";
 import "hardhat-abi-exporter";
 import "hardhat-contract-sizer";
 import "hardhat-interface-generator";
+import "@openzeppelin/hardhat-defender";
 
 import { config as dotenvConfig } from 'dotenv'
 import { resolve } from 'path'
@@ -14,6 +15,8 @@ const POLYGON_MUMBAI_RPC_PROVIDER = process.env.POLYGON_MUMBAI_RPC_PROVIDER || '
 const PRIVATE_KEY = process.env.PRIVATE_KEY || ''
 const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY || ''
 const GOERLISCAN_API_KEY = process.env.GOERLISCAN_API_KEY || ''
+const DEFENDER_TEAM_API_KEY = process.env.DEFENDER_TEAM_API_KEY || ''
+const DEFENDER_TEAM_API_SECRET = process.env.DEFENDER_TEAM_API_SECRET_KEY || ''
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -29,6 +32,9 @@ const config: HardhatUserConfig = {
         }
       },
     ],
+  }, defender: {
+    apiKey: DEFENDER_TEAM_API_KEY,
+    apiSecret: DEFENDER_TEAM_API_SECRET,
   },
   networks: {
     hardhat: {},
@@ -71,7 +77,7 @@ const config: HardhatUserConfig = {
     runOnCompile: true,
     strict: true,
     only: [],
-  }
+  },
 };
 
 export default config;

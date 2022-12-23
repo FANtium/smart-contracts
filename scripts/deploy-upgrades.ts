@@ -13,11 +13,11 @@ async function main() {
   console.log(JSON.parse(contents));
   const contractAddresses = JSON.parse(contents)
 
-  const FantiumNFTV2 = await ethers.getContractFactory("FantiumNFTV2");
-  await upgrades.validateUpgrade(contractAddresses.nftProxy, FantiumNFTV2);
+  const FantiumNFTV1 = await ethers.getContractFactory("FantiumNFTV1");
+  await upgrades.validateUpgrade(contractAddresses.nftProxy, FantiumNFTV1);
 
   //upgrade proxy
-  const nftContract = await upgrades.upgradeProxy(contractAddresses.nftProxy, FantiumNFTV2)
+  const nftContract = await upgrades.upgradeProxy(contractAddresses.nftProxy, FantiumNFTV1)
 
   const data = {
     "nftProxy": nftContract.address,
