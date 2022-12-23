@@ -17,6 +17,7 @@ const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY || ''
 const GOERLISCAN_API_KEY = process.env.GOERLISCAN_API_KEY || ''
 const DEFENDER_TEAM_API_KEY = process.env.DEFENDER_TEAM_API_KEY || ''
 const DEFENDER_TEAM_API_SECRET = process.env.DEFENDER_TEAM_API_SECRET_KEY || ''
+const POLYGON_RPC_PROVIDER = process.env.POLYGON_RPC_PROVIDER || ''
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -38,6 +39,10 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {},
+    polygon: {
+      accounts: ["0x" + PRIVATE_KEY],
+      url: POLYGON_RPC_PROVIDER
+    },
     mumbai: {
       accounts: ["0x" + PRIVATE_KEY],
       url: POLYGON_MUMBAI_RPC_PROVIDER,
@@ -52,7 +57,8 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       polygonMumbai: POLYGONSCAN_API_KEY,
-      goerli: GOERLISCAN_API_KEY
+      goerli: GOERLISCAN_API_KEY,
+      polygon: POLYGONSCAN_API_KEY
     }
   },
   mocha: {

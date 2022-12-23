@@ -30,9 +30,9 @@ contract FantiumNFT is
     mapping(uint256 => mapping(address => uint256))
         public collectionIdToAllowList;
     mapping(address => bool) public kycedAddresses;
-    address payable public fantiumPrimarySalesAddress;
-    address payable public fantiumSecondarySalesAddress;
-    uint256 public fantiumSecondarySalesBPS;
+    // address payable public fantiumPrimarySalesAddress;
+    // address payable public fantiumSecondarySalesAddress;
+    // uint256 public fantiumSecondarySalesBPS;
     uint256 private nextCollectionId;
     address public erc20PaymentToken;
 
@@ -70,7 +70,7 @@ contract FantiumNFT is
 
     struct Collection {
         bool exists;
-        uint launchTimestamp; //
+        uint launchTimestamp;
         bool isMintable;
         bool isPaused;
         uint24 invocations;
@@ -80,6 +80,8 @@ contract FantiumNFT is
         address payable athleteAddress;
         uint256 athletePrimarySalesBPS;
         uint256 athleteSecondarySalesBPS;
+        address payable fantiumSalesAddress;
+        uint256 fantiumSecondarySalesBPS;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -135,18 +137,6 @@ contract FantiumNFT is
         _;
     }
 
-    modifier onlyRoyaltySetContract() {
-        require(
-            fantiumPrimarySalesAddress != address(0),
-            "FANtium primary address is not initialized"
-        );
-        require(
-            fantiumSecondarySalesAddress != address(0),
-            "FANtium secondary address is not initialized"
-        );
-        _;
-    }
-
     modifier onlyValidCollectionId(uint256 _collectionId) {
         require(
             collections[_collectionId].exists == true,
@@ -193,7 +183,7 @@ contract FantiumNFT is
         __Pausable_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
-        _grantRole(UPGRADER_ROLE, msg.sender);
+        _grantRole(UPGRADER_ROLE, _defaultAdmin);
 
         nextCollectionId = 1;
     }
@@ -307,7 +297,8 @@ contract FantiumNFT is
         Collection storage collection = collections[_collectionId];
         require(collection.exists, "Collection does not exist");
         require(
-            collection.launchTimestamp <= block.timestamp,
+            collection.launchTimestamp <= block.timestamp ||
+                hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
             "Collection not launched"
         );
         require(collection.isMintable, "Collection is not mintable");
@@ -421,17 +412,11 @@ contract FantiumNFT is
         athleteRevenue_ =
             (_price * uint256(collection.athletePrimarySalesBPS)) /
             10000;
-        uint256 collectionFunds;
 
-        // fantiumRevenue_ is always <=25, so guaranteed to never underflow
-        collectionFunds = _price - athleteRevenue_;
-
-        // collectionIdToAdditionalPayeePrimarySalesPercentage is always
-        // <=100, so guaranteed to never underflow
-        fantiumRevenue_ = collectionFunds;
+        fantiumRevenue_ = _price - athleteRevenue_;
 
         // set addresses from storage
-        fantiumAddress_ = fantiumPrimarySalesAddress;
+        fantiumAddress_ = collection.fantiumSalesAddress;
         if (athleteRevenue_ > 0) {
             athleteAddress_ = collection.athleteAddress;
         }
@@ -473,12 +458,13 @@ contract FantiumNFT is
         uint256 _maxInvocations,
         uint256 _price,
         uint256 _tournamentEarningShare1e7,
-        uint _launchTimestamp
+        uint _launchTimestamp,
+        address payable _fantiumSalesAddress,
+        uint256 _fantiumSecondarySalesBPS
     )
         external
         whenNotPaused
         onlyRole(PLATFORM_MANAGER_ROLE)
-        onlyRoyaltySetContract
         onlyValidAddress(_athleteAddress)
     {
         uint256 collectionId = nextCollectionId;
@@ -497,6 +483,10 @@ contract FantiumNFT is
         collections[collectionId].exists = true;
         collections[collectionId].isMintable = false;
         collections[collectionId].isPaused = true;
+
+        collections[collectionId].fantiumSalesAddress = _fantiumSalesAddress;
+        collections[collectionId]
+            .fantiumSecondarySalesBPS = _fantiumSecondarySalesBPS;
 
         nextCollectionId = collectionId + 1;
         emit CollectionUpdated(collectionId, FIELD_COLLECTION_CREATED);
@@ -623,7 +613,10 @@ contract FantiumNFT is
         onlyValidCollectionId(_collectionId)
         onlyRole(PLATFORM_MANAGER_ROLE)
     {
-        require(_maxInvocations > 0 && _price  > 0 && _tournamentEarningShare1e7 > 0 , "all parameters must be greater than 0");
+        require(
+            _maxInvocations > 0 && _price > 0 && _tournamentEarningShare1e7 > 0,
+            "all parameters must be greater than 0"
+        );
         collections[_collectionId].maxInvocations = _maxInvocations;
         collections[_collectionId].price = _price;
         collections[_collectionId]
@@ -666,48 +659,19 @@ contract FantiumNFT is
     /**
      * @notice Updates the platform address to be `_fantiumPrimarySalesAddress`.
      */
-    function updateFantiumPrimarySaleAddress(
-        address payable _fantiumPrimarySalesAddress
-    )
-        external
-        whenNotPaused
-        onlyRole(PLATFORM_MANAGER_ROLE)
-        onlyValidAddress(_fantiumPrimarySalesAddress)
-    {
-        fantiumPrimarySalesAddress = _fantiumPrimarySalesAddress;
-        emit PlatformUpdated(FIELD_FANTIUM_PRIMARY_ADDRESS);
-    }
-
-    /**
-     * @notice Updates the FANtium's secondary sales'
-     * address to be `_fantiumSecondarySalesAddress`.
-     */
-    // update fantium secondary sales address
-    function updateFantiumSecondarySaleAddress(
-        address payable _fantiumSecondarySalesAddress
-    )
-        external
-        whenNotPaused
-        onlyRole(PLATFORM_MANAGER_ROLE)
-        onlyValidAddress(_fantiumSecondarySalesAddress)
-    {
-        fantiumSecondarySalesAddress = _fantiumSecondarySalesAddress;
-        emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_ADDRESS);
-    }
-
-    /**
-     * @notice Updates the platform secondary market royalties to be
-     * `_secondMarketRoyaltyBPS` percent.
-     * @param _fantiumSecondarySalesBPS Percent of secondary sales revenue that will
-     * be sent to the platform. This must be less than
-     * or equal to 95 percent.
-     */
-    function updateFantiumSecondaryMarketRoyaltyBPS(
+    function updateFantiumSalesInformation(
+        uint256 _collectionId,
+        address payable _fantiumSalesAddress,
         uint256 _fantiumSecondarySalesBPS
-    ) external whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
-        require(_fantiumSecondarySalesBPS <= 9500, "Max of 95%");
-        fantiumSecondarySalesBPS = uint256(_fantiumSecondarySalesBPS);
-        emit PlatformUpdated(FIELD_FANTIUM_SECONDARY_MARKET_ROYALTY_BPS);
+    )
+        external
+        whenNotPaused
+        onlyRole(PLATFORM_MANAGER_ROLE)
+        onlyValidAddress(_fantiumSalesAddress)
+    {
+        collections[_collectionId].fantiumSalesAddress = _fantiumSalesAddress;
+        collections[_collectionId]
+            .fantiumSecondarySalesBPS = _fantiumSecondarySalesBPS;
     }
 
     /**
@@ -774,7 +738,7 @@ contract FantiumNFT is
         Collection storage collection = collections[collectionId];
         // load values into memory
         uint256 athleteBPS = collection.athleteSecondarySalesBPS;
-        uint256 fantiumBPS = fantiumSecondarySalesBPS;
+        uint256 fantiumBPS = collection.fantiumSecondarySalesBPS;
         // populate arrays
         uint256 payeeCount;
         if (athleteBPS > 0) {
@@ -782,7 +746,7 @@ contract FantiumNFT is
             bps[payeeCount++] = athleteBPS;
         }
         if (fantiumBPS > 0) {
-            recipients[payeeCount] = fantiumSecondarySalesAddress;
+            recipients[payeeCount] = collection.fantiumSalesAddress;
             bps[payeeCount++] = fantiumBPS;
         }
 
