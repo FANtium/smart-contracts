@@ -77,6 +77,11 @@ const config: HardhatUserConfig = {
     filter: () => true,
     rename: undefined
   },
+  gasReporter: {
+    currency: 'USD',
+    gasPrice: 100,
+    enabled: true,
+  },
   contractSizer: {
     alphaSort: true,
     disambiguatePaths: false,
