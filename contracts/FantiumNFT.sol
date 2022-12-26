@@ -479,7 +479,7 @@ contract FantiumNFT is
             .tournamentEarningShare1e7 = _tournamentEarningShare1e7;
         collections[collectionId].launchTimestamp = _launchTimestamp;
 
-        collections[collectionId].invocations = 1;
+        collections[collectionId].invocations = 0;
         collections[collectionId].exists = true;
         collections[collectionId].isMintable = false;
         collections[collectionId].isPaused = true;
