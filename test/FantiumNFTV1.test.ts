@@ -5,7 +5,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { FantiumNFT } from '../typechain-types/contracts/FantiumNFT'
 import { Mock20 } from '../typechain-types/contracts/Mock20'
 
-describe("FANtiumNFT", () => {
+describe("FANtiumNFT V1", () => {
 
     let nftContract: FantiumNFT
     let erc20Contract: Mock20
