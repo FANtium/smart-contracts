@@ -167,6 +167,10 @@ describe("BatchMinting", () => {
 
         /// 
         expect(await nftContractV2.balanceOf(fan.address)).to.equal(10)
+
+        // check that tokenIds are minted
+        expect(await nftContractV2.tokenURI(1000004)).to.equal("https://contract.com/1000004")
+
     })
 })
 

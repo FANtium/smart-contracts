@@ -126,7 +126,7 @@ describe("BatchMinting", () => {
         const allocations = []
         for (let i = 0; i < 500; i++) {
             addresses.push(await ethers.Wallet.createRandom().address)
-            allocations.push(1)
+            allocations.push(5)
         }
 
         /// ADMIN
