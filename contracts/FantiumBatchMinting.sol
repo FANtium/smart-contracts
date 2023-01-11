@@ -17,6 +17,9 @@ contract FantiumBatchMinting is FantiumNFT {
         uint256 _collectionId,
         uint24 _amount
     ) public whenNotPaused {
+        // limit amount to 10
+        _amount = _amount > 10 ? 10 : _amount;
+        
         // CHECKS
         require(isAddressKYCed(msg.sender), "Address is not KYCed");
         Collection storage collection = collections[_collectionId];

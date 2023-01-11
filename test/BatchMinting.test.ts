@@ -27,6 +27,9 @@ describe("BatchMinting", () => {
     let decimals = 18
     let fantiumSecondaryBPS = 250
 
+    // scenario
+    // mint 1 or many NFTs if all conditions are met
+
     beforeEach(async () => {
         const [_defaultAdmin, _platformManager, _kycManager, _fantium, _athlete, _fan, _other] = await ethers.getSigners()
         defaultAdmin = _defaultAdmin

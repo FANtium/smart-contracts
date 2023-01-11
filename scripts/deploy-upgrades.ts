@@ -9,20 +9,19 @@ async function main() {
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
   // We get the contract to deploy
-  const contents = readFileSync(join(__dirname, './contractAddresses.json'), 'utf-8');
+  const contents = readFileSync(join(__dirname, './addresses/fantium.json'), 'utf-8');
   console.log(JSON.parse(contents));
   const contractAddresses = JSON.parse(contents)
 
-  const FantiumNFTV1 = await ethers.getContractFactory("FantiumNFTV1");
-  await upgrades.validateUpgrade(contractAddresses.nftProxy, FantiumNFTV1);
+  const FantiumV2 = await ethers.getContractFactory("FantiumNFTV2");
+  await upgrades.validateUpgrade(contractAddresses.proxy, FantiumV2);
 
   //upgrade proxy
-  const nftContract = await upgrades.upgradeProxy(contractAddresses.nftProxy, FantiumNFTV1)
+  const nftContract = await upgrades.upgradeProxy("0x4c61c07F1Ff7de15e40eFc1Bd3A94eEB54cBF242", FantiumV2)
 
   const data = {
-    "nftProxy": nftContract.address,
-    "nftImplementation": await upgrades.erc1967.getImplementationAddress(nftContract.address),
-    "mock20": contractAddresses.mock20
+    "proxy": nftContract.address,
+    "implementation": await upgrades.erc1967.getImplementationAddress(nftContract.address),
   }
 
   writeFileSync(join(__dirname, './contractAddresses.json'), JSON.stringify(data), {

@@ -1,6 +1,5 @@
 import { readFileSync } from "fs";
 import { ethers, defender, upgrades } from "hardhat";
-import { join } from "path";
 
 async function main() {
 
@@ -9,14 +8,14 @@ async function main() {
     console.log("Account balance:", (await deployer.getBalance()).toString());
 
     // We get the contract to deploy
-    const contents = readFileSync(join(__dirname, './contractAddresses.json'), 'utf-8');
-    console.log(JSON.parse(contents));
-    const contractAddresses = JSON.parse(contents)
+    // const contents = readFileSync(join(__dirname, './contractAddresses.json'), 'utf-8');
+    // console.log(JSON.parse(contents));
+    // const contractAddresses = JSON.parse(contents)
 
-    const F2 = await ethers.getContractFactory("F2");
+    const fantiumUpgrade = await ethers.getContractFactory("FantiumNFTV2");
     console.log("Preparing proposal...");
 
-    const proposal = await upgrades.prepareUpgrade(contractAddresses.nftProxy, F2);
+    const proposal = await upgrades.prepareUpgrade('0x2b98132E7cfd88C5D854d64f436372838A9BA49d', fantiumUpgrade);
     console.log("Upgrade proposal created at:", proposal);
 }
 

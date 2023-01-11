@@ -6,7 +6,7 @@ import { FantiumNFT } from '../typechain-types/contracts/FantiumNFT'
 import { Mock20 } from '../typechain-types/contracts/Mock20'
 import { FantiumBatchAllowlisting } from '../typechain-types'
 
-describe("BatchMinting", () => {
+describe("BatchAllowlisting", () => {
 
     let nftContract: FantiumNFT
     let erc20Contract: Mock20
@@ -134,10 +134,11 @@ describe("BatchMinting", () => {
         await nftContractV2.connect(platformManager).batchAllowlist(1, addresses, allocations)
 
         // check if allowlist is correct
-        for (let i = 0; i < 500; i++) {
-            const allowlist = await nftContractV2.collectionIdToAllowList(1, addresses[i])
-            console.log(allowlist)
-        }       
+        // for (let i = 0; i < 500; i++) {
+        //     const allowlist = await nftContractV2.collectionIdToAllowList(1, addresses[i])
+        //     // console.log(allowlist)
+        // }       
     })
 })
+
 

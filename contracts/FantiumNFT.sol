@@ -550,7 +550,7 @@ contract FantiumNFT is
      * @param _collectionId collection ID.
      * @param _primaryMarketRoyalty Percent of primary sales revenue that will
      * be sent to the athlete. This must be less than
-     * or equal to 95 percent.
+     * or equal to 100 percent.
      */
     function updateCollectionAthletePrimaryMarketRoyaltyBPS(
         uint256 _collectionId,
@@ -561,7 +561,7 @@ contract FantiumNFT is
         onlyValidCollectionId(_collectionId)
         onlyRole(PLATFORM_MANAGER_ROLE)
     {
-        require(_primaryMarketRoyalty <= 9500, "Max of 95%");
+        require(_primaryMarketRoyalty <= 10000, "Max of 100%");
         collections[_collectionId]
             .athletePrimarySalesBPS = _primaryMarketRoyalty;
         emit CollectionUpdated(
