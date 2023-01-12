@@ -5,7 +5,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { FantiumNFT } from '../typechain-types/contracts/FantiumNFT'
 import { Mock20 } from '../typechain-types/contracts/Mock20'
 
-describe("FANtiumNFT", () => {
+describe("FANtiumNFT V1", () => {
 
     let nftContract: FantiumNFT
     let erc20Contract: Mock20
@@ -50,7 +50,7 @@ describe("FANtiumNFT", () => {
         await nftContract.connect(platformManager).updatePaymentToken(erc20Contract.address)
 
         // get timestamp
-        timestamp = (await ethers.provider.getBlock("latest")).timestamp + 1000
+        timestamp = (await ethers.provider.getBlock("latest")).timestamp
 
         // add first collection
         await nftContract.connect(platformManager).addCollection(
@@ -436,7 +436,7 @@ describe("FANtiumNFT", () => {
 
         console.log("fantium address: ", fantium.address)
         console.log("athlete address: ", athlete.address)
-        console.log(await nftContract.getRoyalties(1000001))
+        console.log(await nftContract.getRoyalties(1000000))
     })
 
     it("checks that PLATFORM MANAGER can mint even if collection is not launched", async () => {
@@ -453,7 +453,7 @@ describe("FANtiumNFT", () => {
         await nftContract.connect(platformManager).mint(1);
 
         // check NFT owner
-        expect(await nftContract.ownerOf(1000001)).to.equal(platformManager.address)
+        expect(await nftContract.ownerOf(1000000)).to.equal(platformManager.address)
     })
 
 })
