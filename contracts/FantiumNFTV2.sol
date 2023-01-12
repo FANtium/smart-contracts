@@ -328,7 +328,8 @@ contract FantiumNFTV2 is
         if (collection.isPaused) {
             // if minting is paused, require address to be on allowlist
             require(
-                collectionIdToAllowList[_collectionId][msg.sender] >= _amount,
+                collectionIdToAllowList[_collectionId][msg.sender] >= _amount ||
+                    hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
                 "Collection is paused or allowlist allocation insufficient"
             );
         }
@@ -343,8 +344,8 @@ contract FantiumNFTV2 is
         // EFFECTS
         collection.invocations += _amount;
 
-        if (collection.isPaused) {
-            collectionIdToAllowList[_collectionId][msg.sender]--;
+        if (collection.isPaused && !hasRole(PLATFORM_MANAGER_ROLE, msg.sender)) {
+            collectionIdToAllowList[_collectionId][msg.sender]-= _amount;
         }
 
         // INTERACTIONS

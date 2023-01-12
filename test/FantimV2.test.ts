@@ -51,7 +51,7 @@ describe("FantiumV2", () => {
         await nftContract.connect(platformManager).updatePaymentToken(erc20Contract.address)
 
         // get timestamp
-        timestamp = (await ethers.provider.getBlock("latest")).timestamp
+        timestamp = (await ethers.provider.getBlock("latest")).timestamp + 1000
 
         // add first collection
         await nftContract.connect(platformManager).addCollection(
@@ -87,6 +87,21 @@ describe("FantiumV2", () => {
         const nftContractV2 = await upgrades.upgradeProxy(nftContract.address, fanV2) as FantiumNFTV2
 
         expect(await nftContractV2.name()).to.equal("FANtium")
+
+        // toggle collection mintable
+        await nftContractV2.connect(platformManager).toggleCollectionMintable(1)
+
+        // add platfrom manager to KYC
+        await nftContractV2.connect(kycManager).addAddressToKYC(platformManager.address)
+
+        // approve erc20
+        await erc20Contract.connect(platformManager).approve(nftContractV2.address, 3 * price * 10 ** decimals)
+
+        // default admin mint a token
+        await nftContractV2.connect(platformManager).batchMint(1, 3)
+
+        // check balance
+        expect(await nftContractV2.balanceOf(platformManager.address)).to.equal(3)
     })
 
     it("checks that state is preserved", async () => {
@@ -141,7 +156,7 @@ describe("FantiumV2", () => {
         for (let i = 0; i < 500; i++) {
             // expect(await nftContractV2.collectionIdToAllowList(1, addresses[i])
             // console.log(allowlist)
-        }       
+        }
     })
 
 
@@ -195,11 +210,11 @@ describe("FantiumV2", () => {
         // unpause collection minting
         await nftContractV2.connect(platformManager).toggleCollectionMintable(1)
         // set allowlist allocation
-        await nftContractV2.connect(platformManager).batchAllowlist(1, [fan.address] ,[10])
-        
+        await nftContractV2.connect(platformManager).batchAllowlist(1, [fan.address], [10])
+
         // allocation
         await erc20Contract.connect(fan).approve(nftContract.address, price * 10 ** decimals * 10)
-        
+
         await nftContractV2.connect(fan).batchMint(1, 10);
         /// 
         expect(await nftContractV2.balanceOf(fan.address)).to.equal(10)
