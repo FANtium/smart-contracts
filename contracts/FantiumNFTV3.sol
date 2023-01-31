@@ -11,11 +11,11 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
- * @title FANtium ERC721 contract V1.
+ * @title FANtium ERC721 contract V3.
  * @author MTX stuido AG.
  */
 
-contract FantiumNFT is
+contract FantiumNFTV3 is
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
@@ -242,21 +242,25 @@ contract FantiumNFT is
     /**
      * @notice Add address to allow list.
      * @param _collectionId collection ID.
-     * @param _address address to be added to allow list.
-     * @param _increaseAllocation allocation to the address.
+     * @param _addresses addresses to add to allow list.
+     * @param _increaseAllocations allocation to the address.
      */
-    function increaseAllowListAllocation(
+    function batchAllowlist(
         uint256 _collectionId,
-        address _address,
-        uint256 _increaseAllocation
+        address[] memory _addresses,
+        uint256[] memory _increaseAllocations
     )
         public
         whenNotPaused
         onlyRole(PLATFORM_MANAGER_ROLE)
         onlyValidCollectionId(_collectionId)
     {
-        collectionIdToAllowList[_collectionId][_address] += _increaseAllocation;
-        emit AddressAddedToAllowList(_collectionId, _address);
+        for (uint256 i = 0; i < _addresses.length; i++) {
+            collectionIdToAllowList[_collectionId][
+                _addresses[i]
+            ] += _increaseAllocations[i];
+            emit AddressAddedToAllowList(_collectionId, _addresses[i]);
+        }
     }
 
     /**
@@ -288,10 +292,30 @@ contract FantiumNFT is
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Mints a token
+     * @notice Batch Mints a token
      * @param _collectionId Collection ID.
+     * @param _amount Amount of tokens to mint.
      */
-    function mint(uint256 _collectionId) public whenNotPaused {
+    function batchMint(
+        uint256 _collectionId,
+        uint24 _amount
+    ) public whenNotPaused {
+        batchMintTo(msg.sender, _collectionId, _amount);
+    }
+
+    /**
+     * @notice Batch Mints a token
+     * @param _collectionId Collection ID.
+     * @param _amount Amount of tokens to mint.
+     */
+    function batchMintTo(
+        address _to,
+        uint256 _collectionId,
+        uint24 _amount
+    ) public whenNotPaused {
+        // limit amount to 10
+        _amount = _amount > 10 ? 10 : _amount;
+
         // CHECKS
         require(isAddressKYCed(msg.sender), "Address is not KYCed");
         Collection storage collection = collections[_collectionId];
@@ -303,39 +327,47 @@ contract FantiumNFT is
         );
         require(collection.isMintable, "Collection is not mintable");
         require(erc20PaymentToken != address(0), "ERC20 payment token not set");
-        uint256 tokenPrice = collection.price *
-            10 ** ERC20(erc20PaymentToken).decimals();
+
+        // multiply token price by amount
+        uint256 totalPrice = collection.price *
+            10 ** ERC20(erc20PaymentToken).decimals() *
+            _amount;
         require(
             ERC20(erc20PaymentToken).allowance(msg.sender, address(this)) >=
-                tokenPrice,
+                totalPrice,
             "ERC20 allowance too low"
         );
+
         if (collection.isPaused) {
             // if minting is paused, require address to be on allowlist
             require(
-                collectionIdToAllowList[_collectionId][msg.sender] > 0,
-                "Collection is paused"
+                collectionIdToAllowList[_collectionId][msg.sender] >= _amount ||
+                    hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
+                "Collection is paused or allowlist allocation insufficient"
             );
         }
         require(
-            collection.invocations < collection.maxInvocations,
-            "Max invocations reached"
+            collection.invocations + _amount < collection.maxInvocations,
+            "Max invocations suppassed with amount"
         );
 
         uint256 tokenId = (_collectionId * ONE_MILLION) +
             collection.invocations;
 
         // EFFECTS
-        collection.invocations++;
-        if (collection.isPaused) {
-            collectionIdToAllowList[_collectionId][msg.sender]--;
+        collection.invocations += _amount;
+
+        if (collection.isPaused && !hasRole(PLATFORM_MANAGER_ROLE, msg.sender)) {
+            collectionIdToAllowList[_collectionId][msg.sender]-= _amount;
         }
 
         // INTERACTIONS
-        _splitFunds(tokenPrice, _collectionId, msg.sender);
-        _mint(msg.sender, tokenId);
+        _splitFunds(totalPrice, _collectionId, msg.sender);
 
-        emit Mint(msg.sender, tokenId);
+        for (uint256 i = 0; i < _amount; i++) {
+            _mint(_to, tokenId + i);
+            emit Mint(_to, tokenId);
+        }
     }
 
     /**
