@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {TokenVersionUtil} from "./utils/TokenVersionUtil.sol";
 
 /**
  * @title FANtium ERC721 contract V3.
@@ -30,9 +31,6 @@ contract FantiumNFTV4 is
     mapping(uint256 => mapping(address => uint256))
         public collectionIdToAllowList;
     mapping(address => bool) public kycedAddresses;
-    // address payable public fantiumPrimarySalesAddress;
-    // address payable public fantiumSecondarySalesAddress;
-    // uint256 public fantiumSecondarySalesBPS;
     uint256 private nextCollectionId;
     address public erc20PaymentToken;
 
@@ -83,6 +81,8 @@ contract FantiumNFTV4 is
         address payable fantiumSalesAddress;
         uint256 fantiumSecondarySalesBPS;
     }
+
+    address public claimContract;
 
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
@@ -476,7 +476,7 @@ contract FantiumNFTV4 is
     /**
      * @notice Adds new collection.
      * @param _athleteAddress Address of the athlete.
-     * @param _athletePrimarySalesBPS Primary sales percentage of the athlete.
+     * @param _athletePrimarySalesBPS Primary s, "FantiumClaimingV1: collection must be active"viewles percentage of the athlete.
      * @param _athleteSecondarySalesBPS Secondary sales percentage of the athlete.
      * @param _maxInvocations Maximum number of invocations.
      * @param _price Price of the token.
@@ -722,6 +722,51 @@ contract FantiumNFTV4 is
         _unpause();
     }
 
+
+    /*//////////////////////////////////////////////////////////////
+                            CLAIMING FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice upgrade token version to new version in case of claim event
+     */
+
+    function upgradeTokenVersion(uint256 _tokenId)
+        public
+        whenNotPaused
+        onlyValidTokenId(_tokenId)
+        returns (bool)
+    {
+        require(claimContract == msg.sender, "Only claim contract can call this function");
+
+        (uint256 _collectionId, uint256 _versionId , uint256 _tokenNr) = TokenVersionUtil.getTokenInfo(_tokenId);
+        require(collections[_collectionId].exists, "Collection does not exist");
+        address tokenOwner = ownerOf(_tokenId);
+        
+        // burn old token
+        _burn(_tokenId);
+        _versionId++;
+        uint256 newTokenId = TokenVersionUtil.createTokenId(_collectionId, _versionId, _tokenNr);
+        // mint new token with new version
+        _mint(tokenOwner, newTokenId);
+        if(ownerOf(newTokenId) == tokenOwner){
+            return true;}
+        else {
+            return false;}
+    }
+
+    /**
+     * @notice set Claim contract address
+     */
+
+    function updateClaimContract(address _claimContract)
+        public
+        whenNotPaused
+        onlyRole(PLATFORM_MANAGER_ROLE)
+    {
+        claimContract = _claimContract;
+    }
+
     /*//////////////////////////////////////////////////////////////
                             PAYMENT TOKEN
     //////////////////////////////////////////////////////////////*/
@@ -783,6 +828,10 @@ contract FantiumNFTV4 is
         }
 
         return (recipients, bps);
+    }
+
+    function getCollection(uint256 _collectionID) public view returns (Collection memory) {
+        return collections[_collectionID];
     }
 
     /*//////////////////////////////////////////////////////////////
