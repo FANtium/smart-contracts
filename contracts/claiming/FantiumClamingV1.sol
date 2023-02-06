@@ -192,8 +192,6 @@ contract FantiumClaiming is
     {
         // CHECKS
 
-        //check if 
-
         //check if msg.sender has FAN token Id
         require(
             msg.sender == fantiumNFTContract.ownerOf(_tokenId),
@@ -206,30 +204,33 @@ contract FantiumClaiming is
             "FantiumClaimingV1: You are not IDENTed"
         );
 
-        //check if payouts were claimed for this token
-        require(
-            distributionEventToTokenIdToClaimed[_distributionEventID][_tokenId] == false,
-            "FantiumClaimingV1: payout has already been claimed"
-        );
-
         //check if lockTime is over
         require(distributionEvents[_distributionEventID].startTime  < block.timestamp, "FantiumClaimingV1: distribution time has not started");
         
         //check if tokenID is valid and not to large
         require(_tokenId >= 1000000 && _tokenId <= 100000000000 , "FantiumClaimingV1: invalid token id");
 
+        // check if token is from a valid collection
+        // check that hasn't claimed yet for that distribution event
+        (uint256 collectionOfToken,,uint256 tokenNr) =  TokenVersionUtil.getTokenInfo(_tokenId);
+        uint256 baseTokenId = collectionOfToken * 1000000 + tokenNr;
+        require(checkTokenAllowed(_distributionEventID, collectionOfToken ,baseTokenId), "FantiumClaimingV1: Token already claimed or Collection not allowed");
+        
         // EFFECTS
+        //set claimed to true 
+        distributionEventToTokenIdToClaimed[_distributionEventID][baseTokenId] == true;
+        
+        //calculate claim amount
         uint256 claimAmount = calculateClaim(_distributionEventID, _tokenId);
         require( distributionEvents[_distributionEventID].distributedAmount + claimAmount <= distributionEvents[_distributionEventID].amount, "FantiumClaimingV1: distribution amount exceeded" );
         distributionEvents[_distributionEventID].distributedAmount += claimAmount;
-        distributionEventToTokenIdToClaimed[_distributionEventID][_tokenId] == true;
-        
-        ////////// add burn and mint mechanic //////////
 
         // INTERACTIONS
         //transfer USDC to msg.sender
-        require(payoutToken.transferFrom(address(this),msg.sender, claimAmount), "FantiumClaimingV1: transfer failed");
         require(fantiumNFTContract.upgradeTokenVersion(_tokenId), "FantiumClaimingV1: upgrade failed");
+        require(payoutToken.transferFrom(address(this),msg.sender, claimAmount), "FantiumClaimingV1: transfer failed");
+        //upgrade token to new version
+        
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -258,9 +259,7 @@ contract FantiumClaiming is
             bool collectionExists = fantiumNFTContract.getCollection(_collectionIds[i]).exists;
             require(collectionExists , "FantiumClaimingV1: collection does not exist");
         } 
-
         // EFFECTS
-
         DistributionEvent memory  distributionEvent;
         distributionEvent.distributionEventId = nextDistributionEventId;
         distributionEvent.amount = _amount;
@@ -271,8 +270,7 @@ contract FantiumClaiming is
         distributionEvent.closed = false;
         distributionEvents[nextDistributionEventId] = distributionEvent;
         nextDistributionEventId++;
-        
-        }
+    }
 
 
     function addDistributionAmount(uint256 _distributionEventId, uint256 _amount) 
@@ -296,13 +294,7 @@ contract FantiumClaiming is
 
     // calcualtes the amount to send to the user
     function calculateClaim(uint256 _distributionEventID,uint256  _tokenId) view internal returns (uint256){
-        
-        (uint256 collectionOfToken, , ) =  TokenVersionUtil.getTokenInfo(_tokenId);
-        for (uint256 i = 0; i < distributionEvents[_distributionEventID].collectionIds.length; i++) {
-            if (distributionEvents[_distributionEventID].collectionIds[i] == collectionOfToken) {
-                revert ("FantiumClaimingV1: token is not from a valid collection");
-            }
-        }
+        (uint256 collectionOfToken,,) =  TokenVersionUtil.getTokenInfo(_tokenId);
         
         uint256 share =  fantiumNFTContract.getCollection(collectionOfToken).tournamentEarningShare1e7;
         // calculate amount to send
@@ -311,6 +303,28 @@ contract FantiumClaiming is
         return (claimAmount);
     }
 
+    // check if token is from a valid collection and hasn't claimed yet for that distribution event    
+    function checkTokenAllowed(uint256 _distributionEventID,  uint256 _collectionOfToken, uint256 _baseTokenId) view internal returns (bool){
+        bool collectionIncluded = false;
+        bool tokenNrIncluded = false; 
+        /////// still need figuring out how to make sure that a token cannot be double spend --> use token without version as base for it ////// 
+
+        //check if payouts were claimed for this token
+        if(distributionEventToTokenIdToClaimed[_distributionEventID][_baseTokenId] == true){
+                tokenNrIncluded = true;
+        }
+
+        for (uint256 i = 0; i < distributionEvents[_distributionEventID].collectionIds.length; i++) {
+            if (distributionEvents[_distributionEventID].collectionIds[i] == _collectionOfToken){
+                collectionIncluded = true;}
+            }
+        
+        if (collectionIncluded && tokenNrIncluded) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     /*///////////////////////////////////////////////////////////////
                             ADMIN
