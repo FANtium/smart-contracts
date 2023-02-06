@@ -9,12 +9,13 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "../FantiumNFTV4.sol";
-import {TokenVersionUtil} from "../utils/TokenVersionUtil.sol";
+import "../utils/FantiumUserManager.sol";
+import "../utils/TokenVersionUtil.sol";
 
 /**
  * @title Claiming contract that allows payout tokens to be claimed
  * for FAN token holders.
- * @author MTX stuido AG.
+ * @author MTX studoi AG.
  */
 
 contract FantiumClaiming is
@@ -27,6 +28,7 @@ contract FantiumClaiming is
     IERC20 public payoutToken;
 
     FantiumNFTV4 public fantiumNFTContract;
+    FantiumUserManager public fantiumUserManager;
 
     // mapping of distributionEvent to TokenID to claimed
     mapping(uint256 => DistributionEvent) public distributionEvents; 
@@ -39,7 +41,6 @@ contract FantiumClaiming is
     /// ACM
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant PLATFORM_MANAGER_ROLE = keccak256("PLATFORM_MANAGER_ROLE");
-    bytes32 public constant IDENT_MANAGER_ROLE = keccak256("IDENT_MANAGER_ROLE");
 
     struct DistributionEvent {
         uint256 distributionEventId;
@@ -58,8 +59,6 @@ contract FantiumClaiming is
     //////////////////////////////////////////////////////////////*/
 
     event Claim(uint256 amount);
-    event AddressAddedToIdent(address indexed _address);
-    event AddressRemovedFromIdent(address indexed _address);
 
 
     /*//////////////////////////////////////////////////////////////
@@ -91,11 +90,6 @@ contract FantiumClaiming is
 
     modifier onlyValidAddress(address _address) {
         require(_address != address(0), "Invalid address");
-        _;
-    }
-
-    modifier onlyIdentManager() {
-        require(hasRole(IDENT_MANAGER_ROLE, msg.sender), "Only IDENT manager");
         _;
     }
 
@@ -142,43 +136,12 @@ contract FantiumClaiming is
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Add address to IDENT list.
-     * @param _address address to be added to IDENT list.
-     */
-    function addAddressToIdent(
-        address _address
-    ) 
-    external 
-    whenNotPaused 
-    onlyIdentManager 
-    onlyValidAddress(_address) 
-    {
-        identedAddresses[_address] = true;
-        emit AddressAddedToIdent(_address);
-    }
-
-    /**
-     * @notice Remove address from IDENT list.
-     * @param _address address to be removed from IDENT list.
-     */
-    function removeAddressFromIdent(
-        address _address
-    ) 
-    external 
-    whenNotPaused 
-    onlyIdentManager 
-    {
-        identedAddresses[_address] = false;
-        emit AddressRemovedFromIdent(_address);
-    }
-
-    /**
      * @notice Check if address is IDENTed.
      * @param _address address to be checked.
      * @return isIDENTed true if address is IDENTed.
      */
-    function isAddressIDENTed(address _address) public view returns (bool) {
-        return identedAddresses[_address];
+    function isAddressIDENT(address _address) public view returns (bool) {
+        return fantiumUserManager.isAddressIDENT(_address);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -200,7 +163,7 @@ contract FantiumClaiming is
 
         //check if msg.sender is IDENTed
         require(
-            isAddressIDENTed(msg.sender),
+            isAddressIDENT(msg.sender),
             "FantiumClaimingV1: You are not IDENTed"
         );
 
