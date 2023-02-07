@@ -151,8 +151,20 @@ contract FantiumClaiming is
                             CLAIMING
     //////////////////////////////////////////////////////////////*/
 
-    function claim(uint256 _tokenId, uint256 _distributionEventID) 
+    function batchClaim(uint256[] memory _tokenIds, uint256[] memory _distributionEventID) 
     external 
+    whenNotPaused {
+        require(_tokenIds.length == _distributionEventID.length, "FantiumClaimingV1: Arrays must be of same length");
+        require(_tokenIds.length <= 50, "FantiumClaimingV1: Arrays must be of length <= 50");
+
+        for (uint256 i = 0; i < _tokenIds.length; i++) {
+            claim(_tokenIds[i], _distributionEventID[i]);
+        }
+    }
+    
+    
+    function claim(uint256 _tokenId, uint256 _distributionEventID) 
+    public 
     onlyTokenOwner(_tokenId)
     whenNotPaused
     {
