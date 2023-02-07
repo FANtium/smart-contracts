@@ -9,7 +9,8 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {TokenVersionUtil} from "./utils/TokenVersionUtil.sol";
+import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol" ;
+import "./utils/TokenVersionUtil.sol";
 
 /**
  * @title FANtium ERC721 contract V3.
@@ -22,7 +23,8 @@ contract FantiumNFTV4 is
     UUPSUpgradeable,
     AccessControlUpgradeable,
     DefaultOperatorFiltererUpgradeable,
-    PausableUpgradeable
+    PausableUpgradeable,
+    ERC2771ContextUpgradeable
 {
     using StringsUpgradeable for uint256;
 
@@ -196,7 +198,8 @@ contract FantiumNFTV4 is
     ) internal override onlyRole(UPGRADER_ROLE) {}
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor(address forwarder)
+    ERC2771ContextUpgradeable(forwarder){
         _disableInitializers();
     }
 
@@ -876,4 +879,18 @@ contract FantiumNFTV4 is
     ) public override whenNotPaused onlyAllowedOperator(from) {
         super.safeTransferFrom(from, to, tokenId, data);
     }
+
+
+    /*//////////////////////////////////////////////////////////////
+                            OVERRIDE FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    function _msgSender() internal virtual view override(ERC2771ContextUpgradeable, ContextUpgradeable) returns (address sender) {
+        return super._msgSender();
+    }
+
+    function _msgData() internal virtual view override( ERC2771ContextUpgradeable, ContextUpgradeable ) returns (bytes calldata) {
+        return super._msgData();
+    }
+
 }

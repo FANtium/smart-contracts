@@ -2,15 +2,17 @@
 pragma solidity ^0.8.13;
 
 // import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol" ;
 import "../FantiumNFTV4.sol";
 import "../utils/FantiumUserManager.sol";
 import "../utils/TokenVersionUtil.sol";
+
 
 /**
  * @title Claiming contract that allows payout tokens to be claimed
@@ -22,11 +24,11 @@ contract FantiumClaiming is
     Initializable, 
     UUPSUpgradeable, 
     AccessControlUpgradeable, 
-    PausableUpgradeable 
+    PausableUpgradeable,
+    ERC2771ContextUpgradeable
 {
      
-    IERC20 public payoutToken;
-
+    ERC20 public payoutToken;
     FantiumNFTV4 public fantiumNFTContract;
     FantiumUserManager public fantiumUserManager;
 
@@ -127,7 +129,8 @@ contract FantiumClaiming is
     ) internal override onlyRole(UPGRADER_ROLE) {}
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor(address forwarder)
+    ERC2771ContextUpgradeable(forwarder){
         _disableInitializers();
     }
 
@@ -261,8 +264,9 @@ contract FantiumClaiming is
         
         uint256 share =  fantiumNFTContract.getCollection(collectionOfToken).tournamentEarningShare1e7;
         // calculate amount to send
-        // note: divice by 1e7 will always down round amount at decimal
-        uint256 claimAmount = distributionEvents[_distributionEventID].amount * share / 1e7;
+        // note: divice by 1e7 will always down round amount at decimal. 
+        // note: add decimals for payout token (USDC = 6 decimals)
+        uint256 claimAmount = distributionEvents[_distributionEventID].amount * share * payoutToken.decimals() / 1e7;
         return (claimAmount);
     }
 
@@ -270,13 +274,13 @@ contract FantiumClaiming is
     function checkTokenAllowed(uint256 _distributionEventID,  uint256 _collectionOfToken, uint256 _baseTokenId) view internal returns (bool){
         bool collectionIncluded = false;
         bool tokenNrIncluded = false; 
-        /////// still need figuring out how to make sure that a token cannot be double spend --> use token without version as base for it ////// 
 
         //check if payouts were claimed for this token
         if(distributionEventToTokenIdToClaimed[_distributionEventID][_baseTokenId] == true){
                 tokenNrIncluded = true;
         }
 
+        //check if collection is included in distribution event
         for (uint256 i = 0; i < distributionEvents[_distributionEventID].collectionIds.length; i++) {
             if (distributionEvents[_distributionEventID].collectionIds[i] == _collectionOfToken){
                 collectionIncluded = true;}
@@ -311,6 +315,19 @@ contract FantiumClaiming is
     function closeDistribution(uint256 _distributionEventId) external onlyManager {
 
         distributionEvents[_distributionEventId].closed = true;
+    }
+
+
+    /*///////////////////////////////////////////////////////////////
+                            OVERRIDE
+    //////////////////////////////////////////////////////////////*/
+
+    function _msgSender() internal virtual view override(ERC2771ContextUpgradeable, ContextUpgradeable) returns (address sender) {
+        return super._msgSender();
+    }
+
+    function _msgData() internal virtual view override( ERC2771ContextUpgradeable, ContextUpgradeable ) returns (bytes calldata) {
+        return super._msgData();
     }
 
 
