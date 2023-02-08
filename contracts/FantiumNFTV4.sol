@@ -132,8 +132,8 @@ contract FantiumNFTV4 is
 
     modifier onlyAthlete(uint256 _collectionId) {
         require(
-            msg.sender == collections[_collectionId].athleteAddress ||
-                hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
+            _msgSender() == collections[_collectionId].athleteAddress ||
+                hasRole(PLATFORM_MANAGER_ROLE, _msgSender()),
             "Only athlete"
         );
         _;
@@ -158,7 +158,7 @@ contract FantiumNFTV4 is
     }
 
     modifier onlyKycManager() {
-        require(hasRole(KYC_MANAGER_ROLE, msg.sender), "Only KYC updater");
+        require(hasRole(KYC_MANAGER_ROLE, _msgSender()), "Only KYC updater");
         _;
     }
 
@@ -303,7 +303,7 @@ contract FantiumNFTV4 is
         uint256 _collectionId,
         uint24 _amount
     ) public whenNotPaused {
-        batchMintTo(msg.sender, _collectionId, _amount);
+        batchMintTo(_msgSender(), _collectionId, _amount);
     }
 
     /**
@@ -320,12 +320,12 @@ contract FantiumNFTV4 is
         _amount = _amount > 10 ? 10 : _amount;
 
         // CHECKS
-        require(isAddressKYCed(msg.sender), "Address is not KYCed");
+        require(isAddressKYCed(_msgSender()), "Address is not KYCed");
         Collection storage collection = collections[_collectionId];
         require(collection.exists, "Collection does not exist");
         require(
             collection.launchTimestamp <= block.timestamp ||
-                hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
+                hasRole(PLATFORM_MANAGER_ROLE, _msgSender()),
             "Collection not launched"
         );
         require(collection.isMintable, "Collection is not mintable");
@@ -336,7 +336,7 @@ contract FantiumNFTV4 is
             10 ** ERC20(erc20PaymentToken).decimals() *
             _amount;
         require(
-            ERC20(erc20PaymentToken).allowance(msg.sender, address(this)) >=
+            ERC20(erc20PaymentToken).allowance(_msgSender(), address(this)) >=
                 totalPrice,
             "ERC20 allowance too low"
         );
@@ -344,8 +344,8 @@ contract FantiumNFTV4 is
         if (collection.isPaused) {
             // if minting is paused, require address to be on allowlist
             require(
-                collectionIdToAllowList[_collectionId][msg.sender] >= _amount ||
-                    hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
+                collectionIdToAllowList[_collectionId][_msgSender()] >= _amount ||
+                    hasRole(PLATFORM_MANAGER_ROLE, _msgSender()),
                 "Collection is paused or allowlist allocation insufficient"
             );
         }
@@ -360,12 +360,12 @@ contract FantiumNFTV4 is
         // EFFECTS
         collection.invocations += _amount;
 
-        if (collection.isPaused && !hasRole(PLATFORM_MANAGER_ROLE, msg.sender)) {
-            collectionIdToAllowList[_collectionId][msg.sender]-= _amount;
+        if (collection.isPaused && !hasRole(PLATFORM_MANAGER_ROLE, _msgSender())) {
+            collectionIdToAllowList[_collectionId][_msgSender()]-= _amount;
         }
 
         // INTERACTIONS
-        _splitFunds(totalPrice, _collectionId, msg.sender);
+        _splitFunds(totalPrice, _collectionId, _msgSender());
 
         for (uint256 i = 0; i < _amount; i++) {
             _mint(_to, tokenId + i);
@@ -740,7 +740,7 @@ contract FantiumNFTV4 is
         onlyValidTokenId(_tokenId)
         returns (bool)
     {
-        require(claimContract == msg.sender, "Only claim contract can call this function");
+        require(claimContract == _msgSender(), "Only claim contract can call this function");
 
         (uint256 _collectionId, uint256 _versionId , uint256 _tokenNr) = TokenVersionUtil.getTokenInfo(_tokenId);
         require(collections[_collectionId].exists, "Collection does not exist");
