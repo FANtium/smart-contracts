@@ -95,7 +95,6 @@ contract FantiumNFTV4 is
         bytes32 indexed _update
     );
     event PlatformUpdated(bytes32 indexed _field);
-    event MinterUpdated(address indexed _currentMinter);
     event AddressAddedToKYC(address indexed _address);
     event AddressRemovedFromKYC(address indexed _address);
     event AddressAddedToAllowList(

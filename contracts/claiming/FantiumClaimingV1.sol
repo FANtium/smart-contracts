@@ -42,17 +42,26 @@ contract FantiumClaimingV1 is
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant PLATFORM_MANAGER_ROLE =
         keccak256("PLATFORM_MANAGER_ROLE");
+    
+    bytes32 constant FIELD_CREATED = "created";
+    bytes32 constant FIELD_COLLECTIONS = "collections";
+    bytes32 constant FIELD_AMOUNT = "amount";
+    bytes32 constant FIELD_ADDRESSES = "addresses";
+    bytes32 constant FIELD_FANTIUMFEEBPS = "fantium fee basis points";
+    bytes32 constant FIELD_CLOSED = "isClosed";
+    bytes32 constant FIELD_TIMESTAMPS = "start and close timestamp";
+
 
     struct DistributionEvent {
         uint256 distributionEventId;
         uint256[] collectionIds;
-        address athleteAddress;
+        address payable athleteAddress;
         uint256 amount; // currently without decimals e.g. 200.000
         uint256 distributedAmount;
-        uint256 fantiumFeePBS;
-        uint256 fantiumTransactionFeeInWei;
+        uint256 fantiumFeeBPS;
         address payable fantiumFeeAddress;
         uint256 startTime;
+        uint256 closeTime;
         bool exists;
         bool closed;
     }
@@ -62,6 +71,9 @@ contract FantiumClaimingV1 is
     //////////////////////////////////////////////////////////////*/
 
     event Claim(uint256 amount);
+    event DistributionEventUpdate(uint256 indexed _distributionEventId, bytes32 indexed _field);
+    event AddDistributionEventAmount(uint256 amount);
+
 
     /*//////////////////////////////////////////////////////////////
                             MODIFERS
@@ -92,6 +104,14 @@ contract FantiumClaimingV1 is
 
     modifier onlyValidAddress(address _address) {
         require(_address != address(0), "Invalid address");
+        _;
+    }
+
+    modifier onlyValidDistrutionEvent(uint256 _distributionEventId) {
+        require(
+            distributionEvents[_distributionEventId].exists,
+            "Invalid distribution event"
+        );
         _;
     }
 
@@ -152,13 +172,13 @@ contract FantiumClaimingV1 is
 
     //
     function setupDistributionEvent(
-        address _athleteAddress,
+        address payable _athleteAddress,
         uint256 _amount,
-        uint256 startTime,
+        uint256 _startTime,
+        uint256 _closeTime,
         uint256[] memory _collectionIds,
         address payable _fantiumAddress,
-        uint256 _fantiumFeePBS,
-        uint256 _fantiumTransactionFeeInWei
+        uint256 _fantiumFeeBPS
     ) external onlyManager whenNotPaused onlyValidAddress(_athleteAddress) {
         // CHECKS
         require(
@@ -166,8 +186,8 @@ contract FantiumClaimingV1 is
             "FantiumClaimingV1: amount must be greater than 0"
         );
         require(
-            startTime > 0,
-            "FantiuyarnmClaimingV1: start time must be greater than 0"
+            _startTime > 0 && _closeTime > 0 && _startTime < _closeTime,
+            "FantiuyarnmClaimingV1: times must be greater than 0 and close time must be greater than start time"
         );
         require(
             _collectionIds.length > 0,
@@ -195,14 +215,15 @@ contract FantiumClaimingV1 is
         distributionEvent.collectionIds = _collectionIds;
         distributionEvent.athleteAddress = _athleteAddress;
         distributionEvent.fantiumFeeAddress = _fantiumAddress;
-        distributionEvent
-            .fantiumTransactionFeeInWei = _fantiumTransactionFeeInWei;
-        distributionEvent.fantiumFeePBS = _fantiumFeePBS;
-        distributionEvent.startTime = startTime;
+        distributionEvent.fantiumFeeBPS = _fantiumFeeBPS;
+        distributionEvent.startTime = _startTime;
+        distributionEvent.startTime = _closeTime;
         distributionEvent.exists = true;
         distributionEvent.closed = false;
         distributionEvents[nextDistributionEventId] = distributionEvent;
+        emit DistributionEventUpdate(nextDistributionEventId, FIELD_CREATED);
         nextDistributionEventId++;
+        
     }
 
     function addDistributionAmount(
@@ -224,7 +245,69 @@ contract FantiumClaimingV1 is
             distributionEvents[_distributionEventId].amount +
             _amount;
         payoutToken.transferFrom(_msgSender(), address(this), _amount);
+        emit AddDistributionEventAmount(_amount);
     }
+
+    /*///////////////////////////////////////////////////////////////
+                            UPDATE FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    function updateDistributionEventAmount(uint256 _id, uint256 _amount) external         
+    whenNotPaused
+    onlyValidDistrutionEvent(_id)
+    onlyRole(PLATFORM_MANAGER_ROLE) 
+    {
+        distributionEvents[_id].amount = _amount;
+        emit DistributionEventUpdate(_id, FIELD_AMOUNT);
+    }
+
+    function updateDistributionEventAmount(uint256 _id, uint256[] memory collectionIds) external         
+    whenNotPaused
+    onlyValidDistrutionEvent(_id)
+    onlyRole(PLATFORM_MANAGER_ROLE) 
+    {
+        distributionEvents[_id].collectionIds = collectionIds;
+        emit DistributionEventUpdate(_id, FIELD_COLLECTIONS);
+    }
+
+    function updateDistributionEventAddresses(uint256 _id, address payable _athleteAddress, address payable _fantiumAdress) external
+    whenNotPaused
+    onlyValidDistrutionEvent(_id)
+    onlyRole(PLATFORM_MANAGER_ROLE) 
+    {
+        require(_athleteAddress != address(0) && _fantiumAdress != address(0), "FantiumClaimingV1: athlete address cannot be 0");
+        distributionEvents[_id].athleteAddress = _athleteAddress;
+        distributionEvents[_id].fantiumFeeAddress = _fantiumAdress;
+        emit DistributionEventUpdate(_id, FIELD_ADDRESSES);
+    }
+
+    function updateDistributionEventAddresses(uint256 _id, uint256 _startTime, uint256 _closeTime) external         
+    whenNotPaused
+    onlyValidDistrutionEvent(_id)
+    onlyRole(PLATFORM_MANAGER_ROLE) 
+    {
+                require(
+            _startTime > 0 && _closeTime > 0 && _startTime < _closeTime,
+            "FantiuyarnmClaimingV1: times must be greater than 0 and close time must be greater than start time"
+        );
+        distributionEvents[_id].startTime = _startTime;
+        distributionEvents[_id].closeTime = _closeTime;
+        emit DistributionEventUpdate(_id, FIELD_TIMESTAMPS);
+    }
+
+    function updateDistributionEventFee(uint256 _id, uint256 _feeBPS) external         
+    whenNotPaused
+    onlyValidDistrutionEvent(_id)
+    onlyRole(PLATFORM_MANAGER_ROLE) 
+    {
+        require(
+            _feeBPS >= 0 && _feeBPS < 10000,
+            "FantiumClaimingV1: fee must be between 0 and 10000"
+        );
+        distributionEvents[_id].fantiumFeeBPS = _feeBPS;
+        emit DistributionEventUpdate(_id, FIELD_FANTIUMFEEBPS);
+    }
+
 
     /*///////////////////////////////////////////////////////////////
                             CLAIMING
@@ -311,13 +394,14 @@ contract FantiumClaimingV1 is
             .distributedAmount += claimAmount;
 
         // INTERACTIONS
-        //transfer USDC to _msgSender()
+        //upgrade token to new version
         require(
             fantiumNFTContract.upgradeTokenVersion(_tokenId),
             "FantiumClaimingV1: upgrade failed"
         );
+        //transfer USDC to _msgSender()
         _splitFunds(claimAmount, _distributionEventId);
-        //upgrade token to new version
+        
     }
 
     /*///////////////////////////////////////////////////////////////
