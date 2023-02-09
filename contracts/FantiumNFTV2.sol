@@ -344,8 +344,10 @@ contract FantiumNFTV2 is
         // EFFECTS
         collection.invocations += _amount;
 
-        if (collection.isPaused && !hasRole(PLATFORM_MANAGER_ROLE, msg.sender)) {
-            collectionIdToAllowList[_collectionId][msg.sender]-= _amount;
+        if (
+            collection.isPaused && !hasRole(PLATFORM_MANAGER_ROLE, msg.sender)
+        ) {
+            collectionIdToAllowList[_collectionId][msg.sender] -= _amount;
         }
 
         // INTERACTIONS

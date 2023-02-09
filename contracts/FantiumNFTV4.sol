@@ -9,7 +9,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol" ;
+import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import "./utils/TokenVersionUtil.sol";
 
 /**
@@ -23,8 +23,7 @@ contract FantiumNFTV4 is
     UUPSUpgradeable,
     AccessControlUpgradeable,
     DefaultOperatorFiltererUpgradeable,
-    PausableUpgradeable,
-    ERC2771ContextUpgradeable
+    PausableUpgradeable
 {
     using StringsUpgradeable for uint256;
 
@@ -198,8 +197,9 @@ contract FantiumNFTV4 is
     ) internal override onlyRole(UPGRADER_ROLE) {}
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address forwarder)
-    ERC2771ContextUpgradeable(forwarder){
+    // ERC2771ContextUpgradeable(forwarder)
+    // add: (address forwarder)
+    constructor() {
         _disableInitializers();
     }
 
@@ -344,7 +344,8 @@ contract FantiumNFTV4 is
         if (collection.isPaused) {
             // if minting is paused, require address to be on allowlist
             require(
-                collectionIdToAllowList[_collectionId][_msgSender()] >= _amount ||
+                collectionIdToAllowList[_collectionId][_msgSender()] >=
+                    _amount ||
                     hasRole(PLATFORM_MANAGER_ROLE, _msgSender()),
                 "Collection is paused or allowlist allocation insufficient"
             );
@@ -360,8 +361,10 @@ contract FantiumNFTV4 is
         // EFFECTS
         collection.invocations += _amount;
 
-        if (collection.isPaused && !hasRole(PLATFORM_MANAGER_ROLE, _msgSender())) {
-            collectionIdToAllowList[_collectionId][_msgSender()]-= _amount;
+        if (
+            collection.isPaused && !hasRole(PLATFORM_MANAGER_ROLE, _msgSender())
+        ) {
+            collectionIdToAllowList[_collectionId][_msgSender()] -= _amount;
         }
 
         // INTERACTIONS
@@ -725,7 +728,6 @@ contract FantiumNFTV4 is
         _unpause();
     }
 
-
     /*//////////////////////////////////////////////////////////////
                             CLAIMING FUNCTIONS
     //////////////////////////////////////////////////////////////*/
@@ -734,39 +736,46 @@ contract FantiumNFTV4 is
      * @notice upgrade token version to new version in case of claim event
      */
 
-    function upgradeTokenVersion(uint256 _tokenId)
-        public
-        whenNotPaused
-        onlyValidTokenId(_tokenId)
-        returns (bool)
-    {
-        require(claimContract == _msgSender(), "Only claim contract can call this function");
+    function upgradeTokenVersion(
+        uint256 _tokenId
+    ) public whenNotPaused onlyValidTokenId(_tokenId) returns (bool) {
+        require(
+            claimContract == _msgSender(),
+            "Only claim contract can call this function"
+        );
 
-        (uint256 _collectionId, uint256 _versionId , uint256 _tokenNr) = TokenVersionUtil.getTokenInfo(_tokenId);
+        (
+            uint256 _collectionId,
+            uint256 _versionId,
+            uint256 _tokenNr
+        ) = TokenVersionUtil.getTokenInfo(_tokenId);
         require(collections[_collectionId].exists, "Collection does not exist");
         address tokenOwner = ownerOf(_tokenId);
-        
+
         // burn old token
         _burn(_tokenId);
         _versionId++;
-        uint256 newTokenId = TokenVersionUtil.createTokenId(_collectionId, _versionId, _tokenNr);
+        uint256 newTokenId = TokenVersionUtil.createTokenId(
+            _collectionId,
+            _versionId,
+            _tokenNr
+        );
         // mint new token with new version
         _mint(tokenOwner, newTokenId);
-        if(ownerOf(newTokenId) == tokenOwner){
-            return true;}
-        else {
-            return false;}
+        if (ownerOf(newTokenId) == tokenOwner) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
      * @notice set Claim contract address
      */
 
-    function updateClaimContract(address _claimContract)
-        public
-        whenNotPaused
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
+    function updateClaimContract(
+        address _claimContract
+    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
         claimContract = _claimContract;
     }
 
@@ -833,7 +842,9 @@ contract FantiumNFTV4 is
         return (recipients, bps);
     }
 
-    function getCollection(uint256 _collectionID) public view returns (Collection memory) {
+    function getCollection(
+        uint256 _collectionID
+    ) public view returns (Collection memory) {
         return collections[_collectionID];
     }
 
@@ -880,17 +891,15 @@ contract FantiumNFTV4 is
         super.safeTransferFrom(from, to, tokenId, data);
     }
 
-
-    /*//////////////////////////////////////////////////////////////
-                            OVERRIDE FUNCTIONS
+    /*///////////////////////////////////////////////////////////////
+                            OVERRIDE
     //////////////////////////////////////////////////////////////*/
 
-    function _msgSender() internal virtual view override(ERC2771ContextUpgradeable, ContextUpgradeable) returns (address sender) {
-        return super._msgSender();
-    }
+    // function _msgSender() internal virtual view override(ERC2771ContextUpgradeable, ContextUpgradeable) returns (address sender) {
+    //     return super._msgSender();
+    // }
 
-    function _msgData() internal virtual view override( ERC2771ContextUpgradeable, ContextUpgradeable ) returns (bytes calldata) {
-        return super._msgData();
-    }
-
+    // function _msgData() internal virtual view override( ERC2771ContextUpgradeable, ContextUpgradeable ) returns (bytes calldata) {
+    //     return super._msgData();
+    // }
 }

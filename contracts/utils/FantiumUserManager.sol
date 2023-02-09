@@ -37,7 +37,6 @@ contract FantiumUserManager is
         mapping(address => mapping(uint256 => uint256)) contractToAllowlistToSpots;
     }
 
-
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
@@ -55,7 +54,6 @@ contract FantiumUserManager is
         uint256 collectionId,
         address indexed _address
     );
-
 
     /*//////////////////////////////////////////////////////////////
                             MODIFERS
@@ -87,16 +85,13 @@ contract FantiumUserManager is
      * max(uint248) to avoid overflow when adding to it.
      */
     ///@dev no constructor in upgradable contracts. Instead we have initializers
-    function initialize(
-        address _defaultAdmin
-    ) public initializer {
+    function initialize(address _defaultAdmin) public initializer {
         __UUPSUpgradeable_init();
         __AccessControl_init();
         __Pausable_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _grantRole(UPGRADER_ROLE, _defaultAdmin);
-
     }
 
     /// @notice upgrade authorization logic
@@ -115,20 +110,17 @@ contract FantiumUserManager is
                                  KYC
     //////////////////////////////////////////////////////////////*/
 
-
     /**
      * @notice Add address to KYC list.
      * @param _address address to be added to KYC list.
      */
     function addBatchtoKYC(
         address[] memory _address
-    ) external whenNotPaused onlyManager
-    {
+    ) external whenNotPaused onlyManager {
         for (uint256 i = 0; i < _address.length; i++) {
             addAddressToKYC(_address[i]);
         }
     }
-
 
     /**
      * @notice Add address to KYC list.
@@ -136,10 +128,7 @@ contract FantiumUserManager is
      */
     function addAddressToKYC(
         address _address
-    ) 
-    public
-    whenNotPaused 
-    onlyManager {
+    ) public whenNotPaused onlyManager {
         users[_address].isKYCed = true;
         emit AddressAddedToKYC(_address);
     }
@@ -163,7 +152,6 @@ contract FantiumUserManager is
     function isAddressKYCed(address _address) public view returns (bool) {
         return users[_address].isKYCed;
     }
-
 
     /*//////////////////////////////////////////////////////////////
                                  IDENT
@@ -199,7 +187,7 @@ contract FantiumUserManager is
         emit AddressRemovedFromIDENT(_address);
     }
 
-        /**
+    /**
      * @notice Check if address is KYCed.
      * @param _address address to be checked.
      * @return isKYCed true if address is KYCed.
@@ -229,9 +217,10 @@ contract FantiumUserManager is
         onlyRole(PLATFORM_MANAGER_ROLE)
         onlyAllowedContract(_contractAddress)
     {
-        
-        for (uint256 i = 0; i < _addresses.length; i++) {    
-            users[_addresses[i]].contractToAllowlistToSpots[_contractAddress][_collectionId] += _increaseAllocations[i];
+        for (uint256 i = 0; i < _addresses.length; i++) {
+            users[_addresses[i]].contractToAllowlistToSpots[_contractAddress][
+                _collectionId
+            ] += _increaseAllocations[i];
             emit AddressAddedToAllowList(_collectionId, _addresses[i]);
         }
     }
@@ -253,15 +242,21 @@ contract FantiumUserManager is
         onlyRole(PLATFORM_MANAGER_ROLE)
         onlyAllowedContract(_contractAddress)
     {
-
-        users[_address].contractToAllowlistToSpots[_contractAddress][_collectionId] > _reduceAllocation ? users[_address].contractToAllowlistToSpots[_contractAddress][_collectionId] -= _reduceAllocation : users[_address].contractToAllowlistToSpots[_contractAddress][_collectionId] = 0;
+        users[_address].contractToAllowlistToSpots[_contractAddress][
+            _collectionId
+        ] > _reduceAllocation
+            ? users[_address].contractToAllowlistToSpots[_contractAddress][
+                _collectionId
+            ] -= _reduceAllocation
+            : users[_address].contractToAllowlistToSpots[_contractAddress][
+                _collectionId
+            ] = 0;
         emit AddressRemovedFromAllowList(_collectionId, _address);
     }
 
     /*///////////////////////////////////////////////////////////////
                         PLATFORM FUNCTIONS
     //////////////////////////////////////////////////////////////*/
-
 
     /**
      * @notice Update contract pause status to `_paused`.
@@ -279,7 +274,6 @@ contract FantiumUserManager is
         _unpause();
     }
 
-
     /*//////////////////////////////////////////////////////////////
                             CLAIMING FUNCTIONS
     //////////////////////////////////////////////////////////////*/
@@ -288,11 +282,9 @@ contract FantiumUserManager is
      * @notice set Claim contract address
      */
 
-    function updateClaimContract(address _claimContract)
-        public
-        whenNotPaused
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
+    function updateClaimContract(
+        address _claimContract
+    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
         FantiumClaimContract = _claimContract;
     }
 
@@ -300,14 +292,11 @@ contract FantiumUserManager is
      * @notice set Claim contract address
      */
 
-    function updateNFTConctract(address _nftContract)
-        public
-        whenNotPaused
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
+    function updateNFTConctract(
+        address _nftContract
+    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
         FantiumNFTContract = _nftContract;
     }
-
 
     /*//////////////////////////////////////////////////////////////
                                  VIEWS

@@ -15,18 +15,27 @@ library TokenVersionUtil {
                             INTERNAL 
     //////////////////////////////////////////////////////////////*/
 
-    function getTokenInfo(uint256 _tokenId) pure internal returns (uint, uint, uint) {
-        uint256 collectionOfToken =  (_tokenId - (_tokenId % ONE_MILLION)) / ONE_MILLION;
-        uint256 versionOfToken = (_tokenId % ONE_MILLION) - (_tokenId % TEN_THOUSAND);
+    function getTokenInfo(
+        uint256 _tokenId
+    ) internal pure returns (uint, uint, uint) {
+        uint256 collectionOfToken = (_tokenId - (_tokenId % ONE_MILLION)) /
+            ONE_MILLION;
+        uint256 versionOfToken = (_tokenId % ONE_MILLION) -
+            (_tokenId % TEN_THOUSAND);
         uint256 tokenNr = _tokenId % TEN_THOUSAND;
-        
+
         return (collectionOfToken, versionOfToken, tokenNr);
     }
 
-    function createTokenId(uint256 _collectionId, uint256 _versionId,  uint256 _tokenNr) pure internal returns (uint) {
-        uint256 tokenId =  (_collectionId * ONE_MILLION) + (_versionId * TEN_THOUSAND) + _tokenNr;
-        
+    function createTokenId(
+        uint256 _collectionId,
+        uint256 _versionId,
+        uint256 _tokenNr
+    ) internal pure returns (uint) {
+        uint256 tokenId = (_collectionId * ONE_MILLION) +
+            (_versionId * TEN_THOUSAND) +
+            _tokenNr;
+
         return (tokenId);
     }
-
 }
