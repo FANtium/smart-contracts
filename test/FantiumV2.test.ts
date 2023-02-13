@@ -4,7 +4,7 @@
 // import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 // import { FantiumNFT } from '../typechain-types/contracts/FantiumNFT'
 // import { FantiumNFTV2 } from '../typechain-types/contracts/FantiumNFTV2'
-// import { Mock20 } from '../typechain-types/contracts/Mock20'
+// import { Mock20 } from '../typechain-types/contracts/mocks/Mock20'
 
 // describe("FantiumV2", () => {
 

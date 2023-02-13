@@ -9,7 +9,8 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+//import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+import "./interfaces/IFantiumNFT.sol";
 import "./utils/TokenVersionUtil.sol";
 
 /**
@@ -23,7 +24,8 @@ contract FantiumNFTV4 is
     UUPSUpgradeable,
     AccessControlUpgradeable,
     DefaultOperatorFiltererUpgradeable,
-    PausableUpgradeable
+    PausableUpgradeable,
+    IFantiumNFT
 {
     using StringsUpgradeable for uint256;
 
@@ -737,7 +739,13 @@ contract FantiumNFTV4 is
 
     function upgradeTokenVersion(
         uint256 _tokenId
-    ) public whenNotPaused onlyValidTokenId(_tokenId) returns (bool) {
+    ) external whenNotPaused onlyValidTokenId(_tokenId) returns (bool) {
+        // only claim contract can call this function
+        require(
+            claimContract != address(0),
+            "Claim contract address is not set"
+        );
+
         require(
             claimContract == _msgSender(),
             "Only claim contract can call this function"
@@ -841,10 +849,22 @@ contract FantiumNFTV4 is
         return (recipients, bps);
     }
 
-    function getCollection(
+    function getCollectionAthleteAddress(
         uint256 _collectionID
-    ) public view returns (Collection memory) {
-        return collections[_collectionID];
+    ) external view returns (address) {
+        return collections[_collectionID].athleteAddress;
+    }
+    
+    function getCollectionEarningsShare1e7(
+        uint256 _collectionID
+    ) external view returns (uint256) {
+        return collections[_collectionID].tournamentEarningShare1e7;
+    }
+
+    function getCollectionExists(
+        uint256 _collectionID
+    ) external view returns (bool) {
+        return collections[_collectionID].exists;
     }
 
     /*//////////////////////////////////////////////////////////////

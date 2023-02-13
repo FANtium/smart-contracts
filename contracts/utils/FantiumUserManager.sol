@@ -7,9 +7,10 @@ import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "../claiming/FantiumClaimingV1.sol";
+import "../interfaces/IFantiumUserManager.sol";
 
 /**
- * @title FANtium Allowlist Manager contract V1.
+ * @title FANtium User Manager contract V1.
  * @author MTX studio AG.
  */
 
@@ -17,7 +18,8 @@ contract FantiumUserManager is
     Initializable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
-    PausableUpgradeable
+    PausableUpgradeable,
+    IFantiumUserManager
 {
     using StringsUpgradeable for uint256;
 
@@ -38,24 +40,6 @@ contract FantiumUserManager is
     }
 
     /*//////////////////////////////////////////////////////////////
-                                 EVENTS
-    //////////////////////////////////////////////////////////////*/
-
-    event PlatformUpdated(bytes32 indexed _field);
-    event AddressAddedToKYC(address indexed _address);
-    event AddressRemovedFromKYC(address indexed _address);
-    event AddressAddedToIDENT(address indexed _address);
-    event AddressRemovedFromIDENT(address indexed _address);
-    event AddressAddedToAllowList(
-        uint256 collectionId,
-        address indexed _address
-    );
-    event AddressRemovedFromAllowList(
-        uint256 collectionId,
-        address indexed _address
-    );
-
-    /*//////////////////////////////////////////////////////////////
                             MODIFERS
     //////////////////////////////////////////////////////////////*/
 
@@ -66,11 +50,6 @@ contract FantiumUserManager is
 
     modifier onlyManager() {
         require(hasRole(PLATFORM_MANAGER_ROLE, msg.sender), "Only manager");
-        _;
-    }
-
-    modifier onlyAllowedContract(address _contract) {
-        require(allowedContracts[_contract], "Only allowed contracts");
         _;
     }
 
@@ -85,13 +64,20 @@ contract FantiumUserManager is
      * max(uint248) to avoid overflow when adding to it.
      */
     ///@dev no constructor in upgradable contracts. Instead we have initializers
-    function initialize(address _defaultAdmin) public initializer {
+    function initialize(
+        address _defaultAdmin,         
+        address _fantiumNFTContract,
+        address _fantiumClaimContract
+    ) public initializer {
         __UUPSUpgradeable_init();
         __AccessControl_init();
         __Pausable_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _grantRole(UPGRADER_ROLE, _defaultAdmin);
+
+        FantiumClaimContract = _fantiumClaimContract;
+        FantiumNFTContract = _fantiumNFTContract;
     }
 
     /// @notice upgrade authorization logic
@@ -149,7 +135,7 @@ contract FantiumUserManager is
      * @param _address address to be checked.
      * @return isKYCed true if address is KYCed.
      */
-    function isAddressKYCed(address _address) public view returns (bool) {
+    function isAddressKYCed(address _address) external view returns (bool) {
         return users[_address].isKYCed;
     }
 
@@ -215,7 +201,6 @@ contract FantiumUserManager is
         public
         whenNotPaused
         onlyRole(PLATFORM_MANAGER_ROLE)
-        onlyAllowedContract(_contractAddress)
     {
         for (uint256 i = 0; i < _addresses.length; i++) {
             users[_addresses[i]].contractToAllowlistToSpots[_contractAddress][
@@ -240,7 +225,6 @@ contract FantiumUserManager is
         public
         whenNotPaused
         onlyRole(PLATFORM_MANAGER_ROLE)
-        onlyAllowedContract(_contractAddress)
     {
         users[_address].contractToAllowlistToSpots[_contractAddress][
             _collectionId
@@ -252,6 +236,10 @@ contract FantiumUserManager is
                 _collectionId
             ] = 0;
         emit AddressRemovedFromAllowList(_collectionId, _address);
+    }
+
+    function hasAllowlist(address _contractAddress, uint256 _collectionId, address _address) public view returns (uint256) {
+        return users[_address].contractToAllowlistToSpots[_contractAddress][_collectionId];
     }
 
     /*///////////////////////////////////////////////////////////////
