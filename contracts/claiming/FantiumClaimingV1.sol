@@ -494,13 +494,19 @@ contract FantiumClaimingV1 is
             _tokenId
         );
 
-        (uint256 tournamentShare1e7, uint256 tournamentTotalBPS) = IFantiumNFT(fantiumNFTContract)
-            .getTournamentEarnings(collectionOfToken);
+        (uint256 tournamentShare1e7, uint256 tournamentTotalBPS) = IFantiumNFT(
+            fantiumNFTContract
+        ).getTournamentEarnings(collectionOfToken);
 
-        (uint256 otherEarningsShare, uint256 otherTotalBPS ) = IFantiumNFT(fantiumNFTContract)
-            .getOtherEarnings(collectionOfToken);
+        (uint256 otherEarningsShare, uint256 otherTotalBPS) = IFantiumNFT(
+            fantiumNFTContract
+        ).getOtherEarnings(collectionOfToken);
 
-        require ((tournamentShare1e7 > 0 && tournamentTotalBPS > 0)  || (otherEarningsShare > 0 && otherTotalBPS > 0), "FantiumClaimingV1: Token has no earnings" );
+        require(
+            (tournamentShare1e7 > 0 && tournamentTotalBPS > 0) ||
+                (otherEarningsShare > 0 && otherTotalBPS > 0),
+            "FantiumClaimingV1: Token has no earnings"
+        );
         // calculate amount to send
         // note: amountWithDecimals = Total amount distributed to fans. Only share of overal athlete earnings
         // note: athleteOverallDistributionBPS = Percentage of athlete earnings that are distributed to fans. e.g. 10% of total earnings
@@ -510,7 +516,8 @@ contract FantiumClaimingV1 is
         uint256 tournamentClaim = ((distributionEvents[_distributionEventID]
             .tournamentDistributionAmount *
             tournamentShare1e7 *
-            10000) / tournamentTotalBPS /
+            10000) /
+            tournamentTotalBPS /
             1e7);
 
         uint256 otherClaim = ((distributionEvents[_distributionEventID]

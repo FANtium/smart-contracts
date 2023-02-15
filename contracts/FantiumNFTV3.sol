@@ -92,7 +92,7 @@ contract FantiumNFTV3 is
         uint256 otherTotalBPS;
     }
 
-    mapping (uint256 => Participation) public collectionToParticipations; 
+    mapping(uint256 => Participation) public collectionToParticipations;
     address private trustedForwarder;
     address public claimContract;
 
@@ -193,7 +193,7 @@ contract FantiumNFTV3 is
         __AccessControl_init();
         __DefaultOperatorFilterer_init();
         __Pausable_init();
-        
+
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _grantRole(UPGRADER_ROLE, _defaultAdmin);
         trustedForwarder = trustedForwarder;
@@ -210,8 +210,7 @@ contract FantiumNFTV3 is
     /// @custom:oz-upgrades-unsafe-allow constructor
     // ERC2771ContextUpgradeable(forwarder)
     // add: (address forwarder)
-    constructor() 
-    {
+    constructor() {
         _disableInitializers();
     }
 
@@ -545,11 +544,13 @@ contract FantiumNFTV3 is
         collections[collectionId]
             .fantiumSecondarySalesBPS = _fantiumSecondarySalesBPS;
 
-        collectionToParticipations[collectionId].tournamentTokenShare1e7 = _tournamentTokenShare1e7;
-        collectionToParticipations[collectionId].tournamentTotalBPS = _tournamentTotalBPS;
-        collectionToParticipations[collectionId].otherTokenShare1e7 = _otherTokenShare1e7;
+        collectionToParticipations[collectionId]
+            .tournamentTokenShare1e7 = _tournamentTokenShare1e7;
+        collectionToParticipations[collectionId]
+            .tournamentTotalBPS = _tournamentTotalBPS;
+        collectionToParticipations[collectionId]
+            .otherTokenShare1e7 = _otherTokenShare1e7;
         collectionToParticipations[collectionId].otherTotalBPS = _otherTotalBPS;
-
 
         nextCollectionId = collectionId + 1;
         emit CollectionUpdated(collectionId, FIELD_COLLECTION_CREATED);
@@ -673,8 +674,6 @@ contract FantiumNFTV3 is
         uint256 _tournamentTotalBPS,
         uint256 _otherTokenShare1e7,
         uint256 _otherTotalBPS
-
-
     )
         external
         whenNotPaused
@@ -683,16 +682,23 @@ contract FantiumNFTV3 is
     {
         // require to have either other token share or tournament token share set to > 0
         require(
-            _maxInvocations > 0 && _price > 0 && ((_tournamentTokenShare1e7 > 0 && _tournamentTotalBPS > 0) || (_otherTokenShare1e7 > 0 && _otherTotalBPS > 0) ),
+            _maxInvocations > 0 &&
+                _price > 0 &&
+                ((_tournamentTokenShare1e7 > 0 && _tournamentTotalBPS > 0) ||
+                    (_otherTokenShare1e7 > 0 && _otherTotalBPS > 0)),
             "all parameters must be greater than 0"
         );
         collections[_collectionId].maxInvocations = _maxInvocations;
         collections[_collectionId].price = _price;
 
-        collectionToParticipations[_collectionId].tournamentTokenShare1e7 = _tournamentTokenShare1e7;
-        collectionToParticipations[_collectionId].tournamentTotalBPS = _tournamentTotalBPS;
-        collectionToParticipations[_collectionId].otherTokenShare1e7 = _otherTokenShare1e7;
-        collectionToParticipations[_collectionId].otherTotalBPS = _otherTotalBPS;
+        collectionToParticipations[_collectionId]
+            .tournamentTokenShare1e7 = _tournamentTokenShare1e7;
+        collectionToParticipations[_collectionId]
+            .tournamentTotalBPS = _tournamentTotalBPS;
+        collectionToParticipations[_collectionId]
+            .otherTokenShare1e7 = _otherTokenShare1e7;
+        collectionToParticipations[_collectionId]
+            .otherTotalBPS = _otherTotalBPS;
 
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_TIER);
     }
@@ -888,25 +894,29 @@ contract FantiumNFTV3 is
     ) external view returns (address) {
         return collections[_collectionID].athleteAddress;
     }
-    
+
     function getTournamentEarnings(
         uint256 _collectionID
     ) external view returns (uint256, uint256) {
-        uint256 tournamentTokenShare1e7 = collectionToParticipations[_collectionID].tournamentTokenShare1e7;
-        uint256 tournamentTotalBPS = collectionToParticipations[_collectionID].tournamentTotalBPS;
-        
+        uint256 tournamentTokenShare1e7 = collectionToParticipations[
+            _collectionID
+        ].tournamentTokenShare1e7;
+        uint256 tournamentTotalBPS = collectionToParticipations[_collectionID]
+            .tournamentTotalBPS;
+
         return (tournamentTokenShare1e7, tournamentTotalBPS);
     }
 
     function getOtherEarnings(
         uint256 _collectionID
     ) external view returns (uint256, uint256) {
-        uint256 otherTokenShare1e7 = collectionToParticipations[_collectionID].otherTokenShare1e7;
-        uint256 otherTotalBPS = collectionToParticipations[_collectionID].otherTotalBPS;
+        uint256 otherTokenShare1e7 = collectionToParticipations[_collectionID]
+            .otherTokenShare1e7;
+        uint256 otherTotalBPS = collectionToParticipations[_collectionID]
+            .otherTotalBPS;
         // return collections[_collectionID].otherEarningsShare1e7;
         return (otherTokenShare1e7, otherTotalBPS);
     }
-
 
     function getCollectionExists(
         uint256 _collectionID
@@ -961,15 +971,25 @@ contract FantiumNFTV3 is
                             ERC2771
     //////////////////////////////////////////////////////////////*/
 
-    function setTrustedForwarder(address forwarder) external onlyRole(UPGRADER_ROLE) {
+    function setTrustedForwarder(
+        address forwarder
+    ) external onlyRole(UPGRADER_ROLE) {
         trustedForwarder = forwarder;
     }
 
-    function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
+    function isTrustedForwarder(
+        address forwarder
+    ) public view virtual returns (bool) {
         return forwarder == trustedForwarder;
     }
 
-    function _msgSender() internal view virtual override returns (address sender) {
+    function _msgSender()
+        internal
+        view
+        virtual
+        override
+        returns (address sender)
+    {
         if (isTrustedForwarder(msg.sender)) {
             // The assembly code is more direct than the Solidity version using `abi.decode`.
             /// @solidity memory-safe-assembly
@@ -981,13 +1001,17 @@ contract FantiumNFTV3 is
         }
     }
 
-    function _msgData() internal view virtual override returns (bytes calldata) {
+    function _msgData()
+        internal
+        view
+        virtual
+        override
+        returns (bytes calldata)
+    {
         if (isTrustedForwarder(msg.sender)) {
             return msg.data[:msg.data.length - 20];
         } else {
             return super._msgData();
         }
     }
-
-
 }
