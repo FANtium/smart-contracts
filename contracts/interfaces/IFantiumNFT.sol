@@ -45,7 +45,7 @@ interface IFantiumNFT {
 
     function getTournamentEarnings(
         uint256 _collectionId
-    ) external view returns (uint256 , uint256);
+    ) external view returns (uint256, uint256);
 
     /**
      * @notice get earnings share per token of collection
@@ -55,7 +55,7 @@ interface IFantiumNFT {
 
     function getOtherEarnings(
         uint256 _collectionId
-    ) external view returns (uint256 , uint256);
+    ) external view returns (uint256, uint256);
 
     /**
      * @notice check if collection exists
