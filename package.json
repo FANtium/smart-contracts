@@ -10,7 +10,8 @@
     "compile": "npx hardhat compile",
     "coverage": "npx hardhat coverage",
     "abi": "npx hardhat abi",
-    "typechain": "npx hardhat typechain"
+    "typechain": "npx hardhat typechain",
+    "prettier": "prettier --write 'contracts/**/*.sol'"
   },
   "devDependencies": {
     "@ethersproject/abi": "5.7.0",
@@ -40,10 +41,13 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "4.8.0",
-    "@openzeppelin/contracts-upgradeable": "4.8.0",
+    "@openzeppelin/contracts-upgradeable": "^4.8.1",
     "@openzeppelin/hardhat-defender": "^1.8.1",
     "@openzeppelin/hardhat-upgrades": "1.21.0",
+    "@openzeppelin/upgrades-core": "^1.24.0",
     "hardhat-interface-generator": "^0.0.6",
-    "operator-filter-registry": "^1.3.1"
+    "operator-filter-registry": "^1.3.1",
+    "prettier": "^2.8.4",
+    "prettier-plugin-solidity": "^1.1.2"
   }
 }

@@ -3,10 +3,10 @@
 // import { beforeEach } from 'mocha'
 // import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 // import { FantiumNFT } from '../typechain-types/contracts/FantiumNFT'
-// import { Mock20 } from '../typechain-types/contracts/Mock20'
-// import { FantiumBatchAllowlisting } from '../typechain-types'
+// import { FantiumNFTV2 } from '../typechain-types/contracts/FantiumNFTV2'
+// import { Mock20 } from '../typechain-types/contracts/mocks/Mock20'
 
-// describe("BatchAllowlisting", () => {
+// describe("FantiumV2", () => {
 
 //     let nftContract: FantiumNFT
 //     let erc20Contract: Mock20
@@ -83,10 +83,26 @@
 //     })
 
 //     it("checks that we can deploy upgrade", async () => {
-//         const fanV2 = await ethers.getContractFactory("FantiumBatchAllowlisting")
-//         const nftContractV2 = await upgrades.upgradeProxy(nftContract.address, fanV2) as FantiumBatchAllowlisting
+//         const fanV2 = await ethers.getContractFactory("FantiumNFTV2")
+//         const nftContractV2 = await upgrades.upgradeProxy(nftContract.address, fanV2) as FantiumNFTV2
 
 //         expect(await nftContractV2.name()).to.equal("FANtium")
+
+//         // toggle and unpause collection mintable
+//         await nftContractV2.connect(platformManager).toggleCollectionMintable(1)
+//         await nftContract.connect(platformManager).toggleCollectionPaused(1)
+
+//         // add platfrom manager to KYC
+//         await nftContractV2.connect(kycManager).addAddressToKYC(fan.address)
+
+//         // approve erc20
+//         await erc20Contract.connect(fan).approve(nftContractV2.address, 3 * price * (10 ** decimals))
+
+//         // default admin mint a token
+//         await nftContractV2.connect(fan).batchMint(1, 3)
+
+//         // check balance
+//         expect(await nftContractV2.balanceOf(fan.address)).to.equal(3)
 //     })
 
 //     it("checks that state is preserved", async () => {
@@ -102,18 +118,22 @@
 //         await nftContract.connect(fan).mint(1);
 
 //         /// DEPLOY V2
-//         const fanV2 = await ethers.getContractFactory("FantiumBatchAllowlisting")
-//         const nftContractV2 = await upgrades.upgradeProxy(nftContract.address, fanV2) as FantiumBatchAllowlisting
+//         const fanV2 = await ethers.getContractFactory("FantiumNFTV2")
+//         const nftContractV2 = await upgrades.upgradeProxy(nftContract.address, fanV2) as FantiumNFTV2
 
 //         /// CHECK STATE
 //         expect(await nftContractV2.name()).to.equal("FANtium")
 //         expect(await nftContractV2.balanceOf(fan.address)).to.equal(1)
 //     })
 
+
+
+//     ////// BATCH ALLOWLISTING
+
 //     it("checks that PM can batch allowlist 1000 addresses with allocations", async () => {
 //         /// DEPLOY V2
-//         const fanV2 = await ethers.getContractFactory("FantiumBatchAllowlisting")
-//         const nftContractV2 = await upgrades.upgradeProxy(nftContract.address, fanV2) as FantiumBatchAllowlisting
+//         const fanV2 = await ethers.getContractFactory("FantiumNFTV2")
+//         const nftContractV2 = await upgrades.upgradeProxy(nftContract.address, fanV2) as FantiumNFTV2
 
 //         /// ADMIN ON V1
 //         // add fan address to KYC
@@ -134,10 +154,75 @@
 //         await nftContractV2.connect(platformManager).batchAllowlist(1, addresses, allocations)
 
 //         // check if allowlist is correct
-//         // for (let i = 0; i < 500; i++) {
-//         //     const allowlist = await nftContractV2.collectionIdToAllowList(1, addresses[i])
-//         //     // console.log(allowlist)
-//         // }       
+//         for (let i = 0; i < 500; i++) {
+//             // expect(await nftContractV2.collectionIdToAllowList(1, addresses[i])
+//             // console.log(allowlist)
+//         }
+//     })
+
+
+
+//     ////// BATCH MINTING
+
+//     it("checks that FAN can batch mint 10 NFTs if collection is Mintable and Unpaused", async () => {
+//         /// DEPLOY V2
+//         const fanV2 = await ethers.getContractFactory("FantiumNFTV2")
+//         const nftContractV2 = await upgrades.upgradeProxy(nftContract.address, fanV2) as FantiumNFTV2
+
+//         /// ADMIN ON V1
+//         // add fan address to KYC
+//         await nftContractV2.connect(kycManager).addAddressToKYC(fan.address)
+//         // unpause collection minting
+//         await nftContractV2.connect(platformManager).toggleCollectionPaused(1)
+//         await nftContractV2.connect(platformManager).toggleCollectionMintable(1)
+//         // check if fan can mint
+//         await erc20Contract.connect(fan).approve(nftContract.address, price * 10 ** decimals * 10)
+//         await nftContractV2.connect(fan).batchMint(1, 10);
+
+//         /// 
+//         expect(await nftContractV2.balanceOf(fan.address)).to.equal(10)
+//     })
+
+//     // check that FAN can't mint if collection is not Mintable
+//     it("checks that FAN can't mint if collection is not Mintable", async () => {
+//         /// DEPLOY V2
+//         const fanV2 = await ethers.getContractFactory("FantiumNFTV2")
+//         const nftContractV2 = await upgrades.upgradeProxy(nftContract.address, fanV2) as FantiumNFTV2
+
+//         /// ADMIN ON V1
+//         // add fan address to KYC
+//         await nftContractV2.connect(kycManager).addAddressToKYC(fan.address)
+//         // unpause collection minting
+//         await nftContractV2.connect(platformManager).toggleCollectionPaused(1)
+//         // check if fan can mint
+//         await erc20Contract.connect(fan).approve(nftContract.address, price * 10 ** decimals)
+//         await expect(nftContractV2.connect(fan).batchMint(1, 10)).to.be.revertedWith("Collection is not mintable")
+//     })
+
+//     // check that FAN can mint if collection is Mintable, Paused and has sufficient allowlist allocation
+//     it("checks that FAN can mint if collection is Mintable, Paused and has sufficient allowlist allocation", async () => {
+//         /// DEPLOY V2
+//         const fanV2 = await ethers.getContractFactory("FantiumNFTV2")
+//         const nftContractV2 = await upgrades.upgradeProxy(nftContract.address, fanV2) as FantiumNFTV2
+
+//         /// ADMIN ON V1
+//         // add fan address to KYC
+//         await nftContractV2.connect(kycManager).addAddressToKYC(fan.address)
+//         // unpause collection minting
+//         await nftContractV2.connect(platformManager).toggleCollectionMintable(1)
+//         // set allowlist allocation
+//         await nftContractV2.connect(platformManager).batchAllowlist(1, [fan.address], [10])
+
+//         // allocation
+//         await erc20Contract.connect(fan).approve(nftContract.address, price * 10 ** decimals * 10)
+
+//         await nftContractV2.connect(fan).batchMint(1, 10);
+//         /// 
+//         expect(await nftContractV2.balanceOf(fan.address)).to.equal(10)
+
+//         // check that tokenIds are minted
+//         expect(await nftContractV2.tokenURI(1000000)).to.equal("https://contract.com/1000000")
+
 //     })
 // })
 
