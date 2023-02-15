@@ -35,10 +35,18 @@ interface IFantiumNFT {
     /**
      * @notice get earnings share per token of collection
      * @param _collectionId collectionId of NFT
-     * @return uint256 earnings share per token of collection
+     * @return uint256 tournament share per token of collection
      */
 
-    function getCollectionEarningsShare1e7(uint256 _collectionId) external view returns (uint256);
+    function getTournamentEarningsShare1e7(uint256 _collectionId) external view returns (uint256);
+
+    /**
+     * @notice get earnings share per token of collection
+     * @param _collectionId collectionId of NFT
+     * @return uint256 other earnings share per token of collection
+     */
+
+    function getOtherEarningsShare1e7(uint256 _collectionId) external view returns (uint256);
 
     /**
      * @notice check if collection exists

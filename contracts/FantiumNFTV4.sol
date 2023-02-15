@@ -9,7 +9,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-//import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+// import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import "./interfaces/IFantiumNFT.sol";
 import "./utils/TokenVersionUtil.sol";
 
@@ -83,6 +83,7 @@ contract FantiumNFTV4 is
         uint256 athleteSecondarySalesBPS;
         address payable fantiumSalesAddress;
         uint256 fantiumSecondarySalesBPS;
+        uint256 otherEarningsShare1e7;
     }
 
     address public claimContract;
@@ -200,7 +201,8 @@ contract FantiumNFTV4 is
     /// @custom:oz-upgrades-unsafe-allow constructor
     // ERC2771ContextUpgradeable(forwarder)
     // add: (address forwarder)
-    constructor() {
+    constructor() 
+    {
         _disableInitializers();
     }
 
@@ -499,7 +501,8 @@ contract FantiumNFTV4 is
         uint256 _tournamentEarningShare1e7,
         uint _launchTimestamp,
         address payable _fantiumSalesAddress,
-        uint256 _fantiumSecondarySalesBPS
+        uint256 _fantiumSecondarySalesBPS,
+        uint256 _otherEarningsShare1e7
     )
         external
         whenNotPaused
@@ -516,6 +519,8 @@ contract FantiumNFTV4 is
         collections[collectionId].price = _price;
         collections[collectionId]
             .tournamentEarningShare1e7 = _tournamentEarningShare1e7;
+        collections[collectionId]
+            .otherEarningsShare1e7 = _otherEarningsShare1e7;
         collections[collectionId].launchTimestamp = _launchTimestamp;
 
         collections[collectionId].invocations = 0;
@@ -645,7 +650,8 @@ contract FantiumNFTV4 is
         uint256 _collectionId,
         uint256 _maxInvocations,
         uint256 _price,
-        uint256 _tournamentEarningShare1e7
+        uint256 _tournamentEarningShare1e7,
+        uint256 _otherEarningsShare1e7
     )
         external
         whenNotPaused
@@ -653,13 +659,15 @@ contract FantiumNFTV4 is
         onlyRole(PLATFORM_MANAGER_ROLE)
     {
         require(
-            _maxInvocations > 0 && _price > 0 && _tournamentEarningShare1e7 > 0,
+            _maxInvocations > 0 && _price > 0 && _tournamentEarningShare1e7 > 0 && _otherEarningsShare1e7 > 0,
             "all parameters must be greater than 0"
         );
         collections[_collectionId].maxInvocations = _maxInvocations;
         collections[_collectionId].price = _price;
         collections[_collectionId]
             .tournamentEarningShare1e7 = _tournamentEarningShare1e7;
+        collections[_collectionId]
+            .otherEarningsShare1e7 = _otherEarningsShare1e7;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_TIER);
     }
 
@@ -855,11 +863,18 @@ contract FantiumNFTV4 is
         return collections[_collectionID].athleteAddress;
     }
     
-    function getCollectionEarningsShare1e7(
+    function getTournamentEarningsShare1e7(
         uint256 _collectionID
     ) external view returns (uint256) {
         return collections[_collectionID].tournamentEarningShare1e7;
     }
+
+    function getOtherEarningsShare1e7(
+        uint256 _collectionID
+    ) external view returns (uint256) {
+        return collections[_collectionID].otherEarningsShare1e7;
+    }
+
 
     function getCollectionExists(
         uint256 _collectionID
@@ -911,14 +926,6 @@ contract FantiumNFTV4 is
     }
 
     /*///////////////////////////////////////////////////////////////
-                            OVERRIDE
+                            ERC2771
     //////////////////////////////////////////////////////////////*/
-
-    // function _msgSender() internal virtual view override(ERC2771ContextUpgradeable, ContextUpgradeable) returns (address sender) {
-    //     return super._msgSender();
-    // }
-
-    // function _msgData() internal virtual view override( ERC2771ContextUpgradeable, ContextUpgradeable ) returns (bytes calldata) {
-    //     return super._msgData();
-    // }
 }

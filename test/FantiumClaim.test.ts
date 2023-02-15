@@ -30,8 +30,12 @@ describe("FantiumClaim", () => {
     const maxInvocations = 11
     const price = 1
     const tournamentEarningsShare1e7 = 100000 // 0.1%
-    const distributionAmount = 100000000000 // in USDC without decimals
-    const distributionShareBPS = 1000
+    const tournamentAmount = 50000000000 // in 50,000 USDC without decimals
+    const tournamentTokenShareBPS = 1000 // 10%
+    const otherEarningsShare1e7 = 100000 // 0.1%
+    const otherAmount = 50000000000 // in 50,000 USDC without decimals 
+    const otherTokenShareBPS = 1000 // 10%
+    const totalAmount = tournamentAmount + otherAmount
     let timestamp = 1
     let startTime = 1
     let closeTime = 1876044473
@@ -73,21 +77,6 @@ describe("FantiumClaim", () => {
         await nftContract.connect(platformManager).updatePaymentToken(erc20Contract.address)
         // get timestamp
         timestamp = (await ethers.provider.getBlock("latest")).timestamp
-
-        // add first collection
-        for (let i = 0; i < 4; i++) {
-            await nftContract.connect(platformManager).addCollection(
-                athlete.address,
-                primarySalePercentage,
-                secondarySalePercentage,
-                maxInvocations,
-                price,
-                tournamentEarningsShare1e7,
-                timestamp,
-                fantium.address,
-                fantiumSecondaryBPS
-            )
-        }
 
         // set contract base URI
         await nftContract.connect(platformManager).updateBaseURI("https://contract.com/")
@@ -132,6 +121,22 @@ describe("FantiumClaim", () => {
         const fanV4 = await ethers.getContractFactory("FantiumNFTV4")
         const nftContractV4 = await upgrades.upgradeProxy(nftContract.address, fanV4) as FantiumNFTV4
 
+        // add first collection
+        for (let i = 0; i < 4; i++) {
+            await nftContractV4.connect(platformManager).addCollection(
+                athlete.address,
+                primarySalePercentage,
+                secondarySalePercentage,
+                maxInvocations,
+                price,
+                tournamentEarningsShare1e7,
+                timestamp,
+                fantium.address,
+                fantiumSecondaryBPS,
+                otherEarningsShare1e7
+            )
+        }
+
         // check name   
         expect(await nftContractV4.name()).to.equal("FANtium")
 
@@ -158,13 +163,31 @@ describe("FantiumClaim", () => {
         const fanV4 = await ethers.getContractFactory("FantiumNFTV4")
         const nftContractV4 = await upgrades.upgradeProxy(nftContract.address, fanV4) as FantiumNFTV4
 
+        // add first collection
+        for (let i = 0; i < 4; i++) {
+            await nftContractV4.connect(platformManager).addCollection(
+                athlete.address,
+                primarySalePercentage,
+                secondarySalePercentage,
+                maxInvocations,
+                price,
+                tournamentEarningsShare1e7,
+                timestamp,
+                fantium.address,
+                fantiumSecondaryBPS,
+                otherEarningsShare1e7
+            )
+        }
+
         // check name   
         expect(await nftContractV4.name()).to.equal("FANtium")
 
         await claimContract.connect(platformManager).setupDistributionEvent(
             athlete.address,
-            distributionShareBPS,
-            distributionAmount,
+            tournamentAmount,
+            tournamentTokenShareBPS,
+            otherAmount,
+            otherTokenShareBPS,
             startTime,
             closeTime,
             [1,2,3],
@@ -172,7 +195,7 @@ describe("FantiumClaim", () => {
             fantiumFeePBS
         )
 
-        expect((await claimContract.distributionEvents(1)).amountWithDecimals).to.equal(distributionAmount)
+        expect((await claimContract.distributionEvents(1)).tournamentDistributionAmount).to.equal(tournamentAmount)
         expect((await claimContract.distributionEvents(1)).startTime).to.equal(startTime)
         expect((await claimContract.distributionEvents(1)).closeTime).to.equal(closeTime)
         expect((await claimContract.distributionEvents(1)).closed).to.equal(false)
@@ -183,8 +206,8 @@ describe("FantiumClaim", () => {
 
         await expect(claimContract.connect(athlete).addDistributionAmount(1, 10)).to.be.revertedWith('FantiumClaimingV1: amount must be equal to distribution amount')
         // approve erc20
-        await erc20Contract.connect(athlete).approve(claimContract.address, distributionAmount)
-        await claimContract.connect(athlete).addDistributionAmount(1, distributionAmount)
+        await erc20Contract.connect(athlete).approve(claimContract.address, totalAmount)
+        await claimContract.connect(athlete).addDistributionAmount(1, totalAmount)
 
         expect((await claimContract.getDistributionEvent(1)).amountPaidIn).to.equal(true)
         expect((await erc20Contract.balanceOf(claimContract.address))).to.equal(100000 * (10 ** decimals))
@@ -196,10 +219,28 @@ describe("FantiumClaim", () => {
         const fanV4 = await ethers.getContractFactory("FantiumNFTV4")
         const nftContractV4 = await upgrades.upgradeProxy(nftContract.address, fanV4) as FantiumNFTV4
 
+        // add first collection
+        for (let i = 0; i < 4; i++) {
+            await nftContractV4.connect(platformManager).addCollection(
+                athlete.address,
+                primarySalePercentage,
+                secondarySalePercentage,
+                maxInvocations,
+                price,
+                tournamentEarningsShare1e7,
+                timestamp,
+                fantium.address,
+                fantiumSecondaryBPS,
+                otherEarningsShare1e7
+            )
+        }
+
         await claimContract.connect(platformManager).setupDistributionEvent(
             athlete.address,
-            distributionShareBPS,
-            distributionAmount,
+            tournamentAmount,
+            tournamentTokenShareBPS,
+            otherAmount,
+            otherTokenShareBPS,
             startTime,
             closeTime,
             [1,2,3],
@@ -207,8 +248,8 @@ describe("FantiumClaim", () => {
             fantiumFeePBS
         )
 
-        await erc20Contract.connect(athlete).approve(claimContract.address, distributionAmount)
-        await claimContract.connect(athlete).addDistributionAmount(1, distributionAmount)
+        await erc20Contract.connect(athlete).approve(claimContract.address, totalAmount)
+        await claimContract.connect(athlete).addDistributionAmount(1, totalAmount)
 
         await expect(claimContract.connect(fan).claim(1000000, 1)).to.be.revertedWith('ERC721: invalid token ID')
         await nftContractV4.connect(platformManager).toggleCollectionMintable(1)
@@ -231,6 +272,22 @@ describe("FantiumClaim", () => {
         const nftContractV4 = await upgrades.upgradeProxy(nftContract.address, fanV4) as FantiumNFTV4
         await nftContractV4.connect(platformManager).updateClaimContract(claimContract.address)
 
+        // add first collection
+        for (let i = 0; i < 4; i++) {
+            await nftContractV4.connect(platformManager).addCollection(
+                athlete.address,
+                primarySalePercentage,
+                secondarySalePercentage,
+                maxInvocations,
+                price,
+                tournamentEarningsShare1e7,
+                timestamp,
+                fantium.address,
+                fantiumSecondaryBPS,
+                otherEarningsShare1e7
+            )
+        }
+
         //setup collection
         await nftContractV4.connect(platformManager).toggleCollectionMintable(1)
         await nftContractV4.connect(platformManager).toggleCollectionPaused(1)
@@ -243,8 +300,10 @@ describe("FantiumClaim", () => {
         //setup distribution event
         await claimContract.connect(platformManager).setupDistributionEvent(
             athlete.address,
-            distributionShareBPS,
-            distributionAmount,
+            tournamentAmount,
+            tournamentTokenShareBPS,
+            otherAmount,
+            otherTokenShareBPS,
             startTime,
             closeTime,
             [1,2,3],
@@ -253,8 +312,8 @@ describe("FantiumClaim", () => {
         )
 
         // athlete adds amount to distribution event 
-        await erc20Contract.connect(athlete).approve(claimContract.address, distributionAmount)
-        await claimContract.connect(athlete).addDistributionAmount(1, distributionAmount)
+        await erc20Contract.connect(athlete).approve(claimContract.address, totalAmount)
+        await claimContract.connect(athlete).addDistributionAmount(1, totalAmount)
 
         // claim without being IDENT 
         await expect(claimContract.connect(other).claim(1000000, 1)).to.be.revertedWith('FantiumClaimingV1: You are not ID verified')
@@ -265,9 +324,16 @@ describe("FantiumClaim", () => {
 
         // claim with being IDENT
         await claimContract.connect(other).claim(1000000, 1)
-        expect((await(claimContract.getDistributionEvent(1))).claimedAmount).to.equal(distributionAmount * tournamentEarningsShare1e7 * 10000 / 1e7 / distributionShareBPS)
-        expect(await(erc20Contract.balanceOf(other.address))).to.equal(((distributionAmount) * tournamentEarningsShare1e7  * 10000 / 1e7 / distributionShareBPS) - (distributionAmount *  tournamentEarningsShare1e7 * fantiumFeePBS * 10000 / 10000 / 1e7 / distributionShareBPS) + (price * 9 * (10 ** decimals)))
-        expect(await(erc20Contract.balanceOf(claimContract.address))).to.equal(((distributionAmount) - ((distributionAmount) * tournamentEarningsShare1e7 * 10000 / distributionShareBPS / 1e7))) 
+
+        // tournament amount * tokenshare (1000/1e7) / tournamentShareBPS (1000/10000) )
+        expect((await(claimContract.getDistributionEvent(1))).claimedAmount).to.equal((tournamentAmount * tournamentEarningsShare1e7 * 10000 / 1e7 / tournamentTokenShareBPS) + (otherAmount * otherEarningsShare1e7 * 10000 / 1e7 / otherTokenShareBPS))
+        
+        const tournamentClaim = (tournamentAmount * tournamentEarningsShare1e7  * 10000 / 1e7 / tournamentTokenShareBPS) - (tournamentAmount *  tournamentEarningsShare1e7 * fantiumFeePBS * 10000 / 10000 / 1e7 / tournamentTokenShareBPS)
+        const otherClaim = (otherAmount * otherEarningsShare1e7 * 10000 / 1e7 / otherTokenShareBPS) - (otherAmount *  otherEarningsShare1e7 * fantiumFeePBS * 10000 / 10000 / 1e7 / otherTokenShareBPS)
+
+        expect(await(erc20Contract.balanceOf(other.address))).to.equal((tournamentClaim + otherClaim) + (price * 9 * (10 ** decimals)))
+
+        expect(await(erc20Contract.balanceOf(claimContract.address))).to.equal(((totalAmount) - ((tournamentAmount) * tournamentEarningsShare1e7 * 10000 / tournamentTokenShareBPS / 1e7)) - ((otherAmount) * otherEarningsShare1e7 * 10000 / otherTokenShareBPS / 1e7))
 
     })
 
@@ -277,6 +343,22 @@ describe("FantiumClaim", () => {
         const fanV4 = await ethers.getContractFactory("FantiumNFTV4")
         const nftContractV4 = await upgrades.upgradeProxy(nftContract.address, fanV4) as FantiumNFTV4
         await nftContractV4.connect(platformManager).updateClaimContract(claimContract.address)
+
+        // add first collection
+        for (let i = 0; i < 4; i++) {
+            await nftContractV4.connect(platformManager).addCollection(
+                athlete.address,
+                primarySalePercentage,
+                secondarySalePercentage,
+                maxInvocations,
+                price,
+                tournamentEarningsShare1e7,
+                timestamp,
+                fantium.address,
+                fantiumSecondaryBPS,
+                otherEarningsShare1e7
+            )
+        }
 
         //setup collection
         await nftContractV4.connect(platformManager).toggleCollectionMintable(1)
@@ -290,8 +372,10 @@ describe("FantiumClaim", () => {
         //setup distribution event
         await claimContract.connect(platformManager).setupDistributionEvent(
             athlete.address,
-            distributionShareBPS,
-            distributionAmount,
+            tournamentAmount,
+            tournamentTokenShareBPS,
+            otherAmount,
+            otherTokenShareBPS,
             startTime,
             closeTime,
             [1,2,3],
@@ -300,8 +384,8 @@ describe("FantiumClaim", () => {
         )
 
         // athlete adds amount to distribution event 
-        await erc20Contract.connect(athlete).approve(claimContract.address, distributionAmount)
-        await claimContract.connect(athlete).addDistributionAmount(1, distributionAmount)
+        await erc20Contract.connect(athlete).approve(claimContract.address, totalAmount)
+        await claimContract.connect(athlete).addDistributionAmount(1, totalAmount)
 
         // claim without being IDENT
         await expect(claimContract.connect(other).claim(1000000, 1)).to.be.revertedWith('FantiumClaimingV1: You are not ID verified')
@@ -312,8 +396,14 @@ describe("FantiumClaim", () => {
 
         // claim with being IDENT
         await claimContract.connect(other).batchClaim([1000000,1000001,1000002,1000003,1000004,1000005,1000006,1000007,1000008,1000009], [1,1,1,1,1,1,1,1,1,1])
-        expect((await(claimContract.getDistributionEvent(1))).claimedAmount).to.equal(10 * distributionAmount * tournamentEarningsShare1e7 / 1e7 * 10000 / distributionShareBPS)
-        expect(await(erc20Contract.balanceOf(other.address))).to.equal(( 10 * (distributionAmount) * tournamentEarningsShare1e7 * 10000 / 1e7 / distributionShareBPS) - (10 * distributionAmount *  tournamentEarningsShare1e7 * fantiumFeePBS / 10000 / 1e7 * 10000 / distributionShareBPS))
+        
+        expect((await(claimContract.getDistributionEvent(1))).claimedAmount).to.equal(10 * ((tournamentAmount * tournamentEarningsShare1e7 * 10000 / 1e7 / tournamentTokenShareBPS) + (otherAmount * otherEarningsShare1e7 * 10000 / 1e7 / otherTokenShareBPS)))
+        
+        const tournamentClaim = (tournamentAmount * tournamentEarningsShare1e7  * 10000 / 1e7 / tournamentTokenShareBPS) - (tournamentAmount *  tournamentEarningsShare1e7 * fantiumFeePBS * 10000 / 10000 / 1e7 / tournamentTokenShareBPS)
+        const otherClaim = (otherAmount * otherEarningsShare1e7 * 10000 / 1e7 / otherTokenShareBPS) - (otherAmount *  otherEarningsShare1e7 * fantiumFeePBS * 10000 / 10000 / 1e7 / otherTokenShareBPS)
+
+        expect(await(erc20Contract.balanceOf(other.address))).to.equal(10 * (tournamentClaim + otherClaim))
+
         expect(await(erc20Contract.balanceOf(claimContract.address))).to.equal(0)
 
     })
@@ -359,6 +449,21 @@ describe("FantiumClaim", () => {
         /// DEPLOY V2
         const fanV4 = await ethers.getContractFactory("FantiumNFTV4")
         const nftContractV4 = await upgrades.upgradeProxy(nftContract.address, fanV4) as FantiumNFTV4
+        // add first collection
+        for (let i = 0; i < 4; i++) {
+            await nftContractV4.connect(platformManager).addCollection(
+                athlete.address,
+                primarySalePercentage,
+                secondarySalePercentage,
+                maxInvocations,
+                price,
+                tournamentEarningsShare1e7,
+                timestamp,
+                fantium.address,
+                fantiumSecondaryBPS,
+                otherEarningsShare1e7
+            )
+        }
 
         /// ADMIN ON V1
         // add fan address to KYC
@@ -379,6 +484,21 @@ describe("FantiumClaim", () => {
         /// DEPLOY V2
         const fanV4 = await ethers.getContractFactory("FantiumNFTV4")
         const nftContractV4 = await upgrades.upgradeProxy(nftContract.address, fanV4) as FantiumNFTV4
+        // add first collection
+        for (let i = 0; i < 4; i++) {
+            await nftContractV4.connect(platformManager).addCollection(
+                athlete.address,
+                primarySalePercentage,
+                secondarySalePercentage,
+                maxInvocations,
+                price,
+                tournamentEarningsShare1e7,
+                timestamp,
+                fantium.address,
+                fantiumSecondaryBPS,
+                otherEarningsShare1e7
+            )
+        }
 
         /// ADMIN ON V1
         // add fan address to KYC
@@ -395,6 +515,21 @@ describe("FantiumClaim", () => {
         /// DEPLOY V2
         const fanV4 = await ethers.getContractFactory("FantiumNFTV4")
         const nftContractV4 = await upgrades.upgradeProxy(nftContract.address, fanV4) as FantiumNFTV4
+        // add first collection
+        for (let i = 0; i < 4; i++) {
+            await nftContractV4.connect(platformManager).addCollection(
+                athlete.address,
+                primarySalePercentage,
+                secondarySalePercentage,
+                maxInvocations,
+                price,
+                tournamentEarningsShare1e7,
+                timestamp,
+                fantium.address,
+                fantiumSecondaryBPS,
+                otherEarningsShare1e7
+            )
+        }
 
         /// ADMIN ON V1
         // add fan address to KYC

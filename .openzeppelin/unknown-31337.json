@@ -37,33 +37,13 @@
       "kind": "uups"
     },
     {
-      "address": "0x9d4454B023096f34B160D6B654540c56A1F81688",
-      "txHash": "0x245ee027b0b14c9bba914b7dab461dc27586ee22009770f1e4ef73a2e5cec46c",
-      "kind": "uups"
-    },
-    {
       "address": "0x82e01223d51Eb87e16A03E24687EDF0F294da6f1",
       "txHash": "0x9a76c133a320e7c731bc783935b3c03668975942c11c8061627ff7f90ded14ef",
       "kind": "uups"
     },
     {
-      "address": "0x95401dc811bb5740090279Ba06cfA8fcF6113778",
-      "txHash": "0xf8fec265d33cf38bc0e2f1fd40eea3fb097c4c154c58126ca1702b1de63f7c2c",
-      "kind": "uups"
-    },
-    {
-      "address": "0x1291Be112d480055DaFd8a610b7d1e203891C274",
-      "txHash": "0x9e853014f127e9cfb01f7506b889959e54fd2fba57b2b2a965abcba522349606",
-      "kind": "uups"
-    },
-    {
       "address": "0xCD8a1C3ba11CF5ECfa6267617243239504a98d90",
       "txHash": "0xb968397240fed4f6b2691f813eeb8d3daab4db71f763e4a623047cc200df7eb2",
-      "kind": "uups"
-    },
-    {
-      "address": "0x809d550fca64d94Bd9F66E60752A544199cfAC3D",
-      "txHash": "0x54b20dadae9bc13ff93e2b4c69edbc437cd3186639bdca158ce96d3319af3828",
       "kind": "uups"
     },
     {
@@ -277,16 +257,6 @@
       "kind": "uups"
     },
     {
-      "address": "0xFD471836031dc5108809D173A067e8486B9047A3",
-      "txHash": "0xbac99770892a532432a56264b2e318c14b89fa90aeca00b4d391cf0a4b874fdb",
-      "kind": "uups"
-    },
-    {
-      "address": "0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07",
-      "txHash": "0x373ff499f57416d29f14467c73e8dcaa884c6c58f7de932946b97cd442f2be7f",
-      "kind": "uups"
-    },
-    {
       "address": "0x51A1ceB83B83F1985a81C295d1fF28Afef186E02",
       "txHash": "0xf1a306db2a67216053bc9579b0cd109c5192f883e17424a5c574cadb522c0607",
       "kind": "uups"
@@ -472,18 +442,8 @@
       "kind": "uups"
     },
     {
-      "address": "0xa82fF9aFd8f496c3d6ac40E2a0F282E47488CFc9",
-      "txHash": "0x3b25b8ce97fa9b5da8d9b3c3ba59882b89c7d39c0f44e99e3d489bd16a8bf9c8",
-      "kind": "uups"
-    },
-    {
       "address": "0x70e0bA845a1A0F2DA3359C97E0285013525FFC49",
       "txHash": "0x9fb345985c4fbd18e58f3d814da851ef778544640a42300ff0460fa15041b0bf",
-      "kind": "uups"
-    },
-    {
-      "address": "0x0E801D84Fa97b50751Dbf25036d067dCf18858bF",
-      "txHash": "0xcc84dd6c4a89dbb90d63cfbee86a407b107a5c9571dc8c38d02ec8f0ee5b64f3",
       "kind": "uups"
     },
     {
@@ -499,11 +459,6 @@
     {
       "address": "0x1429859428C0aBc9C2C47C8Ee9FBaf82cFA0F20f",
       "txHash": "0xc8fdec39885b4faac1bc98ae57df038b8f7a2559356869199f5f737edcc69922",
-      "kind": "uups"
-    },
-    {
-      "address": "0x922D6956C99E12DFeB3224DEA977D0939758A1Fe",
-      "txHash": "0x42fb2b70d1ca1d4419a1a21a6ca52d84feeff879829ae5285210d8571130fb3c",
       "kind": "uups"
     },
     {
@@ -562,11 +517,6 @@
       "kind": "uups"
     },
     {
-      "address": "0x67d269191c92Caf3cD7723F116c85e6E9bf55933",
-      "txHash": "0x6434093b51d263b6263d77978afc03799f1a3a9c9cf7459f8c407b2f3010ed3a",
-      "kind": "uups"
-    },
-    {
       "address": "0xf5059a5D33d5853360D16C683c16e67980206f36",
       "txHash": "0xe0e509c860f7071b341205d533a88e7cee095187be55b487fef04229d226a8ef",
       "kind": "uups"
@@ -579,11 +529,6 @@
     {
       "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
       "txHash": "0xd56c4ccf0fae69846c103a17a097b35ce2c2ec26ea028a802fa50ae486c0399a",
-      "kind": "uups"
-    },
-    {
-      "address": "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1",
-      "txHash": "0x9b65cb5530acae6dcdf2ff28979a38c59d1539056d9bff217e2fd6f41eb1c530",
       "kind": "uups"
     },
     {
@@ -607,23 +552,8 @@
       "kind": "uups"
     },
     {
-      "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
-      "txHash": "0xe9e094c5ca087436d01b5d678350fb29f9a0148581d3a3649e293ddc5b78d304",
-      "kind": "uups"
-    },
-    {
-      "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
-      "txHash": "0x92f1466ea098cc130879d60bbee2564f117a2684c1aa9ae912b3b0229830e8ed",
-      "kind": "uups"
-    },
-    {
       "address": "0x9A676e781A523b5d0C0e43731313A708CB607508",
       "txHash": "0x7db99908b35e5b0ff2c776b65c7b9ce87504cc2693089a5fd73585e7693d0d67",
-      "kind": "uups"
-    },
-    {
-      "address": "0x09635F643e140090A9A8Dcd712eD6285858ceBef",
-      "txHash": "0x351d99a1c772eb093dde001fdc3a2b5a3f54257db217220ee7a77676c954a9aa",
       "kind": "uups"
     },
     {
@@ -642,8 +572,78 @@
       "kind": "uups"
     },
     {
+      "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+      "txHash": "0x002df0df9c6dbec65376f1a182f9ecaf292d031968972da16a6009089fdeaef0",
+      "kind": "uups"
+    },
+    {
+      "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+      "txHash": "0x32e06a2d00f40732cba088a95bd8cb1c4c73020977875e0f00b1bd0653c882c5",
+      "kind": "uups"
+    },
+    {
+      "address": "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1",
+      "txHash": "0xe12091dd014bb45d8e6bb46181dcf58fd6b99f380ec8d239288cbf2d92f25ed0",
+      "kind": "uups"
+    },
+    {
       "address": "0xa85233C63b9Ee964Add6F2cffe00Fd84eb32338f",
-      "txHash": "0xc0b1a1b7310066b72176b4d64fecc177a3cb01933398e32d218ad7a5c8d12810",
+      "txHash": "0x9f64e4455a616045c005e0b3500b28cbeeaba3834f42e9e77cb749bfd3a0c66a",
+      "kind": "uups"
+    },
+    {
+      "address": "0x09635F643e140090A9A8Dcd712eD6285858ceBef",
+      "txHash": "0x67b9e324e976dedafb839f6a33e97bf99cc0c61aa7f1fcf838ba3ebf4cf312c7",
+      "kind": "uups"
+    },
+    {
+      "address": "0x67d269191c92Caf3cD7723F116c85e6E9bf55933",
+      "txHash": "0xa4044f74873352771a25d5b1cde0dfdf824e154a43aacaab50d47ae964a43f59",
+      "kind": "uups"
+    },
+    {
+      "address": "0xa82fF9aFd8f496c3d6ac40E2a0F282E47488CFc9",
+      "txHash": "0x0a32d69facfee64ffe7b031ec57b84f726a701d431d11a7800992ba4abbe5484",
+      "kind": "uups"
+    },
+    {
+      "address": "0x95401dc811bb5740090279Ba06cfA8fcF6113778",
+      "txHash": "0x5f2cb78d316fe5fcb6ea8a2f598b0fe643ff2ca749482d106a13576b6061e537",
+      "kind": "uups"
+    },
+    {
+      "address": "0x0E801D84Fa97b50751Dbf25036d067dCf18858bF",
+      "txHash": "0xd078e7daa539aa5c405791abe2986b4032da37586f711021e4291ac5432f2897",
+      "kind": "uups"
+    },
+    {
+      "address": "0x9d4454B023096f34B160D6B654540c56A1F81688",
+      "txHash": "0xcb0973e93ed65bac3be0e47d91d2434a626c73fc0f758ed31ca8f6a84ab65cc7",
+      "kind": "uups"
+    },
+    {
+      "address": "0x809d550fca64d94Bd9F66E60752A544199cfAC3D",
+      "txHash": "0xdd8e2903948dc504fc0025d1d5db29cef9a25d3a04fd1d7668816fc5d71e6ea8",
+      "kind": "uups"
+    },
+    {
+      "address": "0x1291Be112d480055DaFd8a610b7d1e203891C274",
+      "txHash": "0xbc2f5220492f79ee397339e1983f223adb409542d56c5de301e9b86a0018254e",
+      "kind": "uups"
+    },
+    {
+      "address": "0xFD471836031dc5108809D173A067e8486B9047A3",
+      "txHash": "0xedf4b160eae41deb30721a59a19dd1624b7902d00dcecb088f120a727dea7770",
+      "kind": "uups"
+    },
+    {
+      "address": "0xB0D4afd8879eD9F52b28595d31B441D079B2Ca07",
+      "txHash": "0xf1f74b336e881ab5292f4e239676d5b6409416c590d189c61d40b69a3e06703b",
+      "kind": "uups"
+    },
+    {
+      "address": "0x922D6956C99E12DFeB3224DEA977D0939758A1Fe",
+      "txHash": "0x84d772854d94d582650e20bb3fced3eff7f16462433a7a0bbbe2271020513450",
       "kind": "uups"
     },
     {
@@ -653,57 +653,57 @@
     },
     {
       "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
-      "txHash": "0x063024731752095943c38cb10669b5d23e60477833c3135f78ab54a138b8e144",
+      "txHash": "0x52587384c4f7de37cf38307b38504a35adecd8e51a9abc07a64b545be540aee7",
       "kind": "uups"
     },
     {
       "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
-      "txHash": "0x40f529e4d352b6e4f069a8b6320c44365118bb3e240a0e1bbf9cd7685ae725d8",
+      "txHash": "0x9db393d4dcd7d99b694f13be46d6ef47202ff20e03f3b5cb86c2b4d0ae9a2934",
       "kind": "uups"
     },
     {
       "address": "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0",
-      "txHash": "0xcd2bc6220e75b8417676917a56caa05ea7c8dac9e1d3dc62519a4a1de5f7124e",
+      "txHash": "0x3c2a2cf7eb609d37ee435abcf4fba05c97920876f13572144ea787abf03fc13f",
       "kind": "uups"
     },
     {
       "address": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
-      "txHash": "0xfb54747bf54014fe492590d2e1a547f96bfb3e15e81ef812cdb3dd1be42f0fe0",
+      "txHash": "0x6b9559c22c34c3fac7bcd073ae1c67cdcb965672423228a467e9ed703df315cc",
       "kind": "uups"
     },
     {
       "address": "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
-      "txHash": "0x3c75eff58b7c8d4362d16c799dddff6b35af7011aaa43b5001ce986e0c36c6b8",
+      "txHash": "0x57d9d069ee2166058a3d6e1966ca6ec68dc4928195072a6195d77d62857bc856",
       "kind": "uups"
     },
     {
       "address": "0xc6e7DF5E7b4f2A278906862b61205850344D4e7d",
-      "txHash": "0xc61d7106d36fc2632034f8e6545756a9b9f4efd2ad09cb8f0f180f8b706377da",
+      "txHash": "0x0babf6ecf2dda0310c2498afbc3d47e371a42d9e53f22f1cac30c69a483eec81",
       "kind": "uups"
     },
     {
       "address": "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44",
-      "txHash": "0x1b675de51fe9ba52bdef38fec0b5dcf81bba93c995b8ebd3dc64090afb44584a",
+      "txHash": "0x3f417735b25e63e6d0f4012d40eac6b476652d0f767ce177f20646c79f5e4286",
       "kind": "uups"
     },
     {
       "address": "0x4A679253410272dd5232B3Ff7cF5dbB88f295319",
-      "txHash": "0x66172070bf5faa2e79f05b2a860913bc4db4869a3344fac02204771a9fe941ce",
+      "txHash": "0x7adc10e1b4ba3c1c84dda6f0fba51db9a50bb80507243ee8b07bd3a8de452e53",
       "kind": "uups"
     },
     {
       "address": "0xc5a5C42992dECbae36851359345FE25997F5C42d",
-      "txHash": "0x80deb36e67a0e8abe4dd1976f652d08de2ffd303e2107f89c2365a24845f6f17",
+      "txHash": "0x7a7a2264a9058bbca3be9ff1fc175ba918608207db6dc0d4aba7f0f4a73dd67f",
       "kind": "uups"
     },
     {
       "address": "0xc3e53F4d16Ae77Db1c982e75a937B9f60FE63690",
-      "txHash": "0xa9448245be2cbb1dd853dae593acaa766478ee4fa9c64e0d77a37989c1caeee1",
+      "txHash": "0x25a12bccda8ad6cb11c44900082bac28ae67db1114c6d6af3953ac9b89711d9b",
       "kind": "uups"
     },
     {
       "address": "0x9E545E3C0baAB3E08CdfD552C960A1050f373042",
-      "txHash": "0xb0d08eae0851884249e8cece859aed98142a2918203b8e8fbc3eca6db6db34b0",
+      "txHash": "0xbf383d2ed8b79be5fe25ff26cf8fcfb118ff5bec4988cb80f8d41783c4ed1ede",
       "kind": "uups"
     },
     {
@@ -1851,7 +1851,7 @@
     },
     "1376c1c9e80bba5000e77bcdcb06b599c42220fd9ff04954d59c0adf7b3408ce": {
       "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
-      "txHash": "0x8f6f71245fdbd4c00a448e2cdba9e10262417bcc1954233e2ff4acd445a136ac",
+      "txHash": "0x584d3e546129c899248dfe13df757fa88873dbbf145dd7b437d192be34d2604d",
       "layout": {
         "solcVersion": "0.8.13",
         "storage": [
@@ -1940,7 +1940,7 @@
             "label": "users",
             "offset": 0,
             "slot": "301",
-            "type": "t_mapping(t_address,t_struct(User)12828_storage)",
+            "type": "t_mapping(t_address,t_struct(User)12964_storage)",
             "contract": "FantiumUserManager",
             "src": "contracts/utils/FantiumUserManager.sol:26"
           },
@@ -1998,7 +1998,7 @@
             "label": "mapping(address => mapping(uint256 => uint256))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_struct(User)12828_storage)": {
+          "t_mapping(t_address,t_struct(User)12964_storage)": {
             "label": "mapping(address => struct FantiumUserManager.User)",
             "numberOfBytes": "32"
           },
@@ -2028,7 +2028,7 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(User)12828_storage": {
+          "t_struct(User)12964_storage": {
             "label": "struct FantiumUserManager.User",
             "members": [
               {
@@ -2063,315 +2063,9 @@
         }
       }
     },
-    "08a7f867d91a1a9c6f3aaa6f845be509a4ef681bfe6461e1debd5c3507ab91a0": {
-      "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
-      "txHash": "0x69ed2f9325e4e89200f3cb211205513afa5cfade187f938480275cdcc96428e3",
-      "layout": {
-        "solcVersion": "0.8.13",
-        "storage": [
-          {
-            "label": "_initialized",
-            "offset": 0,
-            "slot": "0",
-            "type": "t_uint8",
-            "contract": "Initializable",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
-            "retypedFrom": "bool"
-          },
-          {
-            "label": "_initializing",
-            "offset": 1,
-            "slot": "0",
-            "type": "t_bool",
-            "contract": "Initializable",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "1",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "ERC1967UpgradeUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:211"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "51",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "UUPSUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:107"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "101",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "ContextUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "151",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "ERC2771ContextUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol:50"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "201",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "ERC165Upgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol:41"
-          },
-          {
-            "label": "_roles",
-            "offset": 0,
-            "slot": "251",
-            "type": "t_mapping(t_bytes32,t_struct(RoleData)34_storage)",
-            "contract": "AccessControlUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "252",
-            "type": "t_array(t_uint256)49_storage",
-            "contract": "AccessControlUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:259"
-          },
-          {
-            "label": "_paused",
-            "offset": 0,
-            "slot": "301",
-            "type": "t_bool",
-            "contract": "PausableUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:29"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "302",
-            "type": "t_array(t_uint256)49_storage",
-            "contract": "PausableUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:116"
-          },
-          {
-            "label": "payoutToken",
-            "offset": 0,
-            "slot": "351",
-            "type": "t_address",
-            "contract": "FantiumClaimingV1",
-            "src": "contracts/claiming/FantiumClaimingV1.sol:29"
-          },
-          {
-            "label": "fantiumNFTContract",
-            "offset": 0,
-            "slot": "352",
-            "type": "t_address",
-            "contract": "FantiumClaimingV1",
-            "src": "contracts/claiming/FantiumClaimingV1.sol:30"
-          },
-          {
-            "label": "fantiumUserManager",
-            "offset": 0,
-            "slot": "353",
-            "type": "t_address",
-            "contract": "FantiumClaimingV1",
-            "src": "contracts/claiming/FantiumClaimingV1.sol:31"
-          },
-          {
-            "label": "distributionEvents",
-            "offset": 0,
-            "slot": "354",
-            "type": "t_mapping(t_uint256,t_struct(DistributionEvent)11131_storage)",
-            "contract": "FantiumClaimingV1",
-            "src": "contracts/claiming/FantiumClaimingV1.sol:34"
-          },
-          {
-            "label": "distributionEventToTokenIdToClaimed",
-            "offset": 0,
-            "slot": "355",
-            "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))",
-            "contract": "FantiumClaimingV1",
-            "src": "contracts/claiming/FantiumClaimingV1.sol:35"
-          },
-          {
-            "label": "nextDistributionEventId",
-            "offset": 0,
-            "slot": "356",
-            "type": "t_uint256",
-            "contract": "FantiumClaimingV1",
-            "src": "contracts/claiming/FantiumClaimingV1.sol:38"
-          }
-        ],
-        "types": {
-          "t_address": {
-            "label": "address",
-            "numberOfBytes": "20"
-          },
-          "t_address_payable": {
-            "label": "address payable",
-            "numberOfBytes": "20"
-          },
-          "t_array(t_uint256)49_storage": {
-            "label": "uint256[49]",
-            "numberOfBytes": "1568"
-          },
-          "t_array(t_uint256)50_storage": {
-            "label": "uint256[50]",
-            "numberOfBytes": "1600"
-          },
-          "t_array(t_uint256)dyn_storage": {
-            "label": "uint256[]",
-            "numberOfBytes": "32"
-          },
-          "t_bool": {
-            "label": "bool",
-            "numberOfBytes": "1"
-          },
-          "t_bytes32": {
-            "label": "bytes32",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_address,t_bool)": {
-            "label": "mapping(address => bool)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_bytes32,t_struct(RoleData)34_storage)": {
-            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_uint256,t_bool)": {
-            "label": "mapping(uint256 => bool)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))": {
-            "label": "mapping(uint256 => mapping(uint256 => bool))",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_uint256,t_struct(DistributionEvent)11131_storage)": {
-            "label": "mapping(uint256 => struct FantiumClaimingV1.DistributionEvent)",
-            "numberOfBytes": "32"
-          },
-          "t_struct(DistributionEvent)11131_storage": {
-            "label": "struct FantiumClaimingV1.DistributionEvent",
-            "members": [
-              {
-                "label": "distributionEventId",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "label": "athleteOverallDistributionBPS",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "1"
-              },
-              {
-                "label": "collectionIds",
-                "type": "t_array(t_uint256)dyn_storage",
-                "offset": 0,
-                "slot": "2"
-              },
-              {
-                "label": "athleteAddress",
-                "type": "t_address_payable",
-                "offset": 0,
-                "slot": "3"
-              },
-              {
-                "label": "amountWithDecimals",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "4"
-              },
-              {
-                "label": "claimedAmount",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "5"
-              },
-              {
-                "label": "fantiumFeeBPS",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "6"
-              },
-              {
-                "label": "fantiumFeeAddress",
-                "type": "t_address_payable",
-                "offset": 0,
-                "slot": "7"
-              },
-              {
-                "label": "startTime",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "8"
-              },
-              {
-                "label": "closeTime",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "9"
-              },
-              {
-                "label": "exists",
-                "type": "t_bool",
-                "offset": 0,
-                "slot": "10"
-              },
-              {
-                "label": "amountPaidIn",
-                "type": "t_bool",
-                "offset": 1,
-                "slot": "10"
-              },
-              {
-                "label": "closed",
-                "type": "t_bool",
-                "offset": 2,
-                "slot": "10"
-              }
-            ],
-            "numberOfBytes": "352"
-          },
-          "t_struct(RoleData)34_storage": {
-            "label": "struct AccessControlUpgradeable.RoleData",
-            "members": [
-              {
-                "label": "members",
-                "type": "t_mapping(t_address,t_bool)",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "label": "adminRole",
-                "type": "t_bytes32",
-                "offset": 0,
-                "slot": "1"
-              }
-            ],
-            "numberOfBytes": "64"
-          },
-          "t_uint256": {
-            "label": "uint256",
-            "numberOfBytes": "32"
-          },
-          "t_uint8": {
-            "label": "uint8",
-            "numberOfBytes": "1"
-          }
-        }
-      }
-    },
-    "d366f571062fc21cdcd7046b3209cdf68ac2fc0e9b7baf45c0d9a48abc33d7cd": {
+    "fcf395c4e8d38da29512b9acf6ff89e5bfbf6490fdea97752044bf8f1f84ccd8": {
       "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
-      "txHash": "0xbeab9f935d14705dbf63c4a68d7160a26e77e6d879f006e55b16867d94f59148",
+      "txHash": "0xb9170ee68243b5db45081188602bc4442344bfaa439b5c51e190966a252d5ece",
       "layout": {
         "solcVersion": "0.8.13",
         "storage": [
@@ -2516,7 +2210,7 @@
             "label": "collections",
             "offset": 0,
             "slot": "351",
-            "type": "t_mapping(t_uint256,t_struct(Collection)9447_storage)",
+            "type": "t_mapping(t_uint256,t_struct(Collection)9449_storage)",
             "contract": "FantiumNFTV4",
             "src": "contracts/FantiumNFTV4.sol:32"
           },
@@ -2566,7 +2260,7 @@
             "slot": "357",
             "type": "t_address",
             "contract": "FantiumNFTV4",
-            "src": "contracts/FantiumNFTV4.sol:88"
+            "src": "contracts/FantiumNFTV4.sol:89"
           }
         ],
         "types": {
@@ -2622,7 +2316,7 @@
             "label": "mapping(uint256 => mapping(address => uint256))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(Collection)9447_storage)": {
+          "t_mapping(t_uint256,t_struct(Collection)9449_storage)": {
             "label": "mapping(uint256 => struct FantiumNFTV4.Collection)",
             "numberOfBytes": "32"
           },
@@ -2630,7 +2324,7 @@
             "label": "string",
             "numberOfBytes": "32"
           },
-          "t_struct(Collection)9447_storage": {
+          "t_struct(Collection)9449_storage": {
             "label": "struct FantiumNFTV4.Collection",
             "members": [
               {
@@ -2710,9 +2404,15 @@
                 "type": "t_uint256",
                 "offset": 0,
                 "slot": "10"
+              },
+              {
+                "label": "otherEarningsShare1e7",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "11"
               }
             ],
-            "numberOfBytes": "352"
+            "numberOfBytes": "384"
           },
           "t_struct(RoleData)34_storage": {
             "label": "struct AccessControlUpgradeable.RoleData",
@@ -2735,6 +2435,324 @@
           "t_uint24": {
             "label": "uint24",
             "numberOfBytes": "3"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "984d43eaac713ec7a9547e426d8f51043a634647a11620dfdbdcfe87283d71be": {
+      "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+      "txHash": "0x55487239a970522ded408597b7dc72297b5d67579d9808a3cc57dcfad19bcb26",
+      "layout": {
+        "solcVersion": "0.8.13",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:211"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:107"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC2771ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol:50"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "201",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC165Upgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol:41"
+          },
+          {
+            "label": "_roles",
+            "offset": 0,
+            "slot": "251",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)34_storage)",
+            "contract": "AccessControlUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "252",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "AccessControlUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:259"
+          },
+          {
+            "label": "_paused",
+            "offset": 0,
+            "slot": "301",
+            "type": "t_bool",
+            "contract": "PausableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:29"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "302",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "PausableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:116"
+          },
+          {
+            "label": "payoutToken",
+            "offset": 0,
+            "slot": "351",
+            "type": "t_address",
+            "contract": "FantiumClaimingV1",
+            "src": "contracts/claiming/FantiumClaimingV1.sol:29"
+          },
+          {
+            "label": "fantiumNFTContract",
+            "offset": 0,
+            "slot": "352",
+            "type": "t_address",
+            "contract": "FantiumClaimingV1",
+            "src": "contracts/claiming/FantiumClaimingV1.sol:30"
+          },
+          {
+            "label": "fantiumUserManager",
+            "offset": 0,
+            "slot": "353",
+            "type": "t_address",
+            "contract": "FantiumClaimingV1",
+            "src": "contracts/claiming/FantiumClaimingV1.sol:31"
+          },
+          {
+            "label": "distributionEvents",
+            "offset": 0,
+            "slot": "354",
+            "type": "t_mapping(t_uint256,t_struct(DistributionEvent)11172_storage)",
+            "contract": "FantiumClaimingV1",
+            "src": "contracts/claiming/FantiumClaimingV1.sol:34"
+          },
+          {
+            "label": "distributionEventToTokenIdToClaimed",
+            "offset": 0,
+            "slot": "355",
+            "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))",
+            "contract": "FantiumClaimingV1",
+            "src": "contracts/claiming/FantiumClaimingV1.sol:35"
+          },
+          {
+            "label": "nextDistributionEventId",
+            "offset": 0,
+            "slot": "356",
+            "type": "t_uint256",
+            "contract": "FantiumClaimingV1",
+            "src": "contracts/claiming/FantiumClaimingV1.sol:38"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_address_payable": {
+            "label": "address payable",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)34_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_bool)": {
+            "label": "mapping(uint256 => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))": {
+            "label": "mapping(uint256 => mapping(uint256 => bool))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(DistributionEvent)11172_storage)": {
+            "label": "mapping(uint256 => struct FantiumClaimingV1.DistributionEvent)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(DistributionEvent)11172_storage": {
+            "label": "struct FantiumClaimingV1.DistributionEvent",
+            "members": [
+              {
+                "label": "distributionEventId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "collectionIds",
+                "type": "t_array(t_uint256)dyn_storage",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "athleteAddress",
+                "type": "t_address_payable",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "tournamentDistributionAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "totalTournamentDistributionBPS",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "otherDistributionAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "totalOtherDistributionBPS",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "6"
+              },
+              {
+                "label": "claimedAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "7"
+              },
+              {
+                "label": "fantiumFeeBPS",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "8"
+              },
+              {
+                "label": "fantiumFeeAddress",
+                "type": "t_address_payable",
+                "offset": 0,
+                "slot": "9"
+              },
+              {
+                "label": "startTime",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "10"
+              },
+              {
+                "label": "closeTime",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "11"
+              },
+              {
+                "label": "exists",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "12"
+              },
+              {
+                "label": "amountPaidIn",
+                "type": "t_bool",
+                "offset": 1,
+                "slot": "12"
+              },
+              {
+                "label": "closed",
+                "type": "t_bool",
+                "offset": 2,
+                "slot": "12"
+              }
+            ],
+            "numberOfBytes": "416"
+          },
+          "t_struct(RoleData)34_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "members",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
           },
           "t_uint256": {
             "label": "uint256",
