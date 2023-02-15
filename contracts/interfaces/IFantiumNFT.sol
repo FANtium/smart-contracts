@@ -6,9 +6,8 @@ pragma solidity ^0.8.0;
  * @dev Interface of the IFantiumNFT
  */
 interface IFantiumNFT {
-
     /**
-     * @notice upgrades token version. Old token gets burned and new token gets minted to owner of Token 
+     * @notice upgrades token version. Old token gets burned and new token gets minted to owner of Token
      * @param _tokenId TokenID to be upgraded
      * @return bool if upgrade successfull it returns true
      */
@@ -21,24 +20,32 @@ interface IFantiumNFT {
      * @return bps array of bps of royalties
      */
 
-    function getRoyalties(uint256 _tokenId) external view returns (address payable[] memory recipients, uint256[] memory bps);
+    function getRoyalties(
+        uint256 _tokenId
+    )
+        external
+        view
+        returns (address payable[] memory recipients, uint256[] memory bps);
 
-    
     /**
      * @notice get collection athlete address
      * @param _collectionId collectionId of NFTs
      * @return address of athlete
      */
-    
-    function getCollectionAthleteAddress(uint256 _collectionId) external view returns (address);
-    
+
+    function getCollectionAthleteAddress(
+        uint256 _collectionId
+    ) external view returns (address);
+
     /**
      * @notice get earnings share per token of collection
      * @param _collectionId collectionId of NFT
      * @return uint256 tournament share per token of collection
      */
 
-    function getTournamentEarningsShare1e7(uint256 _collectionId) external view returns (uint256);
+    function getTournamentEarnings(
+        uint256 _collectionId
+    ) external view returns (uint256 , uint256);
 
     /**
      * @notice get earnings share per token of collection
@@ -46,7 +53,9 @@ interface IFantiumNFT {
      * @return uint256 other earnings share per token of collection
      */
 
-    function getOtherEarningsShare1e7(uint256 _collectionId) external view returns (uint256);
+    function getOtherEarnings(
+        uint256 _collectionId
+    ) external view returns (uint256 , uint256);
 
     /**
      * @notice check if collection exists
@@ -54,6 +63,7 @@ interface IFantiumNFT {
      * @return bool true if collection exists
      */
 
-    function getCollectionExists(uint256 _collectionId) external view returns (bool);
-
+    function getCollectionExists(
+        uint256 _collectionId
+    ) external view returns (bool);
 }

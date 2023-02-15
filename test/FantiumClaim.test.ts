@@ -3,16 +3,15 @@ import { expect } from 'chai'
 import { beforeEach } from 'mocha'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { FantiumNFTV2 } from '../typechain-types/contracts/FantiumNFTV2'
-import { FantiumNFTV4 } from '../typechain-types/contracts/FantiumNFTV4'
+import { FantiumNFTV3 } from '../typechain-types/contracts/FantiumNFTV3'
 import { FantiumClaimingV1} from '../typechain-types/contracts/claiming/FantiumClaimingV1'
 import {FantiumUserManager} from '../typechain-types/contracts/utils/FantiumUserManager'
 import { Mock20 } from '../typechain-types/contracts/mocks/Mock20'
-import { erc20 } from '../typechain-types/@openzeppelin/contracts/token'
 
 describe("FantiumClaim", () => {
 
     let nftContract: FantiumNFTV2
-    let nftContractV4: FantiumNFTV4
+    let nftContractV3: FantiumNFTV3
     let claimContract: FantiumClaimingV1
     let userManager: FantiumUserManager
     let erc20Contract: Mock20
@@ -118,76 +117,78 @@ describe("FantiumClaim", () => {
     ////////////////////////////////////////////
 
     it("Check Setup: upgrading contract and minting NFTs on upgraded contract", async () => {
-        const fanV4 = await ethers.getContractFactory("FantiumNFTV4")
-        const nftContractV4 = await upgrades.upgradeProxy(nftContract.address, fanV4) as FantiumNFTV4
+        const fanV3 = await ethers.getContractFactory("FantiumNFTV3")
+        const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3 ) as FantiumNFTV3
 
         // add first collection
         for (let i = 0; i < 4; i++) {
-            await nftContractV4.connect(platformManager).addCollection(
+            await nftContractV3.connect(platformManager).addCollection(
                 athlete.address,
                 primarySalePercentage,
                 secondarySalePercentage,
                 maxInvocations,
                 price,
-                tournamentEarningsShare1e7,
                 timestamp,
                 fantium.address,
                 fantiumSecondaryBPS,
-                otherEarningsShare1e7
+                tournamentEarningsShare1e7,
+                tournamentTokenShareBPS,
+                otherEarningsShare1e7,
+                otherTokenShareBPS
             )
         }
 
         // check name   
-        expect(await nftContractV4.name()).to.equal("FANtium")
+        expect(await nftContractV3.name()).to.equal("FANtium")
 
         // toggle and unpause collection mintable
-        await nftContractV4.connect(platformManager).toggleCollectionMintable(1)
-        await nftContractV4.connect(platformManager).toggleCollectionPaused(1)
+        await nftContractV3.connect(platformManager).toggleCollectionMintable(1)
+        await nftContractV3.connect(platformManager).toggleCollectionPaused(1)
 
         // add platfrom manager to KYC
-        await nftContractV4.connect(kycManager).addAddressToKYC(fan.address)
+        await nftContractV3.connect(kycManager).addAddressToKYC(fan.address)
 
         // approve erc20
-        await erc20Contract.connect(fan).approve(nftContractV4.address, 3 * price * (10 ** decimals))
+        await erc20Contract.connect(fan).approve(nftContractV3.address, 3 * price * (10 ** decimals))
 
         // default admin mint a token
-        await nftContractV4.connect(fan).batchMint(1, 3)
+        await nftContractV3.connect(fan).batchMint(1, 3)
 
         // check balance
-        expect(await nftContractV4.balanceOf(fan.address)).to.equal(3)
+        expect(await nftContractV3.balanceOf(fan.address)).to.equal(3)
     })
 
     ////////////////////////////////////////////
 
     it("Check Setup: upgrading NFTContract, create distributionEvent and pay in amount", async () => {
-        const fanV4 = await ethers.getContractFactory("FantiumNFTV4")
-        const nftContractV4 = await upgrades.upgradeProxy(nftContract.address, fanV4) as FantiumNFTV4
+        const fanV3 = await ethers.getContractFactory("FantiumNFTV3")
+        const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
 
         // add first collection
         for (let i = 0; i < 4; i++) {
-            await nftContractV4.connect(platformManager).addCollection(
+            await nftContractV3.connect(platformManager).addCollection(
                 athlete.address,
                 primarySalePercentage,
                 secondarySalePercentage,
                 maxInvocations,
                 price,
-                tournamentEarningsShare1e7,
                 timestamp,
                 fantium.address,
                 fantiumSecondaryBPS,
-                otherEarningsShare1e7
+                tournamentEarningsShare1e7,
+                tournamentTokenShareBPS,
+                otherEarningsShare1e7,
+                otherTokenShareBPS
             )
         }
 
         // check name   
-        expect(await nftContractV4.name()).to.equal("FANtium")
+        expect(await nftContractV3.name()).to.equal("FANtium")
 
         await claimContract.connect(platformManager).setupDistributionEvent(
             athlete.address,
             tournamentAmount,
-            tournamentTokenShareBPS,
             otherAmount,
-            otherTokenShareBPS,
             startTime,
             closeTime,
             [1,2,3],
@@ -216,31 +217,31 @@ describe("FantiumClaim", () => {
     ////////////////////////////////////////////
 
     it("Check Error: try to claim without token and fail", async () => {
-        const fanV4 = await ethers.getContractFactory("FantiumNFTV4")
-        const nftContractV4 = await upgrades.upgradeProxy(nftContract.address, fanV4) as FantiumNFTV4
+        const fanV3 = await ethers.getContractFactory("FantiumNFTV3")
+        const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
 
         // add first collection
         for (let i = 0; i < 4; i++) {
-            await nftContractV4.connect(platformManager).addCollection(
+            await nftContractV3.connect(platformManager).addCollection(
                 athlete.address,
                 primarySalePercentage,
                 secondarySalePercentage,
                 maxInvocations,
                 price,
-                tournamentEarningsShare1e7,
                 timestamp,
                 fantium.address,
                 fantiumSecondaryBPS,
-                otherEarningsShare1e7
+                tournamentEarningsShare1e7,
+                tournamentTokenShareBPS,
+                otherEarningsShare1e7,
+                otherTokenShareBPS
             )
         }
 
         await claimContract.connect(platformManager).setupDistributionEvent(
             athlete.address,
             tournamentAmount,
-            tournamentTokenShareBPS,
             otherAmount,
-            otherTokenShareBPS,
             startTime,
             closeTime,
             [1,2,3],
@@ -252,14 +253,14 @@ describe("FantiumClaim", () => {
         await claimContract.connect(athlete).addDistributionAmount(1, totalAmount)
 
         await expect(claimContract.connect(fan).claim(1000000, 1)).to.be.revertedWith('ERC721: invalid token ID')
-        await nftContractV4.connect(platformManager).toggleCollectionMintable(1)
-        await nftContractV4.connect(platformManager).toggleCollectionPaused(1)
+        await nftContractV3.connect(platformManager).toggleCollectionMintable(1)
+        await nftContractV3.connect(platformManager).toggleCollectionPaused(1)
         // add platfrom manager to KYC
-        await nftContractV4.connect(kycManager).addAddressToKYC(athlete.address)
+        await nftContractV3.connect(kycManager).addAddressToKYC(athlete.address)
         // approve erc20
-        await erc20Contract.connect(athlete).approve(nftContractV4.address, 3 * price * (10 ** decimals))
+        await erc20Contract.connect(athlete).approve(nftContractV3.address, 3 * price * (10 ** decimals))
         
-        await nftContractV4.connect(athlete).batchMint(1, 1)
+        await nftContractV3.connect(athlete).batchMint(1, 1)
 
         await expect(claimContract.connect(fan).claim(1000000, 1)).to.be.revertedWith('Only token owner')
 
@@ -268,42 +269,42 @@ describe("FantiumClaim", () => {
     ////////////////////////////////////////////
 
     it("Check single claiming: claim, receive amount and check calculation", async () => {
-        const fanV4 = await ethers.getContractFactory("FantiumNFTV4")
-        const nftContractV4 = await upgrades.upgradeProxy(nftContract.address, fanV4) as FantiumNFTV4
-        await nftContractV4.connect(platformManager).updateClaimContract(claimContract.address)
+        const fanV3 = await ethers.getContractFactory("FantiumNFTV3")
+        const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
+        await nftContractV3.connect(platformManager).updateClaimContract(claimContract.address)
 
         // add first collection
         for (let i = 0; i < 4; i++) {
-            await nftContractV4.connect(platformManager).addCollection(
+            await nftContractV3.connect(platformManager).addCollection(
                 athlete.address,
                 primarySalePercentage,
                 secondarySalePercentage,
                 maxInvocations,
                 price,
-                tournamentEarningsShare1e7,
                 timestamp,
                 fantium.address,
                 fantiumSecondaryBPS,
-                otherEarningsShare1e7
+                tournamentEarningsShare1e7,
+                tournamentTokenShareBPS,
+                otherEarningsShare1e7,
+                otherTokenShareBPS
             )
         }
 
         //setup collection
-        await nftContractV4.connect(platformManager).toggleCollectionMintable(1)
-        await nftContractV4.connect(platformManager).toggleCollectionPaused(1)
+        await nftContractV3.connect(platformManager).toggleCollectionMintable(1)
+        await nftContractV3.connect(platformManager).toggleCollectionPaused(1)
         // add platfrom manager to KYC
-        await nftContractV4.connect(kycManager).addAddressToKYC(other.address)
+        await nftContractV3.connect(kycManager).addAddressToKYC(other.address)
         // approve erc20
-        await erc20Contract.connect(other).approve(nftContractV4.address, price * (10 ** decimals))
-        await nftContractV4.connect(other).batchMint(1, 1)
+        await erc20Contract.connect(other).approve(nftContractV3.address, price * (10 ** decimals))
+        await nftContractV3.connect(other).batchMint(1, 1)
 
         //setup distribution event
         await claimContract.connect(platformManager).setupDistributionEvent(
             athlete.address,
             tournamentAmount,
-            tournamentTokenShareBPS,
             otherAmount,
-            otherTokenShareBPS,
             startTime,
             closeTime,
             [1,2,3],
@@ -340,42 +341,42 @@ describe("FantiumClaim", () => {
     ////////////////////////////////////////////
 
     it("Check batch claiming: claim, receive amount and check calculation", async () => {
-        const fanV4 = await ethers.getContractFactory("FantiumNFTV4")
-        const nftContractV4 = await upgrades.upgradeProxy(nftContract.address, fanV4) as FantiumNFTV4
-        await nftContractV4.connect(platformManager).updateClaimContract(claimContract.address)
+        const fanV3 = await ethers.getContractFactory("FantiumNFTV3")
+        const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
+        await nftContractV3.connect(platformManager).updateClaimContract(claimContract.address)
 
         // add first collection
         for (let i = 0; i < 4; i++) {
-            await nftContractV4.connect(platformManager).addCollection(
+            await nftContractV3.connect(platformManager).addCollection(
                 athlete.address,
                 primarySalePercentage,
                 secondarySalePercentage,
                 maxInvocations,
                 price,
-                tournamentEarningsShare1e7,
                 timestamp,
                 fantium.address,
                 fantiumSecondaryBPS,
-                otherEarningsShare1e7
+                tournamentEarningsShare1e7,
+                tournamentTokenShareBPS,
+                otherEarningsShare1e7,
+                otherTokenShareBPS
             )
         }
 
         //setup collection
-        await nftContractV4.connect(platformManager).toggleCollectionMintable(1)
-        await nftContractV4.connect(platformManager).toggleCollectionPaused(1)
+        await nftContractV3.connect(platformManager).toggleCollectionMintable(1)
+        await nftContractV3.connect(platformManager).toggleCollectionPaused(1)
         // add platfrom manager to KYC
-        await nftContractV4.connect(kycManager).addAddressToKYC(other.address)
+        await nftContractV3.connect(kycManager).addAddressToKYC(other.address)
         // approve erc20
-        await erc20Contract.connect(other).approve(nftContractV4.address, 10 * price * (10 ** decimals))
-        await nftContractV4.connect(other).batchMint(1, 10)
+        await erc20Contract.connect(other).approve(nftContractV3.address, 10 * price * (10 ** decimals))
+        await nftContractV3.connect(other).batchMint(1, 10)
 
         //setup distribution event
         await claimContract.connect(platformManager).setupDistributionEvent(
             athlete.address,
             tournamentAmount,
-            tournamentTokenShareBPS,
             otherAmount,
-            otherTokenShareBPS,
             startTime,
             closeTime,
             [1,2,3],
@@ -414,8 +415,8 @@ describe("FantiumClaim", () => {
 
     it("Check UserManager Contract: batch allowlist 1000 addresses with allocations", async () => {
         /// DEPLOY V2
-        const fanV4 = await ethers.getContractFactory("FantiumNFTV4")
-        const nftContractV4 = await upgrades.upgradeProxy(nftContract.address, fanV4) as FantiumNFTV4
+        const fanV3 = await ethers.getContractFactory("FantiumNFTV3")
+        const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
 
         /// ADMIN ON V1
         // add fan address to KYC
@@ -433,11 +434,11 @@ describe("FantiumClaim", () => {
 
         /// ADMIN
         // batch allowlist
-        await userManager.connect(platformManager).batchAllowlist(1, nftContractV4.address,addresses, allocations)
+        await userManager.connect(platformManager).batchAllowlist(1, nftContractV3.address,addresses, allocations)
 
         // check if allowlist is correct
         for (let i = 0; i < 500; i++) {
-            expect(await userManager.hasAllowlist(nftContractV4.address, 1,addresses[i])).to.equal(5)
+            expect(await userManager.hasAllowlist(nftContractV3.address, 1,addresses[i])).to.equal(5)
         }
     })
 
@@ -447,107 +448,113 @@ describe("FantiumClaim", () => {
 
     it("checks that FAN can batch mint 10 NFTs if collection is Mintable and Unpaused", async () => {
         /// DEPLOY V2
-        const fanV4 = await ethers.getContractFactory("FantiumNFTV4")
-        const nftContractV4 = await upgrades.upgradeProxy(nftContract.address, fanV4) as FantiumNFTV4
+        const fanV3 = await ethers.getContractFactory("FantiumNFTV3")
+        const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
         // add first collection
         for (let i = 0; i < 4; i++) {
-            await nftContractV4.connect(platformManager).addCollection(
+            await nftContractV3.connect(platformManager).addCollection(
                 athlete.address,
                 primarySalePercentage,
                 secondarySalePercentage,
                 maxInvocations,
                 price,
-                tournamentEarningsShare1e7,
                 timestamp,
                 fantium.address,
                 fantiumSecondaryBPS,
-                otherEarningsShare1e7
+                tournamentEarningsShare1e7,
+                tournamentTokenShareBPS,
+                otherEarningsShare1e7,
+                otherTokenShareBPS
             )
         }
 
         /// ADMIN ON V1
         // add fan address to KYC
-        await nftContractV4.connect(kycManager).addAddressToKYC(fan.address)
+        await nftContractV3.connect(kycManager).addAddressToKYC(fan.address)
         // unpause collection minting
-        await nftContractV4.connect(platformManager).toggleCollectionPaused(1)
-        await nftContractV4.connect(platformManager).toggleCollectionMintable(1)
+        await nftContractV3.connect(platformManager).toggleCollectionPaused(1)
+        await nftContractV3.connect(platformManager).toggleCollectionMintable(1)
         // check if fan can mint
         await erc20Contract.connect(fan).approve(nftContract.address, price * 10 ** decimals * 10)
-        await nftContractV4.connect(fan).batchMint(1, 10);
+        await nftContractV3.connect(fan).batchMint(1, 10);
 
         /// 
-        expect(await nftContractV4.balanceOf(fan.address)).to.equal(10)
+        expect(await nftContractV3.balanceOf(fan.address)).to.equal(10)
     })
 
     // check that FAN can't mint if collection is not Mintable
     it("checks that FAN can't mint if collection is not Mintable", async () => {
         /// DEPLOY V2
-        const fanV4 = await ethers.getContractFactory("FantiumNFTV4")
-        const nftContractV4 = await upgrades.upgradeProxy(nftContract.address, fanV4) as FantiumNFTV4
+        const fanV3 = await ethers.getContractFactory("FantiumNFTV3")
+        const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
         // add first collection
         for (let i = 0; i < 4; i++) {
-            await nftContractV4.connect(platformManager).addCollection(
+            await nftContractV3.connect(platformManager).addCollection(
                 athlete.address,
                 primarySalePercentage,
                 secondarySalePercentage,
                 maxInvocations,
                 price,
-                tournamentEarningsShare1e7,
                 timestamp,
                 fantium.address,
                 fantiumSecondaryBPS,
-                otherEarningsShare1e7
+                tournamentEarningsShare1e7,
+                tournamentTokenShareBPS,
+                otherEarningsShare1e7,
+                otherTokenShareBPS
             )
         }
 
         /// ADMIN ON V1
         // add fan address to KYC
-        await nftContractV4.connect(kycManager).addAddressToKYC(fan.address)
+        await nftContractV3.connect(kycManager).addAddressToKYC(fan.address)
         // unpause collection minting
-        await nftContractV4.connect(platformManager).toggleCollectionPaused(1)
+        await nftContractV3.connect(platformManager).toggleCollectionPaused(1)
         // check if fan can mint
         await erc20Contract.connect(fan).approve(nftContract.address, price * 10 ** decimals)
-        await expect(nftContractV4.connect(fan).batchMint(1, 10)).to.be.revertedWith("Collection is not mintable")
+        await expect(nftContractV3.connect(fan).batchMint(1, 10)).to.be.revertedWith("Collection is not mintable")
     })
 
     // check that FAN can mint if collection is Mintable, Paused and has sufficient allowlist allocation
     it("checks that FAN can mint if collection is Mintable, Paused and has sufficient allowlist allocation", async () => {
         /// DEPLOY V2
-        const fanV4 = await ethers.getContractFactory("FantiumNFTV4")
-        const nftContractV4 = await upgrades.upgradeProxy(nftContract.address, fanV4) as FantiumNFTV4
+        const fanV3 = await ethers.getContractFactory("FantiumNFTV3")
+        const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
         // add first collection
         for (let i = 0; i < 4; i++) {
-            await nftContractV4.connect(platformManager).addCollection(
+            await nftContractV3.connect(platformManager).addCollection(
                 athlete.address,
                 primarySalePercentage,
                 secondarySalePercentage,
                 maxInvocations,
                 price,
-                tournamentEarningsShare1e7,
                 timestamp,
                 fantium.address,
                 fantiumSecondaryBPS,
-                otherEarningsShare1e7
+                tournamentEarningsShare1e7,
+                tournamentTokenShareBPS,
+                otherEarningsShare1e7,
+                otherTokenShareBPS
             )
         }
 
         /// ADMIN ON V1
         // add fan address to KYC
-        await nftContractV4.connect(kycManager).addAddressToKYC(fan.address)
+        await nftContractV3.connect(kycManager).addAddressToKYC(fan.address)
         // unpause collection minting
-        await nftContractV4.connect(platformManager).toggleCollectionMintable(1)
+        await nftContractV3.connect(platformManager).toggleCollectionMintable(1)
         // set allowlist allocation
-        await nftContractV4.connect(platformManager).batchAllowlist(1, [fan.address], [10])
+        await nftContractV3.connect(platformManager).batchAllowlist(1, [fan.address], [10])
 
         // allocation
         await erc20Contract.connect(fan).approve(nftContract.address, price * 10 ** decimals * 10)
 
-        await nftContractV4.connect(fan).batchMint(1, 10);
+        await nftContractV3.connect(fan).batchMint(1, 10);
         /// 
-        expect(await nftContractV4.balanceOf(fan.address)).to.equal(10)
+        expect(await nftContractV3.balanceOf(fan.address)).to.equal(10)
 
         // check that tokenIds are minted
-        expect(await nftContractV4.tokenURI(1000000)).to.equal("https://contract.com/1000000")
+        expect(await nftContractV3.tokenURI(1000000)).to.equal("https://contract.com/1000000")
 
     })
 })

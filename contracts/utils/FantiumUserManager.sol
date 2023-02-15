@@ -65,7 +65,7 @@ contract FantiumUserManager is
      */
     ///@dev no constructor in upgradable contracts. Instead we have initializers
     function initialize(
-        address _defaultAdmin,         
+        address _defaultAdmin,
         address _fantiumNFTContract,
         address _fantiumClaimContract
     ) public initializer {
@@ -197,11 +197,7 @@ contract FantiumUserManager is
         address _contractAddress,
         address[] memory _addresses,
         uint256[] memory _increaseAllocations
-    )
-        public
-        whenNotPaused
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
+    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
         for (uint256 i = 0; i < _addresses.length; i++) {
             users[_addresses[i]].contractToAllowlistToSpots[_contractAddress][
                 _collectionId
@@ -221,11 +217,7 @@ contract FantiumUserManager is
         address _contractAddress,
         address _address,
         uint256 _reduceAllocation
-    )
-        public
-        whenNotPaused
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
+    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
         users[_address].contractToAllowlistToSpots[_contractAddress][
             _collectionId
         ] > _reduceAllocation
@@ -238,8 +230,15 @@ contract FantiumUserManager is
         emit AddressRemovedFromAllowList(_collectionId, _address);
     }
 
-    function hasAllowlist(address _contractAddress, uint256 _collectionId, address _address) public view returns (uint256) {
-        return users[_address].contractToAllowlistToSpots[_contractAddress][_collectionId];
+    function hasAllowlist(
+        address _contractAddress,
+        uint256 _collectionId,
+        address _address
+    ) public view returns (uint256) {
+        return
+            users[_address].contractToAllowlistToSpots[_contractAddress][
+                _collectionId
+            ];
     }
 
     /*///////////////////////////////////////////////////////////////

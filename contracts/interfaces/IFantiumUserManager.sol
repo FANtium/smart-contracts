@@ -6,7 +6,6 @@ pragma solidity ^0.8.0;
  * @dev Interface of the IFantiumUserManager
  */
 interface IFantiumUserManager {
-
     /**
      * @dev All events are emitted in the FantomUserManager contract.
      */
@@ -30,7 +29,6 @@ interface IFantiumUserManager {
      */
     function isAddressKYCed(address _address) external view returns (bool);
 
-
     /**
      * @notice Check if address is KYCed.
      * @param _address address to be checked.
@@ -45,6 +43,9 @@ interface IFantiumUserManager {
      * @param _address address to be checked for alliwlist.
      * @return hasAllowlist true if address is allowlisted.
      */
-    function hasAllowlist(address _contractAddress, uint256 _collectionId, address _address) external view returns (uint256);
-
+    function hasAllowlist(
+        address _contractAddress,
+        uint256 _collectionId,
+        address _address
+    ) external view returns (uint256);
 }
