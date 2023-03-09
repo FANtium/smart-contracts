@@ -26,7 +26,7 @@ contract FantiumUserManager is
     mapping(address => User) public users;
     mapping(address => bool) public allowedContracts;
     address public FantiumClaimContract;
-    address public FantiumNFTContract;
+    mapping(address => bool) public allowedNFTContracts;
 
     uint256 constant ONE_MILLION = 1_000_000;
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -77,7 +77,7 @@ contract FantiumUserManager is
         _grantRole(UPGRADER_ROLE, _defaultAdmin);
 
         FantiumClaimContract = _fantiumClaimContract;
-        FantiumNFTContract = _fantiumNFTContract;
+        allowedNFTContracts[_fantiumNFTContract] = true;
     }
 
     /// @notice upgrade authorization logic
@@ -197,7 +197,7 @@ contract FantiumUserManager is
         address _contractAddress,
         address[] memory _addresses,
         uint256[] memory _increaseAllocations
-    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
+    ) public whenNotPaused onlyManager {
         for (uint256 i = 0; i < _addresses.length; i++) {
             users[_addresses[i]].contractToAllowlistToSpots[_contractAddress][
                 _collectionId
@@ -217,7 +217,9 @@ contract FantiumUserManager is
         address _contractAddress,
         address _address,
         uint256 _reduceAllocation
-    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
+    ) external whenNotPaused onlyManager returns (uint256){
+        require(hasRole(PLATFORM_MANAGER_ROLE, msg.sender) || allowedNFTContracts[msg.sender], "Only manager");
+
         users[_address].contractToAllowlistToSpots[_contractAddress][
             _collectionId
         ] > _reduceAllocation
@@ -228,6 +230,7 @@ contract FantiumUserManager is
                 _collectionId
             ] = 0;
         emit AddressRemovedFromAllowList(_collectionId, _address);
+        return users[_address].contractToAllowlistToSpots[_contractAddress][_collectionId]; 
     }
 
     function hasAllowlist(
@@ -276,13 +279,13 @@ contract FantiumUserManager is
     }
 
     /**
-     * @notice set Claim contract address
+     * @notice set NFT contract addresses
      */
 
     function updateNFTConctract(
         address _nftContract
     ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
-        FantiumNFTContract = _nftContract;
+        allowedNFTContracts[_nftContract] = true;
     }
 
     /*//////////////////////////////////////////////////////////////
