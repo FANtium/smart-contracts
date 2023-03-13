@@ -303,7 +303,7 @@ contract FantiumClaimingV1 is
         emit DistributionEventUpdate(_id, FIELD_AMOUNT);
     }
 
-    function updateDistributionEventAmount(
+    function updateDistributionEventCollectionIds(
         uint256 _id,
         uint256[] memory collectionIds
     )

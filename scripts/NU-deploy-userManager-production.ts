@@ -13,7 +13,7 @@ async function main() {
   await userManagerContract.deployed();
 
   // vault: 0x77C0B68aD8e5f07fE7C596512496262bDa5f0598
-  console.log("FantiumNFTV1 deployed to:", userManagerContract.address);
+  console.log("FantiumUserManager deployed to:", userManagerContract.address);
 
   const data = {
     "proxy": userManagerContract.address,
