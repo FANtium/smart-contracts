@@ -9,7 +9,7 @@ async function main() {
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
   const FantiumUserManager = await ethers.getContractFactory("FantiumUserManager");
-  const userManagerContract = await upgrades.deployProxy(FantiumUserManager, [deployer.address,0,0], { initializer: 'initialize', kind: 'uups'})
+  const userManagerContract = await upgrades.deployProxy(FantiumUserManager, [deployer.address,'0x0000000000000000000000000000000000000000','0x0000000000000000000000000000000000000000'], { initializer: 'initialize', kind: 'uups'})
   await userManagerContract.deployed();
 
   // vault: 0x77C0B68aD8e5f07fE7C596512496262bDa5f0598
@@ -19,7 +19,7 @@ async function main() {
     "proxy": userManagerContract.address,
     "implementation": await upgrades.erc1967.getImplementationAddress(userManagerContract.address),
   }
-  writeFileSync(join(__dirname, './addresses/fantium.json'), JSON.stringify(data), {
+  writeFileSync(join(__dirname, './addresses/userManager.json'), JSON.stringify(data), {
     flag: 'w',
   });
 }
