@@ -172,9 +172,9 @@ contract FantiumUserManager is
     }
 
     /**
-     * @notice Check if address is KYCed.
+     * @notice Check if address is IDENT.
      * @param _address address to be checked.
-     * @return isKYCed true if address is KYCed.
+     * @return isIDEN true if address is IDENT.
      */
     function isAddressIDENT(address _address) public view returns (bool) {
         return users[_address].isIDENT;
