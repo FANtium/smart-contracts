@@ -56,7 +56,7 @@ interface IFantiumUserManager {
      * @param _address address to be reduced the allowlist for.
      * @return _reduceAllocation amount the allowlist gets reduced by.
      */
-function reduceAllowListAllocation(
+    function reduceAllowListAllocation(
         uint256 _collectionId,
         address _contractAddress,
         address _address,

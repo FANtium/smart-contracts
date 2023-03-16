@@ -246,6 +246,7 @@ contract FantiumNFTV3 is
         _amount = _amount > 10 ? 10 : _amount;
 
         // CHECKS
+        require(fantiumUserManager != address(0), "UserManager not set");
         require( IFantiumUserManager(fantiumUserManager).isAddressKYCed(_msgSender()), "Address is not KYCed");
         Collection storage collection = collections[_collectionId];
         require(collection.exists, "Collection does not exist");

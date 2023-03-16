@@ -216,7 +216,7 @@ contract FantiumUserManager is
         address _contractAddress,
         address _address,
         uint256 _reduceAllocation
-    ) external whenNotPaused onlyManager returns (uint256){
+    ) external whenNotPaused returns (uint256){
         require(hasRole(PLATFORM_MANAGER_ROLE, msg.sender) || allowedContracts[msg.sender], "Only manager or allowed Contract");
         require(allowedContracts[_contractAddress], "Only allowed Contract");
 
