@@ -215,7 +215,6 @@ contract FantiumNFTV3 is
         _disableInitializers();
     }
 
-
     /*//////////////////////////////////////////////////////////////
                                  MINTING
     //////////////////////////////////////////////////////////////*/
@@ -247,7 +246,12 @@ contract FantiumNFTV3 is
 
         // CHECKS
         require(fantiumUserManager != address(0), "UserManager not set");
-        require( IFantiumUserManager(fantiumUserManager).isAddressKYCed(_msgSender()), "Address is not KYCed");
+        require(
+            IFantiumUserManager(fantiumUserManager).isAddressKYCed(
+                _msgSender()
+            ),
+            "Address is not KYCed"
+        );
         Collection storage collection = collections[_collectionId];
         require(collection.exists, "Collection does not exist");
         require(
@@ -271,7 +275,11 @@ contract FantiumNFTV3 is
         if (collection.isPaused) {
             // if minting is paused, require address to be on allowlist
             require(
-                IFantiumUserManager(fantiumUserManager).hasAllowlist(address(this), _collectionId, _msgSender()) >=
+                IFantiumUserManager(fantiumUserManager).hasAllowlist(
+                    address(this),
+                    _collectionId,
+                    _msgSender()
+                ) >=
                     _amount ||
                     hasRole(PLATFORM_MANAGER_ROLE, _msgSender()),
                 "Collection is paused or allowlist allocation insufficient"
@@ -291,7 +299,12 @@ contract FantiumNFTV3 is
         if (
             collection.isPaused && !hasRole(PLATFORM_MANAGER_ROLE, _msgSender())
         ) {
-            IFantiumUserManager(fantiumUserManager).reduceAllowListAllocation(_collectionId,address(this),_msgSender(),_amount);
+            IFantiumUserManager(fantiumUserManager).reduceAllowListAllocation(
+                _collectionId,
+                address(this),
+                _msgSender(),
+                _amount
+            );
         }
 
         // INTERACTIONS

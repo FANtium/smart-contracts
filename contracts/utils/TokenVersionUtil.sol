@@ -20,8 +20,8 @@ library TokenVersionUtil {
     ) internal pure returns (uint, uint, uint) {
         uint256 collectionOfToken = (_tokenId - (_tokenId % ONE_MILLION)) /
             ONE_MILLION;
-        uint256 versionOfToken = (_tokenId % ONE_MILLION) -
-            (_tokenId % TEN_THOUSAND);
+        uint256 versionOfToken = ((_tokenId % ONE_MILLION) -
+            (_tokenId % TEN_THOUSAND)) / TEN_THOUSAND;
         uint256 tokenNr = _tokenId % TEN_THOUSAND;
 
         return (collectionOfToken, versionOfToken, tokenNr);

@@ -62,5 +62,4 @@ interface IFantiumUserManager {
         address _address,
         uint256 _reduceAllocation
     ) external returns (uint256);
-
 }
