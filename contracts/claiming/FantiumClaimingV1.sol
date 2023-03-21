@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/IFantiumNFT.sol";
 import "../interfaces/IFantiumUserManager.sol";
 import "../utils/TokenVersionUtil.sol";
@@ -273,8 +274,15 @@ contract FantiumClaimingV1 is
             "FantiumClaimingV1: amount already paid in"
         );
 
+        // check that the distribution event is open
+        require(         
+            distributionEvents[_distributionEventId].closed == false,
+            "FantiumClaimingV1: distribution event not open"
+        );
+
         // EFFECTS
-        IERC20(payoutToken).transferFrom(
+        SafeERC20.safeTransferFrom(
+            IERC20(payoutToken),
             _msgSender(),
             address(this),
             _amountWithDecimals
@@ -312,6 +320,7 @@ contract FantiumClaimingV1 is
         onlyValidDistributionEvent(_id)
         onlyRole(PLATFORM_MANAGER_ROLE)
     {
+        require(!distributionEvents[_id].amountPaidIn, "Cannot update parameters");
         distributionEvents[_id].collectionIds = collectionIds;
         emit DistributionEventUpdate(_id, FIELD_COLLECTIONS);
     }
@@ -601,11 +610,19 @@ contract FantiumClaimingV1 is
 
         // FANtium payment
         if (fantiumRevenue_ > 0) {
-            IERC20(payoutToken).transfer(fantiumAddress_, fantiumRevenue_);
+            SafeERC20.safeTransfer(
+                IERC20(payoutToken),
+                fantiumAddress_,
+                fantiumRevenue_
+            );
         }
         // yser payment
         if (userRevenue_ > 0) {
-            IERC20(payoutToken).transfer(_msgSender(), userRevenue_);
+            SafeERC20.safeTransfer(
+                IERC20(payoutToken),
+                _msgSender(),
+                userRevenue_
+            );
         }
     }
 
@@ -624,6 +641,7 @@ contract FantiumClaimingV1 is
     function updatePayoutToken(
         address _payoutToken
     ) external onlyManager whenNotPaused {
+        require(IERC20(_payoutToken).balanceOf(address(this)) == 0, "FantiumClaimingV1: no balance");
         payoutToken = _payoutToken;
     }
 
@@ -675,8 +693,8 @@ contract FantiumClaimingV1 is
             "FantiumClaimingV1: Amount to pay is 0"
         );
 
-        IERC20(payoutToken).transferFrom(
-            address(this),
+        SafeERC20.safeTransfer(
+            IERC20(payoutToken),
             distributionEvents[_distributionEventId].athleteAddress,
             closingAmount
         );

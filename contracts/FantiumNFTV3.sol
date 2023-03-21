@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IFantiumNFT.sol";
 import "./utils/TokenVersionUtil.sol";
 import "./interfaces/IFantiumUserManager.sol";
@@ -335,7 +336,8 @@ contract FantiumNFTV3 is
         ) = getPrimaryRevenueSplits(_collectionId, _price);
         // FANtium payment
         if (fantiumRevenue_ > 0) {
-            IERC20(erc20PaymentToken).transferFrom(
+            SafeERC20.safeTransferFrom(
+                IERC20(erc20PaymentToken),
                 _sender,
                 fantiumAddress_,
                 fantiumRevenue_
@@ -343,7 +345,8 @@ contract FantiumNFTV3 is
         }
         // athlete payment
         if (athleteRevenue_ > 0) {
-            IERC20(erc20PaymentToken).transferFrom(
+            SafeERC20.safeTransferFrom(
+                IERC20(erc20PaymentToken),
                 _sender,
                 athleteAddress_,
                 athleteRevenue_
@@ -448,6 +451,9 @@ contract FantiumNFTV3 is
         onlyRole(PLATFORM_MANAGER_ROLE)
         onlyValidAddress(_athleteAddress)
     {
+        require( _athleteSecondarySalesBPS + _fantiumSecondarySalesBPS <= 10_000, "FantiumClaimingV1: secondary sales BPS must be less than 10,000");
+        require( _maxInvocations < 10000, "FantiumClaimingV1: max invocations must be less than 10,000");
+        
         uint256 collectionId = nextCollectionId;
         collections[collectionId].athleteAddress = _athleteAddress;
         collections[collectionId]
@@ -456,11 +462,6 @@ contract FantiumNFTV3 is
             .athleteSecondarySalesBPS = _athleteSecondarySalesBPS;
         collections[collectionId].maxInvocations = _maxInvocations;
         collections[collectionId].price = _price;
-
-        // collections[collectionId]
-        //     .tournamentEarningShare1e7 = _tournamentEarningShare1e7;
-        // collections[collectionId]
-        //     .otherEarningsShare1e7 = _otherEarningsShare1e7;
 
         collections[collectionId].launchTimestamp = _launchTimestamp;
 
@@ -583,7 +584,7 @@ contract FantiumNFTV3 is
         onlyValidCollectionId(_collectionId)
         onlyRole(PLATFORM_MANAGER_ROLE)
     {
-        require(_secondMarketRoyalty <= 9500, "Max of 95%");
+        require( _secondMarketRoyalty + collections[_collectionId].fantiumSecondarySalesBPS <= 10000, "FantiumClaimingV1: secondary sales BPS must be less than 10,000");
         collections[_collectionId]
             .athleteSecondarySalesBPS = _secondMarketRoyalty;
         emit CollectionUpdated(
@@ -617,6 +618,8 @@ contract FantiumNFTV3 is
                     (_otherTokenShare1e7 > 0 && _otherTotalBPS > 0)),
             "all parameters must be greater than 0"
         );
+        require( _maxInvocations <= 10000, "max invocations must be less than 10,000" );
+
         collections[_collectionId].maxInvocations = _maxInvocations;
         collections[_collectionId].price = _price;
 
@@ -677,6 +680,7 @@ contract FantiumNFTV3 is
         onlyRole(PLATFORM_MANAGER_ROLE)
         onlyValidAddress(_fantiumSalesAddress)
     {
+        require( collections[_collectionId].athleteSecondarySalesBPS + _fantiumSecondarySalesBPS <= 10000, "FantiumClaimingV1: secondary sales BPS must be less than 10,000");
         collections[_collectionId].fantiumSalesAddress = _fantiumSalesAddress;
         collections[_collectionId]
             .fantiumSecondarySalesBPS = _fantiumSecondarySalesBPS;
@@ -731,6 +735,9 @@ contract FantiumNFTV3 is
         // burn old token
         _burn(_tokenId);
         _versionId++;
+        
+        require(_versionId < 100, "Version id cannot be greater than 99");
+
         uint256 newTokenId = TokenVersionUtil.createTokenId(
             _collectionId,
             _versionId,
