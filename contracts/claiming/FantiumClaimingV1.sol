@@ -404,6 +404,18 @@ contract FantiumClaimingV1 is
     {
         // CHECKS
 
+        // check if distribution event exists
+        require(
+            distributionEvents[_distributionEventId].exists,
+            "FantiumClaimingV1: distributionEventId does not exist"
+        );
+
+        // check if distribution Event was paid in
+        require(
+            distributionEvents[_distributionEventId].amountPaidIn,
+            "FantiumClaimingV1: distribution amount has not been paid in"
+        );
+
         //check if _msgSender() has FAN token Id
         require(
             _msgSender() ==
@@ -426,6 +438,7 @@ contract FantiumClaimingV1 is
             "FantiumClaimingV1: distribution time has not started or has ended"
         );
 
+        // check if distribution event is closed
         require(
             distributionEvents[_distributionEventId].closed == false,
             "FantiumClaimingV1: distribution event is closed"
@@ -455,7 +468,7 @@ contract FantiumClaimingV1 is
         //set claimed to true
         distributionEventToTokenIdToClaimed[_distributionEventId][
             baseTokenId
-        ] == true;
+        ] = true;
 
         //calculate claim amount
         uint256 claimAmount = calculateClaim(_distributionEventId, _tokenId);
@@ -630,12 +643,24 @@ contract FantiumClaimingV1 is
         onlyValidDistributionEvent(_distributionEventId)
     {
         require(
-            distributionEvents[_distributionEventId].closed = false,
+            distributionEvents[_distributionEventId].closed == false,
             "FantiumClaimingV1: distribution already closed"
         );
         require(
-            distributionEvents[_distributionEventId].exists = true,
+            distributionEvents[_distributionEventId].exists,
             "FantiumClaimingV1: distributionEvent doesn't exist"
+        );
+
+        // check if the athlete already paid it
+        require(
+            distributionEvents[_distributionEventId].amountPaidIn,
+            "FantiumClaimingV1: Amount not paidIn yet"
+        );
+
+        // check if the athlete address is set
+        require(
+            distributionEvents[_distributionEventId].athleteAddress != address(0),
+            "FantiumClaimingV1: Athlete address not set yet"
         );
 
         distributionEvents[_distributionEventId].closed = true;
@@ -643,6 +668,12 @@ contract FantiumClaimingV1 is
             .tournamentDistributionAmount +
             distributionEvents[_distributionEventId].otherDistributionAmount -
             distributionEvents[_distributionEventId].claimedAmount;
+
+        // check if the athlete address is set
+        require(
+            closingAmount > 0,
+            "FantiumClaimingV1: Amount to pay is 0"
+        );
 
         IERC20(payoutToken).transferFrom(
             address(this),

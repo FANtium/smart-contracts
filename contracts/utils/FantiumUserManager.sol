@@ -216,8 +216,12 @@ contract FantiumUserManager is
         address _contractAddress,
         address _address,
         uint256 _reduceAllocation
-    ) external whenNotPaused returns (uint256){
-        require(hasRole(PLATFORM_MANAGER_ROLE, msg.sender) || allowedContracts[msg.sender], "Only manager or allowed Contract");
+    ) external whenNotPaused returns (uint256) {
+        require(
+            hasRole(PLATFORM_MANAGER_ROLE, msg.sender) ||
+                allowedContracts[msg.sender],
+            "Only manager or allowed Contract"
+        );
         require(allowedContracts[_contractAddress], "Only allowed Contract");
 
         users[_address].contractToAllowlistToSpots[_contractAddress][
@@ -230,7 +234,10 @@ contract FantiumUserManager is
                 _collectionId
             ] = 0;
         emit AddressRemovedFromAllowList(_collectionId, _address);
-        return users[_address].contractToAllowlistToSpots[_contractAddress][_collectionId]; 
+        return
+            users[_address].contractToAllowlistToSpots[_contractAddress][
+                _collectionId
+            ];
     }
 
     function hasAllowlist(
