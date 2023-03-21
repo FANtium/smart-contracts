@@ -48,4 +48,19 @@ interface IFantiumUserManager {
         uint256 _collectionId,
         address _address
     ) external view returns (uint256);
+
+    /**
+     * @notice Reduce Allowlist for NFT contract
+     * @param _contractAddress ContractAddress of the NFT contract that allowlist applies to
+     * @param _collectionId CollectionId of the NFT contract that allowlist applies to
+     * @param _address address to be reduced the allowlist for.
+     * @return _reduceAllocation amount the allowlist gets reduced by.
+     */
+    function reduceAllowListAllocation(
+        uint256 _collectionId,
+        address _contractAddress,
+        address _address,
+        uint256 _reduceAllocation
+    ) external returns (uint256);
+
 }

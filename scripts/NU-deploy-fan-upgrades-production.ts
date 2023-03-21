@@ -13,18 +13,18 @@ async function main() {
   console.log(JSON.parse(contents));
   const contractAddresses = JSON.parse(contents)
 
-  const FantiumV2 = await ethers.getContractFactory("FantiumNFTV2");
-  await upgrades.validateUpgrade(contractAddresses.proxy, FantiumV2);
+  const FantiumV3 = await ethers.getContractFactory("FantiumNFTV3");
+  await upgrades.validateUpgrade(contractAddresses.proxy, FantiumV3);
 
   //upgrade proxy
-  const nftContract = await upgrades.upgradeProxy("0x4c61c07F1Ff7de15e40eFc1Bd3A94eEB54cBF242", FantiumV2)
+  const nftContract = await upgrades.upgradeProxy("0x007f61d8Cd499726B9545d6B914682577BFD3556", FantiumV3)
 
   const data = {
     "proxy": nftContract.address,
     "implementation": await upgrades.erc1967.getImplementationAddress(nftContract.address),
   }
 
-  writeFileSync(join(__dirname, './contractAddresses.json'), JSON.stringify(data), {
+  writeFileSync(join(__dirname, './addresses/fantium.json'), JSON.stringify(data), {
     flag: 'w',
   });
 }

@@ -9,9 +9,9 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-// import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import "./interfaces/IFantiumNFT.sol";
 import "./utils/TokenVersionUtil.sol";
+import "./interfaces/IFantiumUserManager.sol";
 
 /**
  * @title FANtium ERC721 contract V3.
@@ -33,7 +33,7 @@ contract FantiumNFTV3 is
     string public baseURI;
     mapping(uint256 => mapping(address => uint256))
         public collectionIdToAllowList;
-    mapping(address => bool) public kycedAddresses;
+    mapping(address => bool) public kycedAddresses; //deprecated and not used anymore; kept for backwards compatibility
     uint256 private nextCollectionId;
     address public erc20PaymentToken;
 
@@ -93,8 +93,9 @@ contract FantiumNFTV3 is
     }
 
     mapping(uint256 => Participation) public collectionToParticipations;
-    address private trustedForwarder;
     address public claimContract;
+    address public fantiumUserManager;
+    address private trustedForwarder;
 
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
@@ -186,7 +187,7 @@ contract FantiumNFTV3 is
         string memory _tokenName,
         string memory _tokenSymbol,
         address _defaultAdmin,
-        address trustedForwarder
+        address _trustedForwarder
     ) public initializer {
         __ERC721_init(_tokenName, _tokenSymbol);
         __UUPSUpgradeable_init();
@@ -196,7 +197,7 @@ contract FantiumNFTV3 is
 
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _grantRole(UPGRADER_ROLE, _defaultAdmin);
-        trustedForwarder = trustedForwarder;
+        trustedForwarder = _trustedForwarder;
         nextCollectionId = 1;
     }
 
@@ -214,92 +215,6 @@ contract FantiumNFTV3 is
         _disableInitializers();
     }
 
-    /*//////////////////////////////////////////////////////////////
-                                 KYC
-    //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice Add address to KYC list.
-     * @param _address address to be added to KYC list.
-     */
-    function addAddressToKYC(
-        address _address
-    ) external whenNotPaused onlyKycManager {
-        kycedAddresses[_address] = true;
-        emit AddressAddedToKYC(_address);
-    }
-
-    /**
-     * @notice Remove address from KYC list.
-     * @param _address address to be removed from KYC list.
-     */
-    function removeAddressFromKYC(
-        address _address
-    ) external whenNotPaused onlyKycManager {
-        kycedAddresses[_address] = false;
-        emit AddressRemovedFromKYC(_address);
-    }
-
-    /**
-     * @notice Check if address is KYCed.
-     * @param _address address to be checked.
-     * @return isKYCed true if address is KYCed.
-     */
-    function isAddressKYCed(address _address) public view returns (bool) {
-        return kycedAddresses[_address];
-    }
-
-    /*//////////////////////////////////////////////////////////////
-                            ALLOW LIST
-    //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice Add address to allow list.
-     * @param _collectionId collection ID.
-     * @param _addresses addresses to add to allow list.
-     * @param _increaseAllocations allocation to the address.
-     */
-    function batchAllowlist(
-        uint256 _collectionId,
-        address[] memory _addresses,
-        uint256[] memory _increaseAllocations
-    )
-        public
-        whenNotPaused
-        onlyRole(PLATFORM_MANAGER_ROLE)
-        onlyValidCollectionId(_collectionId)
-    {
-        for (uint256 i = 0; i < _addresses.length; i++) {
-            collectionIdToAllowList[_collectionId][
-                _addresses[i]
-            ] += _increaseAllocations[i];
-            emit AddressAddedToAllowList(_collectionId, _addresses[i]);
-        }
-    }
-
-    /**
-     * @notice Remove address from allow list.
-     * @param _collectionId collection ID.
-     * @param _address address to be removed from allow list.
-     * @param _reduceAllocation allocation to the address.
-     */
-    function reduceAllowListAllocation(
-        uint256 _collectionId,
-        address _address,
-        uint256 _reduceAllocation
-    )
-        public
-        whenNotPaused
-        onlyRole(PLATFORM_MANAGER_ROLE)
-        onlyValidCollectionId(_collectionId)
-    {
-        collectionIdToAllowList[_collectionId][_address] > _reduceAllocation
-            ? collectionIdToAllowList[_collectionId][
-                _address
-            ] -= _reduceAllocation
-            : collectionIdToAllowList[_collectionId][_address] = 0;
-        emit AddressRemovedFromAllowList(_collectionId, _address);
-    }
 
     /*//////////////////////////////////////////////////////////////
                                  MINTING
@@ -331,7 +246,8 @@ contract FantiumNFTV3 is
         _amount = _amount > 10 ? 10 : _amount;
 
         // CHECKS
-        require(isAddressKYCed(_msgSender()), "Address is not KYCed");
+        require(fantiumUserManager != address(0), "UserManager not set");
+        require( IFantiumUserManager(fantiumUserManager).isAddressKYCed(_msgSender()), "Address is not KYCed");
         Collection storage collection = collections[_collectionId];
         require(collection.exists, "Collection does not exist");
         require(
@@ -355,7 +271,7 @@ contract FantiumNFTV3 is
         if (collection.isPaused) {
             // if minting is paused, require address to be on allowlist
             require(
-                collectionIdToAllowList[_collectionId][_msgSender()] >=
+                IFantiumUserManager(fantiumUserManager).hasAllowlist(address(this), _collectionId, _msgSender()) >=
                     _amount ||
                     hasRole(PLATFORM_MANAGER_ROLE, _msgSender()),
                 "Collection is paused or allowlist allocation insufficient"
@@ -375,7 +291,7 @@ contract FantiumNFTV3 is
         if (
             collection.isPaused && !hasRole(PLATFORM_MANAGER_ROLE, _msgSender())
         ) {
-            collectionIdToAllowList[_collectionId][_msgSender()] -= _amount;
+            IFantiumUserManager(fantiumUserManager).reduceAllowListAllocation(_collectionId,address(this),_msgSender(),_amount);
         }
 
         // INTERACTIONS
@@ -824,6 +740,16 @@ contract FantiumNFTV3 is
         address _claimContract
     ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
         claimContract = _claimContract;
+    }
+
+    /**
+     * @notice set Claim contract address
+     */
+
+    function updateUserManagerContract(
+        address _userManagerContract
+    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
+        fantiumUserManager = _userManagerContract;
     }
 
     /*//////////////////////////////////////////////////////////////

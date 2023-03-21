@@ -133,9 +133,9 @@ contract FantiumClaimingV1 is
      */
     ///@dev no constructor in upgradable contracts. Instead we have initializers
     function initialize(
+        address _defaultAdmin,
         address _payoutToken,
-        address _fantiumNFTContract,
-        address _defaultAdmin
+        address _fantiumNFTContract
     ) public initializer {
         __UUPSUpgradeable_init();
         __AccessControl_init();
@@ -303,7 +303,7 @@ contract FantiumClaimingV1 is
         emit DistributionEventUpdate(_id, FIELD_AMOUNT);
     }
 
-    function updateDistributionEventAmount(
+    function updateDistributionEventCollectionIds(
         uint256 _id,
         uint256[] memory collectionIds
     )

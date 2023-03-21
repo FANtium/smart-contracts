@@ -91,11 +91,9 @@ describe("FantiumClaim", () => {
         //////////////////////////////////////////////////////////////*/
 
         const FantiumClaimingV1 = await ethers.getContractFactory("FantiumClaimingV1")
-        claimContract = await upgrades.deployProxy(FantiumClaimingV1, [erc20Contract.address, nftContract.address, defaultAdmin.address], { constructorArgs: [forwarder.address] }) as FantiumClaimingV1
-
+        claimContract = await upgrades.deployProxy(FantiumClaimingV1, [defaultAdmin.address, erc20Contract.address, nftContract.address], { constructorArgs: [forwarder.address] }) as FantiumClaimingV1
         // set Role
         await claimContract.connect(defaultAdmin).grantRole(await claimContract.PLATFORM_MANAGER_ROLE(), platformManager.address)
-
         // pause the contract
         await claimContract.connect(platformManager).pause()
         // unpause contract
@@ -110,6 +108,9 @@ describe("FantiumClaim", () => {
         userManager = await upgrades.deployProxy(FantiumUserManager, [defaultAdmin.address, nftContract.address, claimContract.address]) as FantiumUserManager
         //set Role and 
         await userManager.connect(defaultAdmin).grantRole(await userManager.PLATFORM_MANAGER_ROLE(), platformManager.address)
+        await userManager.connect(defaultAdmin).grantRole(await userManager.PLATFORM_MANAGER_ROLE(), kycManager.address)
+        await userManager.connect(platformManager).addAllowedConctract(nftContract.address)
+        await userManager.connect(platformManager).addAllowedConctract(claimContract.address)
         await claimContract.connect(platformManager).updateFantiumUserManager(userManager.address)
 
     })
@@ -146,7 +147,8 @@ describe("FantiumClaim", () => {
         await nftContractV3.connect(platformManager).toggleCollectionPaused(1)
 
         // add platfrom manager to KYC
-        await nftContractV3.connect(kycManager).addAddressToKYC(fan.address)
+        await userManager.connect(kycManager).addAddressToKYC(fan.address)
+        await nftContractV3.connect(platformManager).updateUserManagerContract(userManager.address)
 
         // approve erc20
         await erc20Contract.connect(fan).approve(nftContractV3.address, 3 * price * (10 ** decimals))
@@ -256,10 +258,12 @@ describe("FantiumClaim", () => {
         await nftContractV3.connect(platformManager).toggleCollectionMintable(1)
         await nftContractV3.connect(platformManager).toggleCollectionPaused(1)
         // add platfrom manager to KYC
-        await nftContractV3.connect(kycManager).addAddressToKYC(athlete.address)
+        await nftContractV3.connect(platformManager).updateUserManagerContract(userManager.address)
+        await userManager.connect(kycManager).addAddressToKYC(athlete.address)
+
         // approve erc20
         await erc20Contract.connect(athlete).approve(nftContractV3.address, 3 * price * (10 ** decimals))
-        
+
         await nftContractV3.connect(athlete).batchMint(1, 1)
 
         await expect(claimContract.connect(fan).claim(1000000, 1)).to.be.revertedWith('Only token owner')
@@ -295,7 +299,8 @@ describe("FantiumClaim", () => {
         await nftContractV3.connect(platformManager).toggleCollectionMintable(1)
         await nftContractV3.connect(platformManager).toggleCollectionPaused(1)
         // add platfrom manager to KYC
-        await nftContractV3.connect(kycManager).addAddressToKYC(other.address)
+        await userManager.connect(kycManager).addAddressToKYC(other.address)
+        await nftContractV3.connect(platformManager).updateUserManagerContract(userManager.address)
         // approve erc20
         await erc20Contract.connect(other).approve(nftContractV3.address, price * (10 ** decimals))
         await nftContractV3.connect(other).batchMint(1, 1)
@@ -367,7 +372,8 @@ describe("FantiumClaim", () => {
         await nftContractV3.connect(platformManager).toggleCollectionMintable(1)
         await nftContractV3.connect(platformManager).toggleCollectionPaused(1)
         // add platfrom manager to KYC
-        await nftContractV3.connect(kycManager).addAddressToKYC(other.address)
+        await userManager.connect(kycManager).addAddressToKYC(other.address)
+        await nftContractV3.connect(platformManager).updateUserManagerContract(userManager.address)
         // approve erc20
         await erc20Contract.connect(other).approve(nftContractV3.address, 10 * price * (10 ** decimals))
         await nftContractV3.connect(other).batchMint(1, 10)
@@ -470,10 +476,11 @@ describe("FantiumClaim", () => {
 
         /// ADMIN ON V1
         // add fan address to KYC
-        await nftContractV3.connect(kycManager).addAddressToKYC(fan.address)
+        await userManager.connect(kycManager).addAddressToKYC(fan.address)
         // unpause collection minting
         await nftContractV3.connect(platformManager).toggleCollectionPaused(1)
         await nftContractV3.connect(platformManager).toggleCollectionMintable(1)
+        await nftContractV3.connect(platformManager).updateUserManagerContract(userManager.address)
         // check if fan can mint
         await erc20Contract.connect(fan).approve(nftContract.address, price * 10 ** decimals * 10)
         await nftContractV3.connect(fan).batchMint(1, 10);
@@ -507,7 +514,8 @@ describe("FantiumClaim", () => {
 
         /// ADMIN ON V1
         // add fan address to KYC
-        await nftContractV3.connect(kycManager).addAddressToKYC(fan.address)
+        await userManager.connect(kycManager).addAddressToKYC(fan.address)
+        await nftContractV3.connect(platformManager).updateUserManagerContract(userManager.address)
         // unpause collection minting
         await nftContractV3.connect(platformManager).toggleCollectionPaused(1)
         // check if fan can mint
@@ -540,11 +548,12 @@ describe("FantiumClaim", () => {
 
         /// ADMIN ON V1
         // add fan address to KYC
-        await nftContractV3.connect(kycManager).addAddressToKYC(fan.address)
+        await userManager.connect(kycManager).addAddressToKYC(fan.address)
+        await nftContractV3.connect(platformManager).updateUserManagerContract(userManager.address)
         // unpause collection minting
         await nftContractV3.connect(platformManager).toggleCollectionMintable(1)
         // set allowlist allocation
-        await nftContractV3.connect(platformManager).batchAllowlist(1, [fan.address], [10])
+        await userManager.connect(platformManager).batchAllowlist(1, nftContractV3.address ,[fan.address], [10])
 
         // allocation
         await erc20Contract.connect(fan).approve(nftContract.address, price * 10 ** decimals * 10)
