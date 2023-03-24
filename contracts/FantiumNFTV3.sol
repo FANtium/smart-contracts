@@ -84,16 +84,9 @@ contract FantiumNFTV3 is
         uint256 athleteSecondarySalesBPS;
         address payable fantiumSalesAddress;
         uint256 fantiumSecondarySalesBPS;
+        uint256 otherEarningShare1e7;
     }
 
-    struct Participation {
-        uint256 tournamentTokenShare1e7;
-        uint256 tournamentTotalBPS;
-        uint256 otherTokenShare1e7;
-        uint256 otherTotalBPS;
-    }
-
-    mapping(uint256 => Participation) public collectionToParticipations;
     address public claimContract;
     address public fantiumUserManager;
     address private trustedForwarder;
@@ -242,10 +235,9 @@ contract FantiumNFTV3 is
         uint256 _collectionId,
         uint24 _amount
     ) public whenNotPaused {
-        // limit amount to 10
-        _amount = _amount > 10 ? 10 : _amount;
 
         // CHECKS
+        require( 0 < _amount && _amount <= 10 , "Amount must be greater than 0 and smaller than 11");
         require(fantiumUserManager != address(0), "UserManager not set");
         require(
             IFantiumUserManager(fantiumUserManager).isAddressKYCed(
@@ -267,11 +259,6 @@ contract FantiumNFTV3 is
         uint256 totalPrice = collection.price *
             10 ** ERC20(erc20PaymentToken).decimals() *
             _amount;
-        require(
-            ERC20(erc20PaymentToken).allowance(_msgSender(), address(this)) >=
-                totalPrice,
-            "ERC20 allowance too low"
-        );
 
         if (collection.isPaused) {
             // if minting is paused, require address to be on allowlist
@@ -313,7 +300,7 @@ contract FantiumNFTV3 is
 
         for (uint256 i = 0; i < _amount; i++) {
             _mint(_to, tokenId + i);
-            emit Mint(_to, tokenId);
+            emit Mint(_to, tokenId + i);
         }
     }
 
@@ -391,7 +378,7 @@ contract FantiumNFTV3 is
 
         // calculate revenues
         athleteRevenue_ =
-            (_price * uint256(collection.athletePrimarySalesBPS)) /
+            (_price * collection.athletePrimarySalesBPS) /
             10000;
 
         fantiumRevenue_ = _price - athleteRevenue_;
@@ -429,7 +416,8 @@ contract FantiumNFTV3 is
      * @param _athleteSecondarySalesBPS Secondary sales percentage of the athlete.
      * @param _maxInvocations Maximum number of invocations.
      * @param _price Price of the token.
-     * @param _tournamentTokenShare1e7 Tournament earning share.
+     * @param _tournamentEarningShare1e7 Tournament earning share.
+     * @param _otherEarningShare1e7 Tournament earning share.
      * @param _launchTimestamp Launch timestamp.
      */
     function addCollection(
@@ -441,20 +429,42 @@ contract FantiumNFTV3 is
         uint _launchTimestamp,
         address payable _fantiumSalesAddress,
         uint256 _fantiumSecondarySalesBPS,
-        uint256 _tournamentTokenShare1e7,
-        uint256 _tournamentTotalBPS,
-        uint256 _otherTokenShare1e7,
-        uint256 _otherTotalBPS
+        uint256 _tournamentEarningShare1e7,
+        uint256 _otherEarningShare1e7
     )
         external
         whenNotPaused
         onlyRole(PLATFORM_MANAGER_ROLE)
         onlyValidAddress(_athleteAddress)
     {
-        require( _athleteSecondarySalesBPS + _fantiumSecondarySalesBPS <= 10_000, "FantiumClaimingV1: secondary sales BPS must be less than 10,000");
-        require( _maxInvocations < 10000, "FantiumClaimingV1: max invocations must be less than 10,000");
-        
+        require(
+            _athleteSecondarySalesBPS + _fantiumSecondarySalesBPS <= 10_000,
+            "FantiumNFTV3: secondary sales BPS must be less than 10,000"
+        );
+        require(
+            _maxInvocations < 10_000,
+            "FantiumNFTV3: max invocations must be less than 10,000"
+        );
+        require(
+            _athletePrimarySalesBPS <= 10_000,
+            "FantiumNFTV3: max invocations must be less than 10,000"
+        );
+        require(
+            nextCollectionId < 1_000_000,
+            "FantiumNFTV3: max collections reached"
+        );
+        require(
+            _tournamentEarningShare1e7 <= 1e7 && _otherEarningShare1e7 <= 1e7,
+            "FantiumNFTV3: token share must be less than 1e7"
+        );
+
+        require(
+            _athleteAddress != address(0) && _fantiumSalesAddress != address(0), 
+            "FantiumNFTV3: addresses cannot be 0"
+        );
+
         uint256 collectionId = nextCollectionId;
+
         collections[collectionId].athleteAddress = _athleteAddress;
         collections[collectionId]
             .athletePrimarySalesBPS = _athletePrimarySalesBPS;
@@ -474,13 +484,9 @@ contract FantiumNFTV3 is
         collections[collectionId]
             .fantiumSecondarySalesBPS = _fantiumSecondarySalesBPS;
 
-        collectionToParticipations[collectionId]
-            .tournamentTokenShare1e7 = _tournamentTokenShare1e7;
-        collectionToParticipations[collectionId]
-            .tournamentTotalBPS = _tournamentTotalBPS;
-        collectionToParticipations[collectionId]
-            .otherTokenShare1e7 = _otherTokenShare1e7;
-        collectionToParticipations[collectionId].otherTotalBPS = _otherTotalBPS;
+        collections[collectionId]
+            .tournamentEarningShare1e7 = _tournamentEarningShare1e7;
+        collections[collectionId].otherEarningShare1e7 = _otherEarningShare1e7;
 
         nextCollectionId = collectionId + 1;
         emit CollectionUpdated(collectionId, FIELD_COLLECTION_CREATED);
@@ -494,7 +500,6 @@ contract FantiumNFTV3 is
         address payable _athleteAddress
     )
         external
-        whenNotPaused
         onlyValidCollectionId(_collectionId)
         onlyValidAddress(_athleteAddress)
         onlyRole(PLATFORM_MANAGER_ROLE)
@@ -510,7 +515,6 @@ contract FantiumNFTV3 is
         uint256 _collectionId
     )
         external
-        whenNotPaused
         onlyValidCollectionId(_collectionId)
         onlyAthlete(_collectionId)
     {
@@ -526,7 +530,6 @@ contract FantiumNFTV3 is
         uint256 _collectionId
     )
         external
-        whenNotPaused
         onlyValidCollectionId(_collectionId)
         onlyAthlete(_collectionId)
     {
@@ -551,7 +554,6 @@ contract FantiumNFTV3 is
         uint256 _primaryMarketRoyalty
     )
         external
-        whenNotPaused
         onlyValidCollectionId(_collectionId)
         onlyRole(PLATFORM_MANAGER_ROLE)
     {
@@ -580,11 +582,15 @@ contract FantiumNFTV3 is
         uint256 _secondMarketRoyalty
     )
         external
-        whenNotPaused
         onlyValidCollectionId(_collectionId)
         onlyRole(PLATFORM_MANAGER_ROLE)
     {
-        require( _secondMarketRoyalty + collections[_collectionId].fantiumSecondarySalesBPS <= 10000, "FantiumClaimingV1: secondary sales BPS must be less than 10,000");
+        require(
+            _secondMarketRoyalty +
+                collections[_collectionId].fantiumSecondarySalesBPS <=
+                10000,
+            "FantiumClaimingV1: secondary sales BPS must be less than 10,000"
+        );
         collections[_collectionId]
             .athleteSecondarySalesBPS = _secondMarketRoyalty;
         emit CollectionUpdated(
@@ -600,13 +606,10 @@ contract FantiumNFTV3 is
         uint256 _collectionId,
         uint256 _maxInvocations,
         uint256 _price,
-        uint256 _tournamentTokenShare1e7,
-        uint256 _tournamentTotalBPS,
-        uint256 _otherTokenShare1e7,
-        uint256 _otherTotalBPS
+        uint256 _tournamentEarningShare1e7,
+        uint256 _otherEarningShare1e7
     )
         external
-        whenNotPaused
         onlyValidCollectionId(_collectionId)
         onlyRole(PLATFORM_MANAGER_ROLE)
     {
@@ -614,23 +617,28 @@ contract FantiumNFTV3 is
         require(
             _maxInvocations > 0 &&
                 _price > 0 &&
-                ((_tournamentTokenShare1e7 > 0 && _tournamentTotalBPS > 0) ||
-                    (_otherTokenShare1e7 > 0 && _otherTotalBPS > 0)),
+                (_tournamentEarningShare1e7 > 0 && _otherEarningShare1e7 > 0),
             "all parameters must be greater than 0"
         );
-        require( _maxInvocations <= 10000, "max invocations must be less than 10,000" );
+        require(
+            _maxInvocations <= 10000,
+            "max invocations must be less than 10,000"
+        );
+        require(
+            nextCollectionId < 1_000_000,
+            "FantiumNFTV3: max collections reached"
+        );
+        require(
+            _tournamentEarningShare1e7 <= 1e7 && _otherEarningShare1e7 <= 1e7,
+            "FantiumNFTV3: token share must be less than 1e7"
+        );
 
         collections[_collectionId].maxInvocations = _maxInvocations;
         collections[_collectionId].price = _price;
 
-        collectionToParticipations[_collectionId]
-            .tournamentTokenShare1e7 = _tournamentTokenShare1e7;
-        collectionToParticipations[_collectionId]
-            .tournamentTotalBPS = _tournamentTotalBPS;
-        collectionToParticipations[_collectionId]
-            .otherTokenShare1e7 = _otherTokenShare1e7;
-        collectionToParticipations[_collectionId]
-            .otherTotalBPS = _otherTotalBPS;
+        collections[_collectionId]
+            .tournamentEarningShare1e7 = _tournamentEarningShare1e7;
+        collections[_collectionId].otherEarningShare1e7 = _otherEarningShare1e7;
 
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_TIER);
     }
@@ -644,7 +652,6 @@ contract FantiumNFTV3 is
         uint256 _launchTimestamp
     )
         external
-        whenNotPaused
         onlyValidCollectionId(_collectionId)
         onlyRole(PLATFORM_MANAGER_ROLE)
     {
@@ -676,11 +683,16 @@ contract FantiumNFTV3 is
         uint256 _fantiumSecondarySalesBPS
     )
         external
-        whenNotPaused
         onlyRole(PLATFORM_MANAGER_ROLE)
         onlyValidAddress(_fantiumSalesAddress)
+        onlyValidCollectionId(_collectionId)
     {
-        require( collections[_collectionId].athleteSecondarySalesBPS + _fantiumSecondarySalesBPS <= 10000, "FantiumClaimingV1: secondary sales BPS must be less than 10,000");
+        require(
+            collections[_collectionId].athleteSecondarySalesBPS +
+                _fantiumSecondarySalesBPS <=
+                10000,
+            "FantiumClaimingV1: secondary sales BPS must be less than 10,000"
+        );
         collections[_collectionId].fantiumSalesAddress = _fantiumSalesAddress;
         collections[_collectionId]
             .fantiumSecondarySalesBPS = _fantiumSecondarySalesBPS;
@@ -735,7 +747,7 @@ contract FantiumNFTV3 is
         // burn old token
         _burn(_tokenId);
         _versionId++;
-        
+
         require(_versionId < 100, "Version id cannot be greater than 99");
 
         uint256 newTokenId = TokenVersionUtil.createTokenId(
@@ -758,7 +770,7 @@ contract FantiumNFTV3 is
 
     function updateClaimContract(
         address _claimContract
-    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
+    ) public onlyRole(PLATFORM_MANAGER_ROLE) {
         claimContract = _claimContract;
     }
 
@@ -768,7 +780,7 @@ contract FantiumNFTV3 is
 
     function updateUserManagerContract(
         address _userManagerContract
-    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
+    ) public onlyRole(PLATFORM_MANAGER_ROLE) {
         fantiumUserManager = _userManagerContract;
     }
 
@@ -836,38 +848,27 @@ contract FantiumNFTV3 is
     }
 
     function getCollectionAthleteAddress(
-        uint256 _collectionID
+        uint256 _collectionId
     ) external view returns (address) {
-        return collections[_collectionID].athleteAddress;
+        return collections[_collectionId].athleteAddress;
     }
 
-    function getTournamentEarnings(
-        uint256 _collectionID
+    function getEarningsShares1e7(
+        uint256 _collectionId
     ) external view returns (uint256, uint256) {
-        uint256 tournamentTokenShare1e7 = collectionToParticipations[
-            _collectionID
-        ].tournamentTokenShare1e7;
-        uint256 tournamentTotalBPS = collectionToParticipations[_collectionID]
-            .tournamentTotalBPS;
-
-        return (tournamentTokenShare1e7, tournamentTotalBPS);
-    }
-
-    function getOtherEarnings(
-        uint256 _collectionID
-    ) external view returns (uint256, uint256) {
-        uint256 otherTokenShare1e7 = collectionToParticipations[_collectionID]
-            .otherTokenShare1e7;
-        uint256 otherTotalBPS = collectionToParticipations[_collectionID]
-            .otherTotalBPS;
-        // return collections[_collectionID].otherEarningsShare1e7;
-        return (otherTokenShare1e7, otherTotalBPS);
+        return (collections[_collectionId].tournamentEarningShare1e7, collections[_collectionId].otherEarningShare1e7);
     }
 
     function getCollectionExists(
-        uint256 _collectionID
+        uint256 _collectionId
     ) external view returns (bool) {
-        return collections[_collectionID].exists;
+        return collections[_collectionId].exists;
+    }
+
+    function getMintedTokensOfCollection(
+        uint256 _collectionId
+    ) external view returns (uint24) {
+        return collections[_collectionId].invocations;
     }
 
     /*//////////////////////////////////////////////////////////////
