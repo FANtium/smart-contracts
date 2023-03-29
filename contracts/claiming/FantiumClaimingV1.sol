@@ -7,9 +7,8 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "../interfaces/IFantiumNFT.sol";
 import "../interfaces/IFantiumUserManager.sol";
 import "../utils/TokenVersionUtil.sol";
@@ -199,7 +198,7 @@ contract FantiumClaimingV1 is
 
         require(
             _startTime > 0 && _closeTime > 0 && _startTime < _closeTime && block.timestamp < _closeTime,
-            "FantiuyarnmClaimingV1: times must be greater than 0 and close time must be greater than start time and in the future"
+            "FantiumClaimingV1: times must be greater than 0 and close time must be greater than start time and in the future"
         );
         require(
             _collectionIds.length > 0,
@@ -219,7 +218,7 @@ contract FantiumClaimingV1 is
         require(
             (_totalTournamentEarnings + _totalOtherEarnings) > 0 &&
                 (_totalTournamentEarnings + _totalOtherEarnings) <
-                (1_000_000_000 * ERC20(payoutToken).decimals()),
+                (1_000_000_000 * 10 ** ERC20Upgradeable(payoutToken).decimals()),
             "FantiumClaimingV1: amount must be less than a ten billion and greater than 0"
         );
 
@@ -246,7 +245,7 @@ contract FantiumClaimingV1 is
         distributionEvent.exists = true;
         distributionEvent.closed = false;
         distributionEvents[nextDistributionEventId] = distributionEvent;
-        takeClaimingSnapshot(nextDistributionEventId);
+        triggerClaimingSnapshot(nextDistributionEventId);
         emit DistributionEventUpdate(nextDistributionEventId, FIELD_CREATED);
         nextDistributionEventId++;
         
@@ -285,12 +284,14 @@ contract FantiumClaimingV1 is
         );
 
         // EFFECTS
-        SafeERC20.safeTransferFrom(
-            IERC20(payoutToken),
+
+        SafeERC20Upgradeable.safeTransferFrom(
+            IERC20Upgradeable(payoutToken),
             _msgSender(),
             address(this),
             payInAmount
         );
+
         distributionEvents[_distributionEventId].amountPaidIn += payInAmount;
         emit AddDistributionEventAmount(payInAmount);
     }
@@ -313,7 +314,7 @@ contract FantiumClaimingV1 is
 
         distributionEvents[_id].totalTournamentEarnings = _totalTournamentEarnings;
         distributionEvents[_id].totalOtherEarnings = _totalOtherEarnings;
-        takeClaimingSnapshot(_id);
+        triggerClaimingSnapshot(_id);
 
         emit DistributionEventUpdate(_id, FIELD_AMOUNT);
     }
@@ -408,7 +409,7 @@ contract FantiumClaimingV1 is
         );
         require(
             _tokenIds.length <= 100,
-            "FantiumClaimingV1: Arrays must be of length <= 50"
+            "FantiumClaimingV1: Arrays must be of length <= 100"
         );
 
         for (uint256 i = 0; i < _tokenIds.length; i++) {
@@ -436,7 +437,7 @@ contract FantiumClaimingV1 is
         require(
             _msgSender() ==
                 IERC721Upgradeable(fantiumNFTContract).ownerOf(_tokenId),
-            "FantiumClaimingV1: You do not own this token"
+            "FantiumClaimingV1: Only token owner"
         );
 
         //check if _msgSender() is IDENTed
@@ -613,16 +614,16 @@ contract FantiumClaimingV1 is
 
         // FANtium payment
         if (fantiumRevenue_ > 0) {
-            SafeERC20.safeTransfer(
-                IERC20(payoutToken),
+            SafeERC20Upgradeable.safeTransfer(
+                IERC20Upgradeable(payoutToken),
                 fantiumAddress_,
                 fantiumRevenue_
             );
         }
         // yser payment
         if (userRevenue_ > 0) {
-            SafeERC20.safeTransfer(
-                IERC20(payoutToken),
+            SafeERC20Upgradeable.safeTransfer(
+                IERC20Upgradeable(payoutToken),
                 _msgSender(),
                 userRevenue_
             );
@@ -633,12 +634,23 @@ contract FantiumClaimingV1 is
                             ADMIN
     //////////////////////////////////////////////////////////////*/
 
-    // take tokenSnapshot for claiming
+    // take tokenSnapshot by platform manager
     function takeClaimingSnapshot(
         uint256 _distributionEventId
-    ) public onlyRole(PLATFORM_MANAGER_ROLE) onlyValidDistributionEvent(_distributionEventId) {
+    ) external onlyRole(PLATFORM_MANAGER_ROLE) onlyValidDistributionEvent(_distributionEventId) {
+    
+    require(distributionEvents[_distributionEventId].collectionIds.length > 0 , "FantiumClaimingV1: no collections in distributionEvent");
+    triggerClaimingSnapshot(_distributionEventId);
+    }
+
+
+    // automatic trigger for taking tokenSnapshot for claiming
+    function triggerClaimingSnapshot(
+        uint256 _distributionEventId
+    ) internal onlyRole(PLATFORM_MANAGER_ROLE) 
+    {
         
-        require(distributionEvents[_distributionEventId].collectionIds.length > 0 , "FantiumClaimingV1: no collections in distributionEvent");
+        // require(distributionEvents[_distributionEventId].collectionIds.length > 0 , "FantiumClaimingV1: no collections in distributionEvent");
 
         delete distributionEvents[_distributionEventId].mintedTokens;
         
@@ -675,7 +687,7 @@ contract FantiumClaimingV1 is
         address _payoutToken
     ) external onlyRole(PLATFORM_MANAGER_ROLE) {
         require(
-            IERC20(_payoutToken).balanceOf(address(this)) == 0,
+            IERC20Upgradeable(_payoutToken).balanceOf(address(this)) == 0,
             "FantiumClaimingV1: no balance"
         );
         payoutToken = _payoutToken;
@@ -720,8 +732,8 @@ contract FantiumClaimingV1 is
         // check if the athlete address is set
         require(closingAmount > 0, "FantiumClaimingV1: Amount to pay is 0");
 
-        SafeERC20.safeTransfer(
-            IERC20(payoutToken),
+        SafeERC20Upgradeable.safeTransfer(
+            IERC20Upgradeable(payoutToken),
             distributionEvents[_distributionEventId].athleteAddress,
             closingAmount
         );

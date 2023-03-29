@@ -64,7 +64,9 @@ contract FantiumUserManager is
      */
     ///@dev no constructor in upgradable contracts. Instead we have initializers
     function initialize(
-        address _defaultAdmin
+        address _defaultAdmin,
+        address _nftContract,
+        address _claimingContract
     ) public initializer {
         __UUPSUpgradeable_init();
         __AccessControl_init();
@@ -72,6 +74,8 @@ contract FantiumUserManager is
 
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _grantRole(UPGRADER_ROLE, _defaultAdmin);
+        allowedContracts[_nftContract] = true;
+        allowedContracts[_claimingContract] = true;
 
     }
 

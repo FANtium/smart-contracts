@@ -478,10 +478,10 @@ contract FantiumNFTV2 is
         uint256 _athleteSecondarySalesBPS,
         uint256 _maxInvocations,
         uint256 _price,
-        uint256 _tournamentEarningShare1e7,
         uint _launchTimestamp,
         address payable _fantiumSalesAddress,
-        uint256 _fantiumSecondarySalesBPS
+        uint256 _fantiumSecondarySalesBPS,
+        uint256 _tournamentEarningShare1e7
     )
         external
         whenNotPaused

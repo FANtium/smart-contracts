@@ -6,10 +6,10 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol";
 import "./interfaces/IFantiumNFT.sol";
 import "./utils/TokenVersionUtil.sol";
 import "./interfaces/IFantiumUserManager.sol";
@@ -162,7 +162,7 @@ contract FantiumNFTV3 is
     }
 
     modifier onlyKycManager() {
-        require(hasRole(KYC_MANAGER_ROLE, _msgSender()), "Only KYC updater");
+        require(hasRole(KYC_MANAGER_ROLE, msg.sender), "Only KYC updater");
         _;
     }
 
@@ -213,17 +213,6 @@ contract FantiumNFTV3 is
                                  MINTING
     //////////////////////////////////////////////////////////////*/
 
-    /**
-     * @notice Batch Mints a token
-     * @param _collectionId Collection ID.
-     * @param _amount Amount of tokens to mint.
-     */
-    function batchMint(
-        uint256 _collectionId,
-        uint24 _amount
-    ) public whenNotPaused {
-        batchMintTo(_msgSender(), _collectionId, _amount);
-    }
 
     /**
      * @notice Batch Mints a token
@@ -231,6 +220,40 @@ contract FantiumNFTV3 is
      * @param _amount Amount of tokens to mint.
      */
     function batchMintTo(
+        address[] memory _to,
+        uint256[] memory _collectionId,
+        uint24[] memory _amount
+    ) public whenNotPaused {
+        require(
+            _to.length == _collectionId.length &&
+                _to.length == _amount.length,
+            "Arrays must be of equal length"
+        );
+
+        for (uint256 i = 0; i < _to.length; i++) {
+            mintTo(_to[i], _collectionId[i], _amount[i]);
+        }
+    }
+
+
+    /**
+     * @notice Batch Mints a token
+     * @param _collectionId Collection ID.
+     * @param _amount Amount of tokens to mint.
+     */
+    function mint(
+        uint256 _collectionId,
+        uint24 _amount
+    ) public whenNotPaused {
+        mintTo(_msgSender(), _collectionId, _amount);
+    }
+
+    /**
+     * @notice Batch Mints a token
+     * @param _collectionId Collection ID.
+     * @param _amount Amount of tokens to mint.
+     */
+    function mintTo(
         address _to,
         uint256 _collectionId,
         uint24 _amount
@@ -257,7 +280,7 @@ contract FantiumNFTV3 is
 
         // multiply token price by amount
         uint256 totalPrice = collection.price *
-            10 ** ERC20(erc20PaymentToken).decimals() *
+            10 ** ERC20Upgradeable(erc20PaymentToken).decimals() *
             _amount;
 
         if (collection.isPaused) {
@@ -274,7 +297,7 @@ contract FantiumNFTV3 is
             );
         }
         require(
-            collection.invocations + _amount < collection.maxInvocations,
+            collection.invocations + _amount <= collection.maxInvocations,
             "Max invocations suppassed with amount"
         );
 
@@ -323,8 +346,8 @@ contract FantiumNFTV3 is
         ) = getPrimaryRevenueSplits(_collectionId, _price);
         // FANtium payment
         if (fantiumRevenue_ > 0) {
-            SafeERC20.safeTransferFrom(
-                IERC20(erc20PaymentToken),
+            SafeERC20Upgradeable.safeTransferFrom(
+                IERC20Upgradeable(erc20PaymentToken),
                 _sender,
                 fantiumAddress_,
                 fantiumRevenue_
@@ -332,8 +355,8 @@ contract FantiumNFTV3 is
         }
         // athlete payment
         if (athleteRevenue_ > 0) {
-            SafeERC20.safeTransferFrom(
-                IERC20(erc20PaymentToken),
+            SafeERC20Upgradeable.safeTransferFrom(
+                IERC20Upgradeable(erc20PaymentToken),
                 _sender,
                 athleteAddress_,
                 athleteRevenue_
@@ -732,7 +755,7 @@ contract FantiumNFTV3 is
         );
 
         require(
-            claimContract == _msgSender(),
+            claimContract == msg.sender,
             "Only claim contract can call this function"
         );
 
