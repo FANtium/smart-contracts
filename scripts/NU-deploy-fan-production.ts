@@ -13,13 +13,13 @@ async function main() {
   await fanContract.deployed();
 
   // vault: 0x77C0B68aD8e5f07fE7C596512496262bDa5f0598
-  console.log("FantiumNFTV1 deployed to:", fanContract.address);
+  console.log("FantiumNFT deployed to:", fanContract.address);
 
   const data = {
     "proxy": fanContract.address,
     "implementation": await upgrades.erc1967.getImplementationAddress(fanContract.address),
   }
-  writeFileSync(join(__dirname, './addresses/fantium.json'), JSON.stringify(data), {
+  writeFileSync(join(__dirname, './addresses/FantiumNFT.json'), JSON.stringify(data), {
     flag: 'w',
   });
 }

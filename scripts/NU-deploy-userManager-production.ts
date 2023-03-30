@@ -9,7 +9,7 @@ async function main() {
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
   const FantiumUserManager = await ethers.getContractFactory("FantiumUserManager");
-  const userManagerContract = await upgrades.deployProxy(FantiumUserManager, [deployer.address,'0x0000000000000000000000000000000000000000','0x0000000000000000000000000000000000000000'], { initializer: 'initialize', kind: 'uups'})
+  const userManagerContract = await upgrades.deployProxy(FantiumUserManager, [deployer.address,'0x0020b7d87a663F7c113f85230f084856EE79033B','0x3De3D4eaC11c6468140Ffd661C009D52c4956F55'], { initializer: 'initialize', kind: 'uups'})
   await userManagerContract.deployed();
 
   // vault: 0x77C0B68aD8e5f07fE7C596512496262bDa5f0598

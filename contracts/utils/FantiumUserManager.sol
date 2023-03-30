@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "../claiming/FantiumClaimingV1.sol";
+import "../interfaces/IFantiumNFT.sol";
 import "../interfaces/IFantiumUserManager.sol";
 
 /**
@@ -64,8 +65,8 @@ contract FantiumUserManager is
     ///@dev no constructor in upgradable contracts. Instead we have initializers
     function initialize(
         address _defaultAdmin,
-        address _fantiumNFTContract,
-        address _fantiumClaimContract
+        address _nftContract,
+        address _claimingContract
     ) public initializer {
         __UUPSUpgradeable_init();
         __AccessControl_init();
@@ -73,9 +74,9 @@ contract FantiumUserManager is
 
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _grantRole(UPGRADER_ROLE, _defaultAdmin);
+        allowedContracts[_nftContract] = true;
+        allowedContracts[_claimingContract] = true;
 
-        allowedContracts[_fantiumClaimContract] = true;
-        allowedContracts[_fantiumNFTContract] = true;
     }
 
     /// @notice upgrade authorization logic
@@ -113,8 +114,10 @@ contract FantiumUserManager is
     function addAddressToKYC(
         address _address
     ) public whenNotPaused onlyManager {
-        users[_address].isKYCed = true;
-        emit AddressAddedToKYC(_address);
+        if (users[_address].isKYCed == false) {
+            users[_address].isKYCed = true;
+            emit AddressAddedToKYC(_address);
+        }
     }
 
     /**
@@ -124,8 +127,10 @@ contract FantiumUserManager is
     function removeAddressFromKYC(
         address _address
     ) external whenNotPaused onlyManager {
-        users[_address].isKYCed = false;
-        emit AddressRemovedFromKYC(_address);
+        if (users[_address].isKYCed) {
+            users[_address].isKYCed = false;
+            emit AddressRemovedFromKYC(_address);
+        }
     }
 
     /**
@@ -197,6 +202,10 @@ contract FantiumUserManager is
         uint256[] memory _increaseAllocations
     ) public whenNotPaused onlyManager {
         require(allowedContracts[_contractAddress], "Only allowed Contract");
+        require(IFantiumNFT(_contractAddress).getCollectionExists(_collectionId), "Collection does not exist");
+        require(
+            _addresses.length == _increaseAllocations.length,
+            "FantiumUserManagerV1: Array length mismatch");
         for (uint256 i = 0; i < _addresses.length; i++) {
             users[_addresses[i]].contractToAllowlistToSpots[_contractAddress][
                 _collectionId
@@ -281,7 +290,7 @@ contract FantiumUserManager is
 
     function addAllowedConctract(
         address _nftContract
-    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
+    ) public onlyRole(PLATFORM_MANAGER_ROLE) {
         allowedContracts[_nftContract] = true;
     }
 
@@ -291,7 +300,7 @@ contract FantiumUserManager is
 
     function removeAllowedConctract(
         address _nftContract
-    ) public whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
+    ) public onlyRole(PLATFORM_MANAGER_ROLE) {
         allowedContracts[_nftContract] = false;
     }
 
