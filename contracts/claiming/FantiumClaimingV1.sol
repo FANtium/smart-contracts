@@ -53,9 +53,9 @@ contract FantiumClaimingV1 is
 
     struct DistributionEvent {
         uint256 distributionEventId;
-        uint256[] collectionIds;
-        uint256[] mintedTokens;
-        address payable athleteAddress;
+        uint256[] collectionIds; // NFT collections allowed to claim
+        uint256[] mintedTokens; // minted tokens at when snapshot was triggered
+        address payable athleteAddress; // athlete address that need to pay in amount 
         uint256 totalTournamentEarnings; // total earnings from tournaments with decimals
         uint256 totalOtherEarnings; // total earnings from other sources with decimals
         uint256 tournamentDistributionAmount; // total earnings to be distributed from tournaments with decimals
@@ -361,7 +361,7 @@ contract FantiumClaimingV1 is
         emit DistributionEventUpdate(_id, FIELD_ADDRESSES);
     }
 
-    function updateDistributionEventAddresses(
+    function updateDistributionEventTimeStamps(
         uint256 _id,
         uint256 _startTime,
         uint256 _closeTime
@@ -429,7 +429,7 @@ contract FantiumClaimingV1 is
 
         // check if distribution Event was paid in in full 
         require(
-            distributionEvents[_distributionEventId].amountPaidIn ==  (distributionEvents[_distributionEventId].tournamentDistributionAmount + distributionEvents[_distributionEventId].otherDistributionAmount),
+            distributionEvents[_distributionEventId].amountPaidIn == (distributionEvents[_distributionEventId].tournamentDistributionAmount + distributionEvents[_distributionEventId].otherDistributionAmount),
             "FantiumClaimingV1: total distribution amount has not been paid in"
         );
 
@@ -480,7 +480,7 @@ contract FantiumClaimingV1 is
                 baseTokenId,
                 tokenNr
             ),
-            "FantiumClaimingV1: Token already claimed or Collection not allowed"
+            "FantiumClaimingV1: token not allowed"
         );
 
         // EFFECTS

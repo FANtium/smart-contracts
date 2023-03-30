@@ -7,6 +7,9 @@ import { FantiumNFTV3 } from '../typechain-types/contracts/FantiumNFTV3'
 import { FantiumClaimingV1} from '../typechain-types/contracts/claiming/FantiumClaimingV1'
 import {FantiumUserManager} from '../typechain-types/contracts/utils/FantiumUserManager'
 import { Mock20 } from '../typechain-types/contracts/mocks/Mock20'
+import { mine } from "@nomicfoundation/hardhat-network-helpers";
+import { time } from "@nomicfoundation/hardhat-network-helpers";
+import { start } from 'repl'
 
 describe("FantiumClaim", () => {
 
@@ -35,6 +38,7 @@ describe("FantiumClaim", () => {
     const otherEarnings = 500000000000 // in 50,000 USDC without decimals 
     const otherTokenShareBPS = 1000 // 10%
     const totalAmount = tournamentEarnings + otherEarnings
+    const nullAddress = "0x000000"
     let timestamp = 1
     let startTime = 1
     let closeTime = 1876044473
@@ -297,8 +301,11 @@ describe("FantiumClaim", () => {
         
         const total_claim = (tournamentEarnings * tournamentEarningsShare1e7 / 1e7) + (otherEarnings * otherEarningsShare1e7 / 1e7)
         const fanClaim = total_claim * ((10000-fantiumFeePBS)/10000)
+        const fantiumFee = total_claim * (fantiumFeePBS/10000)
+        const fantiumBalance = fantiumFee + (1000000 * 10 ** decimals) + (price * (10 ** decimals) / 10)
 
         expect(await(erc20Contract.balanceOf(other.address))).to.equal((fanClaim) + (price * 9 * (10 ** decimals)))
+        expect(await(erc20Contract.balanceOf(fantium.address))).to.equal(fantiumBalance)
 
         expect(await(erc20Contract.balanceOf(claimContract.address))).to.equal(0)
 
@@ -345,9 +352,9 @@ describe("FantiumClaim", () => {
         await claimContract.connect(other).batchClaim([1000000,1000001,1000002,1000003,1000004,1000005,1000006,1000007,1000008,1000009], [1,1,1,1,1,1,1,1,1,1])
 
         const totalClaim = 10 * ((tournamentEarnings * tournamentEarningsShare1e7 / 1e7) + (otherEarnings * otherEarningsShare1e7 / 1e7))
-
-        
         const fanClaim = totalClaim * ((10000-fantiumFeePBS)/10000)
+        const fantiumFee = totalClaim * (fantiumFeePBS/10000)
+        const fantiumBalance = fantiumFee + (1000000 * 10 ** decimals) + (10 * price * (10 ** decimals) / 10)
         
         expect((await(claimContract.getDistributionEvent(1))).claimedAmount).to.equal(totalClaim)
         expect((await(claimContract.getDistributionEvent(1))).amountPaidIn).to.equal(totalClaim)
@@ -355,6 +362,7 @@ describe("FantiumClaim", () => {
         expect((await(claimContract.getDistributionEvent(1))).otherDistributionAmount).to.equal(10 * otherEarnings * otherEarningsShare1e7 / 1e7)
         
         expect(await(erc20Contract.balanceOf(other.address))).to.equal(fanClaim)
+        expect(await(erc20Contract.balanceOf(fantium.address))).to.equal(fantiumBalance)
 
         expect(await(erc20Contract.balanceOf(claimContract.address))).to.equal(0)
 
@@ -454,7 +462,10 @@ describe("FantiumClaim", () => {
         /// ADMIN ON V1
         // add fan address to KYC
         await userManager.connect(kycManager).addAddressToKYC(fan.address)
-        // set allowlist allocation
+        
+        // setting collection paused
+        await nftContract.connect(platformManager).toggleCollectionPaused(1)
+        // set allowlist allocation 
         await userManager.connect(platformManager).batchAllowlist(1, nftContractV3.address ,[fan.address], [10])
 
         // allocation
@@ -468,6 +479,239 @@ describe("FantiumClaim", () => {
         expect(await nftContractV3.tokenURI(1000000)).to.equal("https://contract.com/1000000")
 
     })
+
+    it("Check batch claiming: update of tokenVersion and tokenID", async () => {
+        const fanV3 = await ethers.getContractFactory("FantiumNFTV3")
+        const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
+        await nftContractV3.connect(platformManager).updateClaimContract(claimContract.address)
+        await nftContractV3.connect(platformManager).updateUserManagerContract(userManager.address)
+        await nftContractV3.connect(platformManager).updateCollectionSales(1,maxInvocations,price,tournamentEarningsShare1e7,otherEarningsShare1e7)
+
+        // add platfrom manager to KYC
+        await userManager.connect(kycManager).addAddressToKYC(other.address)
+        // approve erc20
+        await erc20Contract.connect(other).approve(nftContractV3.address, 10 * price * (10 ** decimals))
+        await nftContractV3.connect(other).mint(1, 10)
+
+        //setup distribution event
+        await claimContract.connect(platformManager).setupDistributionEvent(
+            athlete.address,
+            tournamentEarnings,
+            otherEarnings,
+            startTime,
+            closeTime,
+            [1,2,3],
+            fantium.address,
+            fantiumFeePBS
+        )
+
+        // claim with being IDENT
+        await claimContract.connect(platformManager).takeClaimingSnapshot(1)
+        // athlete adds amount to distribution event 
+        await erc20Contract.connect(athlete).approve(claimContract.address, totalAmount)
+        await claimContract.connect(athlete).addDistributionAmount(1)
+
+        // claim without being IDENT
+        await expect(claimContract.connect(other).claim(1000000, 1)).to.be.revertedWith('FantiumClaimingV1: You are not ID verified')
+        //add fan to IDENT
+        await userManager.connect(kycManager).addAddressToIDENT(other.address)
+        
+        // claim batch
+        await claimContract.connect(other).batchClaim([1000000,1000001,1000002,1000003,1000004,1000005,1000006,1000007,1000008,1000009], [1,1,1,1,1,1,1,1,1,1])
+
+        // check that the token versions were updated
+        // old tokens
+        await expect(nftContractV3.ownerOf(1000000)).to.be.revertedWith('ERC721: invalid token ID')
+        await expect(nftContractV3.ownerOf(1000001)).to.be.revertedWith('ERC721: invalid token ID')
+        await expect(nftContractV3.ownerOf(1000002)).to.be.revertedWith('ERC721: invalid token ID')
+        await expect(nftContractV3.ownerOf(1000003)).to.be.revertedWith('ERC721: invalid token ID')
+
+        // new tokens
+        expect(await nftContractV3.ownerOf(1010000)).to.equal(other.address)
+        expect(await nftContractV3.ownerOf(1010001)).to.equal(other.address)
+        expect(await nftContractV3.ownerOf(1010002)).to.equal(other.address)
+
+    })
+
+
+    it("Check batch claiming: can't claim with tokens not in snapshot", async () => {
+        const fanV3 = await ethers.getContractFactory("FantiumNFTV3")
+        const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
+        await nftContractV3.connect(platformManager).updateClaimContract(claimContract.address)
+        await nftContractV3.connect(platformManager).updateUserManagerContract(userManager.address)
+        await nftContractV3.connect(platformManager).updateCollectionSales(1,maxInvocations,price,tournamentEarningsShare1e7,otherEarningsShare1e7)
+
+        // add platfrom manager to KYC
+        await userManager.connect(kycManager).addAddressToKYC(other.address)
+        // approve erc20
+        await erc20Contract.connect(other).approve(nftContractV3.address, 10 * price * (10 ** decimals))
+        await nftContractV3.connect(other).mint(1, 5)
+
+        //setup distribution event
+        await claimContract.connect(platformManager).setupDistributionEvent(
+            athlete.address,
+            tournamentEarnings,
+            otherEarnings,
+            startTime,
+            closeTime,
+            [1,2,3],
+            fantium.address,
+            fantiumFeePBS
+        )
+
+        // claim with being IDENT
+        await claimContract.connect(platformManager).takeClaimingSnapshot(1)
+        // mint further tokens not in snapshot
+        await nftContractV3.connect(other).mint(1, 5)
+        // athlete adds amount to distribution event 
+        await erc20Contract.connect(athlete).approve(claimContract.address, totalAmount)
+        await claimContract.connect(athlete).addDistributionAmount(1)
+        //add fan to IDENT
+        await userManager.connect(kycManager).addAddressToIDENT(other.address)
+        
+        // claim batch
+        await claimContract.connect(other).batchClaim([1000000,1000001,1000002,1000003,1000004], [1,1,1,1,1])
+
+        // new tokens
+        await expect(claimContract.connect(other).claim(1000005,1)).to.be.revertedWith('FantiumClaimingV1: token not allowed')
+        await expect(claimContract.connect(other).batchClaim([1000005,1000006,1000007,1000008,1000009], [1,1,1,1,1])).to.be.revertedWith('FantiumClaimingV1: token not allowed')
+
+        await expect(nftContractV3.ownerOf(1000004)).to.be.revertedWith('ERC721: invalid token ID')
+        expect(await nftContractV3.ownerOf(1010004)).to.equal(other.address)
+        expect(await nftContractV3.ownerOf(1000005)).to.equal(other.address)
+        await expect(nftContractV3.ownerOf(1010005)).to.be.revertedWith('ERC721: invalid token ID')
+
+    })
+
+
+
+    it("Check claiming: try to claim without having paid in", async () => {
+        const fanV3 = await ethers.getContractFactory("FantiumNFTV3")
+        const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
+        await nftContractV3.connect(platformManager).updateClaimContract(claimContract.address)
+        await nftContractV3.connect(platformManager).updateUserManagerContract(userManager.address)
+        await nftContractV3.connect(platformManager).updateCollectionSales(1,maxInvocations,price,tournamentEarningsShare1e7,otherEarningsShare1e7)
+
+        // add platfrom manager to KYC
+        await userManager.connect(kycManager).addAddressToKYC(other.address)
+        // approve erc20
+        await erc20Contract.connect(other).approve(nftContractV3.address, 10 * price * (10 ** decimals))
+        await nftContractV3.connect(other).mint(1, 5)
+
+        //setup distribution event
+        await claimContract.connect(platformManager).setupDistributionEvent(
+            athlete.address,
+            tournamentEarnings,
+            otherEarnings,
+            startTime,
+            closeTime,
+            [1,2,3],
+            fantium.address,
+            fantiumFeePBS
+        )
+
+        // claim with being IDENT
+        await claimContract.connect(platformManager).takeClaimingSnapshot(1)
+        // mint further tokens not in snapshot
+        await nftContractV3.connect(other).mint(1, 5)
+        // athlete adds amount to distribution event 
+        await erc20Contract.connect(athlete).approve(claimContract.address, totalAmount)
+        //add fan to IDENT
+        await userManager.connect(kycManager).addAddressToIDENT(other.address)
+        
+        // new tokens
+        await expect(claimContract.connect(other).claim(1000005,1)).to.be.revertedWith('FantiumClaimingV1: total distribution amount has not been paid in')
+
+    })
+
+
+    it("Check claiming: claim without start time past", async () => {
+        const fanV3 = await ethers.getContractFactory("FantiumNFTV3")
+        const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
+        await nftContractV3.connect(platformManager).updateClaimContract(claimContract.address)
+        await nftContractV3.connect(platformManager).updateUserManagerContract(userManager.address)
+        await nftContractV3.connect(platformManager).updateCollectionSales(1,maxInvocations,price,tournamentEarningsShare1e7,otherEarningsShare1e7)
+
+        // add platfrom manager to KYC
+        await userManager.connect(kycManager).addAddressToKYC(other.address)
+        // approve erc20
+        await erc20Contract.connect(other).approve(nftContractV3.address, 10 * price * (10 ** decimals))
+        await nftContractV3.connect(other).mint(1, 5)
+
+        //setup distribution event
+        await claimContract.connect(platformManager).setupDistributionEvent(
+            athlete.address,
+            tournamentEarnings,
+            otherEarnings,
+            1780123335,
+            closeTime,
+            [1,2,3],
+            fantium.address,
+            fantiumFeePBS
+        )
+
+        // claim with being IDENT
+        await claimContract.connect(platformManager).takeClaimingSnapshot(1)
+        // mint further tokens not in snapshot
+        await nftContractV3.connect(other).mint(1, 5)
+        // athlete adds amount to distribution event 
+        await erc20Contract.connect(athlete).approve(claimContract.address, totalAmount)
+        await claimContract.connect(athlete).addDistributionAmount(1)
+        //add fan to IDENT
+        await userManager.connect(kycManager).addAddressToIDENT(other.address)
+        
+        // new tokens
+        await expect(claimContract.connect(other).claim(1000005,1)).to.be.revertedWith('FantiumClaimingV1: distribution time has not started or has ended')
+
+    })
+
+
+    it("Check claiming: claim with end time past", async () => {
+        const fanV3 = await ethers.getContractFactory("FantiumNFTV3")
+        const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
+        await nftContractV3.connect(platformManager).updateClaimContract(claimContract.address)
+        await nftContractV3.connect(platformManager).updateUserManagerContract(userManager.address)
+        await nftContractV3.connect(platformManager).updateCollectionSales(1,maxInvocations,price,tournamentEarningsShare1e7,otherEarningsShare1e7)
+
+        // add platfrom manager to KYC
+        await userManager.connect(kycManager).addAddressToKYC(other.address)
+        // approve erc20
+        await erc20Contract.connect(other).approve(nftContractV3.address, 10 * price * (10 ** decimals))
+        await nftContractV3.connect(other).mint(1, 5)
+
+        const timestamp = await time.latest() + 1000;
+
+
+        //setup distribution event
+        await claimContract.connect(platformManager).setupDistributionEvent(
+            athlete.address,
+            tournamentEarnings,
+            otherEarnings,
+            startTime,
+            timestamp,
+            [1,2,3],
+            fantium.address,
+            fantiumFeePBS
+        )
+
+        await time.increase(2000);
+
+        // claim with being IDENT
+        await claimContract.connect(platformManager).takeClaimingSnapshot(1)
+        // mint further tokens not in snapshot
+        await nftContractV3.connect(other).mint(1, 5)
+        // athlete adds amount to distribution event 
+        await erc20Contract.connect(athlete).approve(claimContract.address, totalAmount)
+        await claimContract.connect(athlete).addDistributionAmount(1)
+        //add fan to IDENT
+        await userManager.connect(kycManager).addAddressToIDENT(other.address)
+        
+        // new tokens
+        await expect(claimContract.connect(other).claim(1000000,1)).to.be.revertedWith('FantiumClaimingV1: distribution time has not started or has ended')
+
+    })
+
+
 })
 
 

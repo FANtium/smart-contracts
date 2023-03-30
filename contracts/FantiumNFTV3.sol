@@ -640,7 +640,7 @@ contract FantiumNFTV3 is
         require(
             _maxInvocations > 0 &&
                 _price > 0 &&
-                (_tournamentEarningShare1e7 > 0 && _otherEarningShare1e7 > 0),
+                (_tournamentEarningShare1e7 > 0 || _otherEarningShare1e7 > 0),
             "all parameters must be greater than 0"
         );
         require(
