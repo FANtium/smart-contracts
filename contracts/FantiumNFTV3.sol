@@ -101,16 +101,6 @@ contract FantiumNFTV3 is
         bytes32 indexed _update
     );
     event PlatformUpdated(bytes32 indexed _field);
-    event AddressAddedToKYC(address indexed _address);
-    event AddressRemovedFromKYC(address indexed _address);
-    event AddressAddedToAllowList(
-        uint256 collectionId,
-        address indexed _address
-    );
-    event AddressRemovedFromAllowList(
-        uint256 collectionId,
-        address indexed _address
-    );
 
     /*//////////////////////////////////////////////////////////////
                             INTERFACE
@@ -213,7 +203,6 @@ contract FantiumNFTV3 is
                                  MINTING
     //////////////////////////////////////////////////////////////*/
 
-
     /**
      * @notice Batch Mints a token
      * @param _collectionId Collection ID.
@@ -225,8 +214,7 @@ contract FantiumNFTV3 is
         uint24[] memory _amount
     ) public whenNotPaused {
         require(
-            _to.length == _collectionId.length &&
-                _to.length == _amount.length,
+            _to.length == _collectionId.length && _to.length == _amount.length,
             "Arrays must be of equal length"
         );
 
@@ -235,16 +223,12 @@ contract FantiumNFTV3 is
         }
     }
 
-
     /**
      * @notice Batch Mints a token
      * @param _collectionId Collection ID.
      * @param _amount Amount of tokens to mint.
      */
-    function mint(
-        uint256 _collectionId,
-        uint24 _amount
-    ) public whenNotPaused {
+    function mint(uint256 _collectionId, uint24 _amount) public whenNotPaused {
         mintTo(_msgSender(), _collectionId, _amount);
     }
 
@@ -258,9 +242,11 @@ contract FantiumNFTV3 is
         uint256 _collectionId,
         uint24 _amount
     ) public whenNotPaused {
-
         // CHECKS
-        require( 0 < _amount && _amount <= 10 , "Amount must be greater than 0 and smaller than 11");
+        require(
+            0 < _amount && _amount <= 10,
+            "Amount must be greater than 0 and smaller than 11"
+        );
         require(fantiumUserManager != address(0), "UserManager not set");
         require(
             IFantiumUserManager(fantiumUserManager).isAddressKYCed(
@@ -400,9 +386,7 @@ contract FantiumNFTV3 is
         Collection memory collection = collections[_collectionId];
 
         // calculate revenues
-        athleteRevenue_ =
-            (_price * collection.athletePrimarySalesBPS) /
-            10000;
+        athleteRevenue_ = (_price * collection.athletePrimarySalesBPS) / 10000;
 
         fantiumRevenue_ = _price - athleteRevenue_;
 
@@ -482,7 +466,7 @@ contract FantiumNFTV3 is
         );
 
         require(
-            _athleteAddress != address(0) && _fantiumSalesAddress != address(0), 
+            _athleteAddress != address(0) && _fantiumSalesAddress != address(0),
             "FantiumNFTV3: addresses cannot be 0"
         );
 
@@ -536,11 +520,7 @@ contract FantiumNFTV3 is
      */
     function toggleCollectionPaused(
         uint256 _collectionId
-    )
-        external
-        onlyValidCollectionId(_collectionId)
-        onlyAthlete(_collectionId)
-    {
+    ) external onlyValidCollectionId(_collectionId) onlyAthlete(_collectionId) {
         collections[_collectionId].isPaused = !collections[_collectionId]
             .isPaused;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_PAUSED);
@@ -551,11 +531,7 @@ contract FantiumNFTV3 is
      */
     function toggleCollectionMintable(
         uint256 _collectionId
-    )
-        external
-        onlyValidCollectionId(_collectionId)
-        onlyAthlete(_collectionId)
-    {
+    ) external onlyValidCollectionId(_collectionId) onlyAthlete(_collectionId) {
         collections[_collectionId].isMintable = !collections[_collectionId]
             .isMintable;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ACTIVATED);
@@ -787,39 +763,33 @@ contract FantiumNFTV3 is
         }
     }
 
-    /**
-     * @notice set Claim contract address
-     */
-
-    function updateClaimContract(
-        address _claimContract
-    ) public onlyRole(PLATFORM_MANAGER_ROLE) {
-        claimContract = _claimContract;
-    }
-
-    /**
-     * @notice set Claim contract address
-     */
-
-    function updateUserManagerContract(
-        address _userManagerContract
-    ) public onlyRole(PLATFORM_MANAGER_ROLE) {
-        fantiumUserManager = _userManagerContract;
-    }
-
     /*//////////////////////////////////////////////////////////////
-                            PAYMENT TOKEN
+                            Address Configs TOKEN
     //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Updates the erc20 Payment Token
-     * @param _address address of ERC20 payment token
+     * @param _paymentTokenAdderss address of ERC20 payment token
+     * @param _claimContractAdress address of fantium claim contract
+     * @param _userManagerAddress address of fantium userManager contract
      */
-    function updatePaymentToken(
-        address _address
-    ) external onlyRole(PLATFORM_MANAGER_ROLE) {
-        require(_address != address(0));
-        erc20PaymentToken = _address;
+    function updatePlatformAddressesConfigs(
+        address _paymentTokenAdderss,
+        address _claimContractAdress,
+        address _userManagerAddress,
+        address _trustedForwarder
+    ) external onlyRole(UPGRADER_ROLE) {
+        require(
+            _paymentTokenAdderss != address(0) &&
+                _claimContractAdress != address(0) &&
+                _userManagerAddress != address(0) &&
+                _trustedForwarder != address(0)
+        );
+        erc20PaymentToken = _paymentTokenAdderss;
+        claimContract = _claimContractAdress;
+        fantiumUserManager = _userManagerAddress;
+        trustedForwarder = _trustedForwarder;
+        emit PlatformUpdated("platform address config");
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -879,7 +849,10 @@ contract FantiumNFTV3 is
     function getEarningsShares1e7(
         uint256 _collectionId
     ) external view returns (uint256, uint256) {
-        return (collections[_collectionId].tournamentEarningShare1e7, collections[_collectionId].otherEarningShare1e7);
+        return (
+            collections[_collectionId].tournamentEarningShare1e7,
+            collections[_collectionId].otherEarningShare1e7
+        );
     }
 
     function getCollectionExists(
@@ -940,12 +913,6 @@ contract FantiumNFTV3 is
     /*///////////////////////////////////////////////////////////////
                             ERC2771
     //////////////////////////////////////////////////////////////*/
-
-    function setTrustedForwarder(
-        address forwarder
-    ) external onlyRole(UPGRADER_ROLE) {
-        trustedForwarder = forwarder;
-    }
 
     function isTrustedForwarder(
         address forwarder

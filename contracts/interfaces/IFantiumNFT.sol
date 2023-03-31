@@ -67,5 +67,4 @@ interface IFantiumNFT {
     function getMintedTokensOfCollection(
         uint256 _collectionId
     ) external view returns (uint24);
-
 }

@@ -31,12 +31,35 @@ contract FantiumUserManager is
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant PLATFORM_MANAGER_ROLE =
         keccak256("PLATFORM_MANAGER_ROLE");
+    // generic event fields
+    bytes32 constant FIELD_PLATFORM_CONFIG = "platform address config";
+    bytes32 constant FIELD_CONTRACTS_ALLOWED_CHANGE =
+        "contracts added or removed";
+    bytes32 constant FIELD_KYC_CHANGE = "KYC added or removed";
+    bytes32 constant FIELD_IDENT_CHANGE = "IDENT added or removed";
+    bytes32 constant FIELD_ALLOWLIST_CHANGE = "allowlist added or removed";
 
     struct User {
         bool isKYCed;
         bool isIDENT;
         mapping(address => mapping(uint256 => uint256)) contractToAllowlistToSpots;
     }
+
+    address private trustedForwarder;
+
+    /*//////////////////////////////////////////////////////////////
+                                 EVENTS
+    //////////////////////////////////////////////////////////////*/
+
+    event PlatformUpdate(bytes32 indexed _update);
+    event KYCUpdate(address indexed _address, bytes32 indexed _update);
+    event IDENTUpdate(address indexed _address, bytes32 indexed _update);
+    event ALUpdate(
+        address indexed _contract,
+        uint256 indexed _collectionId,
+        address indexed _address,
+        bytes32 _update
+    );
 
     /*//////////////////////////////////////////////////////////////
                             MODIFERS
@@ -66,7 +89,8 @@ contract FantiumUserManager is
     function initialize(
         address _defaultAdmin,
         address _nftContract,
-        address _claimingContract
+        address _claimingContract,
+        address _trustedForwarder
     ) public initializer {
         __UUPSUpgradeable_init();
         __AccessControl_init();
@@ -76,7 +100,7 @@ contract FantiumUserManager is
         _grantRole(UPGRADER_ROLE, _defaultAdmin);
         allowedContracts[_nftContract] = true;
         allowedContracts[_claimingContract] = true;
-
+        trustedForwarder = _trustedForwarder;
     }
 
     /// @notice upgrade authorization logic
@@ -116,7 +140,7 @@ contract FantiumUserManager is
     ) public whenNotPaused onlyManager {
         if (users[_address].isKYCed == false) {
             users[_address].isKYCed = true;
-            emit AddressAddedToKYC(_address);
+            emit KYCUpdate(_address, FIELD_KYC_CHANGE);
         }
     }
 
@@ -129,7 +153,7 @@ contract FantiumUserManager is
     ) external whenNotPaused onlyManager {
         if (users[_address].isKYCed) {
             users[_address].isKYCed = false;
-            emit AddressRemovedFromKYC(_address);
+            emit KYCUpdate(_address, FIELD_KYC_CHANGE);
         }
     }
 
@@ -162,7 +186,7 @@ contract FantiumUserManager is
         address _address
     ) public whenNotPaused onlyManager {
         users[_address].isIDENT = true;
-        emit AddressAddedToIDENT(_address);
+        emit IDENTUpdate(_address, FIELD_IDENT_CHANGE);
     }
 
     /**
@@ -173,7 +197,7 @@ contract FantiumUserManager is
         address _address
     ) external whenNotPaused onlyManager {
         users[_address].isIDENT = false;
-        emit AddressRemovedFromIDENT(_address);
+        emit IDENTUpdate(_address, FIELD_IDENT_CHANGE);
     }
 
     /**
@@ -202,15 +226,24 @@ contract FantiumUserManager is
         uint256[] memory _increaseAllocations
     ) public whenNotPaused onlyManager {
         require(allowedContracts[_contractAddress], "Only allowed Contract");
-        require(IFantiumNFT(_contractAddress).getCollectionExists(_collectionId), "Collection does not exist");
+        require(
+            IFantiumNFT(_contractAddress).getCollectionExists(_collectionId),
+            "Collection does not exist"
+        );
         require(
             _addresses.length == _increaseAllocations.length,
-            "FantiumUserManagerV1: Array length mismatch");
+            "FantiumUserManagerV1: Array length mismatch"
+        );
         for (uint256 i = 0; i < _addresses.length; i++) {
             users[_addresses[i]].contractToAllowlistToSpots[_contractAddress][
                 _collectionId
             ] += _increaseAllocations[i];
-            emit AddressAddedToAllowList(_collectionId, _addresses[i]);
+            emit ALUpdate(
+                _contractAddress,
+                _collectionId,
+                _addresses[i],
+                FIELD_ALLOWLIST_CHANGE
+            );
         }
     }
 
@@ -242,7 +275,12 @@ contract FantiumUserManager is
             : users[_address].contractToAllowlistToSpots[_contractAddress][
                 _collectionId
             ] = 0;
-        emit AddressRemovedFromAllowList(_collectionId, _address);
+        emit ALUpdate(
+            _contractAddress,
+            _collectionId,
+            _address,
+            FIELD_ALLOWLIST_CHANGE
+        );
         return
             users[_address].contractToAllowlistToSpots[_contractAddress][
                 _collectionId
@@ -289,9 +327,11 @@ contract FantiumUserManager is
      */
 
     function addAllowedConctract(
-        address _nftContract
+        address _contractAddress
     ) public onlyRole(PLATFORM_MANAGER_ROLE) {
-        allowedContracts[_nftContract] = true;
+        require(_contractAddress != address(0), "No null address allowed");
+        allowedContracts[_contractAddress] = true;
+        emit PlatformUpdate(FIELD_CONTRACTS_ALLOWED_CHANGE);
     }
 
     /**
@@ -299,12 +339,59 @@ contract FantiumUserManager is
      */
 
     function removeAllowedConctract(
-        address _nftContract
+        address _contractAddress
     ) public onlyRole(PLATFORM_MANAGER_ROLE) {
-        allowedContracts[_nftContract] = false;
+        require(_contractAddress != address(0), "No null address allowed");
+        allowedContracts[_contractAddress] = false;
+        emit PlatformUpdate(FIELD_CONTRACTS_ALLOWED_CHANGE);
     }
 
-    /*//////////////////////////////////////////////////////////////
-                                 VIEWS
+    /*///////////////////////////////////////////////////////////////
+                            ERC2771
     //////////////////////////////////////////////////////////////*/
+
+    function setTrustedForwarder(
+        address forwarder
+    ) external onlyRole(UPGRADER_ROLE) {
+        trustedForwarder = forwarder;
+        emit PlatformUpdate(FIELD_PLATFORM_CONFIG);
+    }
+
+    function isTrustedForwarder(
+        address forwarder
+    ) public view virtual returns (bool) {
+        return forwarder == trustedForwarder;
+    }
+
+    function _msgSender()
+        internal
+        view
+        virtual
+        override
+        returns (address sender)
+    {
+        if (isTrustedForwarder(msg.sender)) {
+            // The assembly code is more direct than the Solidity version using `abi.decode`.
+            /// @solidity memory-safe-assembly
+            assembly {
+                sender := shr(96, calldataload(sub(calldatasize(), 20)))
+            }
+        } else {
+            return super._msgSender();
+        }
+    }
+
+    function _msgData()
+        internal
+        view
+        virtual
+        override
+        returns (bytes calldata)
+    {
+        if (isTrustedForwarder(msg.sender)) {
+            return msg.data[:msg.data.length - 20];
+        } else {
+            return super._msgData();
+        }
+    }
 }
