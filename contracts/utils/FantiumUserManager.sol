@@ -71,7 +71,7 @@ contract FantiumUserManager is
     }
 
     modifier onlyManager() {
-        require(hasRole(PLATFORM_MANAGER_ROLE, msg.sender), "Only manager");
+        require(hasRole(PLATFORM_MANAGER_ROLE, _msgSender()), "Only manager");
         _;
     }
 
@@ -260,7 +260,7 @@ contract FantiumUserManager is
         uint256 _reduceAllocation
     ) external whenNotPaused returns (uint256) {
         require(
-            hasRole(PLATFORM_MANAGER_ROLE, msg.sender) ||
+            hasRole(PLATFORM_MANAGER_ROLE, _msgSender()) ||
                 allowedContracts[msg.sender],
             "Only manager or allowed Contract"
         );
