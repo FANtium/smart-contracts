@@ -1,6 +1,6 @@
 /**
  *Submitted for verification at polygonscan.com on 2021-06-09
-*/
+ */
 
 // SPDX-License-Identifier: MIT
 
@@ -19,11 +19,11 @@ pragma solidity ^0.8.13;
  * This contract is only required for intermediate, library-like contracts.
  */
 abstract contract Context {
-    function _msgSender() internal virtual view returns (address) {
+    function _msgSender() internal view virtual returns (address) {
         return msg.sender;
     }
 
-    function _msgData() internal virtual view returns (bytes memory) {
+    function _msgData() internal view virtual returns (bytes memory) {
         this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
         return msg.data;
     }
@@ -54,9 +54,10 @@ interface IERC20 {
      *
      * Emits a {Transfer} event.
      */
-    function transfer(address recipient, uint256 amount)
-        external
-        returns (bool);
+    function transfer(
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
 
     /**
      * @dev Returns the remaining number of tokens that `spender` will be
@@ -65,10 +66,10 @@ interface IERC20 {
      *
      * This value changes when {approve} or {transferFrom} are called.
      */
-    function allowance(address owner, address spender)
-        external
-        view
-        returns (uint256);
+    function allowance(
+        address owner,
+        address spender
+    ) external view returns (uint256);
 
     /**
      * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
@@ -353,7 +354,7 @@ library Address {
         );
 
         // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
-        (bool success, ) = recipient.call{ value: amount }("");
+        (bool success, ) = recipient.call{value: amount}("");
         require(
             success,
             "Address: unable to send value, recipient may have reverted"
@@ -378,10 +379,10 @@ library Address {
      *
      * _Available since v3.1._
      */
-    function functionCall(address target, bytes memory data)
-        internal
-        returns (bytes memory)
-    {
+    function functionCall(
+        address target,
+        bytes memory data
+    ) internal returns (bytes memory) {
         return functionCall(target, data, "Address: low-level call failed");
     }
 
@@ -452,9 +453,9 @@ library Address {
         require(isContract(target), "Address: call to non-contract");
 
         // solhint-disable-next-line avoid-low-level-calls
-        (bool success, bytes memory returndata) = target.call{
-            value: weiValue
-        }(data);
+        (bool success, bytes memory returndata) = target.call{value: weiValue}(
+            data
+        );
         if (success) {
             return returndata;
         } else {
@@ -650,19 +651,16 @@ contract ERC20 is Context, IERC20, IERC20Internal {
     /**
      * @dev See {IERC20-totalSupply}.
      */
-    function totalSupply() external override view returns (uint256) {
+    function totalSupply() external view override returns (uint256) {
         return _totalSupply;
     }
 
     /**
      * @dev See {IERC20-balanceOf}.
      */
-    function balanceOf(address account)
-        external
-        override
-        view
-        returns (uint256)
-    {
+    function balanceOf(
+        address account
+    ) external view override returns (uint256) {
         return _balances[account];
     }
 
@@ -674,12 +672,10 @@ contract ERC20 is Context, IERC20, IERC20Internal {
      * - `recipient` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(address recipient, uint256 amount)
-        external
-        virtual
-        override
-        returns (bool)
-    {
+    function transfer(
+        address recipient,
+        uint256 amount
+    ) external virtual override returns (bool) {
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
@@ -687,13 +683,10 @@ contract ERC20 is Context, IERC20, IERC20Internal {
     /**
      * @dev See {IERC20-allowance}.
      */
-    function allowance(address owner, address spender)
-        external
-        virtual
-        override
-        view
-        returns (uint256)
-    {
+    function allowance(
+        address owner,
+        address spender
+    ) external view virtual override returns (uint256) {
         return _allowances[owner][spender];
     }
 
@@ -704,12 +697,10 @@ contract ERC20 is Context, IERC20, IERC20Internal {
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(address spender, uint256 amount)
-        external
-        virtual
-        override
-        returns (bool)
-    {
+    function approve(
+        address spender,
+        uint256 amount
+    ) external virtual override returns (bool) {
         _approve(_msgSender(), spender, amount);
         return true;
     }
@@ -747,11 +738,10 @@ contract ERC20 is Context, IERC20, IERC20Internal {
      *
      * - `spender` cannot be the zero address.
      */
-    function increaseAllowance(address spender, uint256 addedValue)
-        external
-        virtual
-        returns (bool)
-    {
+    function increaseAllowance(
+        address spender,
+        uint256 addedValue
+    ) external virtual returns (bool) {
         _increaseAllowance(_msgSender(), spender, addedValue);
         return true;
     }
@@ -770,11 +760,10 @@ contract ERC20 is Context, IERC20, IERC20Internal {
      * - `spender` must have allowance for the caller of at least
      * `subtractedValue`.
      */
-    function decreaseAllowance(address spender, uint256 subtractedValue)
-        external
-        virtual
-        returns (bool)
-    {
+    function decreaseAllowance(
+        address spender,
+        uint256 subtractedValue
+    ) external virtual returns (bool) {
         _decreaseAllowance(_msgSender(), spender, subtractedValue);
         return true;
     }
@@ -1058,11 +1047,10 @@ library EnumerableSet {
     /**
      * @dev Returns true if the value is in the set. O(1).
      */
-    function _contains(Set storage set, bytes32 value)
-        private
-        view
-        returns (bool)
-    {
+    function _contains(
+        Set storage set,
+        bytes32 value
+    ) private view returns (bool) {
         return set._indexes[value] != 0;
     }
 
@@ -1083,11 +1071,10 @@ library EnumerableSet {
      *
      * - `index` must be strictly less than {length}.
      */
-    function _at(Set storage set, uint256 index)
-        private
-        view
-        returns (bytes32)
-    {
+    function _at(
+        Set storage set,
+        uint256 index
+    ) private view returns (bytes32) {
         require(
             set._values.length > index,
             "EnumerableSet: index out of bounds"
@@ -1107,10 +1094,10 @@ library EnumerableSet {
      * Returns true if the value was added to the set, that is if it was not
      * already present.
      */
-    function add(AddressSet storage set, address value)
-        internal
-        returns (bool)
-    {
+    function add(
+        AddressSet storage set,
+        address value
+    ) internal returns (bool) {
         return _add(set._inner, bytes32(uint256(uint160(value))));
     }
 
@@ -1120,21 +1107,20 @@ library EnumerableSet {
      * Returns true if the value was removed from the set, that is if it was
      * present.
      */
-    function remove(AddressSet storage set, address value)
-        internal
-        returns (bool)
-    {
+    function remove(
+        AddressSet storage set,
+        address value
+    ) internal returns (bool) {
         return _remove(set._inner, bytes32(uint256(uint160(value))));
     }
 
     /**
      * @dev Returns true if the value is in the set. O(1).
      */
-    function contains(AddressSet storage set, address value)
-        internal
-        view
-        returns (bool)
-    {
+    function contains(
+        AddressSet storage set,
+        address value
+    ) internal view returns (bool) {
         return _contains(set._inner, bytes32(uint256(uint160(value))));
     }
 
@@ -1155,11 +1141,10 @@ library EnumerableSet {
      *
      * - `index` must be strictly less than {length}.
      */
-    function at(AddressSet storage set, uint256 index)
-        internal
-        view
-        returns (address)
-    {
+    function at(
+        AddressSet storage set,
+        uint256 index
+    ) internal view returns (address) {
         return address(uint160(uint256(_at(set._inner, index))));
     }
 
@@ -1185,21 +1170,20 @@ library EnumerableSet {
      * Returns true if the value was removed from the set, that is if it was
      * present.
      */
-    function remove(UintSet storage set, uint256 value)
-        internal
-        returns (bool)
-    {
+    function remove(
+        UintSet storage set,
+        uint256 value
+    ) internal returns (bool) {
         return _remove(set._inner, bytes32(value));
     }
 
     /**
      * @dev Returns true if the value is in the set. O(1).
      */
-    function contains(UintSet storage set, uint256 value)
-        internal
-        view
-        returns (bool)
-    {
+    function contains(
+        UintSet storage set,
+        uint256 value
+    ) internal view returns (bool) {
         return _contains(set._inner, bytes32(value));
     }
 
@@ -1220,11 +1204,10 @@ library EnumerableSet {
      *
      * - `index` must be strictly less than {length}.
      */
-    function at(UintSet storage set, uint256 index)
-        internal
-        view
-        returns (uint256)
-    {
+    function at(
+        UintSet storage set,
+        uint256 index
+    ) internal view returns (uint256) {
         return uint256(_at(set._inner, index));
     }
 }
@@ -1487,7 +1470,6 @@ library EnumerableSet {
 //     }
 // }
 
-
 // File: contracts/lib/Initializable.sol
 
 pragma solidity ^0.8.13;
@@ -1615,8 +1597,8 @@ pragma solidity ^0.8.13;
  */
 library EIP712 {
     // keccak256("EIP712Domain(string name,string version,address verifyingContract,bytes32 salt)")
-    bytes32
-        public constant EIP712_DOMAIN_TYPEHASH = 0x36c25de3e541d5d970f66e4210d728721220fff5c077cc6cd008b3a0c62adab7;
+    bytes32 public constant EIP712_DOMAIN_TYPEHASH =
+        0x36c25de3e541d5d970f66e4210d728721220fff5c077cc6cd008b3a0c62adab7;
 
     /**
      * @notice Make EIP712 domain separator
@@ -1624,11 +1606,10 @@ library EIP712 {
      * @param version   Contract version
      * @return Domain separator
      */
-    function makeDomainSeparator(string memory name, string memory version)
-        internal
-        view
-        returns (bytes32)
-    {
+    function makeDomainSeparator(
+        string memory name,
+        string memory version
+    ) internal view returns (bytes32) {
         uint256 chainId;
         assembly {
             chainId := chainid()
@@ -1680,9 +1661,10 @@ pragma solidity ^0.8.13;
 abstract contract EIP712Domain {
     bytes32 public DOMAIN_SEPARATOR;
 
-    function _setDomainSeparator(string memory name, string memory version)
-        internal
-    {
+    function _setDomainSeparator(
+        string memory name,
+        string memory version
+    ) internal {
         DOMAIN_SEPARATOR = EIP712.makeDomainSeparator(name, version);
     }
 }
@@ -1710,8 +1692,8 @@ pragma solidity ^0.8.13;
 
 abstract contract NativeMetaTransaction is EIP712Domain, Nonces {
     // keccak256("MetaTransaction(uint256 nonce,address from,bytes functionSignature)")
-    bytes32
-        public constant META_TRANSACTION_TYPEHASH = 0x23d10def3caacba2e4042e0c75d44a42d2558aabcf5ce951d0642a8032e1e653;
+    bytes32 public constant META_TRANSACTION_TYPEHASH =
+        0x23d10def3caacba2e4042e0c75d44a42d2558aabcf5ce951d0642a8032e1e653;
 
     event MetaTransactionExecuted(
         address userAddress,
@@ -1836,8 +1818,8 @@ pragma solidity ^0.8.13;
 
 abstract contract Permit is IERC20Internal, EIP712Domain, Nonces {
     // = keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")
-    bytes32
-        public constant PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
+    bytes32 public constant PERMIT_TYPEHASH =
+        0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
 
     /**
      * @notice Verify a signed approval permit and execute if valid
@@ -1912,23 +1894,27 @@ pragma solidity ^0.8.13;
  * accessible functions, optionally adding modifiers where necessary
  */
 abstract contract GasAbstraction is IERC20Internal, EIP712Domain {
-    bytes32
-        public constant TRANSFER_WITH_AUTHORIZATION_TYPEHASH = 0x7c7c6cdb67a18743f49ec6fa9b35f50d52ed05cbed4cc592e13b44501c1a2267;
+    bytes32 public constant TRANSFER_WITH_AUTHORIZATION_TYPEHASH =
+        0x7c7c6cdb67a18743f49ec6fa9b35f50d52ed05cbed4cc592e13b44501c1a2267;
     // = keccak256("TransferWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)")
-    bytes32
-        public constant APPROVE_WITH_AUTHORIZATION_TYPEHASH = 0x808c10407a796f3ef2c7ea38c0638ea9d2b8a1c63e3ca9e1f56ce84ae59df73c;
+    bytes32 public constant APPROVE_WITH_AUTHORIZATION_TYPEHASH =
+        0x808c10407a796f3ef2c7ea38c0638ea9d2b8a1c63e3ca9e1f56ce84ae59df73c;
     // = keccak256("ApproveWithAuthorization(address owner,address spender,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)")
-    bytes32
-        public constant INCREASE_ALLOWANCE_WITH_AUTHORIZATION_TYPEHASH = 0x424222bb050a1f7f14017232a5671f2680a2d3420f504bd565cf03035c53198a;
+    bytes32 public constant INCREASE_ALLOWANCE_WITH_AUTHORIZATION_TYPEHASH =
+        0x424222bb050a1f7f14017232a5671f2680a2d3420f504bd565cf03035c53198a;
     // = keccak256("IncreaseAllowanceWithAuthorization(address owner,address spender,uint256 increment,uint256 validAfter,uint256 validBefore,bytes32 nonce)")
-    bytes32
-        public constant DECREASE_ALLOWANCE_WITH_AUTHORIZATION_TYPEHASH = 0xb70559e94cbda91958ebec07f9b65b3b490097c8d25c8dacd71105df1015b6d8;
+    bytes32 public constant DECREASE_ALLOWANCE_WITH_AUTHORIZATION_TYPEHASH =
+        0xb70559e94cbda91958ebec07f9b65b3b490097c8d25c8dacd71105df1015b6d8;
     // = keccak256("DecreaseAllowanceWithAuthorization(address owner,address spender,uint256 decrement,uint256 validAfter,uint256 validBefore,bytes32 nonce)")
-    bytes32
-        public constant CANCEL_AUTHORIZATION_TYPEHASH = 0x158b0a9edf7a828aad02f63cd515c68ef2f50ba807396f6d12842833a1597429;
+    bytes32 public constant CANCEL_AUTHORIZATION_TYPEHASH =
+        0x158b0a9edf7a828aad02f63cd515c68ef2f50ba807396f6d12842833a1597429;
     // = keccak256("CancelAuthorization(address authorizer,bytes32 nonce)")
 
-    enum AuthorizationState { Unused, Used, Canceled }
+    enum AuthorizationState {
+        Unused,
+        Used,
+        Canceled
+    }
 
     /**
      * @dev authorizer address => nonce => authorization state
@@ -1948,11 +1934,10 @@ abstract contract GasAbstraction is IERC20Internal, EIP712Domain {
      * @param nonce         Nonce of the authorization
      * @return Authorization state
      */
-    function authorizationState(address authorizer, bytes32 nonce)
-        external
-        view
-        returns (AuthorizationState)
-    {
+    function authorizationState(
+        address authorizer,
+        bytes32 nonce
+    ) external view returns (AuthorizationState) {
         return _authorizationStates[authorizer][nonce];
     }
 
@@ -2166,10 +2151,10 @@ abstract contract GasAbstraction is IERC20Internal, EIP712Domain {
      * @param authorizer    Authorizer's address
      * @param nonce         Nonce of the authorization
      */
-    function _requireUnusedAuthorization(address authorizer, bytes32 nonce)
-        private
-        view
-    {
+    function _requireUnusedAuthorization(
+        address authorizer,
+        bytes32 nonce
+    ) private view {
         require(
             _authorizationStates[authorizer][nonce] ==
                 AuthorizationState.Unused,
@@ -2194,7 +2179,10 @@ abstract contract GasAbstraction is IERC20Internal, EIP712Domain {
             block.timestamp > validAfter,
             "GasAbstraction: authorization is not yet valid"
         );
-        require(block.timestamp < validBefore, "GasAbstraction: authorization is expired");
+        require(
+            block.timestamp < validBefore,
+            "GasAbstraction: authorization is expired"
+        );
         _requireUnusedAuthorization(authorizer, nonce);
     }
 
@@ -2203,9 +2191,10 @@ abstract contract GasAbstraction is IERC20Internal, EIP712Domain {
      * @param authorizer    Authorizer's address
      * @param nonce         Nonce of the authorization
      */
-    function _markAuthorizationAsUsed(address authorizer, bytes32 nonce)
-        internal
-    {
+    function _markAuthorizationAsUsed(
+        address authorizer,
+        bytes32 nonce
+    ) internal {
         _authorizationStates[authorizer][nonce] = AuthorizationState.Used;
         emit AuthorizationUsed(authorizer, nonce);
     }
@@ -2217,8 +2206,8 @@ pragma solidity ^0.8.13;
 
 abstract contract MaticGasAbstraction is GasAbstraction {
     // keccak256("WithdrawWithAuthorization(address owner,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)")
-    bytes32
-        public constant WITHDRAW_WITH_AUTHORIZATION_TYPEHASH = 0x6c8f8f5f82f0c140edd12e80d10ff715a36d6e5f73e406394862b5f1eb44c4f9;
+    bytes32 public constant WITHDRAW_WITH_AUTHORIZATION_TYPEHASH =
+        0x6c8f8f5f82f0c140edd12e80d10ff715a36d6e5f73e406394862b5f1eb44c4f9;
 
     function _withdrawWithAuthorization(
         address owner,
@@ -2266,38 +2255,36 @@ contract MockUSDC is
     constructor(
         string memory newName,
         string memory newSymbol,
-        uint8 newDecimals) 
-        ERC20(newName, newSymbol) {
+        uint8 newDecimals
+    ) ERC20(newName, newSymbol) {
         _setDecimals(newDecimals);
         _setDomainSeparator(newName, EIP712_VERSION);
-        }
-
+    }
 
     // This is to support Native meta transactions
     // never use msg.sender directly, use _msgSender() instead
     function _msgSender()
         internal
+        view
         virtual
         override
-        view
         returns (address sender)
     {
         return ContextMixin.msgSender();
     }
 
-    function updateMetadata(string calldata newName, string calldata newSymbol)
-        external
-    {
+    function updateMetadata(
+        string calldata newName,
+        string calldata newSymbol
+    ) external {
         _setName(newName);
         _setSymbol(newSymbol);
         _setDomainSeparator(newName, EIP712_VERSION);
     }
 
-
     function mint(address user, uint256 amount) public {
         _mint(user, amount);
     }
-
 
     /**
      * @notice called when user wants to withdraw tokens back to root chain

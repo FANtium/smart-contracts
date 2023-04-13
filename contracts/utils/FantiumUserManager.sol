@@ -71,7 +71,7 @@ contract FantiumUserManager is
     }
 
     modifier onlyManager() {
-        require(hasRole(PLATFORM_MANAGER_ROLE, _msgSender()), "Only manager");
+        require(hasRole(PLATFORM_MANAGER_ROLE, msg.sender), "Only manager");
         _;
     }
 
@@ -185,8 +185,10 @@ contract FantiumUserManager is
     function addAddressToIDENT(
         address _address
     ) public whenNotPaused onlyManager {
-        users[_address].isIDENT = true;
-        emit IDENTUpdate(_address, FIELD_IDENT_CHANGE);
+        if (users[_address].isIDENT == false) {
+            users[_address].isIDENT = true;
+            emit IDENTUpdate(_address, FIELD_IDENT_CHANGE);
+        }
     }
 
     /**
@@ -196,8 +198,10 @@ contract FantiumUserManager is
     function removeAddressFromIDENT(
         address _address
     ) external whenNotPaused onlyManager {
-        users[_address].isIDENT = false;
-        emit IDENTUpdate(_address, FIELD_IDENT_CHANGE);
+        if (users[_address].isIDENT == true) {
+            users[_address].isIDENT = false;
+            emit IDENTUpdate(_address, FIELD_IDENT_CHANGE);
+        }
     }
 
     /**
@@ -260,7 +264,7 @@ contract FantiumUserManager is
         uint256 _reduceAllocation
     ) external whenNotPaused returns (uint256) {
         require(
-            hasRole(PLATFORM_MANAGER_ROLE, _msgSender()) ||
+            hasRole(PLATFORM_MANAGER_ROLE, msg.sender) ||
                 allowedContracts[msg.sender],
             "Only manager or allowed Contract"
         );

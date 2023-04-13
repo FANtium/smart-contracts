@@ -127,7 +127,7 @@ contract FantiumNFTV3 is
     modifier onlyAthlete(uint256 _collectionId) {
         require(
             _msgSender() == collections[_collectionId].athleteAddress ||
-                hasRole(PLATFORM_MANAGER_ROLE, _msgSender()),
+                hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
             "Only athlete"
         );
         _;
@@ -143,11 +143,6 @@ contract FantiumNFTV3 is
 
     modifier onlyValidTokenId(uint256 _tokenId) {
         require(_exists(_tokenId), "Invalid tokenId");
-        _;
-    }
-
-    modifier onlyValidAddress(address _address) {
-        require(_address != address(0), "Invalid address");
         _;
     }
 
@@ -170,8 +165,7 @@ contract FantiumNFTV3 is
     function initialize(
         string memory _tokenName,
         string memory _tokenSymbol,
-        address _defaultAdmin,
-        address _trustedForwarder
+        address _defaultAdmin
     ) public initializer {
         __ERC721_init(_tokenName, _tokenSymbol);
         __UUPSUpgradeable_init();
@@ -181,7 +175,6 @@ contract FantiumNFTV3 is
 
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _grantRole(UPGRADER_ROLE, _defaultAdmin);
-        trustedForwarder = _trustedForwarder;
         nextCollectionId = 1;
     }
 
@@ -258,7 +251,7 @@ contract FantiumNFTV3 is
         require(collection.exists, "Collection does not exist");
         require(
             collection.launchTimestamp <= block.timestamp ||
-                hasRole(PLATFORM_MANAGER_ROLE, _msgSender()),
+                hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
             "Collection not launched"
         );
         require(collection.isMintable, "Collection is not mintable");
@@ -278,7 +271,7 @@ contract FantiumNFTV3 is
                     _msgSender()
                 ) >=
                     _amount ||
-                    hasRole(PLATFORM_MANAGER_ROLE, _msgSender()),
+                    hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
                 "Collection is paused or allowlist allocation insufficient"
             );
         }
@@ -294,7 +287,7 @@ contract FantiumNFTV3 is
         collection.invocations += _amount;
 
         if (
-            collection.isPaused && !hasRole(PLATFORM_MANAGER_ROLE, _msgSender())
+            collection.isPaused && !hasRole(PLATFORM_MANAGER_ROLE, msg.sender)
         ) {
             IFantiumUserManager(fantiumUserManager).reduceAllowListAllocation(
                 _collectionId,
@@ -442,7 +435,6 @@ contract FantiumNFTV3 is
         external
         whenNotPaused
         onlyRole(PLATFORM_MANAGER_ROLE)
-        onlyValidAddress(_athleteAddress)
     {
         require(
             _athleteSecondarySalesBPS + _fantiumSecondarySalesBPS <= 10_000,
@@ -508,9 +500,12 @@ contract FantiumNFTV3 is
     )
         external
         onlyValidCollectionId(_collectionId)
-        onlyValidAddress(_athleteAddress)
         onlyRole(PLATFORM_MANAGER_ROLE)
     {
+        require(
+            _athleteAddress != address(0),
+            "FantiumNFTV3: address cannot be 0"
+        );
         collections[_collectionId].athleteAddress = _athleteAddress;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ATHLETE_ADDRESS);
     }
@@ -606,7 +601,9 @@ contract FantiumNFTV3 is
         uint256 _maxInvocations,
         uint256 _price,
         uint256 _tournamentEarningShare1e7,
-        uint256 _otherEarningShare1e7
+        uint256 _otherEarningShare1e7,
+        address payable _fantiumSalesAddress,
+        uint256 _fantiumSecondarySalesBPS
     )
         external
         onlyValidCollectionId(_collectionId)
@@ -614,14 +611,13 @@ contract FantiumNFTV3 is
     {
         // require to have either other token share or tournament token share set to > 0
         require(
-            _maxInvocations > 0 &&
                 _price > 0 &&
                 (_tournamentEarningShare1e7 > 0 || _otherEarningShare1e7 > 0),
-            "all parameters must be greater than 0"
+            "FantiumNFTV3: all parameters must be greater than 0"
         );
         require(
-            _maxInvocations <= 10000,
-            "max invocations must be less than 10,000"
+            _maxInvocations < 10_000,
+            "FantiumNFTV3: max invocations must be less than 10,000"
         );
         require(
             nextCollectionId < 1_000_000,
@@ -631,6 +627,27 @@ contract FantiumNFTV3 is
             _tournamentEarningShare1e7 <= 1e7 && _otherEarningShare1e7 <= 1e7,
             "FantiumNFTV3: token share must be less than 1e7"
         );
+
+        require(
+            _maxInvocations >= collections[_collectionId].invocations,
+            "FantiumNFTV3: max invocations must be greater than current invocations"
+        );
+
+        require(
+            _fantiumSalesAddress != address(0),
+            "FantiumNFTV3: address cannot be 0"
+        );
+
+        require(
+            collections[_collectionId].athleteSecondarySalesBPS +
+                _fantiumSecondarySalesBPS <=
+                10_000,
+            "FantiumClaimingV1: secondary sales BPS must be less than 10,000"
+        );
+
+        collections[_collectionId].fantiumSalesAddress = _fantiumSalesAddress;
+        collections[_collectionId]
+            .fantiumSecondarySalesBPS = _fantiumSecondarySalesBPS;
 
         collections[_collectionId].maxInvocations = _maxInvocations;
         collections[_collectionId].price = _price;
@@ -671,30 +688,6 @@ contract FantiumNFTV3 is
     ) external whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
         baseURI = _baseURI;
         emit PlatformUpdated(FILED_FANTIUM_BASE_URI);
-    }
-
-    /**
-     * @notice Updates the platform address to be `_fantiumPrimarySalesAddress`.
-     */
-    function updateFantiumSalesInformation(
-        uint256 _collectionId,
-        address payable _fantiumSalesAddress,
-        uint256 _fantiumSecondarySalesBPS
-    )
-        external
-        onlyRole(PLATFORM_MANAGER_ROLE)
-        onlyValidAddress(_fantiumSalesAddress)
-        onlyValidCollectionId(_collectionId)
-    {
-        require(
-            collections[_collectionId].athleteSecondarySalesBPS +
-                _fantiumSecondarySalesBPS <=
-                10000,
-            "FantiumClaimingV1: secondary sales BPS must be less than 10,000"
-        );
-        collections[_collectionId].fantiumSalesAddress = _fantiumSalesAddress;
-        collections[_collectionId]
-            .fantiumSecondarySalesBPS = _fantiumSecondarySalesBPS;
     }
 
     /**
@@ -783,7 +776,8 @@ contract FantiumNFTV3 is
             _paymentTokenAdderss != address(0) &&
                 _claimContractAdress != address(0) &&
                 _userManagerAddress != address(0) &&
-                _trustedForwarder != address(0)
+                _trustedForwarder != address(0),
+            "FantiumNFTV3: addresses cannot be 0"
         );
         erc20PaymentToken = _paymentTokenAdderss;
         claimContract = _claimContractAdress;
