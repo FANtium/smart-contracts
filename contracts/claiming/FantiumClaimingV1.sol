@@ -138,14 +138,15 @@ contract FantiumClaimingV1 is
         address _defaultAdmin,
         address _payoutToken,
         address _fantiumNFTContract,
-        address _forwarder
+        address _trustedForwarder
     ) public initializer {
         __UUPSUpgradeable_init();
         __AccessControl_init();
         __Pausable_init();
+        require (_defaultAdmin != address(0) && _payoutToken != address(0) && _fantiumNFTContract != address(0) && _trustedForwarder != address(0) , "Invalid addresses");
         payoutToken = _payoutToken;
         fantiumNFTContract = _fantiumNFTContract;
-        trustedForwarder = _forwarder;
+        trustedForwarder = _trustedForwarder;
 
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _grantRole(UPGRADER_ROLE, _defaultAdmin);
@@ -346,7 +347,7 @@ contract FantiumClaimingV1 is
                 distributionEvents[_id].amountPaidIn,
             "FantiumClaimingV1: total payout amount must be greater than amount already paid in"
         );
-
+        topUpDistributionEvent(_id);
         emit DistributionEventUpdate(_id, FIELD_AMOUNT);
     }
 
@@ -374,6 +375,7 @@ contract FantiumClaimingV1 is
                 distributionEvents[_id].amountPaidIn,
             "FantiumClaimingV1: total payout amount must be greater than amount already paid in"
         );
+        topUpDistributionEvent(_id);
 
         emit DistributionEventUpdate(_id, FIELD_COLLECTIONS);
     }
@@ -544,6 +546,34 @@ contract FantiumClaimingV1 is
                             INTERNAL 
     //////////////////////////////////////////////////////////////*/
 
+    function topUpDistributionEvent(uint256 _distributionEventId) internal { 
+
+        uint256 payInAmount = (distributionEvents[_distributionEventId]
+            .tournamentDistributionAmount +
+            distributionEvents[_distributionEventId].otherDistributionAmount) -
+            distributionEvents[_distributionEventId].amountPaidIn;
+
+        // check if a topup is needed
+        require(payInAmount > 0, "FantiumClaimingV1: amount already paid in");
+
+        // EFFECT
+        address payOutToken = distributionEventToPayoutToken[_distributionEventId];
+
+        uint256 balanceBefore = IERC20Upgradeable(payOutToken).balanceOf(address(this));
+        
+        SafeERC20Upgradeable.safeTransferFrom(
+            IERC20Upgradeable(payOutToken),
+            distributionEvents[_distributionEventId].athleteAddress,
+            address(this),
+            payInAmount
+        );
+
+        require(balanceBefore + payInAmount == IERC20Upgradeable(payOutToken).balanceOf(address(this)), "FantiumClaimingV1: transfer failed");
+        distributionEvents[_distributionEventId].amountPaidIn += payInAmount;
+        emit PayIn(_distributionEventId, payInAmount);
+    }
+    
+    
     // calcualtes the amount to send to the user
     function calculateClaim(
         uint256 _distributionEventID,
