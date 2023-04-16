@@ -88,17 +88,18 @@ contract FantiumUserManager is
     ///@dev no constructor in upgradable contracts. Instead we have initializers
     function initialize(
         address _defaultAdmin,
-        address _nftContract,
+        address _fantiumNFTContract,
         address _claimingContract,
         address _trustedForwarder
     ) public initializer {
+        require (_defaultAdmin != address(0) && _fantiumNFTContract != address(0) && _trustedForwarder != address(0) && _claimingContract != address(0) , "Invalid addresses");
         __UUPSUpgradeable_init();
         __AccessControl_init();
         __Pausable_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _grantRole(UPGRADER_ROLE, _defaultAdmin);
-        allowedContracts[_nftContract] = true;
+        allowedContracts[_fantiumNFTContract] = true;
         allowedContracts[_claimingContract] = true;
         trustedForwarder = _trustedForwarder;
     }
