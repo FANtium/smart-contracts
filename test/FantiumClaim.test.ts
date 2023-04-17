@@ -173,6 +173,15 @@ describe("FantiumClaim", () => {
 
     })
 
+    //////// CHECK deployment
+
+
+    it("Check Setup: check initializer done", async () => {
+
+        await expect(claimContract.initialize(defaultAdmin.address, erc20Contract.address, nftContract.address, forwarder.address)).to.revertedWith("Initializable: contract is already initialized")
+
+    })
+
     //////// CHECK DISTRIBUTION EVENT SETUP
 
     it("Check Setup: check distributionEvent creation", async () => {
@@ -319,6 +328,25 @@ describe("FantiumClaim", () => {
 
     })
 
+    // check all require statements for distribtionEvents
+    it("Check Setup: check getter Function", async () => {
+
+        // check that others can't create events
+        await claimContract.connect(platformManager).setupDistributionEvent(
+            athlete.address,
+            tournamentEarnings,
+            otherEarnings,
+            startTime,
+            closeTime,
+            [1,2,3],
+            fantium.address,
+            fantiumFeePBS
+        );
+
+        expect((await claimContract.getDistributionEvent(1)).athleteAddress).to.be.equal(athlete.address)
+
+    })
+
     //////// CHECK SNAPSHOT MECHANIC
 
     it("Check Snapshot: check snapshot mechanic", async () => {
@@ -366,6 +394,48 @@ describe("FantiumClaim", () => {
         await expect(claimContract.connect(athlete).addDistributionAmount(1)).to.be.revertedWith("FantiumClaimingV1: amount already paid in")
     })
     
+    it("Check Payin: check batch payin mechanic", async () => {
+        const fanV3 = await ethers.getContractFactory("FantiumNFTV3")
+        const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
+        
+        await claimContract.connect(platformManager).setupDistributionEvent(
+            athlete.address,
+            tournamentEarnings,
+            otherEarnings,
+            startTime,
+            closeTime,
+            [1,2,3],
+            fantium.address,
+            fantiumFeePBS
+        )
+        
+        await erc20Contract.connect(fan).approve(nftContract.address, 3 * price * (10 ** decimals))
+        await nftContractV3.connect(fan).mint(1,1)
+        
+        await claimContract.connect(platformManager).takeClaimingSnapshot(1)
+        await claimContract.connect(platformManager).takeClaimingSnapshot(2)
+
+        // try to add distribution amount as external user
+        await erc20Contract.connect(fan).approve(claimContract.address, 2*totalAmount)
+        await expect(claimContract.connect(fan).batchAddDistributionAmount([1,2])).to.be.revertedWith("only athlete")
+        
+        // try distributionEvent that doesn't exist
+        await erc20Contract.connect(athlete).approve(claimContract.address, totalAmount)
+        await expect(claimContract.connect(athlete).batchAddDistributionAmount([20])).to.be.revertedWith("only athlete")
+
+        // add distribution amount
+        
+        await claimContract.connect(athlete).batchAddDistributionAmount([1,2])
+
+        expect((await claimContract.getDistributionEvent(1)).amountPaidIn).to.equal((2*tournamentEarnings * tournamentEarningsShare1e7 / 1e7) + (2*otherEarnings * otherEarningsShare1e7 / 1e7))
+        expect((await claimContract.getDistributionEvent(2)).amountPaidIn).to.equal((2*tournamentEarnings * tournamentEarningsShare1e7 / 1e7) + (2*otherEarnings * otherEarningsShare1e7 / 1e7))
+        expect((await erc20Contract.balanceOf(claimContract.address))).to.equal((4*tournamentEarnings * tournamentEarningsShare1e7 / 1e7) + (4*otherEarnings * otherEarningsShare1e7 / 1e7))
+
+        await erc20Contract.connect(athlete).approve(claimContract.address, totalAmount)
+        await expect(claimContract.connect(athlete).addDistributionAmount(1)).to.be.revertedWith("FantiumClaimingV1: amount already paid in")
+    })
+    
+
     it("Check Payin: check require statements for payin for closed distributionEvents", async () => {
         const fanV3 = await ethers.getContractFactory("FantiumNFTV3")
         const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
@@ -745,7 +815,7 @@ describe("FantiumClaim", () => {
         await erc20Contract.connect(other).approve(nftContractV3.address, 10 * price * (10 ** decimals))
         await nftContractV3.connect(other).mint(1, 5)
 
-        await claimContract.connect(platformManager).updateDistributionEventTimeStamps(1,1681699940,1681699941)
+        await claimContract.connect(platformManager).updateDistributionEventTimeStamps(1,1689546966,1689596966)
 
         // claim with being IDENT
         await claimContract.connect(platformManager).takeClaimingSnapshot(1)
@@ -903,6 +973,26 @@ describe("FantiumClaim", () => {
         expect(await claimContract.fantiumUserManager()).to.equal(fan.address)
 
         await expect(claimContract.connect(platformManager).updateFantiumUserManager(nullAddress)).to.be.revertedWith('Null address not allowed')
+
+    })
+
+    // CHECK IF UPGRADE ON NFT CONTRACT FAILS
+
+    it("Check Upgrade: Fantium NFT Contract fails upgrade", async () => {
+        const fanV3 = await ethers.getContractFactory("FantiumNFTV3")
+        const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
+
+        await claimContract.connect(platformManager).takeClaimingSnapshot(1)
+        await erc20Contract.connect(athlete).approve(claimContract.address, totalAmount)
+        await claimContract.connect(athlete).addDistributionAmount(1)
+        
+        await nftContractV3.connect(platformManager).updatePlatformAddressesConfigs(erc20Contract.address, fan.address,userManager.address, forwarder.address)
+
+        await userManager.connect(kycManager).addAddressToIDENT(fan.address)
+        await expect(claimContract.connect(fan).claim(1000000,1)).to.be.revertedWith('Only claim contract can call this function')
+
+        await claimContract.connect(platformManager).updateFantiumNFTContract(fan.address)
+        await expect(claimContract.connect(fan).claim(1000000,1)).to.be.reverted
 
     })
 
