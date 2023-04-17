@@ -45,8 +45,6 @@ contract FantiumUserManager is
         mapping(address => mapping(uint256 => uint256)) contractToAllowlistToSpots;
     }
 
-    address private trustedForwarder;
-
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
@@ -64,11 +62,6 @@ contract FantiumUserManager is
     /*//////////////////////////////////////////////////////////////
                             MODIFERS
     //////////////////////////////////////////////////////////////*/
-
-    modifier onlyValidAddress(address _address) {
-        require(_address != address(0), "Invalid address");
-        _;
-    }
 
     modifier onlyManager() {
         require(hasRole(PLATFORM_MANAGER_ROLE, msg.sender), "Only manager");
@@ -89,10 +82,9 @@ contract FantiumUserManager is
     function initialize(
         address _defaultAdmin,
         address _fantiumNFTContract,
-        address _claimingContract,
-        address _trustedForwarder
+        address _claimingContract
     ) public initializer {
-        require (_defaultAdmin != address(0) && _fantiumNFTContract != address(0) && _trustedForwarder != address(0) && _claimingContract != address(0) , "Invalid addresses");
+        require (_defaultAdmin != address(0) && _fantiumNFTContract != address(0) && _claimingContract != address(0) , "Invalid addresses");
         __UUPSUpgradeable_init();
         __AccessControl_init();
         __Pausable_init();
@@ -101,7 +93,6 @@ contract FantiumUserManager is
         _grantRole(UPGRADER_ROLE, _defaultAdmin);
         allowedContracts[_fantiumNFTContract] = true;
         allowedContracts[_claimingContract] = true;
-        trustedForwarder = _trustedForwarder;
     }
 
     /// @notice upgrade authorization logic
@@ -270,6 +261,10 @@ contract FantiumUserManager is
             "Only manager or allowed Contract"
         );
         require(allowedContracts[_contractAddress], "Only allowed Contract");
+        require(
+            IFantiumNFT(_contractAddress).getCollectionExists(_collectionId),
+            "Collection does not exist"
+        );
 
         users[_address].contractToAllowlistToSpots[_contractAddress][
             _collectionId
@@ -349,54 +344,5 @@ contract FantiumUserManager is
         require(_contractAddress != address(0), "No null address allowed");
         allowedContracts[_contractAddress] = false;
         emit PlatformUpdate(FIELD_CONTRACTS_ALLOWED_CHANGE);
-    }
-
-    /*///////////////////////////////////////////////////////////////
-                            ERC2771
-    //////////////////////////////////////////////////////////////*/
-
-    function setTrustedForwarder(
-        address forwarder
-    ) external onlyRole(UPGRADER_ROLE) {
-        trustedForwarder = forwarder;
-        emit PlatformUpdate(FIELD_PLATFORM_CONFIG);
-    }
-
-    function isTrustedForwarder(
-        address forwarder
-    ) public view virtual returns (bool) {
-        return forwarder == trustedForwarder;
-    }
-
-    function _msgSender()
-        internal
-        view
-        virtual
-        override
-        returns (address sender)
-    {
-        if (isTrustedForwarder(msg.sender)) {
-            // The assembly code is more direct than the Solidity version using `abi.decode`.
-            /// @solidity memory-safe-assembly
-            assembly {
-                sender := shr(96, calldataload(sub(calldatasize(), 20)))
-            }
-        } else {
-            return super._msgSender();
-        }
-    }
-
-    function _msgData()
-        internal
-        view
-        virtual
-        override
-        returns (bytes calldata)
-    {
-        if (isTrustedForwarder(msg.sender)) {
-            return msg.data[:msg.data.length - 20];
-        } else {
-            return super._msgData();
-        }
     }
 }
