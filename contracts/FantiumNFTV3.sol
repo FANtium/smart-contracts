@@ -446,7 +446,7 @@ contract FantiumNFTV3 is
         );
         require(
             _athletePrimarySalesBPS <= 10_000,
-            "FantiumNFTV3: max invocations must be less than 10,000"
+            "FantiumNFTV3: athletePrimarySalesBPS must be less than 10,000"
         );
         require(
             nextCollectionId < 1_000_000,
@@ -642,7 +642,7 @@ contract FantiumNFTV3 is
             collections[_collectionId].athleteSecondarySalesBPS +
                 _fantiumSecondarySalesBPS <=
                 10_000,
-            "FantiumClaimingV1: secondary sales BPS must be less than 10,000"
+            "FantiumNFTV3: secondary sales BPS must be less than 10,000"
         );
 
         collections[_collectionId].fantiumSalesAddress = _fantiumSalesAddress;

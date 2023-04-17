@@ -112,11 +112,6 @@ contract FantiumClaimingV1 is
         _;
     }
 
-    modifier onlyValidAddress(address _address) {
-        require(_address != address(0), "Invalid address");
-        _;
-    }
-
     modifier onlyValidDistributionEvent(uint256 _distributionEventId) {
         require(
             distributionEvents[_distributionEventId].exists,
@@ -207,14 +202,7 @@ contract FantiumClaimingV1 is
         external
         onlyRole(PLATFORM_MANAGER_ROLE)
         whenNotPaused
-        onlyValidAddress(_athleteAddress)
     {
-        // CHECKS
-        require(
-            fantiumNFTContract != address(0),
-            "FantiumClaimingV1: FantiumNFT not set"
-        );
-
         require(
             _startTime > 0 &&
                 _closeTime > 0 &&
@@ -363,10 +351,7 @@ contract FantiumClaimingV1 is
                 "FantiumClaimingV1: collection does not exist"
             );
         }
-        require(
-            distributionEvents[_id].amountPaidIn == 0,
-            "Distribution Amount already paid in"
-        );
+
         distributionEvents[_id].collectionIds = collectionIds;
         triggerClaimingSnapshot(_id);
         require(
@@ -404,7 +389,7 @@ contract FantiumClaimingV1 is
                 _closeTime > 0 &&
                 _startTime < _closeTime &&
                 block.timestamp < _closeTime,
-            "FantiuyarnmClaimingV1: times must be greater than 0 and close time must be greater than start time and in the future"
+            "FantiumClaimingV1: times must be greater than 0 and close time must be greater than start time and in the future"
         );
         distributionEvents[_id].startTime = _startTime;
         distributionEvents[_id].closeTime = _closeTime;
@@ -471,7 +456,7 @@ contract FantiumClaimingV1 is
         //check if _msgSender() is IDENTed
         require(
             isAddressIDENT(_msgSender()),
-            "FantiumClaimingV1: You are not ID verified"
+            "FantiumClaimingV1: Only ID verified"
         );
 
         //check if lockTime is over or ca be ignored
@@ -488,12 +473,6 @@ contract FantiumClaimingV1 is
         require(
             distributionEvents[_distributionEventId].closed == false,
             "FantiumClaimingV1: distribution event is closed"
-        );
-
-        //check if tokenID is valid and not to large
-        require(
-            _tokenId >= 1000000 && _tokenId <= 1000000000000,
-            "FantiumClaimingV1: invalid token id"
         );
 
         // check if token is from a valid collection
@@ -768,7 +747,7 @@ contract FantiumClaimingV1 is
         require(_payoutToken != address(0), "Null address not allowed");
         require(
             IERC20Upgradeable(payoutToken).balanceOf(address(this)) == 0,
-            "FantiumClaimingV1: no balance"
+            "FantiumClaimingV1: has balance of current payoutToken"
         );
         payoutToken = _payoutToken;
         emit PlatformUpdate(FIELD_PAYOUT_CONTRACT_CONFIGS);
@@ -808,7 +787,6 @@ contract FantiumClaimingV1 is
             .amountPaidIn -
             distributionEvents[_distributionEventId].claimedAmount;
 
-        // check if the athlete address is set
         require(closingAmount > 0, "FantiumClaimingV1: Amount to pay is 0");
         
         address payOutToken = distributionEventToPayoutToken[_distributionEventId];
