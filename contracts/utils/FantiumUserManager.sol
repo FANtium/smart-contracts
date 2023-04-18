@@ -84,7 +84,12 @@ contract FantiumUserManager is
         address _fantiumNFTContract,
         address _claimingContract
     ) public initializer {
-        require (_defaultAdmin != address(0) && _fantiumNFTContract != address(0) && _claimingContract != address(0) , "Invalid addresses");
+        require(
+            _defaultAdmin != address(0) &&
+                _fantiumNFTContract != address(0) &&
+                _claimingContract != address(0),
+            "Invalid addresses"
+        );
         __UUPSUpgradeable_init();
         __AccessControl_init();
         __Pausable_init();
@@ -330,8 +335,10 @@ contract FantiumUserManager is
         address _contractAddress
     ) public onlyRole(PLATFORM_MANAGER_ROLE) {
         require(_contractAddress != address(0), "No null address allowed");
-        allowedContracts[_contractAddress] = true;
-        emit PlatformUpdate(FIELD_CONTRACTS_ALLOWED_CHANGE);
+        if (!allowedContracts[_contractAddress]) {
+            allowedContracts[_contractAddress] = true;
+            emit PlatformUpdate(FIELD_CONTRACTS_ALLOWED_CHANGE);
+        }
     }
 
     /**
@@ -342,7 +349,9 @@ contract FantiumUserManager is
         address _contractAddress
     ) public onlyRole(PLATFORM_MANAGER_ROLE) {
         require(_contractAddress != address(0), "No null address allowed");
-        allowedContracts[_contractAddress] = false;
-        emit PlatformUpdate(FIELD_CONTRACTS_ALLOWED_CHANGE);
+        if (allowedContracts[_contractAddress]) {
+            allowedContracts[_contractAddress] = false;
+            emit PlatformUpdate(FIELD_CONTRACTS_ALLOWED_CHANGE);
+        }
     }
 }

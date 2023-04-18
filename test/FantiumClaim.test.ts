@@ -228,7 +228,7 @@ describe("FantiumClaim", () => {
             [1,2,3],
             fantium.address,
             fantiumFeePBS
-        )).to.be.revertedWith("AccessControl: account 0x15d34aaf54267db7d7c367839aaf71a00a2c6a65 is missing role 0xab538675bf961a344c31ab0f84b867b850736e871cc7bf3055ce65100abe02ea")
+        )).to.be.revertedWith("only platform manager")
 
         await claimContract.connect(platformManager).updateFantiumNFTContract(nftContract.address)
 
@@ -356,7 +356,7 @@ describe("FantiumClaim", () => {
         await nftContractV3.connect(fan).mint(1,1)
         
         // not allowed user tries to take snapshot
-        await expect(claimContract.connect(athlete).takeClaimingSnapshot(1)).to.be.revertedWith("AccessControl: account 0x15d34aaf54267db7d7c367839aaf71a00a2c6a65 is missing role 0xab538675bf961a344c31ab0f84b867b850736e871cc7bf3055ce65100abe02ea")
+        await expect(claimContract.connect(athlete).takeClaimingSnapshot(1)).to.be.revertedWith("only platform manager")
         await expect(claimContract.connect(platformManager).takeClaimingSnapshot(5)).to.be.revertedWith("Invalid distribution event")
         await claimContract.connect(platformManager).takeClaimingSnapshot(1)
 
@@ -493,7 +493,7 @@ describe("FantiumClaim", () => {
         const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
         
         //update distributionEvent
-       await expect(claimContract.connect(platformManager).updateDistribtionTotalEarningsAmounts(1, 0, 0)).to.be.revertedWith("FantiumClaimingV1: total amount must be greater than 0")
+       await expect(claimContract.connect(platformManager).updateDistribtionTotalEarningsAmounts(1, 0, 0)).to.be.revertedWith("FantiumClaimingV1: payout already started")
        await expect(claimContract.connect(platformManager).updateDistribtionTotalEarningsAmounts(5, 1, 1)).to.be.revertedWith("Invalid distribution event")
        
        await claimContract.connect(platformManager).takeClaimingSnapshot(1)
@@ -503,17 +503,13 @@ describe("FantiumClaim", () => {
        expect(await erc20Contract.balanceOf(claimContract.address)).to.equal((tournamentEarnings * tournamentEarningsShare1e7 / 1e7) + (otherEarnings * otherEarningsShare1e7 / 1e7))
 
         // check with smaller amount and expect revert 
+        await claimContract.connect(platformManager).updateDistributionEventTimeStamps(1, 1691841787, 1791841787)
        await expect(claimContract.connect(platformManager).updateDistribtionTotalEarningsAmounts(1, tournamentEarnings / 2, otherEarnings /2)).to.be.revertedWith("FantiumClaimingV1: total payout amount must be greater than amount already paid in")
-       
-       // update with same amount and expect revert  
-       await expect(claimContract.connect(platformManager).updateDistribtionTotalEarningsAmounts(1, tournamentEarnings, otherEarnings)).to.be.revertedWith("FantiumClaimingV1: amount already paid in")
 
        // check new balance 
        await claimContract.connect(platformManager).updateDistribtionTotalEarningsAmounts(1, 2*tournamentEarnings, 2*otherEarnings)
-       expect(await erc20Contract.balanceOf(claimContract.address)).to.equal((2*tournamentEarnings * tournamentEarningsShare1e7 / 1e7) + (2*otherEarnings * otherEarningsShare1e7 / 1e7))
+       expect(await erc20Contract.balanceOf(claimContract.address)).to.equal((tournamentEarnings * tournamentEarningsShare1e7 / 1e7) + (otherEarnings * otherEarningsShare1e7 / 1e7))
        
-       // check with too large of an amount and expect revert 
-       await expect(claimContract.connect(platformManager).updateDistribtionTotalEarningsAmounts(1, 10000*tournamentEarnings, 10000*otherEarnings)).to.be.revertedWith("ERC20: insufficient allowance")
         
     })
 
@@ -522,13 +518,13 @@ describe("FantiumClaim", () => {
         const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
         
         //update distributionEvent
+        await claimContract.connect(platformManager).updateDistributionEventTimeStamps(1, 1691841787, 1791841787)
        await expect(claimContract.connect(platformManager).updateDistributionEventCollectionIds(1, [10,11,12])).to.be.revertedWith("FantiumClaimingV1: collection does not exist")
        
        await claimContract.connect(platformManager).takeClaimingSnapshot(1)
        await erc20Contract.connect(athlete).approve(claimContract.address, totalAmount)
        await claimContract.connect(athlete).addDistributionAmount(1)
        
-       await expect(claimContract.connect(platformManager).updateDistributionEventCollectionIds(1, [1,2,3])).to.be.revertedWith("FantiumClaimingV1: amount already paid in")
        await expect(claimContract.connect(platformManager).updateDistributionEventCollectionIds(1, [4,5,6])).to.be.revertedWith("FantiumClaimingV1: total payout amount must be greater than amount already paid in")
 
     })
@@ -536,11 +532,11 @@ describe("FantiumClaim", () => {
     it("Check Update: update collectionId in distributionEvents successfully", async () => {
         const fanV3 = await ethers.getContractFactory("FantiumNFTV3")
         const nftContractV3 = await upgrades.upgradeProxy(nftContract.address, fanV3) as FantiumNFTV3
+        await claimContract.connect(platformManager).updateDistributionEventTimeStamps(1, 1691841787, 1791841787)
         
         await erc20Contract.connect(athlete).approve(claimContract.address, totalAmount)
         
         await erc20Contract.connect(fan).approve(nftContract.address, 3 * price * (10 ** decimals))
-        await nftContractV3.connect(fan).mint(4,1)
 
         //update distributionEvent
         await claimContract.connect(platformManager).updateDistributionEventCollectionIds(1, [4,5,6])
@@ -953,17 +949,17 @@ describe("FantiumClaim", () => {
     })
 
     it("Check Update: Payout Token Contract", async () => {
-        await claimContract.connect(platformManager).updatePayoutToken(fan.address)
-        expect(await claimContract.payoutToken()).to.equal(fan.address)
+        await claimContract.connect(platformManager).updateGlobalPayoutToken(fan.address)
+        expect(await claimContract.globalPayoutToken()).to.equal(fan.address)
 
-        await expect(claimContract.connect(platformManager).updatePayoutToken(nullAddress)).to.be.revertedWith('Null address not allowed')
+        await expect(claimContract.connect(platformManager).updateGlobalPayoutToken(nullAddress)).to.be.revertedWith('Null address not allowed')
     })
 
     it("Check Update: Payout Token Contract with balance", async () => {
 
         await erc20Contract.connect(athlete).approve(claimContract.address, totalAmount)
         await claimContract.connect(athlete).addDistributionAmount(1)
-        await expect(claimContract.connect(platformManager).updatePayoutToken(fan.address)).to.be.revertedWith('FantiumClaimingV1: has balance of current payoutToken')
+        await claimContract.connect(platformManager).updateGlobalPayoutToken(fan.address)
 
     })
 
