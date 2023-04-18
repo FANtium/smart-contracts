@@ -146,8 +146,16 @@ contract FantiumNFTV3 is
         _;
     }
 
-    modifier onlyKycManager() {
-        require(hasRole(KYC_MANAGER_ROLE, msg.sender), "Only KYC updater");
+    modifier onlyPlatformManager() {
+        require(
+            hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
+            "Only PlatformManager"
+        );
+        _;
+    }
+
+    modifier onlyUpgrader() {
+        require(hasRole(UPGRADER_ROLE, msg.sender), "Only Upgrader");
         _;
     }
 
@@ -180,10 +188,8 @@ contract FantiumNFTV3 is
 
     /// @notice upgrade authorization logic
     /// @dev required by the OZ UUPS module
-    /// @dev adds onlyRole(UPGRADER_ROLE) requirement
-    function _authorizeUpgrade(
-        address
-    ) internal override onlyRole(UPGRADER_ROLE) {}
+    /// @dev adds onlyUpgrader requirement
+    function _authorizeUpgrade(address) internal override onlyUpgrader {}
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     // ERC2771ContextUpgradeable(forwarder)
@@ -431,11 +437,7 @@ contract FantiumNFTV3 is
         uint256 _fantiumSecondarySalesBPS,
         uint256 _tournamentEarningShare1e7,
         uint256 _otherEarningShare1e7
-    )
-        external
-        whenNotPaused
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
+    ) external whenNotPaused onlyPlatformManager {
         require(
             _athleteSecondarySalesBPS + _fantiumSecondarySalesBPS <= 10_000,
             "FantiumNFTV3: secondary sales BPS must be less than 10,000"
@@ -497,11 +499,7 @@ contract FantiumNFTV3 is
     function updateCollectionAthleteAddress(
         uint256 _collectionId,
         address payable _athleteAddress
-    )
-        external
-        onlyValidCollectionId(_collectionId)
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
+    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
         require(
             _athleteAddress != address(0),
             "FantiumNFTV3: address cannot be 0"
@@ -546,11 +544,7 @@ contract FantiumNFTV3 is
     function updateCollectionAthletePrimaryMarketRoyaltyBPS(
         uint256 _collectionId,
         uint256 _primaryMarketRoyalty
-    )
-        external
-        onlyValidCollectionId(_collectionId)
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
+    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
         require(_primaryMarketRoyalty <= 10000, "Max of 100%");
         collections[_collectionId]
             .athletePrimarySalesBPS = _primaryMarketRoyalty;
@@ -574,11 +568,7 @@ contract FantiumNFTV3 is
     function updateCollectionAthleteSecondaryMarketRoyaltyBPS(
         uint256 _collectionId,
         uint256 _secondMarketRoyalty
-    )
-        external
-        onlyValidCollectionId(_collectionId)
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
+    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
         require(
             _secondMarketRoyalty +
                 collections[_collectionId].fantiumSecondarySalesBPS <=
@@ -604,14 +594,10 @@ contract FantiumNFTV3 is
         uint256 _otherEarningShare1e7,
         address payable _fantiumSalesAddress,
         uint256 _fantiumSecondarySalesBPS
-    )
-        external
-        onlyValidCollectionId(_collectionId)
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
+    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
         // require to have either other token share or tournament token share set to > 0
         require(
-                _price > 0 &&
+            _price > 0 &&
                 (_tournamentEarningShare1e7 > 0 || _otherEarningShare1e7 > 0),
             "FantiumNFTV3: all parameters must be greater than 0"
         );
@@ -666,11 +652,7 @@ contract FantiumNFTV3 is
     function updateCollectionLaunchTimestamp(
         uint256 _collectionId,
         uint256 _launchTimestamp
-    )
-        external
-        onlyValidCollectionId(_collectionId)
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
+    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
         collections[_collectionId].launchTimestamp = _launchTimestamp;
         emit CollectionUpdated(
             _collectionId,
@@ -685,7 +667,7 @@ contract FantiumNFTV3 is
     //update baseURI only platform manager
     function updateBaseURI(
         string memory _baseURI
-    ) external whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
+    ) external whenNotPaused onlyPlatformManager {
         baseURI = _baseURI;
         emit PlatformUpdated(FILED_FANTIUM_BASE_URI);
     }
@@ -694,7 +676,7 @@ contract FantiumNFTV3 is
      * @notice Update contract pause status to `_paused`.
      */
 
-    function pause() external onlyRole(PLATFORM_MANAGER_ROLE) {
+    function pause() external onlyPlatformManager {
         _pause();
     }
 
@@ -702,7 +684,7 @@ contract FantiumNFTV3 is
      * @notice Unpauses contract
      */
 
-    function unpause() external onlyRole(PLATFORM_MANAGER_ROLE) {
+    function unpause() external onlyPlatformManager {
         _unpause();
     }
 
@@ -771,7 +753,7 @@ contract FantiumNFTV3 is
         address _claimContractAdress,
         address _userManagerAddress,
         address _trustedForwarder
-    ) external onlyRole(UPGRADER_ROLE) {
+    ) external onlyUpgrader {
         require(
             _paymentTokenAdderss != address(0) &&
                 _claimContractAdress != address(0) &&
