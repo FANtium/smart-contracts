@@ -115,6 +115,11 @@
       "address": "0x6034BBADa64de5F51D971C48c752CC0051F38E1E",
       "txHash": "0xaa43f55dff3dc4c42082c9f07af85ebf65e053842dc8f1ae9e3280c849b8e0d5",
       "kind": "uups"
+    },
+    {
+      "address": "0x5ec1Dda9308DeC38231F2C3d22C757ecDbcf6b20",
+      "txHash": "0xd55bf0080d5c9d43230f05ed29fe959bd437b66ac68a5cd2f7a5dfeee5d12bc5",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -11074,6 +11079,376 @@
               }
             ],
             "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "7f1c0d7a210a3e0d982d003ab39d88c5a62a6b55cf16abae45dfdb127d8a9144": {
+      "address": "0x626f3E3Dd590885bbC81793a2A085BeBC8Ba365f",
+      "txHash": "0xc4bb43ade6e82fc083ef30a79692716059bc17d2eaf3e86d2f99f2122b76b06d",
+      "layout": {
+        "solcVersion": "0.8.13",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:211"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:107"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC165Upgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol:41"
+          },
+          {
+            "label": "_roles",
+            "offset": 0,
+            "slot": "201",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)34_storage)",
+            "contract": "AccessControlUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "202",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "AccessControlUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:259"
+          },
+          {
+            "label": "_paused",
+            "offset": 0,
+            "slot": "251",
+            "type": "t_bool",
+            "contract": "PausableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:29"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "252",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "PausableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:116"
+          },
+          {
+            "label": "globalPayoutToken",
+            "offset": 0,
+            "slot": "301",
+            "type": "t_address",
+            "contract": "FantiumClaimingV1",
+            "src": "contracts/claiming/FantiumClaimingV1.sol:28"
+          },
+          {
+            "label": "trustedForwarder",
+            "offset": 0,
+            "slot": "302",
+            "type": "t_address",
+            "contract": "FantiumClaimingV1",
+            "src": "contracts/claiming/FantiumClaimingV1.sol:29"
+          },
+          {
+            "label": "fantiumNFTContract",
+            "offset": 0,
+            "slot": "303",
+            "type": "t_address",
+            "contract": "FantiumClaimingV1",
+            "src": "contracts/claiming/FantiumClaimingV1.sol:30"
+          },
+          {
+            "label": "fantiumUserManager",
+            "offset": 0,
+            "slot": "304",
+            "type": "t_address",
+            "contract": "FantiumClaimingV1",
+            "src": "contracts/claiming/FantiumClaimingV1.sol:31"
+          },
+          {
+            "label": "distributionEvents",
+            "offset": 0,
+            "slot": "305",
+            "type": "t_mapping(t_uint256,t_struct(DistributionEvent)3994_storage)",
+            "contract": "FantiumClaimingV1",
+            "src": "contracts/claiming/FantiumClaimingV1.sol:34"
+          },
+          {
+            "label": "distributionEventToBaseTokenToClaimed",
+            "offset": 0,
+            "slot": "306",
+            "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))",
+            "contract": "FantiumClaimingV1",
+            "src": "contracts/claiming/FantiumClaimingV1.sol:35"
+          },
+          {
+            "label": "distributionEventToCollectionInfo",
+            "offset": 0,
+            "slot": "307",
+            "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_struct(collectionInfo)4001_storage))",
+            "contract": "FantiumClaimingV1",
+            "src": "contracts/claiming/FantiumClaimingV1.sol:37"
+          },
+          {
+            "label": "distributionEventToPayoutToken",
+            "offset": 0,
+            "slot": "308",
+            "type": "t_mapping(t_uint256,t_address)",
+            "contract": "FantiumClaimingV1",
+            "src": "contracts/claiming/FantiumClaimingV1.sol:39"
+          },
+          {
+            "label": "nextDistributionEventId",
+            "offset": 0,
+            "slot": "309",
+            "type": "t_uint256",
+            "contract": "FantiumClaimingV1",
+            "src": "contracts/claiming/FantiumClaimingV1.sol:41"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_address_payable": {
+            "label": "address payable",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)34_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_address)": {
+            "label": "mapping(uint256 => address)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_bool)": {
+            "label": "mapping(uint256 => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))": {
+            "label": "mapping(uint256 => mapping(uint256 => bool))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_uint256,t_struct(collectionInfo)4001_storage))": {
+            "label": "mapping(uint256 => mapping(uint256 => struct FantiumClaimingV1.collectionInfo))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(DistributionEvent)3994_storage)": {
+            "label": "mapping(uint256 => struct FantiumClaimingV1.DistributionEvent)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(collectionInfo)4001_storage)": {
+            "label": "mapping(uint256 => struct FantiumClaimingV1.collectionInfo)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(DistributionEvent)3994_storage": {
+            "label": "struct FantiumClaimingV1.DistributionEvent",
+            "members": [
+              {
+                "label": "distributionEventId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "collectionIds",
+                "type": "t_array(t_uint256)dyn_storage",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "athleteAddress",
+                "type": "t_address_payable",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "totalTournamentEarnings",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "totalOtherEarnings",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "tournamentDistributionAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "otherDistributionAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "6"
+              },
+              {
+                "label": "amountPaidIn",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "7"
+              },
+              {
+                "label": "claimedAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "8"
+              },
+              {
+                "label": "fantiumFeeBPS",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "9"
+              },
+              {
+                "label": "fantiumFeeAddress",
+                "type": "t_address_payable",
+                "offset": 0,
+                "slot": "10"
+              },
+              {
+                "label": "startTime",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "11"
+              },
+              {
+                "label": "closeTime",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "12"
+              },
+              {
+                "label": "exists",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "13"
+              },
+              {
+                "label": "closed",
+                "type": "t_bool",
+                "offset": 1,
+                "slot": "13"
+              }
+            ],
+            "numberOfBytes": "448"
+          },
+          "t_struct(RoleData)34_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "members",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(collectionInfo)4001_storage": {
+            "label": "struct FantiumClaimingV1.collectionInfo",
+            "members": [
+              {
+                "label": "mintedTokens",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "tokenTournamentClaim",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "tokenOtherClaim",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
           },
           "t_uint256": {
             "label": "uint256",
