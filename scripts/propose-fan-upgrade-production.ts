@@ -2,7 +2,7 @@ import { ethers, upgrades } from "hardhat";
 
 async function main() {
 
-    const upgradeContractName = "FantiumNFTV2";
+    const upgradeContractName = "FantiumNFTV3";
     const proxyContractAddress = "0x2b98132E7cfd88C5D854d64f436372838A9BA49d";
 
     const [deployer] = await ethers.getSigners();
@@ -22,3 +22,4 @@ main()
         console.error(error);
         process.exit(1);
     })
+    
