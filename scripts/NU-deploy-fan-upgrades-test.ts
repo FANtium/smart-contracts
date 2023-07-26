@@ -17,7 +17,7 @@ async function main() {
   await upgrades.validateUpgrade(contractAddresses.proxy, FantiumV3);
 
   //upgrade proxy
-  const nftContract = await upgrades.upgradeProxy("0x0020b7d87a663F7c113f85230f084856EE79033B", FantiumV3)
+  const nftContract = await upgrades.upgradeProxy('0x0020b7d87a663F7c113f85230f084856EE79033B', FantiumV3)
 
   const data = {
     "proxy": nftContract.address,

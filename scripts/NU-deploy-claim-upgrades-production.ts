@@ -17,7 +17,7 @@ async function main() {
   await upgrades.validateUpgrade(contractAddresses.proxy, FantiumClaimingV1);
 
   //upgrade proxy
-  const FantiumClaiming = await upgrades.upgradeProxy("0x3De3D4eaC11c6468140Ffd661C009D52c4956F55", FantiumClaimingV1)
+  const FantiumClaiming = await upgrades.upgradeProxy("0x5ec1Dda9308DeC38231F2C3d22C757ecDbcf6b20", FantiumClaimingV1)
 
   const data = {
     "proxy": FantiumClaiming.address,

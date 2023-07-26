@@ -105,8 +105,10 @@ contract FantiumClaimingV1 is
 
     modifier onlyAthlete(uint256 _distributionEventId) {
         require(
-            _msgSender() ==
-                distributionEvents[_distributionEventId].athleteAddress ||
+            address(_msgSender()) ==
+                address(
+                    distributionEvents[_distributionEventId].athleteAddress
+                ) ||
                 hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
             "only athlete"
         );
