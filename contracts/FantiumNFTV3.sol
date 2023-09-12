@@ -242,10 +242,7 @@ contract FantiumNFTV3 is
         uint24 _amount
     ) public whenNotPaused {
         // CHECKS
-        require(
-            0 < _amount && _amount <= 10,
-            "Amount must be greater than 0 and smaller than 11"
-        );
+
         require(fantiumUserManager != address(0), "UserManager not set");
         require(
             IFantiumUserManager(fantiumUserManager).isAddressKYCed(
