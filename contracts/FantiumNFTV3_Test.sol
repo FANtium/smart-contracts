@@ -19,7 +19,7 @@ import "./interfaces/IFantiumUserManager.sol";
  * @author MTX stuido AG.
  */
 
-contract FantiumNFTV3 is
+contract FantiumNFTV3_Test is
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
