@@ -728,6 +728,7 @@ contract FantiumNFTV3 is
         );
         // mint new token with new version
         _mint(tokenOwner, newTokenId);
+        emit Mint(tokenOwner, newTokenId);
         if (ownerOf(newTokenId) == tokenOwner) {
             return true;
         } else {
