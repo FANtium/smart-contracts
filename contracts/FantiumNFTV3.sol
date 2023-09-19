@@ -280,7 +280,7 @@ contract FantiumNFTV3 is
         }
         require(
             collection.invocations + _amount <= collection.maxInvocations,
-            "Max invocations suppassed with amount"
+            "Max invocations surpassed with amount"
         );
 
         uint256 tokenId = (_collectionId * ONE_MILLION) +
