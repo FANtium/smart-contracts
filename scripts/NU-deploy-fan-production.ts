@@ -8,8 +8,8 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const FantiumNFT = await ethers.getContractFactory("FantiumNFT");
-  const fanContract = await upgrades.deployProxy(FantiumNFT, ["FANtium", "FAN", deployer.address], { initializer: 'initialize', kind: 'uups'})
+  const FantiumNFT = await ethers.getContractFactory("FantiumNFT3");
+  const fanContract = await upgrades.deployProxy(FantiumNFT, ["HiddenProd", "HiP", deployer.address], { initializer: 'initialize', kind: 'uups'})
   await fanContract.deployed();
 
   // vault: 0x77C0B68aD8e5f07fE7C596512496262bDa5f0598
@@ -19,7 +19,7 @@ async function main() {
     "proxy": fanContract.address,
     "implementation": await upgrades.erc1967.getImplementationAddress(fanContract.address),
   }
-  writeFileSync(join(__dirname, './addresses/FantiumNFT.json'), JSON.stringify(data), {
+  writeFileSync(join(__dirname, './addresses/FantiumNFT_hiddenProd.json'), JSON.stringify(data), {
     flag: 'w',
   });
 }

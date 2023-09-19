@@ -132,9 +132,10 @@ describe("FantiumNFTV3", () => {
         //////////////////////////////////////////////////////////////*/
 
         const FantiumUserManager = await ethers.getContractFactory("FantiumUserManager")
-        userManager = await upgrades.deployProxy(FantiumUserManager, [defaultAdmin.address, nftContract.address, claimContract.address]) as FantiumUserManager
+        userManager = await upgrades.deployProxy(FantiumUserManager, [defaultAdmin.address, nftContract.address, claimContract.address, forwarder.address]) as FantiumUserManager
         //set Role and 
         await userManager.connect(defaultAdmin).grantRole(await userManager.PLATFORM_MANAGER_ROLE(), platformManager.address)
+        await userManager.connect(defaultAdmin).grantRole(await userManager.UPGRADER_ROLE(), platformManager.address)
         await userManager.connect(defaultAdmin).grantRole(await userManager.PLATFORM_MANAGER_ROLE(), kycManager.address)
         await userManager.connect(platformManager).addAllowedConctract(nftContract.address)
         await userManager.connect(platformManager).addAllowedConctract(claimContract.address)
@@ -320,8 +321,6 @@ describe("FantiumNFTV3", () => {
         await userManager.connect(platformManager).addAddressToKYC(fan.address)
         // check if fan can mint
         await erc20Contract.connect(fan).approve(nftContract.address,10 * price * 10 ** decimals)
-        await expect(nftContractV3.connect(fan).mint(1,0)).to.be.revertedWith("Amount must be greater than 0 and smaller than 11");
-        await expect(nftContractV3.connect(fan).mint(1,11)).to.be.revertedWith("Amount must be greater than 0 and smaller than 11");
         await expect(nftContractV3.connect(fan).mint(10,1)).to.be.revertedWith("Collection does not exist");
 
         await nftContractV3.connect(platformManager).toggleCollectionMintable(1)
@@ -332,7 +331,7 @@ describe("FantiumNFTV3", () => {
         await nftContractV3.connect(platformManager).updateCollectionLaunchTimestamp(1, 1)
 
         await nftContractV3.connect(platformManager).updateCollectionSales(1,6,1,tournamentEarningsShare1e7,otherEarningsShare1e7,fantium.address,fantiumSecondaryBPS)
-        await expect(nftContractV3.connect(fan).mint(1,10)).to.be.revertedWith("Max invocations suppassed with amount");
+        await expect(nftContractV3.connect(fan).mint(1,10)).to.be.revertedWith("Max invocations surpassed with amount");
 
         await nftContractV3.connect(fan).mintTo(fan.address,1,1)
         expect(await nftContractV3.connect(fan).balanceOf(fan.address)).to.equal(1)

@@ -134,9 +134,10 @@ describe("FantiumClaim", () => {
         //////////////////////////////////////////////////////////////*/
 
         const FantiumUserManager = await ethers.getContractFactory("FantiumUserManager")
-        userManager = await upgrades.deployProxy(FantiumUserManager, [defaultAdmin.address, nftContract.address, claimContract.address]) as FantiumUserManager
+        userManager = await upgrades.deployProxy(FantiumUserManager, [defaultAdmin.address, nftContract.address, claimContract.address,forwarder.address]) as FantiumUserManager
         //set Role and 
         await userManager.connect(defaultAdmin).grantRole(await userManager.PLATFORM_MANAGER_ROLE(), platformManager.address)
+        await userManager.connect(defaultAdmin).grantRole(await userManager.UPGRADER_ROLE(), platformManager.address)
         await userManager.connect(defaultAdmin).grantRole(await userManager.PLATFORM_MANAGER_ROLE(), kycManager.address)
         await userManager.connect(platformManager).addAllowedConctract(nftContract.address)
         await userManager.connect(platformManager).addAllowedConctract(claimContract.address)

@@ -130,9 +130,10 @@ describe("FantiumUserManager", () => {
         //////////////////////////////////////////////////////////////*/
 
         const FantiumUserManager = await ethers.getContractFactory("FantiumUserManager")
-        userManager = await upgrades.deployProxy(FantiumUserManager, [defaultAdmin.address, nftContract.address, claimContract.address]) as FantiumUserManager
+        userManager = await upgrades.deployProxy(FantiumUserManager, [defaultAdmin.address, nftContract.address, claimContract.address, forwarder.address]) as FantiumUserManager
         //set Role and 
         await userManager.connect(defaultAdmin).grantRole(await userManager.PLATFORM_MANAGER_ROLE(), platformManager.address)
+        await userManager.connect(defaultAdmin).grantRole(await userManager.UPGRADER_ROLE(), platformManager.address)
         await userManager.connect(defaultAdmin).grantRole(await userManager.PLATFORM_MANAGER_ROLE(), kycManager.address)
         await userManager.connect(platformManager).addAllowedConctract(nftContract.address)
         await userManager.connect(platformManager).addAllowedConctract(claimContract.address)
@@ -145,7 +146,7 @@ describe("FantiumUserManager", () => {
 
     it("Check: test initilizer and upgradability", async () => {
 
-        await expect(userManager.connect(platformManager).initialize(defaultAdmin.address, nftContract.address, claimContract.address)).to.revertedWith("Initializable: contract is already initialized")
+        await expect(userManager.connect(platformManager).initialize(defaultAdmin.address, nftContract.address, claimContract.address, forwarder.address)).to.revertedWith("Initializable: contract is already initialized")
         const FantiumUserManager = await ethers.getContractFactory("FantiumUserManager")
         userManager = await upgrades.upgradeProxy(userManager.address, FantiumUserManager) as FantiumUserManager
 
@@ -226,7 +227,7 @@ describe("FantiumUserManager", () => {
         expect(await userManager.connect(forwarder).isAddressIDENT(forwarder.address)).to.be.false
         expect(await userManager.connect(other).isAddressIDENT(forwarder.address)).to.be.false
 
-        await expect(userManager.connect(fan).addAddressToIDENT(fan.address)).to.be.revertedWith("Only manager")
+        await expect(userManager.connect(fan).addAddressToIDENT(fan.address)).to.be.revertedWith("Only managers")
 
     })
 
@@ -258,11 +259,11 @@ describe("FantiumUserManager", () => {
 
     it("Check: only manager role can call functions", async () => {
 
-        await expect(userManager.connect(fan).addAddressToKYC(fan.address)).to.be.revertedWith("Only manager")
-        await expect(userManager.connect(fan).addAddressToIDENT(fan.address)).to.be.revertedWith("Only manager")
-        await expect(userManager.connect(fan).removeAddressFromIDENT(fan.address)).to.be.revertedWith("Only manager")
-        await expect(userManager.connect(fan).removeAddressFromKYC(fan.address)).to.be.revertedWith("Only manager")
-        await expect(userManager.connect(fan).batchAllowlist([1],fan.address,[fan.address],[1])).to.be.revertedWith("Only manager")
+        await expect(userManager.connect(fan).addAddressToKYC(fan.address)).to.be.revertedWith("Only managers")
+        await expect(userManager.connect(fan).addAddressToIDENT(fan.address)).to.be.revertedWith("Only managers")
+        await expect(userManager.connect(fan).removeAddressFromIDENT(fan.address)).to.be.revertedWith("Only managers")
+        await expect(userManager.connect(fan).removeAddressFromKYC(fan.address)).to.be.revertedWith("Only managers")
+        await expect(userManager.connect(fan).batchAllowlist([1],fan.address,[fan.address],[1])).to.be.revertedWith("Only managers")
         await expect(userManager.connect(fan).reduceAllowListAllocation(1,fan.address,fan.address,1)).to.be.revertedWith("Only manager or allowed Contract")
     })
 
