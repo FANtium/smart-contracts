@@ -8,7 +8,7 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const FantiumNFT = await ethers.getContractFactory("FantiumNFT3");
+  const FantiumNFT = await ethers.getContractFactory("FantiumNFTV3");
   const fanContract = await upgrades.deployProxy(FantiumNFT, ["HiddenProd", "HiP", deployer.address], { initializer: 'initialize', kind: 'uups'})
   await fanContract.deployed();
 
