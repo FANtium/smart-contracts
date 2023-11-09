@@ -15,11 +15,11 @@ import "./utils/TokenVersionUtil.sol";
 import "./interfaces/IFantiumUserManager.sol";
 
 /**
- * @title FANtium ERC721 contract V3.
+ * @title FANtium ERC721 contract V4.
  * @author MTX stuido AG.
  */
 
-contract FantiumNFTV3_Test is
+contract FantiumNFTV4 is
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
@@ -242,10 +242,7 @@ contract FantiumNFTV3_Test is
         uint24 _amount
     ) public whenNotPaused {
         // CHECKS
-        require(
-            0 < _amount && _amount <= 10,
-            "Amount must be greater than 0 and smaller than 11"
-        );
+
         require(fantiumUserManager != address(0), "UserManager not set");
         require(
             IFantiumUserManager(fantiumUserManager).isAddressKYCed(
@@ -265,7 +262,8 @@ contract FantiumNFTV3_Test is
 
         // multiply token price by amount
         uint256 totalPrice = collection.price *
-            10 ** 2 * _amount;
+            10 ** ERC20Upgradeable(erc20PaymentToken).decimals() *
+            _amount;
 
         if (collection.isPaused) {
             // if minting is paused, require address to be on allowlist
@@ -282,7 +280,7 @@ contract FantiumNFTV3_Test is
         }
         require(
             collection.invocations + _amount <= collection.maxInvocations,
-            "Max invocations suppassed with amount"
+            "Max invocations surpassed with amount"
         );
 
         uint256 tokenId = (_collectionId * ONE_MILLION) +
@@ -455,7 +453,7 @@ contract FantiumNFTV3_Test is
         );
         require(
             _tournamentEarningShare1e7 <= 1e7 && _otherEarningShare1e7 <= 1e7,
-            "FantiumNFTV3: token share must be less than 1e7"
+            "FantiumNFTV3: token share must be smaller 1e7"
         );
 
         require(
@@ -730,6 +728,7 @@ contract FantiumNFTV3_Test is
         );
         // mint new token with new version
         _mint(tokenOwner, newTokenId);
+        emit Mint(tokenOwner, newTokenId);
         if (ownerOf(newTokenId) == tokenOwner) {
             return true;
         } else {
