@@ -16,7 +16,7 @@ import "./interfaces/IFantiumUserManager.sol";
 
 /**
  * @title FANtium ERC721 contract V4.
- * @author MTX stuido AG.
+ * @author MTX Studio AG.
  */
 
 contract FantiumNFTV4_Test is
