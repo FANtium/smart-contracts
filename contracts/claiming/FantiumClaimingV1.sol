@@ -16,7 +16,7 @@ import "../utils/TokenVersionUtil.sol";
 /**
  * @title Claiming contract that allows payout tokens to be claimed
  * for FAN token holders.
- * @author MTX studoi AG.
+ * @author MTX Studio AG.
  */
 
 contract FantiumClaimingV1 is
