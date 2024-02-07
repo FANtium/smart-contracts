@@ -2,7 +2,7 @@ import { ethers, upgrades } from "hardhat";
 
 async function main() {
 
-    const upgradeContractName = "FantiumNFTV4";
+    const upgradeContractName = "FantiumNFTV5";
     const proxyContractAddress = "0x2b98132E7cfd88C5D854d64f436372838A9BA49d";
 
     const [deployer] = await ethers.getSigners();
