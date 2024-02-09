@@ -8,8 +8,8 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const FantiumNFT = await ethers.getContractFactory("FantiumNFTV4_Test");
-  const fanContract = await upgrades.deployProxy(FantiumNFT, ["FantiumNFTV4_Test", "FANT", deployer.address], { initializer: 'initialize', kind: 'uups'})
+  const FantiumNFT = await ethers.getContractFactory("FantiumNFTV5_Test");
+  const fanContract = await upgrades.deployProxy(FantiumNFT, ["FantiumNFTV5_Test", "FANT", deployer.address], { initializer: 'initialize', kind: 'uups'})
   await fanContract.deployed();
 
   // vault: 0x77C0B68aD8e5f07fE7C596512496262bDa5f0598
@@ -19,7 +19,7 @@ async function main() {
     "proxy": fanContract.address,
     "implementation": await upgrades.erc1967.getImplementationAddress(fanContract.address),
   }
-  writeFileSync(join(__dirname, './addresses/Test_fantiumNFT.json'), JSON.stringify(data), {
+  writeFileSync(join(__dirname, './addresses/Test_sepolia_fantiumNFT.json'), JSON.stringify(data), {
     flag: 'w',
   });
 }
