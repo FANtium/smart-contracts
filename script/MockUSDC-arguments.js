@@ -1,4 +1,1 @@
-module.exports = [
-    "MockUSDC", "USDC", 6,    
-  ];
-  
+module.exports = ["MockUSDC", "USDC", 6];

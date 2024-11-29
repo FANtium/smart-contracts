@@ -1,35 +1,33 @@
-import { ethers } from 'hardhat'
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import { FantiumNFT } from '../typechain-types';
+import { ethers } from "hardhat";
+import { readFileSync } from "fs";
+import { join } from "path";
+import { FantiumNFT } from "../typechain-types";
 
-const primarySalePercentage = 90
-const secondarySalePercentage = 5
-const maxInvocations = 100
-const price = 1
-const earningsSplit = 10
+const primarySalePercentage = 90;
+const secondarySalePercentage = 5;
+const maxInvocations = 100;
+const price = 1;
+const earningsSplit = 10;
 
 async function main() {
-
     const [owner] = await ethers.getSigners();
     console.log("Account balance:", (await owner.getBalance()).toString());
 
-    const contents = readFileSync(join(__dirname, './addresses/fantium.json'), 'utf-8');
+    const contents = readFileSync(join(__dirname, "./addresses/fantium.json"), "utf-8");
     console.log(JSON.parse(contents));
-    const contractAddresses = JSON.parse(contents)
+    const contractAddresses = JSON.parse(contents);
 
-    const nftContract = await ethers.getContractAt("FantiumNFT", contractAddresses.proxy, owner) as FantiumNFT
+    const nftContract = (await ethers.getContractAt("FantiumNFT", contractAddresses.proxy, owner)) as FantiumNFT;
 
-    const mock20Address = readFileSync(join(__dirname, './addresses/mock20.json'), 'utf-8');
+    const mock20Address = readFileSync(join(__dirname, "./addresses/mock20.json"), "utf-8");
     console.log(JSON.parse(mock20Address));
-    const mock20Addresses = JSON.parse(mock20Address)
+    const mock20Addresses = JSON.parse(mock20Address);
 
     // const mock20Contract = await ethers.getContractAt("Mock20", mock20Addresses.address, owner)
     // await mock20Contract.approve(nftContract.address, price * 10 ** 6)
 
     // await nftContract.grantRole(await nftContract.PLATFORM_MANAGER_ROLE(), owner.address)
     // await nftContract.grantRole(await nftContract.KYC_MANAGER_ROLE(), owner.address)
-
 
     // CONTRACT PARAMS
     // await nftContract.updateBaseURI("https://algobits.mypinata.cloud/ipfs/QmWa6KxjWcS7krEpHEjz5n1WPBnLLaaVWiHWfior3FtVH4/")
@@ -56,11 +54,8 @@ async function main() {
     // await nftContract.toggleCollectionMintable(1)
     // await nftContract.toggleCollectionPaused(1)
 
-
-
     // mint a token
-    await nftContract.mint(1)
-
+    await nftContract.mint(1);
 }
 
 main().catch((error) => {

@@ -15,7 +15,7 @@ import "../interfaces/IFantiumUserManager.sol";
  * @author MTX studio AG.
  */
 
-contract FantiumUserManager is
+contract FANtiumUserManager is
     Initializable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
@@ -30,13 +30,11 @@ contract FantiumUserManager is
 
     uint256 constant ONE_MILLION = 1_000_000;
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-    bytes32 public constant PLATFORM_MANAGER_ROLE =
-        keccak256("PLATFORM_MANAGER_ROLE");
+    bytes32 public constant PLATFORM_MANAGER_ROLE = keccak256("PLATFORM_MANAGER_ROLE");
     bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
     // generic event fields
     bytes32 constant FIELD_PLATFORM_CONFIG = "platform address config";
-    bytes32 constant FIELD_CONTRACTS_ALLOWED_CHANGE =
-        "contracts added or removed";
+    bytes32 constant FIELD_CONTRACTS_ALLOWED_CHANGE = "contracts added or removed";
     bytes32 constant FIELD_KYC_CHANGE = "KYC added or removed";
     bytes32 constant FIELD_IDENT_CHANGE = "IDENT added or removed";
     bytes32 constant FIELD_ALLOWLIST_CHANGE = "allowlist added or removed";
@@ -54,12 +52,7 @@ contract FantiumUserManager is
     event PlatformUpdate(bytes32 indexed _update);
     event KYCUpdate(address indexed _address, bytes32 indexed _update);
     event IDENTUpdate(address indexed _address, bytes32 indexed _update);
-    event ALUpdate(
-        address indexed _contract,
-        uint256 indexed _collectionId,
-        address indexed _address,
-        bytes32 _update
-    );
+    event ALUpdate(address indexed _contract, uint256 indexed _collectionId, address indexed _address, bytes32 _update);
 
     /*//////////////////////////////////////////////////////////////
                             MODIFERS
@@ -71,19 +64,12 @@ contract FantiumUserManager is
     }
 
     modifier onlyPlatformManager() {
-        require(
-            hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
-            "Only platform manager"
-        );
+        require(hasRole(PLATFORM_MANAGER_ROLE, msg.sender), "Only platform manager");
         _;
     }
 
     modifier onlyManagers() {
-        require(
-            hasRole(PLATFORM_MANAGER_ROLE, msg.sender) ||
-                hasRole(KYC_MANAGER_ROLE, _msgSender()),
-            "Only managers"
-        );
+        require(hasRole(PLATFORM_MANAGER_ROLE, msg.sender) || hasRole(KYC_MANAGER_ROLE, _msgSender()), "Only managers");
         _;
     }
 
@@ -105,9 +91,7 @@ contract FantiumUserManager is
         address _trustedForwarder
     ) public initializer {
         require(
-            _defaultAdmin != address(0) &&
-                _fantiumNFTContract != address(0) &&
-                _claimingContract != address(0),
+            _defaultAdmin != address(0) && _fantiumNFTContract != address(0) && _claimingContract != address(0),
             "Invalid addresses"
         );
         __UUPSUpgradeable_init();
@@ -124,9 +108,7 @@ contract FantiumUserManager is
     /// @notice upgrade authorization logic
     /// @dev required by the OZ UUPS module
     /// @dev adds onlyRole(UPGRADER_ROLE) requirement
-    function _authorizeUpgrade(
-        address
-    ) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(address) internal override onlyRole(UPGRADER_ROLE) {}
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -141,9 +123,7 @@ contract FantiumUserManager is
      * @notice Add address to KYC list.
      * @param _address address to be added to KYC list.
      */
-    function addBatchtoKYC(
-        address[] memory _address
-    ) external whenNotPaused onlyManagers {
+    function addBatchtoKYC(address[] memory _address) external whenNotPaused onlyManagers {
         for (uint256 i = 0; i < _address.length; i++) {
             addAddressToKYC(_address[i]);
         }
@@ -153,9 +133,7 @@ contract FantiumUserManager is
      * @notice Add address to KYC list.
      * @param _address address to be added to KYC list.
      */
-    function addAddressToKYC(
-        address _address
-    ) public whenNotPaused onlyManagers {
+    function addAddressToKYC(address _address) public whenNotPaused onlyManagers {
         if (users[_address].isKYCed == false) {
             users[_address].isKYCed = true;
             emit KYCUpdate(_address, FIELD_KYC_CHANGE);
@@ -166,9 +144,7 @@ contract FantiumUserManager is
      * @notice Remove address from KYC list.
      * @param _address address to be removed from KYC list.
      */
-    function removeAddressFromKYC(
-        address _address
-    ) external whenNotPaused onlyManagers {
+    function removeAddressFromKYC(address _address) external whenNotPaused onlyManagers {
         if (users[_address].isKYCed) {
             users[_address].isKYCed = false;
             emit KYCUpdate(_address, FIELD_KYC_CHANGE);
@@ -188,9 +164,7 @@ contract FantiumUserManager is
                                  IDENT
     //////////////////////////////////////////////////////////////*/
 
-    function addBatchtoIDENT(
-        address[] memory _address
-    ) external whenNotPaused onlyManagers {
+    function addBatchtoIDENT(address[] memory _address) external whenNotPaused onlyManagers {
         for (uint256 i = 0; i < _address.length; i++) {
             addAddressToIDENT(_address[i]);
         }
@@ -200,9 +174,7 @@ contract FantiumUserManager is
      * @notice Add address to KYC list.
      * @param _address address to be added to KYC list.
      */
-    function addAddressToIDENT(
-        address _address
-    ) public whenNotPaused onlyManagers {
+    function addAddressToIDENT(address _address) public whenNotPaused onlyManagers {
         if (users[_address].isIDENT == false) {
             users[_address].isIDENT = true;
             emit IDENTUpdate(_address, FIELD_IDENT_CHANGE);
@@ -213,9 +185,7 @@ contract FantiumUserManager is
      * @notice Remove address from KYC list.
      * @param _address address to be removed from KYC list.
      */
-    function removeAddressFromIDENT(
-        address _address
-    ) external whenNotPaused onlyManagers {
+    function removeAddressFromIDENT(address _address) external whenNotPaused onlyManagers {
         if (users[_address].isIDENT == true) {
             users[_address].isIDENT = false;
             emit IDENTUpdate(_address, FIELD_IDENT_CHANGE);
@@ -248,24 +218,11 @@ contract FantiumUserManager is
         uint256[] memory _increaseAllocations
     ) public whenNotPaused onlyManagers {
         require(allowedContracts[_contractAddress], "Only allowed Contract");
-        require(
-            IFantiumNFT(_contractAddress).getCollectionExists(_collectionId),
-            "Collection does not exist"
-        );
-        require(
-            _addresses.length == _increaseAllocations.length,
-            "FantiumUserManagerV1: Array length mismatch"
-        );
+        require(IFANtiumNFT(_contractAddress).getCollectionExists(_collectionId), "Collection does not exist");
+        require(_addresses.length == _increaseAllocations.length, "FantiumUserManagerV1: Array length mismatch");
         for (uint256 i = 0; i < _addresses.length; i++) {
-            users[_addresses[i]].contractToAllowlistToSpots[_contractAddress][
-                _collectionId
-            ] += _increaseAllocations[i];
-            emit ALUpdate(
-                _contractAddress,
-                _collectionId,
-                _addresses[i],
-                FIELD_ALLOWLIST_CHANGE
-            );
+            users[_addresses[i]].contractToAllowlistToSpots[_contractAddress][_collectionId] += _increaseAllocations[i];
+            emit ALUpdate(_contractAddress, _collectionId, _addresses[i], FIELD_ALLOWLIST_CHANGE);
         }
     }
 
@@ -283,34 +240,18 @@ contract FantiumUserManager is
     ) external whenNotPaused returns (uint256) {
         require(
             hasRole(PLATFORM_MANAGER_ROLE, msg.sender) ||
-                allowedContracts[msg.sender] || hasRole(KYC_MANAGER_ROLE, msg.sender),
+                allowedContracts[msg.sender] ||
+                hasRole(KYC_MANAGER_ROLE, msg.sender),
             "Only manager or allowed Contract"
         );
         require(allowedContracts[_contractAddress], "Only allowed Contract");
-        require(
-            IFantiumNFT(_contractAddress).getCollectionExists(_collectionId),
-            "Collection does not exist"
-        );
+        require(IFANtiumNFT(_contractAddress).getCollectionExists(_collectionId), "Collection does not exist");
 
-        users[_address].contractToAllowlistToSpots[_contractAddress][
-            _collectionId
-        ] > _reduceAllocation
-            ? users[_address].contractToAllowlistToSpots[_contractAddress][
-                _collectionId
-            ] -= _reduceAllocation
-            : users[_address].contractToAllowlistToSpots[_contractAddress][
-                _collectionId
-            ] = 0;
-        emit ALUpdate(
-            _contractAddress,
-            _collectionId,
-            _address,
-            FIELD_ALLOWLIST_CHANGE
-        );
-        return
-            users[_address].contractToAllowlistToSpots[_contractAddress][
-                _collectionId
-            ];
+        users[_address].contractToAllowlistToSpots[_contractAddress][_collectionId] > _reduceAllocation
+            ? users[_address].contractToAllowlistToSpots[_contractAddress][_collectionId] -= _reduceAllocation
+            : users[_address].contractToAllowlistToSpots[_contractAddress][_collectionId] = 0;
+        emit ALUpdate(_contractAddress, _collectionId, _address, FIELD_ALLOWLIST_CHANGE);
+        return users[_address].contractToAllowlistToSpots[_contractAddress][_collectionId];
     }
 
     function hasAllowlist(
@@ -318,10 +259,7 @@ contract FantiumUserManager is
         uint256 _collectionId,
         address _address
     ) public view returns (uint256) {
-        return
-            users[_address].contractToAllowlistToSpots[_contractAddress][
-                _collectionId
-            ];
+        return users[_address].contractToAllowlistToSpots[_contractAddress][_collectionId];
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -364,9 +302,7 @@ contract FantiumUserManager is
      * @notice set NFT contract addresses
      */
 
-    function removeAllowedConctract(
-        address _contractAddress
-    ) public onlyUpgrader {
+    function removeAllowedConctract(address _contractAddress) public onlyUpgrader {
         require(_contractAddress != address(0), "No null address allowed");
         if (allowedContracts[_contractAddress]) {
             allowedContracts[_contractAddress] = false;
@@ -379,26 +315,15 @@ contract FantiumUserManager is
     //////////////////////////////////////////////////////////////*/
 
     function setTrustedForwarder(address forwarder) external onlyUpgrader {
-        require(
-            forwarder != address(0),
-            "FantiumUserManagerV1: no zero address"
-        );
+        require(forwarder != address(0), "FantiumUserManagerV1: no zero address");
         trustedForwarder = forwarder;
     }
 
-    function isTrustedForwarder(
-        address forwarder
-    ) public view virtual returns (bool) {
+    function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
         return forwarder == trustedForwarder;
     }
 
-    function _msgSender()
-        internal
-        view
-        virtual
-        override
-        returns (address sender)
-    {
+    function _msgSender() internal view virtual override returns (address sender) {
         if (isTrustedForwarder(msg.sender)) {
             // The assembly code is more direct than the Solidity version using `abi.decode`.
             /// @solidity memory-safe-assembly
@@ -410,13 +335,7 @@ contract FantiumUserManager is
         }
     }
 
-    function _msgData()
-        internal
-        view
-        virtual
-        override
-        returns (bytes calldata)
-    {
+    function _msgData() internal view virtual override returns (bytes calldata) {
         if (isTrustedForwarder(msg.sender)) {
             return msg.data[:msg.data.length - 20];
         } else {
