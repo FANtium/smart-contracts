@@ -6,3 +6,7 @@ ast = true
 ffi = true
 
 fs_permissions = [{ access = "read", path = "./test/fixtures"}]
+
+via_ir = true
+optimizer = true
+optimizer-runs = 200

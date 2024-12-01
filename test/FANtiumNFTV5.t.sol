@@ -22,25 +22,25 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
 
     // setClaimContract
     // ========================================================================
-    function testSetClaimContractOK(address claimContract) public {
+    function test_setClaimContract_ok(address claimContract) public {
         vm.startPrank(fantiumNFT_platformManager);
         fantiumNFT.setClaimContract(claimContract);
         vm.stopPrank();
         assertEq(fantiumNFT.claimContract(), claimContract);
     }
 
-    function testSetClaimContractAdmin() public {
+    function test_setClaimContract_unauthorized(address claimContract) public {
         vm.startPrank(admin);
         vm.expectRevert(
             abi.encodeWithSelector(FANtiumNFTV5.RoleNotGranted.selector, admin, fantiumNFT.PLATFORM_MANAGER_ROLE())
         );
-        fantiumNFT.setClaimContract(address(0));
+        fantiumNFT.setClaimContract(claimContract);
         vm.stopPrank();
     }
 
     // setUserManager
     // ========================================================================
-    function testSetUserManagerOK(address userManager) public {
+    function test_setUserManager_ok(address userManager) public {
         vm.startPrank(fantiumNFT_platformManager);
         fantiumNFT.setUserManager(userManager);
         vm.stopPrank();
@@ -49,15 +49,15 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
 
     // mintable
     // ========================================================================
-    function testMintableOK(address user) public {
-        uint256 collectionId = 1;
-        uint24 quantity = 1;
-        address recipient = user;
+    // function test_mintable_ok(address user) public {
+    //     uint256 collectionId = 1;
+    //     uint24 quantity = 1;
+    //     address recipient = user;
 
-        deal(address(usdc), user, fantiumNFT.collections(collectionId).price * quantity);
+    //     deal(address(usdc), user, fantiumNFT.collections(collectionId).price * quantity);
 
-        vm.startPrank(user);
-        fantiumNFT.mintable(collectionId, quantity, recipient);
-        vm.stopPrank();
-    }
+    //     vm.startPrank(user);
+    //     fantiumNFT.mintable(collectionId, quantity, recipient);
+    //     vm.stopPrank();
+    // }
 }

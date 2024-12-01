@@ -165,11 +165,14 @@ contract FANtiumUserManagerV2Test is Test {
         vm.stopPrank();
     }
 
-    function testFuzz_increaseAllowList_OK(address account, uint256 collectionId, uint256 initialAmount, uint256 delta)
-        public
-    {
+    function testFuzz_increaseAllowList_noOverflow(
+        address account,
+        uint256 collectionId,
+        uint256 initialAmount,
+        uint256 delta
+    ) public {
         vm.assume(account != address(0));
-        vm.assume(initialAmount + delta >= initialAmount); // Prevent overflow
+        vm.assume(initialAmount < type(uint256).max - delta);
 
         vm.startPrank(allowlistManager);
         userManager.setAllowList(account, collectionId, initialAmount);
@@ -178,11 +181,30 @@ contract FANtiumUserManagerV2Test is Test {
         vm.stopPrank();
     }
 
-    function testFuzz_decreaseAllowList_OK(address account, uint256 collectionId, uint256 initialAmount, uint256 delta)
-        public
-    {
+    function testFuzz_increaseAllowList_overflow(
+        address account,
+        uint256 collectionId,
+        uint256 initialAmount,
+        uint256 delta
+    ) public {
         vm.assume(account != address(0));
-        vm.assume(initialAmount >= delta); // Prevent underflow
+        vm.assume(initialAmount > type(uint256).max - delta);
+
+        vm.startPrank(allowlistManager);
+        userManager.setAllowList(account, collectionId, initialAmount);
+        userManager.increaseAllowList(account, collectionId, delta);
+        assertEq(userManager.allowlist(account, collectionId), type(uint256).max);
+        vm.stopPrank();
+    }
+
+    function testFuzz_decreaseAllowList_noUnderflow(
+        address account,
+        uint256 collectionId,
+        uint256 initialAmount,
+        uint256 delta
+    ) public {
+        vm.assume(account != address(0));
+        vm.assume(initialAmount >= delta);
 
         vm.startPrank(allowlistManager);
         userManager.setAllowList(account, collectionId, initialAmount);
@@ -197,6 +219,13 @@ contract FANtiumUserManagerV2Test is Test {
         uint256[10] memory collectionIds,
         uint256[10] memory allocations
     ) public {
+        // Assume that all accounts are different
+        for (uint256 i = 0; i < 10; i++) {
+            for (uint256 j = i + 1; j < 10; j++) {
+                vm.assume(accounts[i] != accounts[j]);
+            }
+        }
+
         // Convert fixed arrays to dynamic arrays
         address[] memory accountsArray = new address[](10);
         bool[] memory statusArray = new bool[](10);
@@ -204,7 +233,6 @@ contract FANtiumUserManagerV2Test is Test {
         uint256[] memory allocationsArray = new uint256[](10);
 
         for (uint256 i = 0; i < 10; i++) {
-            vm.assume(accounts[i] != address(0));
             accountsArray[i] = accounts[i];
             statusArray[i] = kycStatuses[i];
             collectionIdsArray[i] = collectionIds[i];
