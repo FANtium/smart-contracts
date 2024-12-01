@@ -38,7 +38,7 @@ contract FANtiumUserManagerV2Test is Test {
     // KYC Tests
     // ========================================================================
 
-    function testSetKYC() public {
+    function test_setKYC_OK() public {
         vm.startPrank(kycManager);
         vm.expectEmit(true, false, false, true);
         emit KYCUpdate(user1, true);
@@ -47,14 +47,14 @@ contract FANtiumUserManagerV2Test is Test {
         vm.stopPrank();
     }
 
-    function testSetKYCUnauthorized() public {
+    function test_setKYC_unauthorized() public {
         vm.startPrank(user1);
         vm.expectRevert();
         userManager.setKYC(user2, true);
         vm.stopPrank();
     }
 
-    function testSetBatchKYC() public {
+    function test_setBatchKYC_OK() public {
         address[] memory accounts = new address[](2);
         accounts[0] = user1;
         accounts[1] = user2;
@@ -69,7 +69,7 @@ contract FANtiumUserManagerV2Test is Test {
         vm.stopPrank();
     }
 
-    function testSetBatchKYCArrayMismatch() public {
+    function test_setBatchKYC_arrayMismatch() public {
         address[] memory accounts = new address[](2);
         bool[] memory statuses = new bool[](1);
 
@@ -83,7 +83,7 @@ contract FANtiumUserManagerV2Test is Test {
     // IDENT Tests
     // ========================================================================
 
-    function testSetIDENT() public {
+    function test_setIDENT_OK() public {
         vm.startPrank(kycManager);
         vm.expectEmit(true, false, false, true);
         emit IDENTUpdate(user1, true);
@@ -92,7 +92,7 @@ contract FANtiumUserManagerV2Test is Test {
         vm.stopPrank();
     }
 
-    function testSetBatchIDENT() public {
+    function test_setBatchIDENT_OK() public {
         address[] memory accounts = new address[](2);
         accounts[0] = user1;
         accounts[1] = user2;
@@ -111,7 +111,7 @@ contract FANtiumUserManagerV2Test is Test {
     // AllowList Tests
     // ========================================================================
 
-    function testSetAllowList() public {
+    function test_setAllowList_OK() public {
         vm.startPrank(allowlistManager);
         vm.expectEmit(true, true, false, true);
         emit AllowListUpdate(user1, 1, 100);
@@ -120,7 +120,7 @@ contract FANtiumUserManagerV2Test is Test {
         vm.stopPrank();
     }
 
-    function testBatchSetAllowList() public {
+    function test_batchSetAllowList_OK() public {
         address[] memory accounts = new address[](2);
         accounts[0] = user1;
         accounts[1] = user2;
@@ -138,7 +138,7 @@ contract FANtiumUserManagerV2Test is Test {
         vm.stopPrank();
     }
 
-    function testIncreaseAllowList() public {
+    function test_increaseAllowList_OK() public {
         vm.startPrank(allowlistManager);
         userManager.setAllowList(user1, 1, 100);
         userManager.increaseAllowList(user1, 1, 50);
@@ -146,7 +146,7 @@ contract FANtiumUserManagerV2Test is Test {
         vm.stopPrank();
     }
 
-    function testDecreaseAllowList() public {
+    function test_decreaseAllowList_OK() public {
         vm.startPrank(allowlistManager);
         userManager.setAllowList(user1, 1, 100);
         userManager.decreaseAllowList(user1, 1, 30);
@@ -158,7 +158,7 @@ contract FANtiumUserManagerV2Test is Test {
     // Fuzz Tests
     // ========================================================================
 
-    function testFuzz_SetAllowList(address account, uint256 collectionId, uint256 allocation) public {
+    function testFuzz_setAllowList_OK(address account, uint256 collectionId, uint256 allocation) public {
         vm.assume(account != address(0));
 
         vm.startPrank(allowlistManager);
@@ -167,7 +167,7 @@ contract FANtiumUserManagerV2Test is Test {
         vm.stopPrank();
     }
 
-    function testFuzz_IncreaseAllowList(
+    function testFuzz_increaseAllowList_OK(
         address account,
         uint256 collectionId,
         uint256 initialAmount,
@@ -183,7 +183,7 @@ contract FANtiumUserManagerV2Test is Test {
         vm.stopPrank();
     }
 
-    function testFuzz_DecreaseAllowList(
+    function testFuzz_decreaseAllowList_OK(
         address account,
         uint256 collectionId,
         uint256 initialAmount,
@@ -199,7 +199,7 @@ contract FANtiumUserManagerV2Test is Test {
         vm.stopPrank();
     }
 
-    function testFuzz_BatchOperations(
+    function testFuzz_batchOperations_OK(
         address[10] memory accounts,
         bool[10] memory kycStatuses,
         uint256[10] memory collectionIds,

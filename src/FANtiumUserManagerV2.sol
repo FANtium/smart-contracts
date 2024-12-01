@@ -135,19 +135,36 @@ contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
         }
     }
 
+    /**
+     * @notice Increases the allowlist for an account and collection.
+     * @dev If the result is greater than type(uint256).max, it will be set to type(uint256).max.
+     * @param account The account to increase the allowlist for.
+     * @param collectionId The collection to increase the allowlist for.
+     * @param delta The amount to increase the allowlist by.
+     */
     function increaseAllowList(
         address account,
         uint256 collectionId,
         uint256 delta
     ) external whenNotPaused onlyRoleOrAdmin(ALLOWLIST_MANAGER_ROLE) {
-        _setAllowList(account, collectionId, allowlist(account, collectionId) + delta);
+        uint256 current = allowlist(account, collectionId);
+        uint256 max = type(uint256).max;
+        _setAllowList(account, collectionId, (delta > max - current) ? max : current + delta);
     }
 
+    /**
+     * @notice Decreases the allowlist for an account and collection.
+     * @dev If the current allowlist is less than the delta, it will be set to 0.
+     * @param account The account to decrease the allowlist for.
+     * @param collectionId The collection to decrease the allowlist for.
+     * @param delta The amount to decrease the allowlist by.
+     */
     function decreaseAllowList(
         address account,
         uint256 collectionId,
         uint256 delta
     ) external whenNotPaused onlyRoleOrAdmin(ALLOWLIST_MANAGER_ROLE) {
-        _setAllowList(account, collectionId, allowlist(account, collectionId) - delta);
+        uint256 current = allowlist(account, collectionId);
+        _setAllowList(account, collectionId, current < delta ? 0 : current - delta);
     }
 }
