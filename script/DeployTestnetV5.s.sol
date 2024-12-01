@@ -16,7 +16,7 @@ contract DeployTestnetV5 is Script {
         FANtiumNFTV5 fantiumNFT = FANtiumNFTV5(
             UnsafeUpgrades.deployUUPSProxy(
                 address(new FANtiumNFTV5()),
-                abi.encodeCall(FANtiumNFTV5.initialize, ("FANtium", "FAN", ADMIN))
+                abi.encodeCall(FANtiumNFTV5.initialize, (ADMIN, "FANtium", "FAN"))
             )
         );
         vm.stopBroadcast();

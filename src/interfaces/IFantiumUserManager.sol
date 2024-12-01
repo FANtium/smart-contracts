@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.0;
 
-/**
- * @dev Interface of the IFantiumUserManager
- */
-interface IFantiumUserManager {
-    /**
-     * @dev All events are emitted in the FantomUserManager contract.
-     */
+struct User {
+    bool isKYCed;
+    bool isIDENT;
+    mapping(address => mapping(uint256 => uint256)) contractToAllowlistToSpots;
+}
+
+interface IFANtiumUserManager {
     event AddressAddedToKYC(address indexed _address);
     event AddressRemovedFromKYC(address indexed _address);
     event AddressAddedToIDENT(address indexed _address);

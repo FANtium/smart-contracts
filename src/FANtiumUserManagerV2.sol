@@ -1,49 +1,49 @@
 // SPDX-License-Identifier: Apache 2.0
 pragma solidity ^0.8.13;
 
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "../claiming/FantiumClaimingV1.sol";
-import "../interfaces/IFantiumNFT.sol";
-import "../interfaces/IFantiumUserManager.sol";
+import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
+import "../claiming/FANtiumClaimingV1.sol";
+import "../interfaces/IFANtiumNFT.sol";
+import "../interfaces/IFANtiumUserManager.sol";
 
 /**
- * @title FANtium User Manager contract V1.
+ * @title FANtium User Manager contract V2.
  * @author MTX studio AG.
  */
 
-contract FANtiumUserManager is
-    Initializable,
-    UUPSUpgradeable,
-    AccessControlUpgradeable,
-    PausableUpgradeable,
-    IFantiumUserManager
-{
+contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
     using StringsUpgradeable for uint256;
 
-    mapping(address => User) public users;
-    mapping(address => bool) public allowedContracts;
-    address private trustedForwarder;
+    // ========================================================================
+    // Constants
+    // ========================================================================
+    string public constant VERSION = "5.0.0";
+    uint256 public constant ONE_MILLION = 1_000_000;
 
-    uint256 constant ONE_MILLION = 1_000_000;
+    // Roles
+    // ========================================================================
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant PLATFORM_MANAGER_ROLE = keccak256("PLATFORM_MANAGER_ROLE");
     bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
-    // generic event fields
-    bytes32 constant FIELD_PLATFORM_CONFIG = "platform address config";
-    bytes32 constant FIELD_CONTRACTS_ALLOWED_CHANGE = "contracts added or removed";
-    bytes32 constant FIELD_KYC_CHANGE = "KYC added or removed";
-    bytes32 constant FIELD_IDENT_CHANGE = "IDENT added or removed";
-    bytes32 constant FIELD_ALLOWLIST_CHANGE = "allowlist added or removed";
 
-    struct User {
-        bool isKYCed;
-        bool isIDENT;
-        mapping(address => mapping(uint256 => uint256)) contractToAllowlistToSpots;
-    }
+    // Fields
+    // ========================================================================
+    bytes32 public constant FIELD_PLATFORM_CONFIG = "platform address config";
+    bytes32 public constant FIELD_CONTRACTS_ALLOWED_CHANGE = "contracts added or removed";
+    bytes32 public constant FIELD_KYC_CHANGE = "KYC added or removed";
+    bytes32 public constant FIELD_IDENT_CHANGE = "IDENT added or removed";
+    bytes32 public constant FIELD_ALLOWLIST_CHANGE = "allowlist added or removed";
+
+    // ========================================================================
+    // State variables
+    // ========================================================================
+    mapping(address => User) public users;
+    mapping(address => bool) public allowedContracts;
+    address public trustedForwarder;
 
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
@@ -73,9 +73,28 @@ contract FANtiumUserManager is
         _;
     }
 
-    /*///////////////////////////////////////////////////////////////
-                            UUPS UPGRADEABLE
-    //////////////////////////////////////////////////////////////*/
+    // ========================================================================
+    // UUPS upgradeable pattern
+    // ========================================================================
+    /**
+     * @custom:oz-upgrades-unsafe-allow constructor
+     */
+    constructor() {
+        _disableInitializers();
+    }
+
+    function version() public pure override returns (string memory) {
+        return "2.0.0";
+    }
+
+    function initialize(
+        address _defaultAdmin,
+        address _fantiumNFTContract,
+        address _claimingContract,
+        address _trustedForwarder
+    ) public initializer {
+        __FANtiumBaseUpgradable_init(_defaultAdmin);
+    }
 
     /**
      * @notice Initializes contract.
@@ -105,14 +124,41 @@ contract FANtiumUserManager is
         trustedForwarder = _trustedForwarder;
     }
 
-    /// @notice upgrade authorization logic
-    /// @dev required by the OZ UUPS module
-    /// @dev adds onlyRole(UPGRADER_ROLE) requirement
+    /**
+     * @notice Implementation of the upgrade authorization logic
+     * @dev Restricted to the UPGRADER_ROLE
+     */
     function _authorizeUpgrade(address) internal override onlyRole(UPGRADER_ROLE) {}
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
+    // ========================================================================
+    // ERC2771, single trusted forwarder
+    // ========================================================================
+    function setTrustedForwarder(address _trustedForwarder) public onlyRole(UPGRADER_ROLE) {
+        trustedForwarder = _trustedForwarder;
+    }
+
+    function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
+        return forwarder == trustedForwarder;
+    }
+
+    function _msgSender() internal view virtual override returns (address sender) {
+        if (isTrustedForwarder(msg.sender)) {
+            // The assembly code is more direct than the Solidity version using `abi.decode`.
+            /// @solidity memory-safe-assembly
+            assembly {
+                sender := shr(96, calldataload(sub(calldatasize(), 20)))
+            }
+        } else {
+            return super._msgSender();
+        }
+    }
+
+    function _msgData() internal view virtual override returns (bytes calldata) {
+        if (isTrustedForwarder(msg.sender)) {
+            return msg.data[:msg.data.length - 20];
+        } else {
+            return super._msgData();
+        }
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -219,7 +265,7 @@ contract FANtiumUserManager is
     ) public whenNotPaused onlyManagers {
         require(allowedContracts[_contractAddress], "Only allowed Contract");
         require(IFANtiumNFT(_contractAddress).getCollectionExists(_collectionId), "Collection does not exist");
-        require(_addresses.length == _increaseAllocations.length, "FantiumUserManagerV1: Array length mismatch");
+        require(_addresses.length == _increaseAllocations.length, "FANtiumUserManagerV1: Array length mismatch");
         for (uint256 i = 0; i < _addresses.length; i++) {
             users[_addresses[i]].contractToAllowlistToSpots[_contractAddress][_collectionId] += _increaseAllocations[i];
             emit ALUpdate(_contractAddress, _collectionId, _addresses[i], FIELD_ALLOWLIST_CHANGE);
@@ -307,39 +353,6 @@ contract FANtiumUserManager is
         if (allowedContracts[_contractAddress]) {
             allowedContracts[_contractAddress] = false;
             emit PlatformUpdate(FIELD_CONTRACTS_ALLOWED_CHANGE);
-        }
-    }
-
-    /*///////////////////////////////////////////////////////////////
-                            ERC2771
-    //////////////////////////////////////////////////////////////*/
-
-    function setTrustedForwarder(address forwarder) external onlyUpgrader {
-        require(forwarder != address(0), "FantiumUserManagerV1: no zero address");
-        trustedForwarder = forwarder;
-    }
-
-    function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
-        return forwarder == trustedForwarder;
-    }
-
-    function _msgSender() internal view virtual override returns (address sender) {
-        if (isTrustedForwarder(msg.sender)) {
-            // The assembly code is more direct than the Solidity version using `abi.decode`.
-            /// @solidity memory-safe-assembly
-            assembly {
-                sender := shr(96, calldataload(sub(calldatasize(), 20)))
-            }
-        } else {
-            return super._msgSender();
-        }
-    }
-
-    function _msgData() internal view virtual override returns (bytes calldata) {
-        if (isTrustedForwarder(msg.sender)) {
-            return msg.data[:msg.data.length - 20];
-        } else {
-            return super._msgData();
         }
     }
 }

@@ -3,6 +3,10 @@ pragma solidity ^0.8.0;
 
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 
+/**
+ * @notice Collection struct
+ * @dev /!\ Do not change the order of the struct fields!!
+ */
 struct Collection {
     bool exists;
     uint256 launchTimestamp;
@@ -19,11 +23,58 @@ struct Collection {
     uint256 fantiumSecondarySalesBPS;
     uint256 otherEarningShare1e7;
 }
+
+/**
+ * @notice Create collection struct
+ * @dev Fields may be added.
+ */
+struct CreateCollection {
+    address payable athleteAddress;
+    uint256 athletePrimarySalesBPS;
+    uint256 athleteSecondarySalesBPS;
+    address payable fantiumSalesAddress;
+    uint256 fantiumSecondarySalesBPS;
+    uint256 launchTimestamp;
+    uint256 maxInvocations;
+    uint256 otherEarningShare1e7;
+    uint256 price;
+    uint256 tournamentEarningShare1e7;
+}
+
+struct UpdateCollection {
+    uint256 athleteSecondarySalesBPS;
+    uint256 maxInvocations;
+    uint256 price;
+    uint256 tournamentEarningShare1e7;
+    uint256 otherEarningShare1e7;
+    address payable fantiumSalesAddress;
+    uint256 fantiumSecondarySalesBPS;
+}
+
+enum CollectionErrorReason {
+    INVALID_BPS_SUM,
+    INVALID_MAX_INVOCATIONS,
+    INVALID_PRIMARY_SALES_BPS,
+    INVALID_SECONDARY_SALES_BPS,
+    MAX_COLLECTIONS_REACHED,
+    INVALID_TOURNAMENT_EARNING_SHARE,
+    INVALID_OTHER_EARNING_SHARE,
+    INVALID_ATHLETE_ADDRESS,
+    INVALID_FANTIUM_SALES_ADDRESS,
+    INVALID_PRICE
+}
+
 /**
  * @dev Interface of the IFANtiumNFT
  */
 interface IFANtiumNFT is IERC721Upgradeable {
-    function collections(uint256 _collectionId) external view returns (Collection memory);
+    function collections(uint256 collectionId) external view returns (Collection memory);
+
+    function createCollection(CreateCollection memory data) external returns (uint256);
+
+    function updateCollection(uint256 collectionId, UpdateCollection memory data) external;
+
+    function toggleCollectionPaused(uint256 collectionId) external;
 
     /**
      * @notice upgrades token version. Old token gets burned and new token gets minted to owner of Token
