@@ -83,10 +83,7 @@ interface IFANtiumNFT is IERC721Upgradeable {
      */
     function upgradeTokenVersion(uint256 _tokenId) external returns (bool);
 
-    function getPrimaryRevenueSplits(
-        uint256 _collectionId,
-        uint256 _price
-    )
+    function getPrimaryRevenueSplits(uint256 _collectionId, uint256 _price)
         external
         view
         returns (
@@ -102,17 +99,16 @@ interface IFANtiumNFT is IERC721Upgradeable {
      * @return recipients array of recepients of royalties
      * @return bps array of bps of royalties
      */
-
-    function getRoyalties(
-        uint256 _tokenId
-    ) external view returns (address payable[] memory recipients, uint256[] memory bps);
+    function getRoyalties(uint256 _tokenId)
+        external
+        view
+        returns (address payable[] memory recipients, uint256[] memory bps);
 
     /**
      * @notice get collection athlete address
      * @param _collectionId collectionId of NFTs
      * @return address of athlete
      */
-
     function getCollectionAthleteAddress(uint256 _collectionId) external view returns (address);
 
     /**
@@ -121,7 +117,6 @@ interface IFANtiumNFT is IERC721Upgradeable {
      * @return uint256 tournament share in 1e7 per token of collection
      * @return uint256 other share in 1e7 per token of collection
      */
-
     function getEarningsShares1e7(uint256 _collectionId) external view returns (uint256, uint256);
 
     /**
@@ -129,7 +124,6 @@ interface IFANtiumNFT is IERC721Upgradeable {
      * @param _collectionId collectionId of NFT
      * @return bool true if collection exists
      */
-
     function getCollectionExists(uint256 _collectionId) external view returns (bool);
 
     /**
@@ -137,7 +131,6 @@ interface IFANtiumNFT is IERC721Upgradeable {
      * @param _collectionId collectionId of NFT
      * @return uint24 returns amount of minted tokens of collection
      */
-
     function getMintedTokensOfCollection(uint256 _collectionId) external view returns (uint24);
 
     function mintTo(uint256 collectionId, uint24 quantity, address recipient) external;

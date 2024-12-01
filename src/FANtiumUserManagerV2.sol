@@ -8,7 +8,6 @@ import {FANtiumBaseUpgradable} from "./FANtiumBaseUpgradable.sol";
  * @title FANtium User Manager contract V2.
  * @author MTX studio AG.
  */
-
 contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
     // Roles
     // ========================================================================
@@ -52,10 +51,11 @@ contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
         _setKYC(account, isKYCed_);
     }
 
-    function setBatchKYC(
-        address[] memory accounts,
-        bool[] memory isKYCed_
-    ) external whenNotPaused onlyRoleOrAdmin(KYC_MANAGER_ROLE) {
+    function setBatchKYC(address[] memory accounts, bool[] memory isKYCed_)
+        external
+        whenNotPaused
+        onlyRoleOrAdmin(KYC_MANAGER_ROLE)
+    {
         if (accounts.length != isKYCed_.length) {
             revert ArrayLengthMismatch(accounts.length, isKYCed_.length);
         }
@@ -81,10 +81,11 @@ contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
         _setIDENT(account, isIDENT_);
     }
 
-    function setBatchIDENT(
-        address[] memory accounts,
-        bool[] memory isIDENT_
-    ) external whenNotPaused onlyRoleOrAdmin(KYC_MANAGER_ROLE) {
+    function setBatchIDENT(address[] memory accounts, bool[] memory isIDENT_)
+        external
+        whenNotPaused
+        onlyRoleOrAdmin(KYC_MANAGER_ROLE)
+    {
         if (accounts.length != isIDENT_.length) {
             revert ArrayLengthMismatch(accounts.length, isIDENT_.length);
         }
@@ -110,19 +111,18 @@ contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
         emit AllowListUpdate(account, collectionId, allocation);
     }
 
-    function setAllowList(
-        address account,
-        uint256 collectionId,
-        uint256 allocation
-    ) external whenNotPaused onlyRoleOrAdmin(ALLOWLIST_MANAGER_ROLE) {
+    function setAllowList(address account, uint256 collectionId, uint256 allocation)
+        external
+        whenNotPaused
+        onlyRoleOrAdmin(ALLOWLIST_MANAGER_ROLE)
+    {
         _setAllowList(account, collectionId, allocation);
     }
 
-    function batchSetAllowList(
-        address[] memory accounts,
-        uint256[] memory collectionIds,
-        uint256[] memory allocations
-    ) external onlyRoleOrAdmin(ALLOWLIST_MANAGER_ROLE) {
+    function batchSetAllowList(address[] memory accounts, uint256[] memory collectionIds, uint256[] memory allocations)
+        external
+        onlyRoleOrAdmin(ALLOWLIST_MANAGER_ROLE)
+    {
         if (accounts.length != collectionIds.length) {
             revert ArrayLengthMismatch(accounts.length, collectionIds.length);
         }
@@ -142,11 +142,11 @@ contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
      * @param collectionId The collection to increase the allowlist for.
      * @param delta The amount to increase the allowlist by.
      */
-    function increaseAllowList(
-        address account,
-        uint256 collectionId,
-        uint256 delta
-    ) external whenNotPaused onlyRoleOrAdmin(ALLOWLIST_MANAGER_ROLE) {
+    function increaseAllowList(address account, uint256 collectionId, uint256 delta)
+        external
+        whenNotPaused
+        onlyRoleOrAdmin(ALLOWLIST_MANAGER_ROLE)
+    {
         uint256 current = allowlist(account, collectionId);
         uint256 max = type(uint256).max;
         _setAllowList(account, collectionId, (delta > max - current) ? max : current + delta);
@@ -159,11 +159,11 @@ contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
      * @param collectionId The collection to decrease the allowlist for.
      * @param delta The amount to decrease the allowlist by.
      */
-    function decreaseAllowList(
-        address account,
-        uint256 collectionId,
-        uint256 delta
-    ) external whenNotPaused onlyRoleOrAdmin(ALLOWLIST_MANAGER_ROLE) {
+    function decreaseAllowList(address account, uint256 collectionId, uint256 delta)
+        external
+        whenNotPaused
+        onlyRoleOrAdmin(ALLOWLIST_MANAGER_ROLE)
+    {
         uint256 current = allowlist(account, collectionId);
         _setAllowList(account, collectionId, current < delta ? 0 : current - delta);
     }

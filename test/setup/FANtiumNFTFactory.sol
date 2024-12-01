@@ -48,8 +48,7 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
         usdc = new ERC20("USD Coin", "USDC");
         fantiumNFT_implementation = address(new FANtiumNFTV5());
         fantiumNFT_proxy = UnsafeUpgrades.deployUUPSProxy(
-            fantiumNFT_implementation,
-            abi.encodeCall(FANtiumNFTV5.initialize, (admin, "FANtium", "FAN"))
+            fantiumNFT_implementation, abi.encodeCall(FANtiumNFTV5.initialize, (admin, "FANtium", "FAN"))
         );
         fantiumNFT = FANtiumNFTV5(fantiumNFT_proxy);
 

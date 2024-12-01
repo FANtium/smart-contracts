@@ -15,8 +15,7 @@ contract FANtiumUserManagerFactory is BaseTest {
     function setUp() public virtual {
         fantiumUserManager_implementation = address(new FANtiumUserManagerV2());
         fantiumUserManager_proxy = UnsafeUpgrades.deployUUPSProxy(
-            fantiumUserManager_implementation,
-            abi.encodeCall(FANtiumUserManagerV2.initialize, (admin))
+            fantiumUserManager_implementation, abi.encodeCall(FANtiumUserManagerV2.initialize, (admin))
         );
         fantiumUserManager = FANtiumUserManagerV2(fantiumUserManager_proxy);
     }

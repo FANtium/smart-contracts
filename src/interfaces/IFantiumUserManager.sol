@@ -34,11 +34,8 @@ interface IFANtiumUserManager {
     // ========================================================================
     function allowlist(address account, uint256 collectionId) external view returns (uint256);
     function setAllowList(address account, uint256 collectionId, uint256 allocation) external;
-    function batchSetAllowList(
-        address[] memory accounts,
-        uint256[] memory collectionIds,
-        uint256[] memory allocations
-    ) external;
+    function batchSetAllowList(address[] memory accounts, uint256[] memory collectionIds, uint256[] memory allocations)
+        external;
     function increaseAllowList(address account, uint256 collectionId, uint256 delta) external;
     function decreaseAllowList(address account, uint256 collectionId, uint256 delta) external;
 }

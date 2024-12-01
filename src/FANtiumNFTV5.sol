@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: Apache 2.0
 pragma solidity ^0.8.13;
 
-import {IERC20MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+import {IERC20MetadataUpgradeable} from
+    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {ERC721Upgradeable, IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {
+    ERC721Upgradeable,
+    IERC165Upgradeable
+} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
@@ -12,8 +16,15 @@ import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {ECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
-import {DefaultOperatorFiltererUpgradeable} from "operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol";
-import {IFANtiumNFT, Collection, CreateCollection, UpdateCollection, CollectionErrorReason} from "./interfaces/IFANtiumNFT.sol";
+import {DefaultOperatorFiltererUpgradeable} from
+    "operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol";
+import {
+    IFANtiumNFT,
+    Collection,
+    CreateCollection,
+    UpdateCollection,
+    CollectionErrorReason
+} from "./interfaces/IFANtiumNFT.sol";
 import {IFANtiumUserManager} from "./interfaces/IFANtiumUserManager.sol";
 import {TokenVersionUtil} from "./utils/TokenVersionUtil.sol";
 
@@ -120,11 +131,10 @@ contract FANtiumNFTV5 is
      * @param _tokenSymbol Token symbol.
      * max(uint248) to avoid overflow when adding to it.
      */
-    function initialize(
-        address _defaultAdmin,
-        string memory _tokenName,
-        string memory _tokenSymbol
-    ) public initializer {
+    function initialize(address _defaultAdmin, string memory _tokenName, string memory _tokenSymbol)
+        public
+        initializer
+    {
         __ERC721_init(_tokenName, _tokenSymbol);
         __UUPSUpgradeable_init();
         __AccessControl_init();
@@ -145,9 +155,13 @@ contract FANtiumNFTV5 is
     // ========================================================================
     // Interface
     // ========================================================================
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(IERC165Upgradeable, AccessControlUpgradeable, ERC721Upgradeable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(IERC165Upgradeable, AccessControlUpgradeable, ERC721Upgradeable)
+        returns (bool)
+    {
         return interfaceId == _INTERFACE_ID_ERC2981_OVERRIDE || super.supportsInterface(interfaceId);
     }
 
@@ -234,11 +248,11 @@ contract FANtiumNFTV5 is
      * @param quantity Amount of tokens to mint.
      * @param recipient Recipient of the mint.
      */
-    function mintable(
-        uint256 collectionId,
-        uint24 quantity,
-        address recipient
-    ) public view returns (bool useAllowList) {
+    function mintable(uint256 collectionId, uint24 quantity, address recipient)
+        public
+        view
+        returns (bool useAllowList)
+    {
         if (!IFANtiumUserManager(fantiumUserManager).isKYCed(_msgSender())) {
             revert AccountNotKYCed(recipient);
         }
@@ -318,15 +332,12 @@ contract FANtiumNFTV5 is
      * @param recipient The recipient of the NFTs.
      * @param signature The signature of the purchase request.
      */
-    function mintTo(
-        uint256 collectionId,
-        uint24 quantity,
-        uint256 amount,
-        address recipient,
-        bytes memory signature
-    ) public whenNotPaused {
-        bytes32 hash = keccak256(abi.encode(_msgSender(), collectionId, quantity, amount, recipient))
-            .toEthSignedMessageHash();
+    function mintTo(uint256 collectionId, uint24 quantity, uint256 amount, address recipient, bytes memory signature)
+        public
+        whenNotPaused
+    {
+        bytes32 hash =
+            keccak256(abi.encode(_msgSender(), collectionId, quantity, amount, recipient)).toEthSignedMessageHash();
         if (!hasRole(SIGNER_ROLE, hash.recover(signature))) {
             revert InvalidSignature();
         }
@@ -353,10 +364,7 @@ contract FANtiumNFTV5 is
      * to the contract performing the revenue split to handle this
      * appropriately.
      */
-    function getPrimaryRevenueSplits(
-        uint256 _collectionId,
-        uint256 _price
-    )
+    function getPrimaryRevenueSplits(uint256 _collectionId, uint256 _price)
         public
         view
         returns (
@@ -388,30 +396,20 @@ contract FANtiumNFTV5 is
      */
     function _splitFunds(uint256 _price, uint256 _collectionId, address _sender) internal {
         // split funds between FANtium and athlete
-        (
-            uint256 fantiumRevenue_,
-            address fantiumAddress_,
-            uint256 athleteRevenue_,
-            address athleteAddress_
-        ) = getPrimaryRevenueSplits(_collectionId, _price);
+        (uint256 fantiumRevenue_, address fantiumAddress_, uint256 athleteRevenue_, address athleteAddress_) =
+            getPrimaryRevenueSplits(_collectionId, _price);
 
         // FANtium payment
         if (fantiumRevenue_ > 0) {
             SafeERC20Upgradeable.safeTransferFrom(
-                IERC20Upgradeable(erc20PaymentToken),
-                _sender,
-                fantiumAddress_,
-                fantiumRevenue_
+                IERC20Upgradeable(erc20PaymentToken), _sender, fantiumAddress_, fantiumRevenue_
             );
         }
 
         // athlete payment
         if (athleteRevenue_ > 0) {
             SafeERC20Upgradeable.safeTransferFrom(
-                IERC20Upgradeable(erc20PaymentToken),
-                _sender,
-                athleteAddress_,
-                athleteRevenue_
+                IERC20Upgradeable(erc20PaymentToken), _sender, athleteAddress_, athleteRevenue_
             );
         }
     }
@@ -462,10 +460,7 @@ contract FANtiumNFTV5 is
     }
 
     function getEarningsShares1e7(uint256 _collectionId) external view returns (uint256, uint256) {
-        return (
-            _collections[_collectionId].tournamentEarningShare1e7,
-            _collections[_collectionId].otherEarningShare1e7
-        );
+        return (_collections[_collectionId].tournamentEarningShare1e7, _collections[_collectionId].otherEarningShare1e7);
     }
 
     function getCollectionExists(uint256 _collectionId) external view returns (bool) {
@@ -480,9 +475,12 @@ contract FANtiumNFTV5 is
      * @notice Creates a new collection.
      * @dev Restricted to platform manager.
      */
-    function createCollection(
-        CreateCollection memory data
-    ) external whenNotPaused onlyPlatformManager returns (uint256) {
+    function createCollection(CreateCollection memory data)
+        external
+        whenNotPaused
+        onlyPlatformManager
+        returns (uint256)
+    {
         // Validate the data
         if (data.athleteSecondarySalesBPS + data.fantiumSecondarySalesBPS > 10_000) {
             revert InvalidCollection(CollectionErrorReason.INVALID_BPS_SUM);
@@ -538,10 +536,12 @@ contract FANtiumNFTV5 is
         return collectionId;
     }
 
-    function updateCollection(
-        uint256 collectionId,
-        UpdateCollection memory data
-    ) external onlyValidCollectionId(collectionId) whenNotPaused onlyPlatformManager {
+    function updateCollection(uint256 collectionId, UpdateCollection memory data)
+        external
+        onlyValidCollectionId(collectionId)
+        whenNotPaused
+        onlyPlatformManager
+    {
         if (data.price == 0) {
             revert InvalidCollection(CollectionErrorReason.INVALID_PRICE);
         }
@@ -578,25 +578,30 @@ contract FANtiumNFTV5 is
     /**
      * @notice Toggles isMintingPaused state of collection `_collectionId`.
      */
-    function toggleCollectionPaused(
-        uint256 collectionId
-    ) external onlyValidCollectionId(collectionId) onlyAthlete(collectionId) {
+    function toggleCollectionPaused(uint256 collectionId)
+        external
+        onlyValidCollectionId(collectionId)
+        onlyAthlete(collectionId)
+    {
         _collections[collectionId].isPaused = !_collections[collectionId].isPaused;
     }
 
     /**
      * @notice Toggles isMintingPaused state of collection `_collectionId`.
      */
-    function toggleCollectionMintable(
-        uint256 collectionId
-    ) external onlyValidCollectionId(collectionId) onlyAthlete(collectionId) {
+    function toggleCollectionMintable(uint256 collectionId)
+        external
+        onlyValidCollectionId(collectionId)
+        onlyAthlete(collectionId)
+    {
         _collections[collectionId].isMintable = !_collections[collectionId].isMintable;
     }
 
-    function updateCollectionAthleteAddress(
-        uint256 collectionId,
-        address payable athleteAddress
-    ) external onlyValidCollectionId(collectionId) onlyPlatformManager {
+    function updateCollectionAthleteAddress(uint256 collectionId, address payable athleteAddress)
+        external
+        onlyValidCollectionId(collectionId)
+        onlyPlatformManager
+    {
         if (athleteAddress == address(0)) {
             revert InvalidCollection(CollectionErrorReason.INVALID_ATHLETE_ADDRESS);
         }
@@ -615,10 +620,11 @@ contract FANtiumNFTV5 is
      * be sent to the athlete. This must be less than
      * or equal to 100 percent.
      */
-    function updateCollectionAthletePrimaryMarketRoyaltyBPS(
-        uint256 collectionId,
-        uint256 primaryMarketRoyalty
-    ) external onlyValidCollectionId(collectionId) onlyPlatformManager {
+    function updateCollectionAthletePrimaryMarketRoyaltyBPS(uint256 collectionId, uint256 primaryMarketRoyalty)
+        external
+        onlyValidCollectionId(collectionId)
+        onlyPlatformManager
+    {
         require(primaryMarketRoyalty <= 10000, "Max of 100%");
         _collections[collectionId].athletePrimarySalesBPS = primaryMarketRoyalty;
     }
@@ -634,10 +640,11 @@ contract FANtiumNFTV5 is
      * be sent to the athlete. This must be less than
      * or equal to 95 percent.
      */
-    function updateCollectionAthleteSecondaryMarketRoyaltyBPS(
-        uint256 collectionId,
-        uint256 secondMarketRoyalty
-    ) external onlyValidCollectionId(collectionId) onlyPlatformManager {
+    function updateCollectionAthleteSecondaryMarketRoyaltyBPS(uint256 collectionId, uint256 secondMarketRoyalty)
+        external
+        onlyValidCollectionId(collectionId)
+        onlyPlatformManager
+    {
         if (secondMarketRoyalty + _collections[collectionId].fantiumSecondarySalesBPS > 10000) {
             revert InvalidCollection(CollectionErrorReason.INVALID_SECONDARY_SALES_BPS);
         }
@@ -649,10 +656,11 @@ contract FANtiumNFTV5 is
      * @notice Updates the launch timestamp of collection `_collectionId` to be
      * `_launchTimestamp`.
      */
-    function updateCollectionLaunchTimestamp(
-        uint256 _collectionId,
-        uint256 _launchTimestamp
-    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
+    function updateCollectionLaunchTimestamp(uint256 _collectionId, uint256 _launchTimestamp)
+        external
+        onlyValidCollectionId(_collectionId)
+        onlyPlatformManager
+    {
         _collections[_collectionId].launchTimestamp = _launchTimestamp;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_LAUNCH_TIMESTAMP);
     }
@@ -713,9 +721,12 @@ contract FANtiumNFTV5 is
      * @dev reverts if invalid _tokenId
      * @dev only returns recipients that have a non-zero BPS allocation
      */
-    function getRoyalties(
-        uint256 _tokenId
-    ) external view onlyValidTokenId(_tokenId) returns (address payable[] memory recipients, uint256[] memory bps) {
+    function getRoyalties(uint256 _tokenId)
+        external
+        view
+        onlyValidTokenId(_tokenId)
+        returns (address payable[] memory recipients, uint256[] memory bps)
+    {
         // initialize arrays with maximum potential length
         recipients = new address payable[](2);
         bps = new uint256[](2);

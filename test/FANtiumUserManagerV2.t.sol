@@ -21,10 +21,8 @@ contract FANtiumUserManagerV2Test is Test {
 
     function setUp() public {
         address implementation = address(new FANtiumUserManagerV2());
-        address proxy = UnsafeUpgrades.deployUUPSProxy(
-            implementation,
-            abi.encodeCall(FANtiumUserManagerV2.initialize, (admin))
-        );
+        address proxy =
+            UnsafeUpgrades.deployUUPSProxy(implementation, abi.encodeCall(FANtiumUserManagerV2.initialize, (admin)));
         userManager = FANtiumUserManagerV2(proxy);
 
         // Setup roles
@@ -167,12 +165,9 @@ contract FANtiumUserManagerV2Test is Test {
         vm.stopPrank();
     }
 
-    function testFuzz_increaseAllowList_OK(
-        address account,
-        uint256 collectionId,
-        uint256 initialAmount,
-        uint256 delta
-    ) public {
+    function testFuzz_increaseAllowList_OK(address account, uint256 collectionId, uint256 initialAmount, uint256 delta)
+        public
+    {
         vm.assume(account != address(0));
         vm.assume(initialAmount + delta >= initialAmount); // Prevent overflow
 
@@ -183,12 +178,9 @@ contract FANtiumUserManagerV2Test is Test {
         vm.stopPrank();
     }
 
-    function testFuzz_decreaseAllowList_OK(
-        address account,
-        uint256 collectionId,
-        uint256 initialAmount,
-        uint256 delta
-    ) public {
+    function testFuzz_decreaseAllowList_OK(address account, uint256 collectionId, uint256 initialAmount, uint256 delta)
+        public
+    {
         vm.assume(account != address(0));
         vm.assume(initialAmount >= delta); // Prevent underflow
 
@@ -211,7 +203,7 @@ contract FANtiumUserManagerV2Test is Test {
         uint256[] memory collectionIdsArray = new uint256[](10);
         uint256[] memory allocationsArray = new uint256[](10);
 
-        for (uint i = 0; i < 10; i++) {
+        for (uint256 i = 0; i < 10; i++) {
             vm.assume(accounts[i] != address(0));
             accountsArray[i] = accounts[i];
             statusArray[i] = kycStatuses[i];
@@ -228,7 +220,7 @@ contract FANtiumUserManagerV2Test is Test {
         vm.stopPrank();
 
         // Verify results
-        for (uint i = 0; i < 10; i++) {
+        for (uint256 i = 0; i < 10; i++) {
             assertEq(userManager.isKYCed(accountsArray[i]), statusArray[i]);
             assertEq(userManager.allowlist(accountsArray[i], collectionIdsArray[i]), allocationsArray[i]);
         }
