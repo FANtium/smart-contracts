@@ -44,7 +44,7 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
     address public fantiumNFT_proxy;
     FANtiumNFTV5 public fantiumNFT;
 
-    function setUp() public virtual {
+    function setUp() public virtual override {
         usdc = new ERC20("USD Coin", "USDC");
         fantiumNFT_implementation = address(new FANtiumNFTV5());
         fantiumNFT_proxy = UnsafeUpgrades.deployUUPSProxy(

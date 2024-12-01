@@ -161,7 +161,7 @@ contract FANtiumNFTV5 is
 
     modifier onlyPlatformManager() {
         if (!hasRole(PLATFORM_MANAGER_ROLE, msg.sender)) {
-            revert RoleNotGranted(msg.sender, PLATFORM_MANAGER_ROLE, );
+            revert RoleNotGranted(msg.sender, PLATFORM_MANAGER_ROLE);
         }
         _;
     }
@@ -239,7 +239,7 @@ contract FANtiumNFTV5 is
         uint24 quantity,
         address recipient
     ) public view returns (bool useAllowList) {
-        if (!IFANtiumUserManager(fantiumUserManager).isAddressKYCed(_msgSender())) {
+        if (!IFANtiumUserManager(fantiumUserManager).isKYCed(_msgSender())) {
             revert AccountNotKYCed(recipient);
         }
 
@@ -260,11 +260,7 @@ contract FANtiumNFTV5 is
         // If the collection is paused, we need to check if the recipient is on the allowlist and has enough allocation
         if (collection.isPaused) {
             useAllowList = true;
-            bool isAllowListed = IFANtiumUserManager(fantiumUserManager).hasAllowlist(
-                address(this),
-                collectionId,
-                recipient
-            ) >= quantity;
+            bool isAllowListed = IFANtiumUserManager(fantiumUserManager).allowlist(recipient, collectionId) >= quantity;
             if (!isAllowListed) {
                 revert CollectionPaused(collectionId);
             }
@@ -289,12 +285,7 @@ contract FANtiumNFTV5 is
         // EFFECTS
         _collections[collectionId].invocations += quantity;
         if (useAllowList) {
-            IFANtiumUserManager(fantiumUserManager).reduceAllowListAllocation(
-                collectionId,
-                address(this),
-                recipient,
-                quantity
-            );
+            IFANtiumUserManager(fantiumUserManager).decreaseAllowList(recipient, collectionId, quantity);
         }
 
         // INTERACTIONS

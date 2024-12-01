@@ -9,9 +9,9 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import "../interfaces/IFANtiumNFT.sol";
-import "../interfaces/IFANtiumUserManager.sol";
-import "../utils/TokenVersionUtil.sol";
+import {IFANtiumNFT} from "./interfaces/IFANtiumNFT.sol";
+import {IFANtiumUserManager} from "./interfaces/IFANtiumUserManager.sol";
+import {TokenVersionUtil} from "./utils/TokenVersionUtil.sol";
 
 /**
  * @title Claiming contract that allows payout tokens to be claimed
@@ -168,7 +168,7 @@ contract FANtiumClaimingV2 is Initializable, UUPSUpgradeable, AccessControlUpgra
      */
     function isAddressIDENT(address _address) public view returns (bool) {
         require(fantiumUserManager != address(0), "FANtiumClaimingV1: FANtiumUserManager not set");
-        return IFANtiumUserManager(fantiumUserManager).isAddressIDENT(_address);
+        return IFANtiumUserManager(fantiumUserManager).isIDENT(_address);
     }
 
     function getDistributionEvent(uint256 _id) public view returns (DistributionEvent memory) {

@@ -4,6 +4,8 @@ pragma solidity 0.8.28;
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
  * @title FANtium base contract
@@ -18,7 +20,10 @@ abstract contract FANtiumBaseUpgradable is
     using StringsUpgradeable for uint256;
 
     function __FANtiumBaseUpgradable_init(address admin) internal initializer {
+        __UUPSUpgradeable_init();
         __AccessControl_init();
+        __Pausable_init();
+
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
@@ -33,7 +38,7 @@ abstract contract FANtiumBaseUpgradable is
                 string(
                     abi.encodePacked(
                         "AccessControl: account ",
-                        StringsUpgradeable.toHexString(account),
+                        StringsUpgradeable.toHexString(msg.sender),
                         " is missing role ",
                         StringsUpgradeable.toHexString(uint256(role), 32)
                     )
@@ -44,13 +49,18 @@ abstract contract FANtiumBaseUpgradable is
     }
 
     // ========================================================================
+    // Errors
+    // ========================================================================
+    error ArrayLengthMismatch(uint256 lhs, uint256 rhs);
+
+    // ========================================================================
     // UUPS upgradeable pattern
     // ========================================================================
     /**
      * @notice Implementation of the upgrade authorization logic
-     * @dev Restricted to the UPGRADER_ROLE
+     * @dev Restricted to the DEFAULT_ADMIN_ROLE
      */
-    function _authorizeUpgrade(address) internal override onlyRoleOrAdmin(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(address) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 
     // ========================================================================
     // Pause
