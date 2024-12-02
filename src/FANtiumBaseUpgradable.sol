@@ -33,6 +33,21 @@ abstract contract FANtiumBaseUpgradable is
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     modifier onlyRoleOrAdmin(bytes32 role) {
+        _checkRoleOrAdmin(role);
+        _;
+    }
+
+    modifier onlyAdmin() {
+        _checkRole(DEFAULT_ADMIN_ROLE);
+        _;
+    }
+
+    modifier onlyManagerOrAdmin() {
+        _checkRoleOrAdmin(MANAGER_ROLE);
+        _;
+    }
+
+    function _checkRoleOrAdmin(bytes32 role) internal view virtual {
         if (!hasRole(role, msg.sender) && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
             revert(
                 string(
@@ -40,13 +55,11 @@ abstract contract FANtiumBaseUpgradable is
                         "AccessControl: account ",
                         StringsUpgradeable.toHexString(msg.sender),
                         " is missing role ",
-                        StringsUpgradeable.toHexString(uint256(role), 32),
-                        " or DEFAULT_ADMIN_ROLE"
+                        StringsUpgradeable.toHexString(uint256(role), 32)
                     )
                 )
             );
         }
-        _;
     }
 
     // ========================================================================
@@ -61,7 +74,7 @@ abstract contract FANtiumBaseUpgradable is
      * @notice Implementation of the upgrade authorization logic
      * @dev Restricted to the DEFAULT_ADMIN_ROLE
      */
-    function _authorizeUpgrade(address) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
+    function _authorizeUpgrade(address) internal override onlyAdmin {}
 
     // ========================================================================
     // Pause
@@ -69,14 +82,14 @@ abstract contract FANtiumBaseUpgradable is
     /**
      * @notice Update contract pause status to `_paused`.
      */
-    function pause() external onlyRoleOrAdmin(MANAGER_ROLE) {
+    function pause() external onlyManagerOrAdmin {
         _pause();
     }
 
     /**
      * @notice Unpauses contract
      */
-    function unpause() external onlyRoleOrAdmin(MANAGER_ROLE) {
+    function unpause() external onlyManagerOrAdmin {
         _unpause();
     }
 

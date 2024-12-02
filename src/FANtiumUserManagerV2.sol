@@ -6,7 +6,9 @@ import {FANtiumBaseUpgradable} from "./FANtiumBaseUpgradable.sol";
 
 /**
  * @title FANtium User Manager contract V2.
- * @author MTX studio AG.
+ * @notice Used to manage user information such as KYC status, IDENT status, and allowlist allocations.
+ * @dev KYC is  "soft verification" and IDENT is "hard verification".
+ * @author Mathieu Bour - FANtium, based on previous work by MTX Studio AG
  */
 contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
     // Roles
@@ -31,12 +33,19 @@ contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
     // ========================================================================
     // UUPS upgradeable pattern
     // ========================================================================
-    function version() public pure override returns (string memory) {
-        return "2.0.0";
+    /**
+     * @custom:oz-upgrades-unsafe-allow constructor
+     */
+    constructor() {
+        // _disableInitializers(); // TODO: uncomment when we are on v6
     }
 
     function initialize(address _defaultAdmin) public initializer {
         __FANtiumBaseUpgradable_init(_defaultAdmin);
+    }
+
+    function version() public pure override returns (string memory) {
+        return "2.0.0";
     }
 
     // ========================================================================

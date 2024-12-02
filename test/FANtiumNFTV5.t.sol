@@ -27,7 +27,7 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
     // setClaimContract
     // ========================================================================
     function testFuzz_setClaimContract_ok(address claimContract) public {
-        vm.startPrank(fantiumNFT_platformManager);
+        vm.startPrank(fantiumNFT_manager);
         fantiumNFT.setClaimContract(claimContract);
         vm.stopPrank();
         assertEq(fantiumNFT.claimContract(), claimContract);
@@ -36,9 +36,7 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
     function testFuzz_setClaimContract_unauthorized(address claimContract) public {
         vm.startPrank(fantiumNFT_admin);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IFANtiumNFT.RoleNotGranted.selector, fantiumNFT_admin, fantiumNFT.PLATFORM_MANAGER_ROLE()
-            )
+            abi.encodeWithSelector(IFANtiumNFT.RoleNotGranted.selector, fantiumNFT_admin, fantiumNFT.MANAGER_ROLE())
         );
         fantiumNFT.setClaimContract(claimContract);
         vm.stopPrank();
@@ -47,7 +45,7 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
     // setUserManager
     // ========================================================================
     function testFuzz_setUserManager_ok(address userManager) public {
-        vm.startPrank(fantiumNFT_platformManager);
+        vm.startPrank(fantiumNFT_manager);
         fantiumNFT.setUserManager(userManager);
         vm.stopPrank();
         assertEq(fantiumNFT.fantiumUserManager(), userManager);
@@ -132,7 +130,7 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
         vm.assume(0 < athletePrimarySalesBPS && athletePrimarySalesBPS < 10000);
         vm.assume(0 < price && price < 1000000 * 10 ** usdc.decimals());
 
-        vm.startPrank(fantiumNFT_platformManager);
+        vm.startPrank(fantiumNFT_manager);
         uint256 collectionId = fantiumNFT.createCollection(
             CreateCollection({
                 athleteAddress: fantiumNFT_athlete,

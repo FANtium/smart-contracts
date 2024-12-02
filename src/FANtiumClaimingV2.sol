@@ -12,15 +12,18 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import {IFANtiumNFT} from "./interfaces/IFANtiumNFT.sol";
 import {IFANtiumUserManager} from "./interfaces/IFANtiumUserManager.sol";
 import {TokenVersionUtil} from "./utils/TokenVersionUtil.sol";
-
+import {FANtiumBaseUpgradable} from "./FANtiumBaseUpgradable.sol";
 /**
  * @title Claiming contract that allows payout tokens to be claimed
  * for FAN token holders.
  * @author MTX studoi AG.
  */
-contract FANtiumClaimingV2 is Initializable, UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeable {
+
+contract FANtiumClaimingV2 is FANtiumBaseUpgradable {
+    // State variables
+    // ========================================================================
     address public globalPayoutToken;
-    address private trustedForwarder;
+    address private _UNUSED_trustedForwarder; // Now handled by the FANtiumBaseUpgradable contract
     address public fantiumNFTContract;
     address public fantiumUserManager;
 
@@ -32,9 +35,6 @@ contract FANtiumClaimingV2 is Initializable, UUPSUpgradeable, AccessControlUpgra
 
     uint256 private nextDistributionEventId;
     uint256 constant ONE_MILLION = 1_000_000;
-    /// ACM
-    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-    bytes32 public constant PLATFORM_MANAGER_ROLE = keccak256("PLATFORM_MANAGER_ROLE");
 
     bytes32 constant FIELD_CREATED = "created";
     bytes32 constant FIELD_COLLECTIONS = "collection IDs";
@@ -90,7 +90,7 @@ contract FANtiumClaimingV2 is Initializable, UUPSUpgradeable, AccessControlUpgra
     modifier onlyAthlete(uint256 _distributionEventId) {
         require(
             address(_msgSender()) == address(distributionEvents[_distributionEventId].athleteAddress)
-                || hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
+                || hasRole(MANAGER_ROLE, msg.sender),
             "only athlete"
         );
         _;
@@ -101,57 +101,45 @@ contract FANtiumClaimingV2 is Initializable, UUPSUpgradeable, AccessControlUpgra
         _;
     }
 
-    modifier onlyPlatformManager() {
-        require(hasRole(PLATFORM_MANAGER_ROLE, msg.sender), "only platform manager");
-        _;
-    }
-
-    modifier onlyUpgrader() {
-        require(hasRole(UPGRADER_ROLE, msg.sender), "only upgrader");
-        _;
-    }
-
-    /*///////////////////////////////////////////////////////////////
-                            UUPS UPGRADEABLE
-    //////////////////////////////////////////////////////////////*/
+    // ========================================================================
+    // UUPS upgradeable pattern
+    // ========================================================================
 
     /**
-     * @notice Initializes contract.
-     * max(uint248) to avoid overflow when adding to it.
+     * @custom:oz-upgrades-unsafe-allow constructor
      */
-    ///@dev no constructor in upgradable contracts. Instead we have initializers
-    function initialize(
-        address _defaultAdmin,
-        address _payoutToken,
-        address _fantiumNFTContract,
-        address _trustedForwarder
-    ) public initializer {
+    constructor() {
+        // _disableInitializers(); // TODO: uncomment when we are on v6
+    }
+
+    function initialize(address admin) public initializer {
         __UUPSUpgradeable_init();
         __AccessControl_init();
         __Pausable_init();
-        require(
-            _defaultAdmin != address(0) && _payoutToken != address(0) && _fantiumNFTContract != address(0)
-                && _trustedForwarder != address(0),
-            "Invalid addresses"
-        );
-        globalPayoutToken = _payoutToken;
-        fantiumNFTContract = _fantiumNFTContract;
-        trustedForwarder = _trustedForwarder;
 
-        _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
-        _grantRole(UPGRADER_ROLE, _defaultAdmin);
+        require(admin != address(0), "Invalid addresses");
 
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
         nextDistributionEventId = 1;
     }
 
-    /// @notice upgrade authorization logic
-    /// @dev required by the OZ UUPS module
-    /// @dev adds onlyUpgrader requirement
-    function _authorizeUpgrade(address) internal override onlyUpgrader {}
+    function version() public pure override returns (string memory) {
+        return "2.0.0";
+    }
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
+    // ========================================================================
+    // Setters
+    // ========================================================================
+    function setFantiumNFTContract(address _fantiumNFTContract) external onlyManagerOrAdmin {
+        fantiumNFTContract = _fantiumNFTContract;
+    }
+
+    function setFantiumUserManager(address _fantiumUserManager) external onlyManagerOrAdmin {
+        fantiumUserManager = _fantiumUserManager;
+    }
+
+    function setGlobalPayoutToken(address _globalPayoutToken) external onlyManagerOrAdmin {
+        globalPayoutToken = _globalPayoutToken;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -186,7 +174,7 @@ contract FANtiumClaimingV2 is Initializable, UUPSUpgradeable, AccessControlUpgra
         uint256[] memory _collectionIds,
         address payable _fantiumAddress,
         uint256 _fantiumFeeBPS
-    ) external onlyPlatformManager whenNotPaused {
+    ) external onlyManagerOrAdmin whenNotPaused {
         require(
             _startTime > 0 && _closeTime > 0 && _startTime < _closeTime && block.timestamp < _closeTime,
             "FANtiumClaimingV1: times must be greater than 0 and close time must be greater than start time and in the future"
@@ -284,7 +272,7 @@ contract FANtiumClaimingV2 is Initializable, UUPSUpgradeable, AccessControlUpgra
         uint256 _id,
         uint256 _totalTournamentEarnings,
         uint256 _totalOtherEarnings
-    ) external onlyValidDistributionEvent(_id) onlyPlatformManager {
+    ) external onlyValidDistributionEvent(_id) onlyManagerOrAdmin {
         require(!distributionEvents[_id].closed, "FANtiumClaimingV1: distribution already closed");
         require(
             distributionEvents[_id].claimedAmount == 0 && distributionEvents[_id].startTime > block.timestamp,
@@ -311,7 +299,7 @@ contract FANtiumClaimingV2 is Initializable, UUPSUpgradeable, AccessControlUpgra
     function updateDistributionEventCollectionIds(uint256 _id, uint256[] memory collectionIds)
         external
         onlyValidDistributionEvent(_id)
-        onlyPlatformManager
+        onlyManagerOrAdmin
     {
         require(!distributionEvents[_id].closed, "FANtiumClaimingV1: distribution already closed");
         require(
@@ -341,7 +329,7 @@ contract FANtiumClaimingV2 is Initializable, UUPSUpgradeable, AccessControlUpgra
         uint256 _id,
         address payable _athleteAddress,
         address payable _fantiumAdress
-    ) external onlyValidDistributionEvent(_id) onlyPlatformManager {
+    ) external onlyValidDistributionEvent(_id) onlyManagerOrAdmin {
         require(
             _athleteAddress != address(0) && _fantiumAdress != address(0),
             "FANtiumClaimingV1: athlete address cannot be 0"
@@ -354,7 +342,7 @@ contract FANtiumClaimingV2 is Initializable, UUPSUpgradeable, AccessControlUpgra
     function updateDistributionEventTimeStamps(uint256 _id, uint256 _startTime, uint256 _closeTime)
         external
         onlyValidDistributionEvent(_id)
-        onlyPlatformManager
+        onlyManagerOrAdmin
     {
         require(
             _startTime > 0 && _closeTime > 0 && _startTime < _closeTime && block.timestamp < _closeTime,
@@ -368,7 +356,7 @@ contract FANtiumClaimingV2 is Initializable, UUPSUpgradeable, AccessControlUpgra
     function updateDistributionEventFee(uint256 _id, uint256 _feeBPS)
         external
         onlyValidDistributionEvent(_id)
-        onlyPlatformManager
+        onlyManagerOrAdmin
     {
         require(distributionEvents[_id].claimedAmount == 0, "FANtiumClaimingV1: payout already started");
 
@@ -562,7 +550,7 @@ contract FANtiumClaimingV2 is Initializable, UUPSUpgradeable, AccessControlUpgra
     // take tokenSnapshot by platform manager
     function takeClaimingSnapshot(uint256 _distributionEventId)
         external
-        onlyPlatformManager
+        onlyManagerOrAdmin
         onlyValidDistributionEvent(_distributionEventId)
     {
         triggerClaimingSnapshot(_distributionEventId);
@@ -598,21 +586,21 @@ contract FANtiumClaimingV2 is Initializable, UUPSUpgradeable, AccessControlUpgra
     }
 
     // update fantiumNFTContract address
-    function updateFANtiumNFTContract(address _fantiumNFTContract) external onlyPlatformManager {
+    function updateFANtiumNFTContract(address _fantiumNFTContract) external onlyManagerOrAdmin {
         require(_fantiumNFTContract != address(0), "Null address not allowed");
         fantiumNFTContract = _fantiumNFTContract;
         emit PlatformUpdate(FIELD_NFT_CONTRACT_CONFIGS);
     }
 
     // update payoutToken address
-    function updateGlobalPayoutToken(address _globalPayoutToken) external onlyPlatformManager {
+    function updateGlobalPayoutToken(address _globalPayoutToken) external onlyManagerOrAdmin {
         require(_globalPayoutToken != address(0), "Null address not allowed");
         globalPayoutToken = _globalPayoutToken;
         emit PlatformUpdate(FIELD_PAYOUT_CONTRACT_CONFIGS);
     }
 
     // update payoutToken address
-    function updateFANtiumUserManager(address _fantiumUserManager) external onlyPlatformManager {
+    function updateFANtiumUserManager(address _fantiumUserManager) external onlyManagerOrAdmin {
         require(_fantiumUserManager != address(0), "Null address not allowed");
         fantiumUserManager = _fantiumUserManager;
         emit PlatformUpdate(FIELD_USER_MANAGER_CONFIGS);
@@ -620,7 +608,7 @@ contract FANtiumClaimingV2 is Initializable, UUPSUpgradeable, AccessControlUpgra
 
     function closeDistribution(uint256 _distributionEventId)
         external
-        onlyPlatformManager
+        onlyManagerOrAdmin
         whenNotPaused
         onlyValidDistributionEvent(_distributionEventId)
     {
@@ -647,52 +635,5 @@ contract FANtiumClaimingV2 is Initializable, UUPSUpgradeable, AccessControlUpgra
         );
 
         emit DistributionEventUpdate(_distributionEventId, FIELD_CLOSED);
-    }
-
-    /**
-     * @notice Update contract pause status to `_paused`.
-     */
-    function pause() external onlyPlatformManager {
-        _pause();
-    }
-
-    /**
-     * @notice Unpauses contract
-     */
-    function unpause() external onlyPlatformManager {
-        _unpause();
-    }
-
-    /*///////////////////////////////////////////////////////////////
-                            ERC2771
-    //////////////////////////////////////////////////////////////*/
-
-    function setTrustedForwarder(address forwarder) external onlyUpgrader {
-        trustedForwarder = forwarder;
-        emit PlatformUpdate(FIELD_FORWARDER_CONFIGS);
-    }
-
-    function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
-        return forwarder == trustedForwarder;
-    }
-
-    function _msgSender() internal view virtual override returns (address sender) {
-        if (isTrustedForwarder(msg.sender)) {
-            // The assembly code is more direct than the Solidity version using `abi.decode`.
-            /// @solidity memory-safe-assembly
-            assembly {
-                sender := shr(96, calldataload(sub(calldatasize(), 20)))
-            }
-        } else {
-            return super._msgSender();
-        }
-    }
-
-    function _msgData() internal view virtual override returns (bytes calldata) {
-        if (isTrustedForwarder(msg.sender)) {
-            return msg.data[:msg.data.length - 20];
-        } else {
-            return super._msgData();
-        }
     }
 }

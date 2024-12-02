@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.28;
+pragma solidity ^0.8.27;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -33,8 +33,7 @@ struct CollectionJson {
 
 contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
     address public fantiumNFT_admin = makeAddr("admin");
-    address public fantiumNFT_platformManager = makeAddr("platformManager");
-    address public fantiumNFT_upgrader = makeAddr("upgrader");
+    address public fantiumNFT_manager = makeAddr("platformManager");
     address public fantiumNFT_trustedForwarder = makeAddr("trustedForwarder");
     address payable public fantiumNFT_athlete = payable(makeAddr("athlete"));
     address payable public fantiumNFT_treasuryPrimary = payable(makeAddr("treasuryPrimary"));
@@ -57,12 +56,11 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
 
         // Configure roles
         vm.startPrank(fantiumNFT_admin);
-        fantiumNFT.grantRole(fantiumNFT.UPGRADER_ROLE(), fantiumNFT_upgrader);
-        fantiumNFT.grantRole(fantiumNFT.PLATFORM_MANAGER_ROLE(), fantiumNFT_platformManager);
+        fantiumNFT.grantRole(fantiumNFT.MANAGER_ROLE(), fantiumNFT_manager);
         vm.stopPrank();
 
-        vm.startPrank(fantiumNFT_platformManager);
-        fantiumNFT.setTrustedForwarder(fantiumNFT_trustedForwarder);
+        vm.startPrank(fantiumNFT_manager);
+        fantiumNFT.grantRole(fantiumNFT.FORWARDER_ROLE(), fantiumNFT_trustedForwarder);
         fantiumNFT.setERC20PaymentToken(address(usdc));
         fantiumNFT.setUserManager(fantiumUserManager_proxy);
 

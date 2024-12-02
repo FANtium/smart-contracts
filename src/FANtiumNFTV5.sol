@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache 2.0
 pragma solidity 0.8.28;
 
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {IERC20MetadataUpgradeable} from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -28,20 +29,13 @@ import {
 } from "./interfaces/IFANtiumNFT.sol";
 import {IFANtiumUserManager} from "./interfaces/IFANtiumUserManager.sol";
 import {TokenVersionUtil} from "./utils/TokenVersionUtil.sol";
+import {FANtiumBaseUpgradable} from "./FANtiumBaseUpgradable.sol";
 
 /**
  * @title FANtium ERC721 contract V5.
  * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
  */
-contract FANtiumNFTV5 is
-    Initializable,
-    ERC721Upgradeable,
-    UUPSUpgradeable,
-    AccessControlUpgradeable,
-    DefaultOperatorFiltererUpgradeable,
-    PausableUpgradeable,
-    IFANtiumNFT
-{
+contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperatorFiltererUpgradeable, IFANtiumNFT {
     using StringsUpgradeable for uint256;
     using ECDSAUpgradeable for bytes32;
 
@@ -57,8 +51,6 @@ contract FANtiumNFTV5 is
 
     // Roles
     // ========================================================================
-    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-    bytes32 public constant PLATFORM_MANAGER_ROLE = keccak256("PLATFORM_MANAGER_ROLE");
     bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
     bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
 
@@ -103,7 +95,7 @@ contract FANtiumNFTV5 is
      * @custom:oz-upgrades-unsafe-allow constructor
      */
     constructor() {
-        _disableInitializers();
+        // _disableInitializers(); // TODO: uncomment when we are on v6
     }
 
     /**
@@ -123,15 +115,23 @@ contract FANtiumNFTV5 is
         __Pausable_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
-        _grantRole(UPGRADER_ROLE, _defaultAdmin);
         nextCollectionId = 1;
     }
 
-    /**
-     * @notice Implementation of the upgrade authorization logic
-     * @dev Restricted to the UPGRADER_ROLE
-     */
-    function _authorizeUpgrade(address) internal override onlyRole(UPGRADER_ROLE) {}
+    function version() public pure override returns (string memory) {
+        return VERSION;
+    }
+
+    // ========================================================================
+    // Setters
+    // ========================================================================
+    function setClaimContract(address _claimContract) external onlyManagerOrAdmin {
+        claimContract = _claimContract;
+    }
+
+    function setUserManager(address _userManager) external onlyManagerOrAdmin {
+        fantiumUserManager = _userManager;
+    }
 
     // ========================================================================
     // Interface
@@ -154,15 +154,11 @@ contract FANtiumNFTV5 is
         _;
     }
 
-    modifier onlyPlatformManager() {
-        if (!hasRole(PLATFORM_MANAGER_ROLE, msg.sender)) {
-            revert RoleNotGranted(msg.sender, PLATFORM_MANAGER_ROLE);
-        }
-        _;
-    }
-
     modifier onlyAthlete(uint256 collectionId) {
-        if (_msgSender() != _collections[collectionId].athleteAddress && !hasRole(PLATFORM_MANAGER_ROLE, msg.sender)) {
+        if (
+            _msgSender() != _collections[collectionId].athleteAddress && !hasRole(MANAGER_ROLE, msg.sender)
+                && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)
+        ) {
             revert AthleteOnly(collectionId, msg.sender, _collections[collectionId].athleteAddress);
         }
         _;
@@ -183,45 +179,30 @@ contract FANtiumNFTV5 is
     }
 
     // ========================================================================
-    // ERC2771, single trusted forwarder
+    // ERC2771: logic handled by FANtiumBaseUpgradable
     // ========================================================================
-    function setTrustedForwarder(address _trustedForwarder) public onlyPlatformManager {
-        trustedForwarder = _trustedForwarder;
+    function isTrustedForwarder(address forwarder) public view override returns (bool) {
+        return FANtiumBaseUpgradable.isTrustedForwarder(forwarder);
     }
 
-    function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
-        return forwarder == trustedForwarder;
+    function _msgSender()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, FANtiumBaseUpgradable)
+        returns (address sender)
+    {
+        return FANtiumBaseUpgradable._msgSender();
     }
 
-    function _msgSender() internal view virtual override returns (address sender) {
-        if (isTrustedForwarder(msg.sender)) {
-            // The assembly code is more direct than the Solidity version using `abi.decode`.
-            /// @solidity memory-safe-assembly
-            assembly {
-                sender := shr(96, calldataload(sub(calldatasize(), 20)))
-            }
-        } else {
-            return super._msgSender();
-        }
-    }
-
-    function _msgData() internal view virtual override returns (bytes calldata) {
-        if (isTrustedForwarder(msg.sender)) {
-            return msg.data[:msg.data.length - 20];
-        } else {
-            return super._msgData();
-        }
-    }
-
-    // ========================================================================
-    // Contract setters
-    // ========================================================================
-    function setClaimContract(address _claimContract) external onlyPlatformManager {
-        claimContract = _claimContract;
-    }
-
-    function setUserManager(address _userManager) external onlyPlatformManager {
-        fantiumUserManager = _userManager;
+    function _msgData()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, FANtiumBaseUpgradable)
+        returns (bytes calldata)
+    {
+        return FANtiumBaseUpgradable._msgData();
     }
 
     // ========================================================================
@@ -451,7 +432,7 @@ contract FANtiumNFTV5 is
         super.safeTransferFrom(from, to, tokenId, data);
     }
 
-    function setBaseURI(string memory _baseURI) external whenNotPaused onlyPlatformManager {
+    function setBaseURI(string memory _baseURI) external whenNotPaused onlyManagerOrAdmin {
         baseURI = _baseURI;
         emit PlatformUpdated(FILED_FANTIUM_BASE_URI);
     }
@@ -463,23 +444,6 @@ contract FANtiumNFTV5 is
      */
     function tokenURI(uint256 _tokenId) public view override onlyValidTokenId(_tokenId) returns (string memory) {
         return string(bytes.concat(bytes(baseURI), bytes(_tokenId.toString())));
-    }
-
-    // ========================================================================
-    // Pause
-    // ========================================================================
-    /**
-     * @notice Update contract pause status to `_paused`.
-     */
-    function pause() external onlyPlatformManager {
-        _pause();
-    }
-
-    /**
-     * @notice Unpauses contract
-     */
-    function unpause() external onlyPlatformManager {
-        _unpause();
     }
 
     // ========================================================================
@@ -512,7 +476,7 @@ contract FANtiumNFTV5 is
     function createCollection(CreateCollection memory data)
         external
         whenNotPaused
-        onlyPlatformManager
+        onlyManagerOrAdmin
         returns (uint256)
     {
         // Validate the data
@@ -574,7 +538,7 @@ contract FANtiumNFTV5 is
         external
         onlyValidCollectionId(collectionId)
         whenNotPaused
-        onlyPlatformManager
+        onlyManagerOrAdmin
     {
         if (data.price == 0) {
             revert InvalidCollection(CollectionErrorReason.INVALID_PRICE);
@@ -634,7 +598,7 @@ contract FANtiumNFTV5 is
     function updateCollectionAthleteAddress(uint256 collectionId, address payable athleteAddress)
         external
         onlyValidCollectionId(collectionId)
-        onlyPlatformManager
+        onlyManagerOrAdmin
     {
         if (athleteAddress == address(0)) {
             revert InvalidCollection(CollectionErrorReason.INVALID_ATHLETE_ADDRESS);
@@ -657,7 +621,7 @@ contract FANtiumNFTV5 is
     function updateCollectionAthletePrimaryMarketRoyaltyBPS(uint256 collectionId, uint256 primaryMarketRoyalty)
         external
         onlyValidCollectionId(collectionId)
-        onlyPlatformManager
+        onlyManagerOrAdmin
     {
         if (primaryMarketRoyalty > 10000) {
             revert InvalidCollection(CollectionErrorReason.INVALID_PRIMARY_SALES_BPS);
@@ -680,7 +644,7 @@ contract FANtiumNFTV5 is
     function updateCollectionAthleteSecondaryMarketRoyaltyBPS(uint256 collectionId, uint256 secondMarketRoyalty)
         external
         onlyValidCollectionId(collectionId)
-        onlyPlatformManager
+        onlyManagerOrAdmin
     {
         if (secondMarketRoyalty + _collections[collectionId].fantiumSecondarySalesBPS > 10000) {
             revert InvalidCollection(CollectionErrorReason.INVALID_SECONDARY_SALES_BPS);
@@ -696,7 +660,7 @@ contract FANtiumNFTV5 is
     function updateCollectionLaunchTimestamp(uint256 _collectionId, uint256 _launchTimestamp)
         external
         onlyValidCollectionId(_collectionId)
-        onlyPlatformManager
+        onlyManagerOrAdmin
     {
         _collections[_collectionId].launchTimestamp = _launchTimestamp;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_LAUNCH_TIMESTAMP);
@@ -706,7 +670,7 @@ contract FANtiumNFTV5 is
                         PLATFORM FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function setERC20PaymentToken(address _erc20PaymentToken) external onlyPlatformManager {
+    function setERC20PaymentToken(address _erc20PaymentToken) external onlyManagerOrAdmin {
         erc20PaymentToken = _erc20PaymentToken;
     }
 
