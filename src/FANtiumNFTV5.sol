@@ -37,7 +37,6 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
     // ========================================================================
     // Constants
     // ========================================================================
-    string private constant VERSION = "5.0.0";
     string private constant NAME = "FANtium";
     string private constant SYMBOL = "FAN";
 
@@ -97,7 +96,7 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
     }
 
     function version() public pure override returns (string memory) {
-        return VERSION;
+        return "5.0.0";
     }
 
     // ========================================================================
@@ -258,7 +257,6 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
 
         for (uint256 i = 0; i < quantity; i++) {
             _mint(recipient, tokenId + i);
-            emit Mint(recipient, tokenId + i);
         }
 
         lastTokenId = tokenId + quantity - 1;
@@ -730,7 +728,6 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
         uint256 newTokenId = TokenVersionUtil.createTokenId(_collectionId, _versionId, _tokenNr);
         // mint new token with new version
         _mint(tokenOwner, newTokenId);
-        emit Mint(tokenOwner, newTokenId);
         if (ownerOf(newTokenId) == tokenOwner) {
             return true;
         } else {

@@ -71,7 +71,6 @@ interface IFANtiumNFT is IERC721Upgradeable {
     // ========================================================================
     // Events
     // ========================================================================
-    event Mint(address indexed _to, uint256 indexed _tokenId);
     event CollectionUpdated(uint256 indexed _collectionId, bytes32 indexed _update);
     event PlatformUpdated(bytes32 indexed _field);
 

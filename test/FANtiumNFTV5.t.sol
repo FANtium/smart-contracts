@@ -6,6 +6,7 @@ import { FANtiumNFTV5 } from "src/FANtiumNFTV5.sol";
 import { IFANtiumNFT, Collection, CreateCollection } from "src/interfaces/IFANtiumNFT.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { FANtiumNFTFactory } from "test/setup/FANtiumNFTFactory.sol";
+import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
     function setUp() public override {
@@ -116,6 +117,8 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
     // mintTo (standard price)
     // ========================================================================
     function testFuzz_mintTo_standardPrice_ok(address recipient) public {
+        vm.assume(recipient != address(0));
+
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
         Collection memory collection = fantiumNFT.collections(collectionId);
@@ -132,6 +135,40 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
         vm.stopPrank();
 
         assertEq(fantiumNFT.ownerOf(lastTokenId), recipient);
+    }
+
+    function testFuzz_mintTo_standardPrice_ok_batch(address recipient, uint24 quantity) public {
+        vm.assume(recipient != address(0));
+
+        uint256 collectionId = 1; // collection 1 is mintable
+        Collection memory collection = fantiumNFT.collections(collectionId);
+        uint256 reamingTokens = collection.maxInvocations - collection.invocations;
+        quantity = uint24(bound(uint256(quantity), 1, reamingTokens));
+        uint256 amountUSDC = collection.price * quantity;
+        (uint256 fantiumRevenue, address payable fantiumAddress, uint256 athleteRevenue, address payable athleteAddress)
+        = fantiumNFT.getPrimaryRevenueSplits(collectionId, amountUSDC);
+
+        deal(address(usdc), recipient, amountUSDC);
+
+        vm.prank(fantiumUserManager_kycManager);
+        fantiumUserManager.setKYC(recipient, true);
+
+        vm.startPrank(recipient);
+        usdc.approve(fantiumNFT_proxy, amountUSDC);
+
+        // Transfers expected
+        vm.expectEmit(true, true, false, true, address(usdc));
+        emit IERC20Upgradeable.Transfer(recipient, fantiumAddress, fantiumRevenue);
+        vm.expectEmit(true, true, false, true, address(usdc));
+        emit IERC20Upgradeable.Transfer(recipient, athleteAddress, athleteRevenue);
+
+        uint256 lastTokenId = fantiumNFT.mintTo(collectionId, quantity, recipient);
+        uint256 firstTokenId = lastTokenId - quantity + 1;
+        vm.stopPrank();
+
+        for (uint256 tokenId = firstTokenId; tokenId <= lastTokenId; tokenId++) {
+            assertEq(fantiumNFT.ownerOf(tokenId), recipient);
+        }
     }
 
     // getPrimaryRevenueSplits
