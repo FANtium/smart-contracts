@@ -9,10 +9,10 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import {IFANtiumNFT} from "./interfaces/IFANtiumNFT.sol";
-import {IFANtiumUserManager} from "./interfaces/IFANtiumUserManager.sol";
-import {TokenVersionUtil} from "./utils/TokenVersionUtil.sol";
-import {FANtiumBaseUpgradable} from "./FANtiumBaseUpgradable.sol";
+import {IFANtiumNFT} from "src/interfaces/IFANtiumNFT.sol";
+import {IFANtiumUserManager} from "src/interfaces/IFANtiumUserManager.sol";
+import {TokenVersionUtil} from "src/utils/TokenVersionUtil.sol";
+import {FANtiumBaseUpgradable} from "src/FANtiumBaseUpgradable.sol";
 /**
  * @title Claiming contract that allows payout tokens to be claimed
  * for FAN token holders.

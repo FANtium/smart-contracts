@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache 2.0
 pragma solidity 0.8.28;
 
-import {IFANtiumUserManager} from "./interfaces/IFANtiumUserManager.sol";
-import {FANtiumBaseUpgradable} from "./FANtiumBaseUpgradable.sol";
+import {IFANtiumUserManager} from "src/interfaces/IFANtiumUserManager.sol";
+import {FANtiumBaseUpgradable} from "src/FANtiumBaseUpgradable.sol";
 
 /**
  * @title FANtium User Manager contract V2.

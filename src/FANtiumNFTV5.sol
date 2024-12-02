@@ -26,10 +26,10 @@ import {
     CreateCollection,
     UpdateCollection,
     CollectionErrorReason
-} from "./interfaces/IFANtiumNFT.sol";
-import {IFANtiumUserManager} from "./interfaces/IFANtiumUserManager.sol";
-import {TokenVersionUtil} from "./utils/TokenVersionUtil.sol";
-import {FANtiumBaseUpgradable} from "./FANtiumBaseUpgradable.sol";
+} from "src/interfaces/IFANtiumNFT.sol";
+import {IFANtiumUserManager} from "src/interfaces/IFANtiumUserManager.sol";
+import {TokenVersionUtil} from "src/utils/TokenVersionUtil.sol";
+import {FANtiumBaseUpgradable} from "src/FANtiumBaseUpgradable.sol";
 
 /**
  * @title FANtium ERC721 contract V5.

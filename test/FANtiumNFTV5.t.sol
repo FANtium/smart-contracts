@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import {BaseTest} from "./BaseTest.sol";
-import {FANtiumNFTV5} from "../src/FANtiumNFTV5.sol";
-import {IFANtiumNFT, Collection, CreateCollection} from "../src/interfaces/IFANtiumNFT.sol";
-import {UnsafeUpgrades} from "../src/upgrades/UnsafeUpgrades.sol";
-import {FANtiumNFTFactory} from "./setup/FANtiumNFTFactory.sol";
+import {BaseTest} from "test/BaseTest.sol";
+import {FANtiumNFTV5} from "src/FANtiumNFTV5.sol";
+import {IFANtiumNFT, Collection, CreateCollection} from "src/interfaces/IFANtiumNFT.sol";
+import {UnsafeUpgrades} from "src/upgrades/UnsafeUpgrades.sol";
+import {FANtiumNFTFactory} from "test/setup/FANtiumNFTFactory.sol";
 
 contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
     function setUp() public override {
