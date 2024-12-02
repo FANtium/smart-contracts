@@ -250,6 +250,8 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
     // setApprovalForAll
     // ========================================================================
     function testFuzz_setApprovalForAll_ok(address user, address operator) public {
+        vm.assume(user != address(0) && operator != address(0) && user != operator);
+
         vm.prank(user);
         fantiumNFT.setApprovalForAll(operator, true);
         assertTrue(fantiumNFT.isApprovedForAll(user, operator));
