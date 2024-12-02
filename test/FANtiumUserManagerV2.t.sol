@@ -215,8 +215,10 @@ contract FANtiumUserManagerV2Test is Test {
     )
         public
     {
+        uint max = type(uint256).max;
         vm.assume(account != address(0));
-        vm.assume(initialAmount > type(uint256).max - delta);
+        vm.assume(delta > 0);
+        initialAmount = bound(initialAmount,  max - delta, max);
 
         vm.startPrank(allowlistManager);
         userManager.setAllowList(account, collectionId, initialAmount);
