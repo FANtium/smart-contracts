@@ -18,7 +18,8 @@
     "dependencies": {
         "@openzeppelin/contracts": "4.9.6",
         "@openzeppelin/contracts-upgradeable": "4.9.6",
-        "@openzeppelin/foundry-upgrades": "github:OpenZeppelin/openzeppelin-foundry-upgrades#v0.3.6"
+        "@openzeppelin/foundry-upgrades": "github:OpenZeppelin/openzeppelin-foundry-upgrades#v0.3.6",
+        "operator-filter-registry": "1.4.2"
     },
     "devDependencies": {
         "forge-std": "github:foundry-rs/forge-std#v1.9.4",
