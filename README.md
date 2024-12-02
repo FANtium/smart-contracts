@@ -1,3 +1,5 @@
+# FANtium smart contracts
+
 ## Token IDs generation
 
 ```
