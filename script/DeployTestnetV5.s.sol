@@ -4,6 +4,7 @@ pragma solidity 0.8.28;
 import { Script } from "forge-std/Script.sol";
 import { UnsafeUpgrades } from "../src/upgrades/UnsafeUpgrades.sol";
 import { FANtiumNFTV5 } from "../src/FANtiumNFTV5.sol";
+import { console } from "forge-std/console.sol";
 
 /**
  * @notice Deploy the FANtiumNFTV5 contract to the testnet.
@@ -18,6 +19,7 @@ contract DeployTestnetV5 is Script {
                 address(new FANtiumNFTV5()), abi.encodeCall(FANtiumNFTV5.initialize, (ADMIN, "FANtium", "FAN"))
             )
         );
+        console.log("FANtiumNFTV5 deployed at", address(fantiumNFT));
         vm.stopBroadcast();
     }
 }
