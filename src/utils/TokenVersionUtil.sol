@@ -7,8 +7,8 @@ pragma solidity 0.8.28;
  * @author FAANtium AG - based onMTX stuido AG.
  */
 library TokenVersionUtil {
-    uint256 constant ONE_MILLION = 1_000_000;
-    uint256 constant TEN_THOUSAND = 10_000;
+    uint256 private constant ONE_MILLION = 1_000_000;
+    uint256 private constant TEN_THOUSAND = 10_000;
 
     /*///////////////////////////////////////////////////////////////
                             INTERNAL 

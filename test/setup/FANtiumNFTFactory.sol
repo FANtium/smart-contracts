@@ -57,10 +57,10 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
         // Configure roles
         vm.startPrank(fantiumNFT_admin);
         fantiumNFT.grantRole(fantiumNFT.MANAGER_ROLE(), fantiumNFT_manager);
+        fantiumNFT.grantRole(fantiumNFT.FORWARDER_ROLE(), fantiumNFT_trustedForwarder);
         vm.stopPrank();
 
         vm.startPrank(fantiumNFT_manager);
-        fantiumNFT.grantRole(fantiumNFT.FORWARDER_ROLE(), fantiumNFT_trustedForwarder);
         fantiumNFT.setERC20PaymentToken(address(usdc));
         fantiumNFT.setUserManager(fantiumUserManager_proxy);
 

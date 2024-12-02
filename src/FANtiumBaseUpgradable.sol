@@ -74,7 +74,9 @@ abstract contract FANtiumBaseUpgradable is
      * @notice Implementation of the upgrade authorization logic
      * @dev Restricted to the DEFAULT_ADMIN_ROLE
      */
-    function _authorizeUpgrade(address) internal override onlyAdmin { }
+    function _authorizeUpgrade(address) internal override onlyAdmin {
+        // no-op
+    }
 
     // ========================================================================
     // Pause

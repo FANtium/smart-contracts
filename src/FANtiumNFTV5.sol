@@ -2,10 +2,6 @@
 pragma solidity 0.8.28;
 
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import { IERC20MetadataUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
-import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {
     ERC721Upgradeable,
     IERC165Upgradeable
@@ -15,7 +11,6 @@ import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/St
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
 import { DefaultOperatorFiltererUpgradeable } from
@@ -42,46 +37,25 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
     // ========================================================================
     // Constants
     // ========================================================================
-    string public constant VERSION = "5.0.0";
-    string public constant NAME = "FANtium";
-    string public constant SYMBOL = "FAN";
+    string private constant VERSION = "5.0.0";
+    string private constant NAME = "FANtium";
+    string private constant SYMBOL = "FAN";
 
-    uint256 public constant ONE_MILLION = 1_000_000;
-    bytes4 private constant _INTERFACE_ID_ERC2981_OVERRIDE = 0xbb3bafd6;
+    uint256 private constant ONE_MILLION = 1_000_000;
+    bytes4 private constant INTERFACE_ID_ERC2981_OVERRIDE = 0xbb3bafd6;
 
     // Roles
     // ========================================================================
     bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
     bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
 
-    // Fields
-    // ========================================================================
-    bytes32 public constant FIELD_FANTIUM_SECONDARY_MARKET_ROYALTY_BPS = "fantium secondary royalty BPS";
-    bytes32 public constant FIELD_FANTIUM_PRIMARY_ADDRESS = "fantium primary sale address";
-    bytes32 public constant FIELD_FANTIUM_SECONDARY_ADDRESS = "fantium secondary sale address";
-    bytes32 public constant FIELD_COLLECTION_CREATED = "created";
-    bytes32 public constant FIELD_COLLECTION_NAME = "name";
-    bytes32 public constant FIELD_COLLECTION_ATHLETE_NAME = "name";
-    bytes32 public constant FIELD_COLLECTION_ATHLETE_ADDRESS = "athlete address";
-    bytes32 public constant FIELD_COLLECTION_PAUSED = "isMintingPaused";
-    bytes32 public constant FIELD_COLLECTION_PRICE = "price";
-    bytes32 public constant FIELD_COLLECTION_MAX_INVOCATIONS = "max invocations";
-    bytes32 public constant FIELD_COLLECTION_PRIMARY_MARKET_ROYALTY_PERCENTAGE = "collection primary sale %";
-    bytes32 public constant FIELD_COLLECTION_SECONDARY_MARKET_ROYALTY_PERCENTAGE = "collection secondary sale %";
-    bytes32 public constant FIELD_COLLECTION_BASE_URI = "collection base uri";
-    bytes32 public constant FIELD_COLLECTION_TIER = "collection tier";
-    bytes32 public constant FILED_FANTIUM_BASE_URI = "fantium base uri";
-    bytes32 public constant FIELD_FANTIUM_MINTER_ADDRESS = "fantium minter address";
-    bytes32 public constant FIELD_COLLECTION_ACTIVATED = "isActivated";
-    bytes32 public constant FIELD_COLLECTION_LAUNCH_TIMESTAMP = "launch timestamp";
-
     // ========================================================================
     // State variables
     // ========================================================================
     mapping(uint256 => Collection) private _collections;
     string public baseURI;
-    mapping(uint256 => mapping(address => uint256)) public UNUSED_collectionIdToAllowList;
-    mapping(address => bool) public UNUSED_kycedAddresses;
+    mapping(uint256 => mapping(address => uint256)) private UNUSED_collectionIdToAllowList;
+    mapping(address => bool) private UNUSED_kycedAddresses;
     uint256 public nextCollectionId;
     address public erc20PaymentToken;
     address public claimContract;
@@ -147,17 +121,12 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
         override(IERC165Upgradeable, AccessControlUpgradeable, ERC721Upgradeable)
         returns (bool)
     {
-        return interfaceId == _INTERFACE_ID_ERC2981_OVERRIDE || super.supportsInterface(interfaceId);
+        return interfaceId == INTERFACE_ID_ERC2981_OVERRIDE || super.supportsInterface(interfaceId);
     }
 
     // ========================================================================
     // Modifiers
     // ========================================================================
-    modifier onlyReady() {
-        require(fantiumUserManager != address(0), "UserManager not set");
-        _;
-    }
-
     modifier onlyAthlete(uint256 collectionId) {
         if (
             _msgSender() != _collections[collectionId].athleteAddress && !hasRole(MANAGER_ROLE, msg.sender)
@@ -470,7 +439,6 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
 
     function setBaseURI(string memory _baseURI) external whenNotPaused onlyManagerOrAdmin {
         baseURI = _baseURI;
-        emit PlatformUpdated(FILED_FANTIUM_BASE_URI);
     }
 
     /**
@@ -714,7 +682,6 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
         onlyManagerOrAdmin
     {
         _collections[_collectionId].launchTimestamp = _launchTimestamp;
-        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_LAUNCH_TIMESTAMP);
     }
 
     /*///////////////////////////////////////////////////////////////

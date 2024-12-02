@@ -26,18 +26,26 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
 
     // setClaimContract
     // ========================================================================
-    function testFuzz_setClaimContract_ok(address claimContract) public {
+    function testFuzz_setClaimContract_ok_manager(address claimContract) public {
         vm.startPrank(fantiumNFT_manager);
         fantiumNFT.setClaimContract(claimContract);
         vm.stopPrank();
         assertEq(fantiumNFT.claimContract(), claimContract);
     }
 
-    function testFuzz_setClaimContract_unauthorized(address claimContract) public {
+    function testFuzz_setClaimContract_ok_admin(address claimContract) public {
         vm.startPrank(fantiumNFT_admin);
-        vm.expectRevert(
-            abi.encodeWithSelector(IFANtiumNFT.RoleNotGranted.selector, fantiumNFT_admin, fantiumNFT.MANAGER_ROLE())
+        fantiumNFT.setClaimContract(claimContract);
+        vm.stopPrank();
+    }
+
+    function testFuzz_setClaimContract_unauthorized(address nobody, address claimContract) public {
+        vm.assume(
+            !fantiumNFT.hasRole(fantiumNFT.MANAGER_ROLE(), nobody)
+                && !fantiumNFT.hasRole(fantiumNFT.DEFAULT_ADMIN_ROLE(), nobody)
         );
+        vm.startPrank(nobody);
+        expectMissingRole(nobody, fantiumNFT.MANAGER_ROLE());
         fantiumNFT.setClaimContract(claimContract);
         vm.stopPrank();
     }
