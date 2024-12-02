@@ -161,5 +161,15 @@ interface IFANtiumNFT is IERC721Upgradeable {
      */
     function getMintedTokensOfCollection(uint256 _collectionId) external view returns (uint24);
 
-    function mintTo(uint256 collectionId, uint24 quantity, address recipient) external;
+    function mintTo(uint256 collectionId, uint24 quantity, address recipient) external returns (uint256);
+
+    function mintTo(
+        uint256 collectionId,
+        uint24 quantity,
+        uint256 amount,
+        address recipient,
+        bytes memory signature
+    )
+        external
+        returns (uint256);
 }

@@ -113,6 +113,27 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
         vm.stopPrank();
     }
 
+    // mintTo (standard price)
+    // ========================================================================
+    function testFuzz_mintTo_standardPrice_ok(address recipient) public {
+        uint256 collectionId = 1; // collection 1 is mintable
+        uint24 quantity = 1;
+        Collection memory collection = fantiumNFT.collections(collectionId);
+        uint256 amountUSDC = collection.price * quantity;
+
+        deal(address(usdc), recipient, amountUSDC);
+
+        vm.prank(fantiumUserManager_kycManager);
+        fantiumUserManager.setKYC(recipient, true);
+
+        vm.startPrank(recipient);
+        usdc.approve(address(fantiumNFT), amountUSDC);
+        uint256 lastTokenId = fantiumNFT.mintTo(collectionId, quantity, recipient);
+        vm.stopPrank();
+
+        assertEq(fantiumNFT.ownerOf(lastTokenId), recipient);
+    }
+
     // getPrimaryRevenueSplits
     // ========================================================================
     function testFuzz_getPrimaryRevenueSplits_ok(uint256 price) public view {
@@ -165,5 +186,35 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
         // Verify addresses
         assertEq(fantiumAddress, fantiumNFT_treasuryPrimary, "Incorrect fantium address");
         assertEq(athleteAddress, fantiumNFT_athlete, "Incorrect athlete address");
+    }
+
+    // approve
+    // ========================================================================
+    function testFuzz_approve_ok(address user, address operator) public {
+        vm.assume(user != address(0) && operator != address(0) && user != operator);
+
+        uint256 collectionId = 1;
+        uint24 quantity = 1;
+        Collection memory collection = fantiumNFT.collections(1);
+        uint256 amountUSDC = collection.price * 10 ** usdc.decimals();
+
+        deal(address(usdc), user, amountUSDC);
+
+        vm.prank(fantiumUserManager_kycManager);
+        fantiumUserManager.setKYC(user, true);
+
+        vm.startPrank(user);
+        usdc.approve(address(fantiumNFT), amountUSDC);
+        uint256 lastTokenId = fantiumNFT.mintTo(collectionId, quantity, user);
+        fantiumNFT.approve(operator, lastTokenId);
+        assertTrue(fantiumNFT.getApproved(lastTokenId) == operator);
+    }
+
+    // setApprovalForAll
+    // ========================================================================
+    function testFuzz_setApprovalForAll_ok(address user, address operator) public {
+        vm.prank(user);
+        fantiumNFT.setApprovalForAll(operator, true);
+        assertTrue(fantiumNFT.isApprovedForAll(user, operator));
     }
 }

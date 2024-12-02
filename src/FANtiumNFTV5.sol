@@ -228,8 +228,18 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
      * @param collectionId Collection ID.
      * @param quantity Amount of tokens to mint.
      * @param recipient Recipient of the mint.
+     * @return lastTokenId The ID of the last minted token. Token range is [lastTokenId - quantity + 1, lastTokenId].
      */
-    function _mintTo(uint256 collectionId, uint24 quantity, uint256 amount, address recipient) internal whenNotPaused {
+    function _mintTo(
+        uint256 collectionId,
+        uint24 quantity,
+        uint256 amount,
+        address recipient
+    )
+        internal
+        whenNotPaused
+        returns (uint256 lastTokenId)
+    {
         Collection memory collection = _collections[collectionId];
         uint256 tokenId = (collectionId * ONE_MILLION) + collection.invocations;
 
@@ -250,6 +260,8 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
             _mint(recipient, tokenId + i);
             emit Mint(recipient, tokenId + i);
         }
+
+        lastTokenId = tokenId + quantity - 1;
     }
 
     /**
@@ -258,10 +270,10 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
      * @param quantity The quantity of NFTs to purchase.
      * @param recipient The recipient of the NFTs.
      */
-    function mintTo(uint256 collectionId, uint24 quantity, address recipient) public whenNotPaused {
+    function mintTo(uint256 collectionId, uint24 quantity, address recipient) public whenNotPaused returns (uint256) {
         Collection memory collection = _collections[collectionId];
         uint256 amount = collection.price * quantity;
-        _mintTo(collectionId, quantity, amount, recipient);
+        return _mintTo(collectionId, quantity, amount, recipient);
     }
 
     /**
@@ -281,6 +293,7 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
     )
         public
         whenNotPaused
+        returns (uint256)
     {
         bytes32 hash =
             keccak256(abi.encode(_msgSender(), collectionId, quantity, amount, recipient)).toEthSignedMessageHash();
@@ -288,7 +301,7 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
             revert InvalidSignature();
         }
 
-        _mintTo(collectionId, quantity, amount, recipient);
+        return _mintTo(collectionId, quantity, amount, recipient);
     }
 
     /**
@@ -373,43 +386,6 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
     // ========================================================================
     // ERC721 overrides
     // ========================================================================
-    function setApprovalForAll(
-        address operator,
-        bool approved
-    )
-        public
-        override(ERC721Upgradeable, IERC721Upgradeable)
-        whenNotPaused
-        onlyAllowedOperatorApproval(operator)
-    {
-        super.setApprovalForAll(operator, approved);
-    }
-
-    function approve(
-        address operator,
-        uint256 tokenId
-    )
-        public
-        override(ERC721Upgradeable, IERC721Upgradeable)
-        whenNotPaused
-        onlyAllowedOperatorApproval(operator)
-    {
-        super.approve(operator, tokenId);
-    }
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    )
-        public
-        override(ERC721Upgradeable, IERC721Upgradeable)
-        whenNotPaused
-        onlyAllowedOperator(from)
-    {
-        super.transferFrom(from, to, tokenId);
-    }
-
     function safeTransferFrom(
         address from,
         address to,
@@ -435,6 +411,43 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
         onlyAllowedOperator(from)
     {
         super.safeTransferFrom(from, to, tokenId, data);
+    }
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    )
+        public
+        override(ERC721Upgradeable, IERC721Upgradeable)
+        whenNotPaused
+        onlyAllowedOperator(from)
+    {
+        super.transferFrom(from, to, tokenId);
+    }
+
+    function approve(
+        address operator,
+        uint256 tokenId
+    )
+        public
+        override(ERC721Upgradeable, IERC721Upgradeable)
+        whenNotPaused
+        onlyAllowedOperatorApproval(operator)
+    {
+        super.approve(operator, tokenId);
+    }
+
+    function setApprovalForAll(
+        address operator,
+        bool approved
+    )
+        public
+        override(ERC721Upgradeable, IERC721Upgradeable)
+        whenNotPaused
+        onlyAllowedOperatorApproval(operator)
+    {
+        super.setApprovalForAll(operator, approved);
     }
 
     function setBaseURI(string memory _baseURI) external whenNotPaused onlyManagerOrAdmin {
