@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import {Script} from "forge-std/Script.sol";
-import {UnsafeUpgrades} from "../src/upgrades/UnsafeUpgrades.sol";
-import {FANtiumNFTV5} from "../src/FANtiumNFTV5.sol";
+import { Script } from "forge-std/Script.sol";
+import { UnsafeUpgrades } from "../src/upgrades/UnsafeUpgrades.sol";
+import { FANtiumNFTV5 } from "../src/FANtiumNFTV5.sol";
 
 /**
  * @notice Deploy the FANtiumNFTV5 contract to the testnet.

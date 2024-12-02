@@ -22,7 +22,11 @@ library TokenVersionUtil {
         return (collectionOfToken, versionOfToken, tokenNr);
     }
 
-    function createTokenId(uint256 _collectionId, uint256 _versionId, uint256 _tokenNr)
+    function createTokenId(
+        uint256 _collectionId,
+        uint256 _versionId,
+        uint256 _tokenNr
+    )
         internal
         pure
         returns (uint256)

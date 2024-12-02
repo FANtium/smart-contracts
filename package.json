@@ -2,18 +2,27 @@
     "name": "@fantium/contracts",
     "version": "5.0.0",
     "description": "FANtium Smart Contracts",
-    "main": "index.js",
     "license": "MIT",
     "private": true,
     "scripts": {
+        "clean": "rm -rf cache out",
+        "build": "forge build",
+        "lint": "bun run lint:sol && bun run prettier:check",
+        "lint:sol": "forge fmt --check && bun solhint \"{script,src,test}/**/*.sol\"",
+        "prettier:check": "prettier --check \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
+        "prettier:write": "prettier --write \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
         "test": "forge test",
-        "compile": "forge build",
-        "coverage": "forge coverage --ir-minimum --report lcov",
-        "format": "forge fmt && prettier --write '**/*.{js,json,md,ts,yaml}'"
+        "test:coverage": "forge coverage --ir-minimum",
+        "test:coverage:report": "forge coverage --ir-minimum  --report lcov && genhtml lcov.info --branch-coverage --output-dir coverage"
     },
-    "dependencies": {},
+    "dependencies": {
+        "@openzeppelin/contracts": "4.9.6",
+        "@openzeppelin/contracts-upgradeable": "4.9.6",
+        "@openzeppelin/foundry-upgrades": "github:OpenZeppelin/openzeppelin-foundry-upgrades#v0.3.6"
+    },
     "devDependencies": {
-        "prettier": "^3.4.0"
-    },
-    "packageManager": "pnpm@9.13.2+sha512.88c9c3864450350e65a33587ab801acf946d7c814ed1134da4a924f6df5a2120fd36b46aab68f7cd1d413149112d53c7db3a4136624cfd00ff1846a0c6cef48a"
+        "forge-std": "github:foundry-rs/forge-std#v1.9.4",
+        "prettier": "^3.4.0",
+        "solhint": "^5.0.3"
+    }
 }

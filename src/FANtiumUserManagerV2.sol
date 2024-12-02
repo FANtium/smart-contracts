@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache 2.0
 pragma solidity 0.8.28;
 
-import {IFANtiumUserManager} from "src/interfaces/IFANtiumUserManager.sol";
-import {FANtiumBaseUpgradable} from "src/FANtiumBaseUpgradable.sol";
+import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
+import { FANtiumBaseUpgradable } from "src/FANtiumBaseUpgradable.sol";
 
 /**
  * @title FANtium User Manager contract V2.
@@ -60,7 +60,10 @@ contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
         _setKYC(account, isKYCed_);
     }
 
-    function setBatchKYC(address[] memory accounts, bool[] memory isKYCed_)
+    function setBatchKYC(
+        address[] memory accounts,
+        bool[] memory isKYCed_
+    )
         external
         whenNotPaused
         onlyRoleOrAdmin(KYC_MANAGER_ROLE)
@@ -90,7 +93,10 @@ contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
         _setIDENT(account, isIDENT_);
     }
 
-    function setBatchIDENT(address[] memory accounts, bool[] memory isIDENT_)
+    function setBatchIDENT(
+        address[] memory accounts,
+        bool[] memory isIDENT_
+    )
         external
         whenNotPaused
         onlyRoleOrAdmin(KYC_MANAGER_ROLE)
@@ -120,7 +126,11 @@ contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
         emit AllowListUpdate(account, collectionId, allocation);
     }
 
-    function setAllowList(address account, uint256 collectionId, uint256 allocation)
+    function setAllowList(
+        address account,
+        uint256 collectionId,
+        uint256 allocation
+    )
         external
         whenNotPaused
         onlyRoleOrAdmin(ALLOWLIST_MANAGER_ROLE)
@@ -128,7 +138,11 @@ contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
         _setAllowList(account, collectionId, allocation);
     }
 
-    function batchSetAllowList(address[] memory accounts, uint256[] memory collectionIds, uint256[] memory allocations)
+    function batchSetAllowList(
+        address[] memory accounts,
+        uint256[] memory collectionIds,
+        uint256[] memory allocations
+    )
         external
         onlyRoleOrAdmin(ALLOWLIST_MANAGER_ROLE)
     {
@@ -151,7 +165,11 @@ contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
      * @param collectionId The collection to increase the allowlist for.
      * @param delta The amount to increase the allowlist by.
      */
-    function increaseAllowList(address account, uint256 collectionId, uint256 delta)
+    function increaseAllowList(
+        address account,
+        uint256 collectionId,
+        uint256 delta
+    )
         external
         whenNotPaused
         onlyRoleOrAdmin(ALLOWLIST_MANAGER_ROLE)
@@ -168,7 +186,11 @@ contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
      * @param collectionId The collection to decrease the allowlist for.
      * @param delta The amount to decrease the allowlist by.
      */
-    function decreaseAllowList(address account, uint256 collectionId, uint256 delta)
+    function decreaseAllowList(
+        address account,
+        uint256 collectionId,
+        uint256 delta
+    )
         external
         whenNotPaused
         onlyRoleOrAdmin(ALLOWLIST_MANAGER_ROLE)

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import {Test} from "forge-std/Test.sol";
-import {FANtiumBaseUpgradable} from "../src/FANtiumBaseUpgradable.sol";
-import {FANtiumUserManagerV2} from "../src/FANtiumUserManagerV2.sol";
-import {UnsafeUpgrades} from "../src/upgrades/UnsafeUpgrades.sol";
+import { Test } from "forge-std/Test.sol";
+import { FANtiumBaseUpgradable } from "src/FANtiumBaseUpgradable.sol";
+import { FANtiumUserManagerV2 } from "src/FANtiumUserManagerV2.sol";
+import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 
 contract FANtiumUserManagerV2Test is Test {
-    uint256 public constant MAX_ARRAY_LENGTH = 10000;
+    uint256 public constant MAX_ARRAY_LENGTH = 10_000;
 
     FANtiumUserManagerV2 public userManager;
 
@@ -117,7 +117,7 @@ contract FANtiumUserManagerV2Test is Test {
     }
 
     function test_setBatchIDENT_arrayMismatch(uint256 x, uint256 y) public {
-        vm.assume(x != y && 0 < x && x < 10000 && 0 < y && y < 10000);
+        vm.assume(x != y && 0 < x && x < 10_000 && 0 < y && y < 10_000);
         address[] memory accounts = new address[](x);
         bool[] memory statuses = new bool[](y);
 
@@ -194,7 +194,9 @@ contract FANtiumUserManagerV2Test is Test {
         uint256 collectionId,
         uint256 initialAmount,
         uint256 delta
-    ) public {
+    )
+        public
+    {
         vm.assume(account != address(0));
         vm.assume(initialAmount < type(uint256).max - delta);
 
@@ -210,7 +212,9 @@ contract FANtiumUserManagerV2Test is Test {
         uint256 collectionId,
         uint256 initialAmount,
         uint256 delta
-    ) public {
+    )
+        public
+    {
         vm.assume(account != address(0));
         vm.assume(initialAmount > type(uint256).max - delta);
 
@@ -226,7 +230,9 @@ contract FANtiumUserManagerV2Test is Test {
         uint256 collectionId,
         uint256 initialAmount,
         uint256 delta
-    ) public {
+    )
+        public
+    {
         vm.assume(account != address(0));
         vm.assume(initialAmount >= delta);
 
@@ -242,7 +248,9 @@ contract FANtiumUserManagerV2Test is Test {
         bool[10] memory kycStatuses,
         uint256[10] memory collectionIds,
         uint256[10] memory allocations
-    ) public {
+    )
+        public
+    {
         // Assume that all accounts are different
         for (uint256 i = 0; i < 10; i++) {
             for (uint256 j = i + 1; j < 10; j++) {

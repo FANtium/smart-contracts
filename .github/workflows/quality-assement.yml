@@ -1,44 +1,92 @@
-name: QA
-
-on:
-    push:
-        branches:
-            - main
-    pull_request:
-    workflow_dispatch:
+name: "CI"
 
 env:
-    FOUNDRY_PROFILE: ci
+    API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
+    FOUNDRY_PROFILE: "ci"
+
+on:
+    workflow_dispatch:
+    pull_request:
+    push:
+        branches:
+            - "main"
 
 jobs:
-    check:
-        strategy:
-            fail-fast: true
-
-        name: Foundry project
-        runs-on: ubuntu-latest
+    lint:
+        runs-on: "ubuntu-latest"
         steps:
-            - uses: actions/checkout@v4
-              with:
-                  submodules: recursive
-            - name: Install Foundry
-              uses: foundry-rs/foundry-toolchain@v1
-              with:
-                  version: nightly
-            - name: Debug files
+            - name: "Check out the repo"
+              uses: "actions/checkout@v4"
+
+            - name: "Install Foundry"
+              uses: "foundry-rs/foundry-toolchain@v1"
+
+            - name: "Install Bun"
+              uses: "oven-sh/setup-bun@v1"
+
+            - name: "Install the Node.js dependencies"
+              run: "bun install"
+
+            - name: "Lint the code"
+              run: "bun run lint"
+
+            - name: "Add lint summary"
               run: |
-                  forge re
-                  tree src
-                  tree test
-                  cat remappings.txt
-            - name: Show Forge version
-              run: forge --version
-            - name: Run Forge fmt
-              run: forge fmt --check
-              id: fmt
-            - name: Run Forge build
-              run: forge build --sizes
-              id: build
-            - name: Run Forge tests
-              run: forge test -vvv
-              id: test
+                  echo "## Lint result" >> $GITHUB_STEP_SUMMARY
+                  echo "✅ Passed" >> $GITHUB_STEP_SUMMARY
+
+    build:
+        runs-on: "ubuntu-latest"
+        steps:
+            - name: "Check out the repo"
+              uses: "actions/checkout@v4"
+
+            - name: "Install Foundry"
+              uses: "foundry-rs/foundry-toolchain@v1"
+
+            - name: "Install Bun"
+              uses: "oven-sh/setup-bun@v1"
+
+            - name: "Install the Node.js dependencies"
+              run: "bun install"
+
+            - name: "Build the contracts and print their size"
+              run: "forge build --sizes"
+
+            - name: "Add build summary"
+              run: |
+                  echo "## Build result" >> $GITHUB_STEP_SUMMARY
+                  echo "✅ Passed" >> $GITHUB_STEP_SUMMARY
+
+    test:
+        needs: ["lint", "build"]
+        runs-on: "ubuntu-latest"
+        steps:
+            - name: "Check out the repo"
+              uses: "actions/checkout@v4"
+
+            - name: "Install Foundry"
+              uses: "foundry-rs/foundry-toolchain@v1"
+
+            - name: "Install Bun"
+              uses: "oven-sh/setup-bun@v1"
+
+            - name: "Install the Node.js dependencies"
+              run: "bun install"
+
+            - name: "Show the Foundry config"
+              run: "forge config"
+
+            - name: "Generate a fuzz seed that changes weekly to avoid burning through RPC allowance"
+              run: >
+                  echo "FOUNDRY_FUZZ_SEED=$(
+                    echo $(($EPOCHSECONDS - $EPOCHSECONDS % 604800))
+                  )" >> $GITHUB_ENV
+
+            - name: "Run the tests"
+              run: "forge test"
+
+            - name: "Add test summary"
+              run: |
+                  echo "## Tests result" >> $GITHUB_STEP_SUMMARY
+                  echo "✅ Passed" >> $GITHUB_STEP_SUMMARY

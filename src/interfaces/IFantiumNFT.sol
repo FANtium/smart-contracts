@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 
 /**
  * @notice Collection struct
@@ -108,7 +108,10 @@ interface IFANtiumNFT is IERC721Upgradeable {
      */
     function upgradeTokenVersion(uint256 _tokenId) external returns (bool);
 
-    function getPrimaryRevenueSplits(uint256 _collectionId, uint256 _price)
+    function getPrimaryRevenueSplits(
+        uint256 _collectionId,
+        uint256 _price
+    )
         external
         view
         returns (

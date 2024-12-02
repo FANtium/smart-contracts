@@ -1,24 +1,24 @@
 // SPDX-License-Identifier: Apache 2.0
 pragma solidity 0.8.28;
 
-import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import {IERC20MetadataUpgradeable} from
+import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {
     ERC721Upgradeable,
     IERC165Upgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
-import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {ECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
-import {DefaultOperatorFiltererUpgradeable} from
+import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
+import { DefaultOperatorFiltererUpgradeable } from
     "operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol";
 import {
     IFANtiumNFT,
@@ -27,9 +27,9 @@ import {
     UpdateCollection,
     CollectionErrorReason
 } from "src/interfaces/IFANtiumNFT.sol";
-import {IFANtiumUserManager} from "src/interfaces/IFANtiumUserManager.sol";
-import {TokenVersionUtil} from "src/utils/TokenVersionUtil.sol";
-import {FANtiumBaseUpgradable} from "src/FANtiumBaseUpgradable.sol";
+import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
+import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
+import { FANtiumBaseUpgradable } from "src/FANtiumBaseUpgradable.sol";
 
 /**
  * @title FANtium ERC721 contract V5.
@@ -104,7 +104,11 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
      * @param _tokenSymbol Token symbol.
      * max(uint248) to avoid overflow when adding to it.
      */
-    function initialize(address _defaultAdmin, string memory _tokenName, string memory _tokenSymbol)
+    function initialize(
+        address _defaultAdmin,
+        string memory _tokenName,
+        string memory _tokenSymbol
+    )
         public
         initializer
     {
@@ -214,7 +218,11 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
      * @param quantity Amount of tokens to mint.
      * @param recipient Recipient of the mint.
      */
-    function mintable(uint256 collectionId, uint24 quantity, address recipient)
+    function mintable(
+        uint256 collectionId,
+        uint24 quantity,
+        address recipient
+    )
         public
         view
         onlyValidCollectionId(collectionId)
@@ -295,7 +303,13 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
      * @param recipient The recipient of the NFTs.
      * @param signature The signature of the purchase request.
      */
-    function mintTo(uint256 collectionId, uint24 quantity, uint256 amount, address recipient, bytes memory signature)
+    function mintTo(
+        uint256 collectionId,
+        uint24 quantity,
+        uint256 amount,
+        address recipient,
+        bytes memory signature
+    )
         public
         whenNotPaused
     {
@@ -337,7 +351,10 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
      * @return athleteRevenue amount of revenue to be sent to athlete
      * @return athleteAddress address to send athlete revenue to
      */
-    function getPrimaryRevenueSplits(uint256 collectionId, uint256 price)
+    function getPrimaryRevenueSplits(
+        uint256 collectionId,
+        uint256 price
+    )
         public
         view
         returns (
@@ -351,7 +368,7 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
         Collection memory collection = _collections[collectionId];
 
         // calculate revenues
-        athleteRevenue = (price * collection.athletePrimarySalesBPS) / 10000;
+        athleteRevenue = (price * collection.athletePrimarySalesBPS) / 10_000;
         fantiumRevenue = price - athleteRevenue;
 
         // set addresses from storage
@@ -387,7 +404,10 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
     // ========================================================================
     // ERC721 overrides
     // ========================================================================
-    function setApprovalForAll(address operator, bool approved)
+    function setApprovalForAll(
+        address operator,
+        bool approved
+    )
         public
         override(ERC721Upgradeable, IERC721Upgradeable)
         whenNotPaused
@@ -396,7 +416,10 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
         super.setApprovalForAll(operator, approved);
     }
 
-    function approve(address operator, uint256 tokenId)
+    function approve(
+        address operator,
+        uint256 tokenId
+    )
         public
         override(ERC721Upgradeable, IERC721Upgradeable)
         whenNotPaused
@@ -405,7 +428,11 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
         super.approve(operator, tokenId);
     }
 
-    function transferFrom(address from, address to, uint256 tokenId)
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    )
         public
         override(ERC721Upgradeable, IERC721Upgradeable)
         whenNotPaused
@@ -414,7 +441,11 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
         super.transferFrom(from, to, tokenId);
     }
 
-    function safeTransferFrom(address from, address to, uint256 tokenId)
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    )
         public
         override(ERC721Upgradeable, IERC721Upgradeable)
         whenNotPaused
@@ -423,7 +454,12 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
         super.safeTransferFrom(from, to, tokenId);
     }
 
-    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data)
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes memory data
+    )
         public
         override(ERC721Upgradeable, IERC721Upgradeable)
         whenNotPaused
@@ -534,7 +570,10 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
         return collectionId;
     }
 
-    function updateCollection(uint256 collectionId, UpdateCollection memory data)
+    function updateCollection(
+        uint256 collectionId,
+        UpdateCollection memory data
+    )
         external
         onlyValidCollectionId(collectionId)
         whenNotPaused
@@ -595,7 +634,10 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
         _collections[collectionId].isMintable = !_collections[collectionId].isMintable;
     }
 
-    function updateCollectionAthleteAddress(uint256 collectionId, address payable athleteAddress)
+    function updateCollectionAthleteAddress(
+        uint256 collectionId,
+        address payable athleteAddress
+    )
         external
         onlyValidCollectionId(collectionId)
         onlyManagerOrAdmin
@@ -618,12 +660,15 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
      * be sent to the athlete. This must be less than
      * or equal to 100 percent.
      */
-    function updateCollectionAthletePrimaryMarketRoyaltyBPS(uint256 collectionId, uint256 primaryMarketRoyalty)
+    function updateCollectionAthletePrimaryMarketRoyaltyBPS(
+        uint256 collectionId,
+        uint256 primaryMarketRoyalty
+    )
         external
         onlyValidCollectionId(collectionId)
         onlyManagerOrAdmin
     {
-        if (primaryMarketRoyalty > 10000) {
+        if (primaryMarketRoyalty > 10_000) {
             revert InvalidCollection(CollectionErrorReason.INVALID_PRIMARY_SALES_BPS);
         }
 
@@ -641,12 +686,15 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
      * be sent to the athlete. This must be less than
      * or equal to 95 percent.
      */
-    function updateCollectionAthleteSecondaryMarketRoyaltyBPS(uint256 collectionId, uint256 secondMarketRoyalty)
+    function updateCollectionAthleteSecondaryMarketRoyaltyBPS(
+        uint256 collectionId,
+        uint256 secondMarketRoyalty
+    )
         external
         onlyValidCollectionId(collectionId)
         onlyManagerOrAdmin
     {
-        if (secondMarketRoyalty + _collections[collectionId].fantiumSecondarySalesBPS > 10000) {
+        if (secondMarketRoyalty + _collections[collectionId].fantiumSecondarySalesBPS > 10_000) {
             revert InvalidCollection(CollectionErrorReason.INVALID_SECONDARY_SALES_BPS);
         }
 
@@ -657,7 +705,10 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
      * @notice Updates the launch timestamp of collection `_collectionId` to be
      * `_launchTimestamp`.
      */
-    function updateCollectionLaunchTimestamp(uint256 _collectionId, uint256 _launchTimestamp)
+    function updateCollectionLaunchTimestamp(
+        uint256 _collectionId,
+        uint256 _launchTimestamp
+    )
         external
         onlyValidCollectionId(_collectionId)
         onlyManagerOrAdmin

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import {FANtiumUserManagerV2} from "src/FANtiumUserManagerV2.sol";
-import {UnsafeUpgrades} from "src/upgrades/UnsafeUpgrades.sol";
-import {BaseTest} from "test/BaseTest.sol";
+import { FANtiumUserManagerV2 } from "src/FANtiumUserManagerV2.sol";
+import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
+import { BaseTest } from "test/BaseTest.sol";
 
 contract FANtiumUserManagerFactory is BaseTest {
     address public fantiumUserManager_admin = makeAddr("admin");

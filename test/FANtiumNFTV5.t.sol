@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import {BaseTest} from "test/BaseTest.sol";
-import {FANtiumNFTV5} from "src/FANtiumNFTV5.sol";
-import {IFANtiumNFT, Collection, CreateCollection} from "src/interfaces/IFANtiumNFT.sol";
-import {UnsafeUpgrades} from "src/upgrades/UnsafeUpgrades.sol";
-import {FANtiumNFTFactory} from "test/setup/FANtiumNFTFactory.sol";
+import { BaseTest } from "test/BaseTest.sol";
+import { FANtiumNFTV5 } from "src/FANtiumNFTV5.sol";
+import { IFANtiumNFT, Collection, CreateCollection } from "src/interfaces/IFANtiumNFT.sol";
+import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
+import { FANtiumNFTFactory } from "test/setup/FANtiumNFTFactory.sol";
 
 contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
     function setUp() public override {
@@ -108,7 +108,7 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
     // getPrimaryRevenueSplits
     // ========================================================================
     function testFuzz_getPrimaryRevenueSplits_ok(uint256 price) public view {
-        vm.assume(0 < price && price < 1000000 * 10 ** usdc.decimals());
+        vm.assume(0 < price && price < 1_000_000 * 10 ** usdc.decimals());
         uint256 collectionId = 1; // Using collection 1 from fixtures
 
         (uint256 fantiumRevenue, address payable fantiumAddress, uint256 athleteRevenue, address payable athleteAddress)
@@ -118,7 +118,7 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
         Collection memory collection = fantiumNFT.collections(collectionId);
 
         // Verify revenue splits
-        assertEq(athleteRevenue, (price * collection.athletePrimarySalesBPS) / 10000, "Incorrect athlete revenue");
+        assertEq(athleteRevenue, (price * collection.athletePrimarySalesBPS) / 10_000, "Incorrect athlete revenue");
         assertEq(fantiumRevenue, price - athleteRevenue, "Incorrect fantium revenue");
 
         // Verify addresses
@@ -127,8 +127,8 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
     }
 
     function testFuzz_getPrimaryRevenueSplits_newCollection(uint256 athletePrimarySalesBPS, uint256 price) public {
-        vm.assume(0 < athletePrimarySalesBPS && athletePrimarySalesBPS < 10000);
-        vm.assume(0 < price && price < 1000000 * 10 ** usdc.decimals());
+        vm.assume(0 < athletePrimarySalesBPS && athletePrimarySalesBPS < 10_000);
+        vm.assume(0 < price && price < 1_000_000 * 10 ** usdc.decimals());
 
         vm.startPrank(fantiumNFT_manager);
         uint256 collectionId = fantiumNFT.createCollection(
@@ -151,7 +151,7 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
         = fantiumNFT.getPrimaryRevenueSplits(collectionId, price);
 
         // Verify revenue splits
-        assertEq(athleteRevenue, (price * athletePrimarySalesBPS) / 10000, "Incorrect athlete revenue");
+        assertEq(athleteRevenue, (price * athletePrimarySalesBPS) / 10_000, "Incorrect athlete revenue");
         assertEq(fantiumRevenue, price - athleteRevenue, "Incorrect fantium revenue");
 
         // Verify addresses
