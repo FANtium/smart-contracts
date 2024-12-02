@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity 0.8.28;
 
 import {BaseTest} from "./BaseTest.sol";
 import {FANtiumNFTV5} from "../src/FANtiumNFTV5.sol";
@@ -109,7 +109,7 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
 
     // getPrimaryRevenueSplits
     // ========================================================================
-    function testFuzz_getPrimaryRevenueSplits_ok(uint256 price) public {
+    function testFuzz_getPrimaryRevenueSplits_ok(uint256 price) public view {
         vm.assume(0 < price && price < 1000000 * 10 ** usdc.decimals());
         uint256 collectionId = 1; // Using collection 1 from fixtures
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache 2.0
-pragma solidity ^0.8.13;
+pragma solidity 0.8.28;
 
 import {IERC20MetadataUpgradeable} from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
@@ -483,7 +483,7 @@ contract FANtiumNFTV5 is
     }
 
     // ========================================================================
-    // ERC721 collections
+    // Collections
     // ========================================================================
     function collections(uint256 _collectionId) external view returns (Collection memory) {
         return _collections[_collectionId];

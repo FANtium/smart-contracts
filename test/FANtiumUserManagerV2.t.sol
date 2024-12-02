@@ -2,10 +2,13 @@
 pragma solidity 0.8.28;
 
 import {Test} from "forge-std/Test.sol";
+import {FANtiumBaseUpgradable} from "../src/FANtiumBaseUpgradable.sol";
 import {FANtiumUserManagerV2} from "../src/FANtiumUserManagerV2.sol";
 import {UnsafeUpgrades} from "../src/upgrades/UnsafeUpgrades.sol";
 
 contract FANtiumUserManagerV2Test is Test {
+    uint256 public constant MAX_ARRAY_LENGTH = 10000;
+
     FANtiumUserManagerV2 public userManager;
 
     address public admin = makeAddr("admin");
@@ -32,10 +35,14 @@ contract FANtiumUserManagerV2Test is Test {
         vm.stopPrank();
     }
 
+    // version
     // ========================================================================
-    // KYC Tests
-    // ========================================================================
+    function test_version_ok() public view {
+        assertEq(userManager.version(), "2.0.0");
+    }
 
+    // setKYC
+    // ========================================================================
     function test_setKYC_OK() public {
         vm.startPrank(kycManager);
         vm.expectEmit(true, false, false, true);
@@ -52,6 +59,8 @@ contract FANtiumUserManagerV2Test is Test {
         vm.stopPrank();
     }
 
+    // setBatchKYC
+    // ========================================================================
     function test_setBatchKYC_OK() public {
         address[] memory accounts = new address[](2);
         accounts[0] = user1;
@@ -72,15 +81,15 @@ contract FANtiumUserManagerV2Test is Test {
         bool[] memory statuses = new bool[](1);
 
         vm.startPrank(kycManager);
-        vm.expectRevert();
+        vm.expectRevert(
+            abi.encodeWithSelector(FANtiumBaseUpgradable.ArrayLengthMismatch.selector, accounts.length, statuses.length)
+        );
         userManager.setBatchKYC(accounts, statuses);
         vm.stopPrank();
     }
 
+    // setIDENT
     // ========================================================================
-    // IDENT Tests
-    // ========================================================================
-
     function test_setIDENT_OK() public {
         vm.startPrank(kycManager);
         vm.expectEmit(true, false, false, true);
@@ -90,6 +99,8 @@ contract FANtiumUserManagerV2Test is Test {
         vm.stopPrank();
     }
 
+    // setBatchIDENT
+    // ========================================================================
     function test_setBatchIDENT_OK() public {
         address[] memory accounts = new address[](2);
         accounts[0] = user1;
@@ -102,6 +113,19 @@ contract FANtiumUserManagerV2Test is Test {
         userManager.setBatchIDENT(accounts, statuses);
         assertTrue(userManager.isIDENT(user1));
         assertFalse(userManager.isIDENT(user2));
+        vm.stopPrank();
+    }
+
+    function test_setBatchIDENT_arrayMismatch(uint256 x, uint256 y) public {
+        vm.assume(x != y && 0 < x && x < 10000 && 0 < y && y < 10000);
+        address[] memory accounts = new address[](x);
+        bool[] memory statuses = new bool[](y);
+
+        vm.startPrank(kycManager);
+        vm.expectRevert(
+            abi.encodeWithSelector(FANtiumBaseUpgradable.ArrayLengthMismatch.selector, accounts.length, statuses.length)
+        );
+        userManager.setBatchIDENT(accounts, statuses);
         vm.stopPrank();
     }
 

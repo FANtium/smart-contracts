@@ -8,7 +8,7 @@
     "scripts": {
         "test": "forge test",
         "compile": "forge build",
-        "coverage": "forge coverage --ir-minimum",
+        "coverage": "forge coverage --ir-minimum --report lcov",
         "format": "forge fmt && prettier --write '**/*.{js,json,md,ts,yaml}'"
     },
     "dependencies": {},
