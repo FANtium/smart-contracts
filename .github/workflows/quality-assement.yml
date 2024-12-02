@@ -25,7 +25,12 @@ jobs:
               uses: foundry-rs/foundry-toolchain@v1
               with:
                   version: nightly
-            - run: tree src
+            - name: Debug files
+              run: |
+                  forge re
+                  tree src
+                  tree test
+                  cat remappings.txt
             - name: Show Forge version
               run: forge --version
             - name: Run Forge fmt
