@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache 2.0
 pragma solidity 0.8.28;
 
-import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
+import { IFANtiumUserManager } from "src/interfaces2/IFANtiumUserManager.sol";
 import { FANtiumBaseUpgradable } from "src/FANtiumBaseUpgradable.sol";
 
 /**
@@ -20,8 +20,14 @@ contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
     // State variables
     // ========================================================================
     mapping(address => User) public users;
-    mapping(address => bool) private _UNUSED_allowedContracts; // replaced by the ALLOWLIST_MANAGER_ROLE
-    address private _UNUSED_trustedForwarder; // handled by the base contract
+    /**
+     * @dev deprecated: replaced by the ALLOWLIST_MANAGER_ROLE
+     */
+    mapping(address => bool) private _UNUSED_allowedContracts;
+    /**
+     * @dev deprecated: handled by the base contract
+     */
+    address private _UNUSED_trustedForwarder;
 
     // ========================================================================
     // Events
