@@ -1,6 +1,9 @@
 pre-commit:
-  parallel: true
-  commands:
-    forge_fmt:
-      glob: "*.{sol}"
-      run: forge fmt {staged_files}
+    parallel: true
+    commands:
+        prettier:
+            glob: "*.{json,md,yml}"
+            run: prettier --write {staged_files}
+        forge_fmt:
+            glob: "*.{sol}"
+            run: forge fmt {staged_files}
