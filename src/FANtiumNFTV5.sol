@@ -21,8 +21,8 @@ import {
     CreateCollection,
     UpdateCollection,
     CollectionErrorReason
-} from "src/interfaces2/IFANtiumNFT.sol";
-import { IFANtiumUserManager } from "src/interfaces2/IFANtiumUserManager.sol";
+} from "src/interfaces/IFANtiumNFT.sol";
+import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 import { FANtiumBaseUpgradable } from "src/FANtiumBaseUpgradable.sol";
 
