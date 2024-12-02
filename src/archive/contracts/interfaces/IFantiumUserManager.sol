@@ -41,7 +41,10 @@ interface IFantiumUserManager {
         address _contractAddress,
         uint256 _collectionId,
         address _address
-    ) external view returns (uint256);
+    )
+        external
+        view
+        returns (uint256);
 
     /**
      * @notice Reduce Allowlist for NFT contract
@@ -55,5 +58,7 @@ interface IFantiumUserManager {
         address _contractAddress,
         address _address,
         uint256 _reduceAllocation
-    ) external returns (uint256);
+    )
+        external
+        returns (uint256);
 }

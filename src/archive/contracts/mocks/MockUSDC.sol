@@ -1,5 +1,5 @@
 /**
- *Submitted for verification at polygonscan.com on 2021-06-09
+ * Submitted for verification at polygonscan.com on 2021-06-09
  */
 
 // SPDX-License-Identifier: MIT
@@ -24,7 +24,8 @@ abstract contract Context {
     }
 
     function _msgData() internal view virtual returns (bytes memory) {
-        this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
+        this; // silence state mutability warning without generating bytecode - see
+            // https://github.com/ethereum/solidity/issues/2691
         return msg.data;
     }
 }
@@ -319,13 +320,14 @@ library Address {
      * IMPORTANT: because control is transferred to `recipient`, care must be
      * taken to not create reentrancy vulnerabilities. Consider using
      * {ReentrancyGuard} or the
-     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
+     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions
+     * pattern].
      */
     function sendValue(address payable recipient, uint256 amount) internal {
         require(address(this).balance >= amount, "Address: insufficient balance");
 
         // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
-        (bool success, ) = recipient.call{value: amount}("");
+        (bool success,) = recipient.call{ value: amount }("");
         require(success, "Address: unable to send value, recipient may have reverted");
     }
 
@@ -338,7 +340,8 @@ library Address {
      * function (like regular Solidity function calls).
      *
      * Returns the raw returned data. To convert to the expected return value,
-     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].
+     * use
+     * https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].
      *
      * Requirements:
      *
@@ -361,7 +364,10 @@ library Address {
         address target,
         bytes memory data,
         string memory errorMessage
-    ) internal returns (bytes memory) {
+    )
+        internal
+        returns (bytes memory)
+    {
         return _functionCallWithValue(target, data, 0, errorMessage);
     }
 
@@ -391,7 +397,10 @@ library Address {
         bytes memory data,
         uint256 value,
         string memory errorMessage
-    ) internal returns (bytes memory) {
+    )
+        internal
+        returns (bytes memory)
+    {
         require(address(this).balance >= value, "Address: insufficient balance for call");
         return _functionCallWithValue(target, data, value, errorMessage);
     }
@@ -401,11 +410,14 @@ library Address {
         bytes memory data,
         uint256 weiValue,
         string memory errorMessage
-    ) private returns (bytes memory) {
+    )
+        private
+        returns (bytes memory)
+    {
         require(isContract(target), "Address: call to non-contract");
 
         // solhint-disable-next-line avoid-low-level-calls
-        (bool success, bytes memory returndata) = target.call{value: weiValue}(data);
+        (bool success, bytes memory returndata) = target.call{ value: weiValue }(data);
         if (success) {
             return returndata;
         } else {
@@ -469,7 +481,6 @@ abstract contract IERC20Internal {
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
 pragma solidity ^0.8.13;
 
 /**
@@ -702,7 +713,8 @@ contract ERC20 is Context, IERC20, IERC20Internal {
         emit Transfer(sender, recipient, amount);
     }
 
-    /** @dev Creates `amount` tokens and assigns them to `account`, increasing
+    /**
+     * @dev Creates `amount` tokens and assigns them to `account`, increasing
      * the total supply.
      *
      * Emits a {Transfer} event with `from` set to the zero address.
@@ -788,7 +800,7 @@ contract ERC20 is Context, IERC20, IERC20Internal {
      *
      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
      */
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual {}
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual { }
 
     function _transferFrom(address sender, address recipient, uint256 amount) internal virtual override {
         _transfer(sender, recipient, amount);
@@ -805,9 +817,7 @@ contract ERC20 is Context, IERC20, IERC20Internal {
 
     function _decreaseAllowance(address owner, address spender, uint256 subtractedValue) internal virtual override {
         _approve(
-            owner,
-            spender,
-            _allowances[owner][spender].sub(subtractedValue, "ERC20: decreased allowance below zero")
+            owner, spender, _allowances[owner][spender].sub(subtractedValue, "ERC20: decreased allowance below zero")
         );
     }
 }
@@ -1170,7 +1180,8 @@ library EnumerableSet {
 //      *
 //      * WARNING: When using {getRoleMember} and {getRoleMemberCount}, make sure
 //      * you perform all queries on the same block. See the following
-//      * https://forum.openzeppelin.com/t/iterating-over-elements-on-enumerableset-in-openzeppelin-contracts/2296[forum post]
+//      * https://forum.openzeppelin.com/t/iterating-over-elements-on-enumerableset-in-openzeppelin-contracts/2296[forum
+// post]
 //      * for more information.
 //      */
 //     function getRoleMember(bytes32 role, uint256 index)
@@ -1356,7 +1367,6 @@ contract Initializable {
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 pragma solidity ^0.8.13;
 
 /**
@@ -1366,7 +1376,8 @@ pragma solidity ^0.8.13;
 library ECRecover {
     /**
      * @notice Recover signer's address from a signed message
-     * @dev Adapted from: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/65e4ffde586ec89af3b7e9140bdc9235d1254853/contracts/cryptography/ECDSA.sol
+     * @dev Adapted from:
+     * https://github.com/OpenZeppelin/openzeppelin-contracts/blob/65e4ffde586ec89af3b7e9140bdc9235d1254853/contracts/cryptography/ECDSA.sol
      * Modifications: Accept v, r, and s as separate arguments
      * @param digest    Keccak-256 hash digest of the signed message
      * @param v         v of the signature
@@ -1423,7 +1434,6 @@ library ECRecover {
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 pragma solidity ^0.8.13;
 
 /**
@@ -1446,16 +1456,15 @@ library EIP712 {
             chainId := chainid()
         }
 
-        return
-            keccak256(
-                abi.encode(
-                    EIP712_DOMAIN_TYPEHASH,
-                    keccak256(bytes(name)),
-                    keccak256(bytes(version)),
-                    address(this),
-                    bytes32(chainId)
-                )
-            );
+        return keccak256(
+            abi.encode(
+                EIP712_DOMAIN_TYPEHASH,
+                keccak256(bytes(name)),
+                keccak256(bytes(version)),
+                address(this),
+                bytes32(chainId)
+            )
+        );
     }
 
     /**
@@ -1473,7 +1482,11 @@ library EIP712 {
         bytes32 r,
         bytes32 s,
         bytes memory typeHashAndData
-    ) internal pure returns (address) {
+    )
+        internal
+        pure
+        returns (address)
+    {
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, keccak256(typeHashAndData)));
         return ECRecover.recover(digest, v, r, s);
     }
@@ -1521,7 +1534,7 @@ abstract contract NativeMetaTransaction is EIP712Domain, Nonces {
 
     /*
      * Meta transaction structure.
-     * No point of including value field here as if user is doing value transfer then he has the funds to pay for gas
+    * No point of including value field here as if user is doing value transfer then he has the funds to pay for gas
      * He should call the desired function directly in that case.
      */
     struct MetaTransaction {
@@ -1536,12 +1549,13 @@ abstract contract NativeMetaTransaction is EIP712Domain, Nonces {
         bytes32 sigR,
         bytes32 sigS,
         uint8 sigV
-    ) external payable returns (bytes memory) {
-        MetaTransaction memory metaTx = MetaTransaction({
-            nonce: _nonces[userAddress]++,
-            from: userAddress,
-            functionSignature: functionSignature
-        });
+    )
+        external
+        payable
+        returns (bytes memory)
+    {
+        MetaTransaction memory metaTx =
+            MetaTransaction({ nonce: _nonces[userAddress]++, from: userAddress, functionSignature: functionSignature });
 
         require(_verify(userAddress, metaTx, sigR, sigS, sigV), "Signer and signature do not match");
 
@@ -1561,15 +1575,15 @@ abstract contract NativeMetaTransaction is EIP712Domain, Nonces {
         bytes32 sigR,
         bytes32 sigS,
         uint8 sigV
-    ) internal view returns (bool) {
+    )
+        internal
+        view
+        returns (bool)
+    {
         require(signer != address(0), "NativeMetaTransaction: INVALID_SIGNER");
 
-        bytes memory data = abi.encode(
-            META_TRANSACTION_TYPEHASH,
-            metaTx.nonce,
-            metaTx.from,
-            keccak256(metaTx.functionSignature)
-        );
+        bytes memory data =
+            abi.encode(META_TRANSACTION_TYPEHASH, metaTx.nonce, metaTx.from, keccak256(metaTx.functionSignature));
 
         return EIP712.recover(DOMAIN_SEPARATOR, sigV, sigR, sigS, data) == signer;
     }
@@ -1618,7 +1632,6 @@ abstract contract ContextMixin {
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 pragma solidity ^0.8.13;
 
 abstract contract Permit is IERC20Internal, EIP712Domain, Nonces {
@@ -1643,7 +1656,9 @@ abstract contract Permit is IERC20Internal, EIP712Domain, Nonces {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) internal {
+    )
+        internal
+    {
         require(msg.sender != address(this), "Caller is this contract");
         require(deadline >= block.timestamp, "Permit: permit is expired");
 
@@ -1677,7 +1692,6 @@ abstract contract Permit is IERC20Internal, EIP712Domain, Nonces {
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 pragma solidity ^0.8.13;
 
 /**
@@ -1690,16 +1704,20 @@ pragma solidity ^0.8.13;
 abstract contract GasAbstraction is IERC20Internal, EIP712Domain {
     bytes32 public constant TRANSFER_WITH_AUTHORIZATION_TYPEHASH =
         0x7c7c6cdb67a18743f49ec6fa9b35f50d52ed05cbed4cc592e13b44501c1a2267;
-    // = keccak256("TransferWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)")
+    // = keccak256("TransferWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256
+    // validBefore,bytes32 nonce)")
     bytes32 public constant APPROVE_WITH_AUTHORIZATION_TYPEHASH =
         0x808c10407a796f3ef2c7ea38c0638ea9d2b8a1c63e3ca9e1f56ce84ae59df73c;
-    // = keccak256("ApproveWithAuthorization(address owner,address spender,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)")
+    // = keccak256("ApproveWithAuthorization(address owner,address spender,uint256 value,uint256 validAfter,uint256
+    // validBefore,bytes32 nonce)")
     bytes32 public constant INCREASE_ALLOWANCE_WITH_AUTHORIZATION_TYPEHASH =
         0x424222bb050a1f7f14017232a5671f2680a2d3420f504bd565cf03035c53198a;
-    // = keccak256("IncreaseAllowanceWithAuthorization(address owner,address spender,uint256 increment,uint256 validAfter,uint256 validBefore,bytes32 nonce)")
+    // = keccak256("IncreaseAllowanceWithAuthorization(address owner,address spender,uint256 increment,uint256
+    // validAfter,uint256 validBefore,bytes32 nonce)")
     bytes32 public constant DECREASE_ALLOWANCE_WITH_AUTHORIZATION_TYPEHASH =
         0xb70559e94cbda91958ebec07f9b65b3b490097c8d25c8dacd71105df1015b6d8;
-    // = keccak256("DecreaseAllowanceWithAuthorization(address owner,address spender,uint256 decrement,uint256 validAfter,uint256 validBefore,bytes32 nonce)")
+    // = keccak256("DecreaseAllowanceWithAuthorization(address owner,address spender,uint256 decrement,uint256
+    // validAfter,uint256 validBefore,bytes32 nonce)")
     bytes32 public constant CANCEL_AUTHORIZATION_TYPEHASH =
         0x158b0a9edf7a828aad02f63cd515c68ef2f50ba807396f6d12842833a1597429;
     // = keccak256("CancelAuthorization(address authorizer,bytes32 nonce)")
@@ -1750,18 +1768,13 @@ abstract contract GasAbstraction is IERC20Internal, EIP712Domain {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) internal {
+    )
+        internal
+    {
         _requireValidAuthorization(from, nonce, validAfter, validBefore);
 
-        bytes memory data = abi.encode(
-            TRANSFER_WITH_AUTHORIZATION_TYPEHASH,
-            from,
-            to,
-            value,
-            validAfter,
-            validBefore,
-            nonce
-        );
+        bytes memory data =
+            abi.encode(TRANSFER_WITH_AUTHORIZATION_TYPEHASH, from, to, value, validAfter, validBefore, nonce);
         require(EIP712.recover(DOMAIN_SEPARATOR, v, r, s, data) == from, "GasAbstraction: invalid signature");
 
         _markAuthorizationAsUsed(from, nonce);
@@ -1791,17 +1804,13 @@ abstract contract GasAbstraction is IERC20Internal, EIP712Domain {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) internal {
+    )
+        internal
+    {
         _requireValidAuthorization(owner, nonce, validAfter, validBefore);
 
         bytes memory data = abi.encode(
-            INCREASE_ALLOWANCE_WITH_AUTHORIZATION_TYPEHASH,
-            owner,
-            spender,
-            increment,
-            validAfter,
-            validBefore,
-            nonce
+            INCREASE_ALLOWANCE_WITH_AUTHORIZATION_TYPEHASH, owner, spender, increment, validAfter, validBefore, nonce
         );
         require(EIP712.recover(DOMAIN_SEPARATOR, v, r, s, data) == owner, "GasAbstraction: invalid signature");
 
@@ -1832,17 +1841,13 @@ abstract contract GasAbstraction is IERC20Internal, EIP712Domain {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) internal {
+    )
+        internal
+    {
         _requireValidAuthorization(owner, nonce, validAfter, validBefore);
 
         bytes memory data = abi.encode(
-            DECREASE_ALLOWANCE_WITH_AUTHORIZATION_TYPEHASH,
-            owner,
-            spender,
-            decrement,
-            validAfter,
-            validBefore,
-            nonce
+            DECREASE_ALLOWANCE_WITH_AUTHORIZATION_TYPEHASH, owner, spender, decrement, validAfter, validBefore, nonce
         );
         require(EIP712.recover(DOMAIN_SEPARATOR, v, r, s, data) == owner, "GasAbstraction: invalid signature");
 
@@ -1872,18 +1877,13 @@ abstract contract GasAbstraction is IERC20Internal, EIP712Domain {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) internal {
+    )
+        internal
+    {
         _requireValidAuthorization(owner, nonce, validAfter, validBefore);
 
-        bytes memory data = abi.encode(
-            APPROVE_WITH_AUTHORIZATION_TYPEHASH,
-            owner,
-            spender,
-            value,
-            validAfter,
-            validBefore,
-            nonce
-        );
+        bytes memory data =
+            abi.encode(APPROVE_WITH_AUTHORIZATION_TYPEHASH, owner, spender, value, validAfter, validBefore, nonce);
         require(EIP712.recover(DOMAIN_SEPARATOR, v, r, s, data) == owner, "GasAbstraction: invalid signature");
 
         _markAuthorizationAsUsed(owner, nonce);
@@ -1932,7 +1932,10 @@ abstract contract GasAbstraction is IERC20Internal, EIP712Domain {
         bytes32 nonce,
         uint256 validAfter,
         uint256 validBefore
-    ) internal view {
+    )
+        internal
+        view
+    {
         require(block.timestamp > validAfter, "GasAbstraction: authorization is not yet valid");
         require(block.timestamp < validBefore, "GasAbstraction: authorization is expired");
         _requireUnusedAuthorization(authorizer, nonce);
@@ -1954,7 +1957,8 @@ abstract contract GasAbstraction is IERC20Internal, EIP712Domain {
 pragma solidity ^0.8.13;
 
 abstract contract MaticGasAbstraction is GasAbstraction {
-    // keccak256("WithdrawWithAuthorization(address owner,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)")
+    // keccak256("WithdrawWithAuthorization(address owner,uint256 value,uint256 validAfter,uint256 validBefore,bytes32
+    // nonce)")
     bytes32 public constant WITHDRAW_WITH_AUTHORIZATION_TYPEHASH =
         0x6c8f8f5f82f0c140edd12e80d10ff715a36d6e5f73e406394862b5f1eb44c4f9;
 
@@ -1967,17 +1971,13 @@ abstract contract MaticGasAbstraction is GasAbstraction {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) internal {
+    )
+        internal
+    {
         _requireValidAuthorization(owner, nonce, validAfter, validBefore);
 
-        bytes memory data = abi.encode(
-            WITHDRAW_WITH_AUTHORIZATION_TYPEHASH,
-            owner,
-            value,
-            validAfter,
-            validBefore,
-            nonce
-        );
+        bytes memory data =
+            abi.encode(WITHDRAW_WITH_AUTHORIZATION_TYPEHASH, owner, value, validAfter, validBefore, nonce);
         require(EIP712.recover(DOMAIN_SEPARATOR, v, r, s, data) == owner, "GasAbstraction: invalid signature");
 
         _markAuthorizationAsUsed(owner, nonce);
@@ -2040,7 +2040,10 @@ contract MockUSDC is ERC20, NativeMetaTransaction, ContextMixin, Permit, MaticGa
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external virtual {
+    )
+        external
+        virtual
+    {
         _permit(owner, spender, value, deadline, v, r, s);
     }
 
@@ -2066,7 +2069,10 @@ contract MockUSDC is ERC20, NativeMetaTransaction, ContextMixin, Permit, MaticGa
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external virtual {
+    )
+        external
+        virtual
+    {
         _transferWithAuthorization(from, to, value, validAfter, validBefore, nonce, v, r, s);
     }
 
@@ -2092,7 +2098,10 @@ contract MockUSDC is ERC20, NativeMetaTransaction, ContextMixin, Permit, MaticGa
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external virtual {
+    )
+        external
+        virtual
+    {
         _approveWithAuthorization(owner, spender, value, validAfter, validBefore, nonce, v, r, s);
     }
 
@@ -2118,7 +2127,10 @@ contract MockUSDC is ERC20, NativeMetaTransaction, ContextMixin, Permit, MaticGa
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external virtual {
+    )
+        external
+        virtual
+    {
         _increaseAllowanceWithAuthorization(owner, spender, increment, validAfter, validBefore, nonce, v, r, s);
     }
 
@@ -2144,7 +2156,10 @@ contract MockUSDC is ERC20, NativeMetaTransaction, ContextMixin, Permit, MaticGa
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external virtual {
+    )
+        external
+        virtual
+    {
         _decreaseAllowanceWithAuthorization(owner, spender, decrement, validAfter, validBefore, nonce, v, r, s);
     }
 
@@ -2169,7 +2184,10 @@ contract MockUSDC is ERC20, NativeMetaTransaction, ContextMixin, Permit, MaticGa
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external virtual {
+    )
+        external
+        virtual
+    {
         _withdrawWithAuthorization(owner, value, validAfter, validBefore, nonce, v, r, s);
     }
 

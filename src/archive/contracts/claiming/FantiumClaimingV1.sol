@@ -18,7 +18,6 @@ import "../utils/TokenVersionUtil.sol";
  * for FAN token holders.
  * @author MTX studoi AG.
  */
-
 contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeable {
     address public globalPayoutToken;
     address private trustedForwarder;
@@ -90,8 +89,8 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
 
     modifier onlyAthlete(uint256 _distributionEventId) {
         require(
-            address(_msgSender()) == address(distributionEvents[_distributionEventId].athleteAddress) ||
-                hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
+            address(_msgSender()) == address(distributionEvents[_distributionEventId].athleteAddress)
+                || hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
             "only athlete"
         );
         _;
@@ -126,15 +125,16 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
         address _payoutToken,
         address _fantiumNFTContract,
         address _trustedForwarder
-    ) public initializer {
+    )
+        public
+        initializer
+    {
         __UUPSUpgradeable_init();
         __AccessControl_init();
         __Pausable_init();
         require(
-            _defaultAdmin != address(0) &&
-                _payoutToken != address(0) &&
-                _fantiumNFTContract != address(0) &&
-                _trustedForwarder != address(0),
+            _defaultAdmin != address(0) && _payoutToken != address(0) && _fantiumNFTContract != address(0)
+                && _trustedForwarder != address(0),
             "Invalid addresses"
         );
         globalPayoutToken = _payoutToken;
@@ -150,7 +150,7 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
     /// @notice upgrade authorization logic
     /// @dev required by the OZ UUPS module
     /// @dev adds onlyUpgrader requirement
-    function _authorizeUpgrade(address) internal override onlyUpgrader {}
+    function _authorizeUpgrade(address) internal override onlyUpgrader { }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -189,7 +189,11 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
         uint256[] memory _collectionIds,
         address payable _fantiumAddress,
         uint256 _fantiumFeeBPS
-    ) external onlyPlatformManager whenNotPaused {
+    )
+        external
+        onlyPlatformManager
+        whenNotPaused
+    {
         require(
             _startTime > 0 && _closeTime > 0 && _startTime < _closeTime && block.timestamp < _closeTime,
             "FantiumClaimingV1: times must be greater than 0 and close time must be greater than start time and in the future"
@@ -198,15 +202,14 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
         require(_fantiumFeeBPS < 10_000, "FantiumClaimingV1: fantium fee must be less than 10000");
 
         require(
-            _athleteAddress != address(0) && _fantiumAddress != address(0),
-            "FantiumClaimingV1: addresses cannot be 0"
+            _athleteAddress != address(0) && _fantiumAddress != address(0), "FantiumClaimingV1: addresses cannot be 0"
         );
 
         // check if amount is less than a billion
         require(
-            (_totalTournamentEarnings + _totalOtherEarnings) > 0 &&
-                (_totalTournamentEarnings + _totalOtherEarnings) <
-                (1_000_000_000 * 10 ** ERC20Upgradeable(globalPayoutToken).decimals()),
+            (_totalTournamentEarnings + _totalOtherEarnings) > 0
+                && (_totalTournamentEarnings + _totalOtherEarnings)
+                    < (1_000_000_000 * 10 ** ERC20Upgradeable(globalPayoutToken).decimals()),
             "FantiumClaimingV1: amount must be less than a billion and greater than 0"
         );
 
@@ -241,24 +244,25 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
         }
     }
 
-    function addDistributionAmount(
-        uint256 _distributionEventId
-    ) public whenNotPaused onlyAthlete(_distributionEventId) {
+    function addDistributionAmount(uint256 _distributionEventId)
+        public
+        whenNotPaused
+        onlyAthlete(_distributionEventId)
+    {
         // CHECKS
         require(
-            distributionEvents[_distributionEventId].exists,
-            "FantiumClaimingV1: distributionEventId does not exist"
+            distributionEvents[_distributionEventId].exists, "FantiumClaimingV1: distributionEventId does not exist"
         );
 
         // check that the distribution event is open
         require(
-            distributionEvents[_distributionEventId].closed == false,
-            "FantiumClaimingV1: distribution event not open"
+            distributionEvents[_distributionEventId].closed == false, "FantiumClaimingV1: distribution event not open"
         );
 
-        uint256 payInAmount = (distributionEvents[_distributionEventId].tournamentDistributionAmount +
-            distributionEvents[_distributionEventId].otherDistributionAmount) -
-            distributionEvents[_distributionEventId].amountPaidIn;
+        uint256 payInAmount = (
+            distributionEvents[_distributionEventId].tournamentDistributionAmount
+                + distributionEvents[_distributionEventId].otherDistributionAmount
+        ) - distributionEvents[_distributionEventId].amountPaidIn;
 
         // check if a topup is needed
         require(payInAmount > 0, "FantiumClaimingV1: amount already paid in");
@@ -287,7 +291,11 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
         uint256 _id,
         uint256 _totalTournamentEarnings,
         uint256 _totalOtherEarnings
-    ) external onlyValidDistributionEvent(_id) onlyPlatformManager {
+    )
+        external
+        onlyValidDistributionEvent(_id)
+        onlyPlatformManager
+    {
         require(!distributionEvents[_id].closed, "FantiumClaimingV1: distribution already closed");
         require(
             distributionEvents[_id].claimedAmount == 0 && distributionEvents[_id].startTime > block.timestamp,
@@ -304,8 +312,8 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
 
         triggerClaimingSnapshot(_id);
         require(
-            (distributionEvents[_id].tournamentDistributionAmount + distributionEvents[_id].otherDistributionAmount) >=
-                distributionEvents[_id].amountPaidIn,
+            (distributionEvents[_id].tournamentDistributionAmount + distributionEvents[_id].otherDistributionAmount)
+                >= distributionEvents[_id].amountPaidIn,
             "FantiumClaimingV1: total payout amount must be greater than amount already paid in"
         );
         emit DistributionEventUpdate(_id, FIELD_AMOUNT);
@@ -314,7 +322,11 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
     function updateDistributionEventCollectionIds(
         uint256 _id,
         uint256[] memory collectionIds
-    ) external onlyValidDistributionEvent(_id) onlyPlatformManager {
+    )
+        external
+        onlyValidDistributionEvent(_id)
+        onlyPlatformManager
+    {
         require(!distributionEvents[_id].closed, "FantiumClaimingV1: distribution already closed");
         require(
             distributionEvents[_id].claimedAmount == 0 && distributionEvents[_id].startTime > block.timestamp,
@@ -331,8 +343,8 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
         distributionEvents[_id].collectionIds = collectionIds;
         triggerClaimingSnapshot(_id);
         require(
-            (distributionEvents[_id].tournamentDistributionAmount + distributionEvents[_id].otherDistributionAmount) >=
-                distributionEvents[_id].amountPaidIn,
+            (distributionEvents[_id].tournamentDistributionAmount + distributionEvents[_id].otherDistributionAmount)
+                >= distributionEvents[_id].amountPaidIn,
             "FantiumClaimingV1: total payout amount must be greater than amount already paid in"
         );
 
@@ -343,7 +355,11 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
         uint256 _id,
         address payable _athleteAddress,
         address payable _fantiumAdress
-    ) external onlyValidDistributionEvent(_id) onlyPlatformManager {
+    )
+        external
+        onlyValidDistributionEvent(_id)
+        onlyPlatformManager
+    {
         require(
             _athleteAddress != address(0) && _fantiumAdress != address(0),
             "FantiumClaimingV1: athlete address cannot be 0"
@@ -357,7 +373,11 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
         uint256 _id,
         uint256 _startTime,
         uint256 _closeTime
-    ) external onlyValidDistributionEvent(_id) onlyPlatformManager {
+    )
+        external
+        onlyValidDistributionEvent(_id)
+        onlyPlatformManager
+    {
         require(
             _startTime > 0 && _closeTime > 0 && _startTime < _closeTime && block.timestamp < _closeTime,
             "FantiumClaimingV1: times must be greater than 0 and close time must be greater than start time and in the future"
@@ -370,10 +390,14 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
     function updateDistributionEventFee(
         uint256 _id,
         uint256 _feeBPS
-    ) external onlyValidDistributionEvent(_id) onlyPlatformManager {
+    )
+        external
+        onlyValidDistributionEvent(_id)
+        onlyPlatformManager
+    {
         require(distributionEvents[_id].claimedAmount == 0, "FantiumClaimingV1: payout already started");
 
-        require(_feeBPS >= 0 && _feeBPS < 10000, "FantiumClaimingV1: fee must be between 0 and 10000");
+        require(_feeBPS >= 0 && _feeBPS < 10_000, "FantiumClaimingV1: fee must be between 0 and 10000");
         distributionEvents[_id].fantiumFeeBPS = _feeBPS;
         emit DistributionEventUpdate(_id, FIELD_FANTIUMFEE);
     }
@@ -394,14 +418,20 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
     function claim(
         uint256 _tokenId,
         uint256 _distributionEventId
-    ) public whenNotPaused onlyValidDistributionEvent(_distributionEventId) {
+    )
+        public
+        whenNotPaused
+        onlyValidDistributionEvent(_distributionEventId)
+    {
         // CHECKS
 
         // check if distribution Event was paid in in full
         require(
-            distributionEvents[_distributionEventId].amountPaidIn ==
-                (distributionEvents[_distributionEventId].tournamentDistributionAmount +
-                    distributionEvents[_distributionEventId].otherDistributionAmount),
+            distributionEvents[_distributionEventId].amountPaidIn
+                == (
+                    distributionEvents[_distributionEventId].tournamentDistributionAmount
+                        + distributionEvents[_distributionEventId].otherDistributionAmount
+                ),
             "FantiumClaimingV1: total distribution amount has not been paid in"
         );
 
@@ -416,21 +446,20 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
 
         //check if lockTime is over or ca be ignored
         require(
-            distributionEvents[_distributionEventId].startTime < block.timestamp &&
-                distributionEvents[_distributionEventId].closeTime > block.timestamp,
+            distributionEvents[_distributionEventId].startTime < block.timestamp
+                && distributionEvents[_distributionEventId].closeTime > block.timestamp,
             "FantiumClaimingV1: distribution time has not started or has ended"
         );
 
         // check if distribution event is closed
         require(
-            distributionEvents[_distributionEventId].closed == false,
-            "FantiumClaimingV1: distribution event is closed"
+            distributionEvents[_distributionEventId].closed == false, "FantiumClaimingV1: distribution event is closed"
         );
 
         // check if token is from a valid collection
         // check that hasn't claimed yet for that distribution event
-        (uint256 collectionOfToken, , uint256 tokenNr) = TokenVersionUtil.getTokenInfo(_tokenId);
-        uint256 baseTokenId = collectionOfToken * 1000000 + tokenNr;
+        (uint256 collectionOfToken,, uint256 tokenNr) = TokenVersionUtil.getTokenInfo(_tokenId);
+        uint256 baseTokenId = collectionOfToken * 1_000_000 + tokenNr;
         // check if token alreadu claimed
         require(
             checkTokenAllowed(_distributionEventId, collectionOfToken, baseTokenId, tokenNr),
@@ -442,14 +471,14 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
         distributionEventToBaseTokenToClaimed[_distributionEventId][baseTokenId] = true;
 
         //calculate claim amount
-        uint256 tournamentClaim = distributionEventToCollectionInfo[_distributionEventId][collectionOfToken]
-            .tokenTournamentClaim;
+        uint256 tournamentClaim =
+            distributionEventToCollectionInfo[_distributionEventId][collectionOfToken].tokenTournamentClaim;
         uint256 otherClaim = distributionEventToCollectionInfo[_distributionEventId][collectionOfToken].tokenOtherClaim;
         uint256 claimAmount = tournamentClaim + otherClaim;
 
         require(
-            distributionEvents[_distributionEventId].claimedAmount + claimAmount <=
-                distributionEvents[_distributionEventId].amountPaidIn,
+            distributionEvents[_distributionEventId].claimedAmount + claimAmount
+                <= distributionEvents[_distributionEventId].amountPaidIn,
             "FantiumClaimingV1: distribution amount exceeds payInAmount"
         );
         distributionEvents[_distributionEventId].claimedAmount += claimAmount;
@@ -471,22 +500,27 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
         uint256 _distributionEventID,
         uint256 _tournamentEarningsShare1e7,
         uint256 _otherEarningShare1e7
-    ) internal view returns (uint256, uint256) {
+    )
+        internal
+        view
+        returns (uint256, uint256)
+    {
         require(
-            (_tournamentEarningsShare1e7 > 0) || (_otherEarningShare1e7 > 0),
-            "FantiumClaimingV1: Token has no earnings"
+            (_tournamentEarningsShare1e7 > 0) || (_otherEarningShare1e7 > 0), "FantiumClaimingV1: Token has no earnings"
         );
         // calculate amount to send
         // note: totalTorunamentEarnings = Total amount of earnings from tournaments
         // note: tournamentShare1e7 = % share of fan of total athlete earnings in 1e7 e.g. 0,00001% == 0,0000001 == 1
         // note: dividing by 1e7 to get the share in base 10
-        // note: Get the total distribution amount and multiple it by the token share and devide it by the overall share distributed
-        // note: Example calculation for one token with 1% share: 100_000 USDC (amount) * 10.000.000(1e7)(share) / 1e7  = 1000 USDC
-        uint256 tournamentClaim = ((distributionEvents[_distributionEventID].totalTournamentEarnings *
-            _tournamentEarningsShare1e7) / 1e7);
+        // note: Get the total distribution amount and multiple it by the token share and devide it by the overall share
+        // distributed
+        // note: Example calculation for one token with 1% share: 100_000 USDC (amount) * 10.000.000(1e7)(share) / 1e7  =
+        // 1000 USDC
+        uint256 tournamentClaim =
+            ((distributionEvents[_distributionEventID].totalTournamentEarnings * _tournamentEarningsShare1e7) / 1e7);
 
-        uint256 otherClaim = ((distributionEvents[_distributionEventID].totalOtherEarnings * _otherEarningShare1e7) /
-            1e7);
+        uint256 otherClaim =
+            ((distributionEvents[_distributionEventID].totalOtherEarnings * _otherEarningShare1e7) / 1e7);
 
         return (tournamentClaim, otherClaim);
     }
@@ -497,7 +531,11 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
         uint256 _collectionOfToken,
         uint256 _baseTokenId,
         uint256 _tokenNr
-    ) internal view returns (bool) {
+    )
+        internal
+        view
+        returns (bool)
+    {
         bool collectionIncluded = false;
         bool tokenNrClaimed = false;
         bool tokenInSnapshot = true;
@@ -513,9 +551,8 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
                 if (collectionID == _collectionOfToken) {
                     collectionIncluded = true;
                     // check if tokenNr is in snapshot
-                    if (
-                        _tokenNr >= distributionEventToCollectionInfo[_distributionEventID][collectionID].mintedTokens
-                    ) {
+                    if (_tokenNr >= distributionEventToCollectionInfo[_distributionEventID][collectionID].mintedTokens)
+                    {
                         tokenInSnapshot = false;
                     }
                     break;
@@ -536,7 +573,7 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
         DistributionEvent memory distributionEvent = distributionEvents[_distributionEventId];
 
         // calculate fantium revenue
-        uint256 fantiumRevenue_ = ((_claimAmount * distributionEvent.fantiumFeeBPS) / 10000);
+        uint256 fantiumRevenue_ = ((_claimAmount * distributionEvent.fantiumFeeBPS) / 10_000);
 
         // calculate user revenue
         uint256 userRevenue_ = _claimAmount - fantiumRevenue_;
@@ -561,9 +598,11 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
     //////////////////////////////////////////////////////////////*/
 
     // take tokenSnapshot by platform manager
-    function takeClaimingSnapshot(
-        uint256 _distributionEventId
-    ) external onlyPlatformManager onlyValidDistributionEvent(_distributionEventId) {
+    function takeClaimingSnapshot(uint256 _distributionEventId)
+        external
+        onlyPlatformManager
+        onlyValidDistributionEvent(_distributionEventId)
+    {
         triggerClaimingSnapshot(_distributionEventId);
         emit SnapShotTaken(_distributionEventId);
     }
@@ -576,18 +615,14 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
         for (uint256 i = 0; i < distributionEvents[_distributionEventId].collectionIds.length; i++) {
             uint256 collectionId = distributionEvents[_distributionEventId].collectionIds[i];
             uint256 mintedTokens = IFantiumNFT(fantiumNFTContract).getMintedTokensOfCollection(collectionId);
-            (uint256 tournamentEarningShare1e7, uint256 otherEarningShare1e7) = IFantiumNFT(fantiumNFTContract)
-                .getEarningsShares1e7(collectionId);
+            (uint256 tournamentEarningShare1e7, uint256 otherEarningShare1e7) =
+                IFantiumNFT(fantiumNFTContract).getEarningsShares1e7(collectionId);
 
-            (uint256 tournamentClaim, uint256 otherClaim) = calculateClaim(
-                _distributionEventId,
-                tournamentEarningShare1e7,
-                otherEarningShare1e7
-            );
+            (uint256 tournamentClaim, uint256 otherClaim) =
+                calculateClaim(_distributionEventId, tournamentEarningShare1e7, otherEarningShare1e7);
 
             distributionEventToCollectionInfo[_distributionEventId][collectionId].mintedTokens = mintedTokens;
-            distributionEventToCollectionInfo[_distributionEventId][collectionId]
-                .tokenTournamentClaim = tournamentClaim;
+            distributionEventToCollectionInfo[_distributionEventId][collectionId].tokenTournamentClaim = tournamentClaim;
             distributionEventToCollectionInfo[_distributionEventId][collectionId].tokenOtherClaim = otherClaim;
 
             holdersTournamentEarningsShare1e7 += (mintedTokens * tournamentEarningShare1e7);
@@ -595,11 +630,9 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
         }
 
         distributionEvents[_distributionEventId].tournamentDistributionAmount =
-            (holdersTournamentEarningsShare1e7 * distributionEvents[_distributionEventId].totalTournamentEarnings) /
-            1e7;
+            (holdersTournamentEarningsShare1e7 * distributionEvents[_distributionEventId].totalTournamentEarnings) / 1e7;
         distributionEvents[_distributionEventId].otherDistributionAmount =
-            (holdersOtherEarningsShare1e7 * distributionEvents[_distributionEventId].totalOtherEarnings) /
-            1e7;
+            (holdersOtherEarningsShare1e7 * distributionEvents[_distributionEventId].totalOtherEarnings) / 1e7;
     }
 
     // update fantiumNFTContract address
@@ -623,12 +656,14 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
         emit PlatformUpdate(FIELD_USER_MANAGER_CONFIGS);
     }
 
-    function closeDistribution(
-        uint256 _distributionEventId
-    ) external onlyPlatformManager whenNotPaused onlyValidDistributionEvent(_distributionEventId) {
+    function closeDistribution(uint256 _distributionEventId)
+        external
+        onlyPlatformManager
+        whenNotPaused
+        onlyValidDistributionEvent(_distributionEventId)
+    {
         require(
-            distributionEvents[_distributionEventId].closed == false,
-            "FantiumClaimingV1: distribution already closed"
+            distributionEvents[_distributionEventId].closed == false, "FantiumClaimingV1: distribution already closed"
         );
 
         // check if the athlete address is set
@@ -638,17 +673,15 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
         );
 
         distributionEvents[_distributionEventId].closed = true;
-        uint256 closingAmount = distributionEvents[_distributionEventId].amountPaidIn -
-            distributionEvents[_distributionEventId].claimedAmount;
+        uint256 closingAmount = distributionEvents[_distributionEventId].amountPaidIn
+            - distributionEvents[_distributionEventId].claimedAmount;
 
         require(closingAmount > 0, "FantiumClaimingV1: Amount to pay is 0");
 
         address payOutToken = distributionEventToPayoutToken[_distributionEventId];
 
         SafeERC20Upgradeable.safeTransfer(
-            IERC20Upgradeable(payOutToken),
-            distributionEvents[_distributionEventId].athleteAddress,
-            closingAmount
+            IERC20Upgradeable(payOutToken), distributionEvents[_distributionEventId].athleteAddress, closingAmount
         );
 
         emit DistributionEventUpdate(_distributionEventId, FIELD_CLOSED);
@@ -657,7 +690,6 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
     /**
      * @notice Update contract pause status to `_paused`.
      */
-
     function pause() external onlyPlatformManager {
         _pause();
     }
@@ -665,7 +697,6 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
     /**
      * @notice Unpauses contract
      */
-
     function unpause() external onlyPlatformManager {
         _unpause();
     }

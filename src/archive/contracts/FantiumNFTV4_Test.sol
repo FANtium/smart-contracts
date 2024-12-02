@@ -18,7 +18,6 @@ import "./interfaces/IFantiumUserManager.sol";
  * @title FANtium ERC721 contract V4.
  * @author MTX Studio AG.
  */
-
 contract FantiumNFTV4_Test is
     Initializable,
     ERC721Upgradeable,
@@ -65,7 +64,7 @@ contract FantiumNFTV4_Test is
 
     struct Collection {
         bool exists;
-        uint launchTimestamp;
+        uint256 launchTimestamp;
         bool isMintable;
         bool isPaused;
         uint24 invocations;
@@ -96,9 +95,13 @@ contract FantiumNFTV4_Test is
                             INTERFACE
     //////////////////////////////////////////////////////////////*/
 
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(AccessControlUpgradeable, ERC721Upgradeable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(AccessControlUpgradeable, ERC721Upgradeable)
+        returns (bool)
+    {
         return interfaceId == _INTERFACE_ID_ERC2981_OVERRIDE || super.supportsInterface(interfaceId);
     }
 
@@ -149,7 +152,10 @@ contract FantiumNFTV4_Test is
         string memory _tokenName,
         string memory _tokenSymbol,
         address _defaultAdmin
-    ) public initializer {
+    )
+        public
+        initializer
+    {
         __ERC721_init(_tokenName, _tokenSymbol);
         __UUPSUpgradeable_init();
         __AccessControl_init();
@@ -164,7 +170,7 @@ contract FantiumNFTV4_Test is
     /// @notice upgrade authorization logic
     /// @dev required by the OZ UUPS module
     /// @dev adds onlyUpgrader requirement
-    function _authorizeUpgrade(address) internal override onlyUpgrader {}
+    function _authorizeUpgrade(address) internal override onlyUpgrader { }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     // ERC2771ContextUpgradeable(forwarder)
@@ -186,7 +192,10 @@ contract FantiumNFTV4_Test is
         address[] memory _to,
         uint256[] memory _collectionId,
         uint24[] memory _amount
-    ) public whenNotPaused {
+    )
+        public
+        whenNotPaused
+    {
         require(_to.length == _collectionId.length && _to.length == _amount.length, "Arrays must be of equal length");
 
         for (uint256 i = 0; i < _to.length; i++) {
@@ -228,9 +237,8 @@ contract FantiumNFTV4_Test is
         if (collection.isPaused) {
             // if minting is paused, require address to be on allowlist
             require(
-                IFantiumUserManager(fantiumUserManager).hasAllowlist(address(this), _collectionId, _msgSender()) >=
-                    _amount ||
-                    hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
+                IFantiumUserManager(fantiumUserManager).hasAllowlist(address(this), _collectionId, _msgSender())
+                    >= _amount || hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
                 "Collection is paused or allowlist allocation insufficient"
             );
         }
@@ -243,10 +251,7 @@ contract FantiumNFTV4_Test is
 
         if (collection.isPaused && !hasRole(PLATFORM_MANAGER_ROLE, msg.sender)) {
             IFantiumUserManager(fantiumUserManager).reduceAllowListAllocation(
-                _collectionId,
-                address(this),
-                _msgSender(),
-                _amount
+                _collectionId, address(this), _msgSender(), _amount
             );
         }
 
@@ -266,28 +271,18 @@ contract FantiumNFTV4_Test is
      */
     function _splitFunds(uint256 _price, uint256 _collectionId, address _sender) internal {
         // split funds between FANtium and athlete
-        (
-            uint256 fantiumRevenue_,
-            address fantiumAddress_,
-            uint256 athleteRevenue_,
-            address athleteAddress_
-        ) = getPrimaryRevenueSplits(_collectionId, _price);
+        (uint256 fantiumRevenue_, address fantiumAddress_, uint256 athleteRevenue_, address athleteAddress_) =
+            getPrimaryRevenueSplits(_collectionId, _price);
         // FANtium payment
         if (fantiumRevenue_ > 0) {
             SafeERC20Upgradeable.safeTransferFrom(
-                IERC20Upgradeable(erc20PaymentToken),
-                _sender,
-                fantiumAddress_,
-                fantiumRevenue_
+                IERC20Upgradeable(erc20PaymentToken), _sender, fantiumAddress_, fantiumRevenue_
             );
         }
         // athlete payment
         if (athleteRevenue_ > 0) {
             SafeERC20Upgradeable.safeTransferFrom(
-                IERC20Upgradeable(erc20PaymentToken),
-                _sender,
-                athleteAddress_,
-                athleteRevenue_
+                IERC20Upgradeable(erc20PaymentToken), _sender, athleteAddress_, athleteRevenue_
             );
         }
     }
@@ -328,7 +323,7 @@ contract FantiumNFTV4_Test is
         Collection memory collection = collections[_collectionId];
 
         // calculate revenues
-        athleteRevenue_ = (_price * collection.athletePrimarySalesBPS) / 10000;
+        athleteRevenue_ = (_price * collection.athletePrimarySalesBPS) / 10_000;
 
         fantiumRevenue_ = _price - athleteRevenue_;
 
@@ -359,7 +354,8 @@ contract FantiumNFTV4_Test is
     /**
      * @notice Adds new collection.
      * @param _athleteAddress Address of the athlete.
-     * @param _athletePrimarySalesBPS Primary s, "FantiumClaimingV1: collection must be active"viewles percentage of the athlete.
+     * @param _athletePrimarySalesBPS Primary s, "FantiumClaimingV1: collection must be active"viewles percentage of the
+     * athlete.
      * @param _athleteSecondarySalesBPS Secondary sales percentage of the athlete.
      * @param _maxInvocations Maximum number of invocations.
      * @param _price Price of the token.
@@ -373,12 +369,16 @@ contract FantiumNFTV4_Test is
         uint256 _athleteSecondarySalesBPS,
         uint256 _maxInvocations,
         uint256 _price,
-        uint _launchTimestamp,
+        uint256 _launchTimestamp,
         address payable _fantiumSalesAddress,
         uint256 _fantiumSecondarySalesBPS,
         uint256 _tournamentEarningShare1e7,
         uint256 _otherEarningShare1e7
-    ) external whenNotPaused onlyPlatformManager {
+    )
+        external
+        whenNotPaused
+        onlyPlatformManager
+    {
         require(
             _athleteSecondarySalesBPS + _fantiumSecondarySalesBPS <= 10_000,
             "FantiumNFTV3: secondary sales BPS must be less than 10,000"
@@ -392,8 +392,7 @@ contract FantiumNFTV4_Test is
         );
 
         require(
-            _athleteAddress != address(0) && _fantiumSalesAddress != address(0),
-            "FantiumNFTV3: addresses cannot be 0"
+            _athleteAddress != address(0) && _fantiumSalesAddress != address(0), "FantiumNFTV3: addresses cannot be 0"
         );
 
         uint256 collectionId = nextCollectionId;
@@ -427,7 +426,11 @@ contract FantiumNFTV4_Test is
     function updateCollectionAthleteAddress(
         uint256 _collectionId,
         address payable _athleteAddress
-    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
+    )
+        external
+        onlyValidCollectionId(_collectionId)
+        onlyPlatformManager
+    {
         require(_athleteAddress != address(0), "FantiumNFTV3: address cannot be 0");
         collections[_collectionId].athleteAddress = _athleteAddress;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ATHLETE_ADDRESS);
@@ -436,9 +439,11 @@ contract FantiumNFTV4_Test is
     /**
      * @notice Toggles isMintingPaused state of collection `_collectionId`.
      */
-    function toggleCollectionPaused(
-        uint256 _collectionId
-    ) external onlyValidCollectionId(_collectionId) onlyAthlete(_collectionId) {
+    function toggleCollectionPaused(uint256 _collectionId)
+        external
+        onlyValidCollectionId(_collectionId)
+        onlyAthlete(_collectionId)
+    {
         collections[_collectionId].isPaused = !collections[_collectionId].isPaused;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_PAUSED);
     }
@@ -446,9 +451,11 @@ contract FantiumNFTV4_Test is
     /**
      * @notice Toggles isMintingPaused state of collection `_collectionId`.
      */
-    function toggleCollectionMintable(
-        uint256 _collectionId
-    ) external onlyValidCollectionId(_collectionId) onlyAthlete(_collectionId) {
+    function toggleCollectionMintable(uint256 _collectionId)
+        external
+        onlyValidCollectionId(_collectionId)
+        onlyAthlete(_collectionId)
+    {
         collections[_collectionId].isMintable = !collections[_collectionId].isMintable;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ACTIVATED);
     }
@@ -467,8 +474,12 @@ contract FantiumNFTV4_Test is
     function updateCollectionAthletePrimaryMarketRoyaltyBPS(
         uint256 _collectionId,
         uint256 _primaryMarketRoyalty
-    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
-        require(_primaryMarketRoyalty <= 10000, "Max of 100%");
+    )
+        external
+        onlyValidCollectionId(_collectionId)
+        onlyPlatformManager
+    {
+        require(_primaryMarketRoyalty <= 10_000, "Max of 100%");
         collections[_collectionId].athletePrimarySalesBPS = _primaryMarketRoyalty;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_PRIMARY_MARKET_ROYALTY_PERCENTAGE);
     }
@@ -487,9 +498,13 @@ contract FantiumNFTV4_Test is
     function updateCollectionAthleteSecondaryMarketRoyaltyBPS(
         uint256 _collectionId,
         uint256 _secondMarketRoyalty
-    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
+    )
+        external
+        onlyValidCollectionId(_collectionId)
+        onlyPlatformManager
+    {
         require(
-            _secondMarketRoyalty + collections[_collectionId].fantiumSecondarySalesBPS <= 10000,
+            _secondMarketRoyalty + collections[_collectionId].fantiumSecondarySalesBPS <= 10_000,
             "FantiumClaimingV1: secondary sales BPS must be less than 10,000"
         );
         collections[_collectionId].athleteSecondarySalesBPS = _secondMarketRoyalty;
@@ -507,7 +522,11 @@ contract FantiumNFTV4_Test is
         uint256 _otherEarningShare1e7,
         address payable _fantiumSalesAddress,
         uint256 _fantiumSecondarySalesBPS
-    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
+    )
+        external
+        onlyValidCollectionId(_collectionId)
+        onlyPlatformManager
+    {
         // require to have either other token share or tournament token share set to > 0
         require(
             _price > 0 && (_tournamentEarningShare1e7 > 0 || _otherEarningShare1e7 > 0),
@@ -551,7 +570,11 @@ contract FantiumNFTV4_Test is
     function updateCollectionLaunchTimestamp(
         uint256 _collectionId,
         uint256 _launchTimestamp
-    ) external onlyValidCollectionId(_collectionId) onlyPlatformManager {
+    )
+        external
+        onlyValidCollectionId(_collectionId)
+        onlyPlatformManager
+    {
         collections[_collectionId].launchTimestamp = _launchTimestamp;
         emit CollectionUpdated(_collectionId, FIELD_COLLECTION_LAUNCH_TIMESTAMP);
     }
@@ -569,7 +592,6 @@ contract FantiumNFTV4_Test is
     /**
      * @notice Update contract pause status to `_paused`.
      */
-
     function pause() external onlyPlatformManager {
         _pause();
     }
@@ -577,7 +599,6 @@ contract FantiumNFTV4_Test is
     /**
      * @notice Unpauses contract
      */
-
     function unpause() external onlyPlatformManager {
         _unpause();
     }
@@ -589,7 +610,6 @@ contract FantiumNFTV4_Test is
     /**
      * @notice upgrade token version to new version in case of claim event
      */
-
     function upgradeTokenVersion(uint256 _tokenId) external whenNotPaused onlyValidTokenId(_tokenId) returns (bool) {
         // only claim contract can call this function
         require(claimContract != address(0), "Claim contract address is not set");
@@ -632,12 +652,13 @@ contract FantiumNFTV4_Test is
         address _claimContractAdress,
         address _userManagerAddress,
         address _trustedForwarder
-    ) external onlyUpgrader {
+    )
+        external
+        onlyUpgrader
+    {
         require(
-            _paymentTokenAdderss != address(0) &&
-                _claimContractAdress != address(0) &&
-                _userManagerAddress != address(0) &&
-                _trustedForwarder != address(0),
+            _paymentTokenAdderss != address(0) && _claimContractAdress != address(0)
+                && _userManagerAddress != address(0) && _trustedForwarder != address(0),
             "FantiumNFTV3: addresses cannot be 0"
         );
         erc20PaymentToken = _paymentTokenAdderss;
@@ -663,9 +684,12 @@ contract FantiumNFTV4_Test is
      * @dev reverts if invalid _tokenId
      * @dev only returns recipients that have a non-zero BPS allocation
      */
-    function getRoyalties(
-        uint256 _tokenId
-    ) external view onlyValidTokenId(_tokenId) returns (address payable[] memory recipients, uint256[] memory bps) {
+    function getRoyalties(uint256 _tokenId)
+        external
+        view
+        onlyValidTokenId(_tokenId)
+        returns (address payable[] memory recipients, uint256[] memory bps)
+    {
         // initialize arrays with maximum potential length
         recipients = new address payable[](2);
         bps = new uint256[](2);
@@ -713,14 +737,24 @@ contract FantiumNFTV4_Test is
     function setApprovalForAll(
         address operator,
         bool approved
-    ) public override whenNotPaused onlyAllowedOperatorApproval(operator) {
+    )
+        public
+        override
+        whenNotPaused
+        onlyAllowedOperatorApproval(operator)
+    {
         super.setApprovalForAll(operator, approved);
     }
 
     function approve(
         address operator,
         uint256 tokenId
-    ) public override whenNotPaused onlyAllowedOperatorApproval(operator) {
+    )
+        public
+        override
+        whenNotPaused
+        onlyAllowedOperatorApproval(operator)
+    {
         super.approve(operator, tokenId);
     }
 
@@ -728,7 +762,12 @@ contract FantiumNFTV4_Test is
         address from,
         address to,
         uint256 tokenId
-    ) public override whenNotPaused onlyAllowedOperator(from) {
+    )
+        public
+        override
+        whenNotPaused
+        onlyAllowedOperator(from)
+    {
         super.transferFrom(from, to, tokenId);
     }
 
@@ -736,7 +775,12 @@ contract FantiumNFTV4_Test is
         address from,
         address to,
         uint256 tokenId
-    ) public override whenNotPaused onlyAllowedOperator(from) {
+    )
+        public
+        override
+        whenNotPaused
+        onlyAllowedOperator(from)
+    {
         super.safeTransferFrom(from, to, tokenId);
     }
 
@@ -745,7 +789,12 @@ contract FantiumNFTV4_Test is
         address to,
         uint256 tokenId,
         bytes memory data
-    ) public override whenNotPaused onlyAllowedOperator(from) {
+    )
+        public
+        override
+        whenNotPaused
+        onlyAllowedOperator(from)
+    {
         super.safeTransferFrom(from, to, tokenId, data);
     }
 

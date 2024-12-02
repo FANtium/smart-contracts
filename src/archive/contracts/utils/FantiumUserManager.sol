@@ -14,7 +14,6 @@ import "../interfaces/IFantiumUserManager.sol";
  * @title FANtium User Manager contract V1.
  * @author MTX studio AG.
  */
-
 contract FantiumUserManager is
     Initializable,
     UUPSUpgradeable,
@@ -89,7 +88,10 @@ contract FantiumUserManager is
         address _fantiumNFTContract,
         address _claimingContract,
         address _trustedForwarder
-    ) public initializer {
+    )
+        public
+        initializer
+    {
         require(
             _defaultAdmin != address(0) && _fantiumNFTContract != address(0) && _claimingContract != address(0),
             "Invalid addresses"
@@ -108,7 +110,7 @@ contract FantiumUserManager is
     /// @notice upgrade authorization logic
     /// @dev required by the OZ UUPS module
     /// @dev adds onlyRole(UPGRADER_ROLE) requirement
-    function _authorizeUpgrade(address) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(address) internal override onlyRole(UPGRADER_ROLE) { }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -216,7 +218,11 @@ contract FantiumUserManager is
         address _contractAddress,
         address[] memory _addresses,
         uint256[] memory _increaseAllocations
-    ) public whenNotPaused onlyManagers {
+    )
+        public
+        whenNotPaused
+        onlyManagers
+    {
         require(allowedContracts[_contractAddress], "Only allowed Contract");
         require(IFantiumNFT(_contractAddress).getCollectionExists(_collectionId), "Collection does not exist");
         require(_addresses.length == _increaseAllocations.length, "FantiumUserManagerV1: Array length mismatch");
@@ -237,11 +243,14 @@ contract FantiumUserManager is
         address _contractAddress,
         address _address,
         uint256 _reduceAllocation
-    ) external whenNotPaused returns (uint256) {
+    )
+        external
+        whenNotPaused
+        returns (uint256)
+    {
         require(
-            hasRole(PLATFORM_MANAGER_ROLE, msg.sender) ||
-                allowedContracts[msg.sender] ||
-                hasRole(KYC_MANAGER_ROLE, msg.sender),
+            hasRole(PLATFORM_MANAGER_ROLE, msg.sender) || allowedContracts[msg.sender]
+                || hasRole(KYC_MANAGER_ROLE, msg.sender),
             "Only manager or allowed Contract"
         );
         require(allowedContracts[_contractAddress], "Only allowed Contract");
@@ -258,7 +267,11 @@ contract FantiumUserManager is
         address _contractAddress,
         uint256 _collectionId,
         address _address
-    ) public view returns (uint256) {
+    )
+        public
+        view
+        returns (uint256)
+    {
         return users[_address].contractToAllowlistToSpots[_contractAddress][_collectionId];
     }
 
@@ -269,7 +282,6 @@ contract FantiumUserManager is
     /**
      * @notice Update contract pause status to `_paused`.
      */
-
     function pause() external onlyPlatformManager {
         _pause();
     }
@@ -277,7 +289,6 @@ contract FantiumUserManager is
     /**
      * @notice Unpauses contract
      */
-
     function unpause() external onlyPlatformManager {
         _unpause();
     }
@@ -289,7 +300,6 @@ contract FantiumUserManager is
     /**
      * @notice set NFT contract addresses
      */
-
     function addAllowedConctract(address _contractAddress) public onlyUpgrader {
         require(_contractAddress != address(0), "No null address allowed");
         if (!allowedContracts[_contractAddress]) {
@@ -301,7 +311,6 @@ contract FantiumUserManager is
     /**
      * @notice set NFT contract addresses
      */
-
     function removeAllowedConctract(address _contractAddress) public onlyUpgrader {
         require(_contractAddress != address(0), "No null address allowed");
         if (allowedContracts[_contractAddress]) {

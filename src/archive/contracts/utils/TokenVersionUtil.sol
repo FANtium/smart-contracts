@@ -6,7 +6,6 @@ pragma solidity ^0.8.13;
  * for FAN token holders.
  * @author MTX stuido AG.
  */
-
 library TokenVersionUtil {
     uint256 constant ONE_MILLION = 1_000_000;
     uint256 constant TEN_THOUSAND = 10_000;
@@ -15,7 +14,7 @@ library TokenVersionUtil {
                             INTERNAL 
     //////////////////////////////////////////////////////////////*/
 
-    function getTokenInfo(uint256 _tokenId) internal pure returns (uint, uint, uint) {
+    function getTokenInfo(uint256 _tokenId) internal pure returns (uint256, uint256, uint256) {
         uint256 collectionOfToken = _tokenId / ONE_MILLION;
         uint256 versionOfToken = (_tokenId % ONE_MILLION) / TEN_THOUSAND;
         uint256 tokenNr = _tokenId % TEN_THOUSAND;
@@ -23,7 +22,15 @@ library TokenVersionUtil {
         return (collectionOfToken, versionOfToken, tokenNr);
     }
 
-    function createTokenId(uint256 _collectionId, uint256 _versionId, uint256 _tokenNr) internal pure returns (uint) {
+    function createTokenId(
+        uint256 _collectionId,
+        uint256 _versionId,
+        uint256 _tokenNr
+    )
+        internal
+        pure
+        returns (uint256)
+    {
         uint256 tokenId = (_collectionId * ONE_MILLION) + (_versionId * TEN_THOUSAND) + _tokenNr;
 
         return (tokenId);
