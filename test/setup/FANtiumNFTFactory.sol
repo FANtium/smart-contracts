@@ -8,6 +8,7 @@ import {FANtiumNFTV5} from "../../src/FANtiumNFTV5.sol";
 import {UnsafeUpgrades} from "../../src/upgrades/UnsafeUpgrades.sol";
 import {BaseTest} from "../BaseTest.sol";
 import {FANtiumUserManagerFactory} from "./FANtiumUserManagerFactory.sol";
+import {FANtiumUserManagerV2} from "../../src/FANtiumUserManagerV2.sol";
 
 /**
  * @notice Collection data structure for deserialization.
@@ -45,15 +46,17 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
     FANtiumNFTV5 public fantiumNFT;
 
     function setUp() public virtual override {
+        FANtiumUserManagerFactory.setUp();
+
         usdc = new ERC20("USD Coin", "USDC");
         fantiumNFT_implementation = address(new FANtiumNFTV5());
         fantiumNFT_proxy = UnsafeUpgrades.deployUUPSProxy(
-            fantiumNFT_implementation, abi.encodeCall(FANtiumNFTV5.initialize, (admin, "FANtium", "FAN"))
+            fantiumNFT_implementation, abi.encodeCall(FANtiumNFTV5.initialize, (fantiumNFT_admin, "FANtium", "FAN"))
         );
         fantiumNFT = FANtiumNFTV5(fantiumNFT_proxy);
 
         // Configure roles
-        vm.startPrank(admin);
+        vm.startPrank(fantiumNFT_admin);
         fantiumNFT.grantRole(fantiumNFT.UPGRADER_ROLE(), fantiumNFT_upgrader);
         fantiumNFT.grantRole(fantiumNFT.PLATFORM_MANAGER_ROLE(), fantiumNFT_platformManager);
         vm.stopPrank();
@@ -61,12 +64,13 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
         vm.startPrank(fantiumNFT_platformManager);
         fantiumNFT.setTrustedForwarder(fantiumNFT_trustedForwarder);
         fantiumNFT.setERC20PaymentToken(address(usdc));
+        fantiumNFT.setUserManager(fantiumUserManager_proxy);
 
         // Configure collections
         CollectionJson[] memory collections = abi.decode(loadFixture("collections.json"), (CollectionJson[]));
         for (uint256 i = 0; i < collections.length; i++) {
             CollectionJson memory collection = collections[i];
-            fantiumNFT.createCollection(
+            uint256 collectionId = fantiumNFT.createCollection(
                 CreateCollection({
                     athleteAddress: collection.athleteAddress,
                     athletePrimarySalesBPS: collection.athletePrimarySalesBPS,
@@ -80,6 +84,16 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
                     tournamentEarningShare1e7: collection.tournamentEarningShare1e7
                 })
             );
+
+            // By default, collections are not mintable, set them as mintable if needed
+            if (collection.isMintable) {
+                fantiumNFT.toggleCollectionMintable(collectionId);
+            }
+
+            // By default, collections are paused, unpause them if needed
+            if (!collection.isPaused) {
+                fantiumNFT.toggleCollectionPaused(collectionId);
+            }
         }
         vm.stopPrank();
     }

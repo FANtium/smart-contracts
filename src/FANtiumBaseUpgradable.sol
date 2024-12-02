@@ -40,7 +40,8 @@ abstract contract FANtiumBaseUpgradable is
                         "AccessControl: account ",
                         StringsUpgradeable.toHexString(msg.sender),
                         " is missing role ",
-                        StringsUpgradeable.toHexString(uint256(role), 32)
+                        StringsUpgradeable.toHexString(uint256(role), 32),
+                        " or DEFAULT_ADMIN_ROLE"
                     )
                 )
             );

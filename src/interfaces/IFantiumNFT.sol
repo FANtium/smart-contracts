@@ -68,6 +68,31 @@ enum CollectionErrorReason {
  * @dev Interface of the IFANtiumNFT
  */
 interface IFANtiumNFT is IERC721Upgradeable {
+    // ========================================================================
+    // Events
+    // ========================================================================
+    event Mint(address indexed _to, uint256 indexed _tokenId);
+    event CollectionUpdated(uint256 indexed _collectionId, bytes32 indexed _update);
+    event PlatformUpdated(bytes32 indexed _field);
+
+    // ========================================================================
+    // Errors
+    // ========================================================================
+    error InvalidCollectionId(uint256 collectionId);
+    error InvalidTokenId(uint256 tokenId);
+    error AccountNotKYCed(address recipient);
+    error CollectionDoesNotExist(uint256 collectionId);
+    error CollectionNotLaunched(uint256 collectionId);
+    error CollectionNotMintable(uint256 collectionId);
+    error CollectionPaused(uint256 collectionId);
+    error InvalidSignature();
+    error RoleNotGranted(address account, bytes32 role);
+    error AthleteOnly(uint256 collectionId, address account, address expected);
+    error InvalidCollection(CollectionErrorReason reason);
+
+    // ========================================================================
+    // Collection
+    // ========================================================================
     function collections(uint256 collectionId) external view returns (Collection memory);
 
     function createCollection(CreateCollection memory data) external returns (uint256);

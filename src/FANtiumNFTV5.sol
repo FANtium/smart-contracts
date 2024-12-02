@@ -9,6 +9,7 @@ import {
     ERC721Upgradeable,
     IERC165Upgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
@@ -96,26 +97,6 @@ contract FANtiumNFTV5 is
     address public trustedForwarder;
 
     // ========================================================================
-    // Events
-    // ========================================================================
-    event Mint(address indexed _to, uint256 indexed _tokenId);
-    event CollectionUpdated(uint256 indexed _collectionId, bytes32 indexed _update);
-    event PlatformUpdated(bytes32 indexed _field);
-
-    // ========================================================================
-    // Errors
-    // ========================================================================
-    error AccountNotKYCed(address recipient);
-    error CollectionDoesNotExist(uint256 collectionId);
-    error CollectionNotLaunched(uint256 collectionId);
-    error CollectionNotMintable(uint256 collectionId);
-    error CollectionPaused(uint256 collectionId);
-    error InvalidSignature();
-    error RoleNotGranted(address account, bytes32 role);
-    error AthleteOnly(uint256 collectionId, address account, address expected);
-    error InvalidCollection(CollectionErrorReason reason);
-
-    // ========================================================================
     // UUPS upgradeable pattern
     // ========================================================================
     /**
@@ -188,12 +169,16 @@ contract FANtiumNFTV5 is
     }
 
     modifier onlyValidCollectionId(uint256 _collectionId) {
-        require(_collections[_collectionId].exists == true, "Invalid collectionId");
+        if (!_collections[_collectionId].exists) {
+            revert InvalidCollectionId(_collectionId);
+        }
         _;
     }
 
     modifier onlyValidTokenId(uint256 _tokenId) {
-        require(_exists(_tokenId), "Invalid tokenId");
+        if (!_exists(_tokenId)) {
+            revert InvalidTokenId(_tokenId);
+        }
         _;
     }
 
@@ -251,6 +236,7 @@ contract FANtiumNFTV5 is
     function mintable(uint256 collectionId, uint24 quantity, address recipient)
         public
         view
+        onlyValidCollectionId(collectionId)
         returns (bool useAllowList)
     {
         if (!IFANtiumUserManager(fantiumUserManager).isKYCed(_msgSender())) {
@@ -258,10 +244,6 @@ contract FANtiumNFTV5 is
         }
 
         Collection memory collection = _collections[collectionId];
-
-        if (!collection.exists) {
-            revert CollectionDoesNotExist(collectionId);
-        }
 
         if (collection.launchTimestamp > block.timestamp) {
             revert CollectionNotLaunched(collectionId);
@@ -352,41 +334,48 @@ contract FANtiumNFTV5 is
      * revenue is zero for athlete, the corresponding
      * address returned will also be null (for gas optimization).
      * Does not account for refund if user overpays for a token
-     * @param _collectionId collection ID to be queried.
-     * @param _price Sale price of token.
-     * @return fantiumRevenue_ amount of revenue to be sent to FANtium
-     * @return fantiumAddress_ address to send FANtium revenue to
-     * @return athleteRevenue_ amount of revenue to be sent to athlete
-     * @return athleteAddress_ address to send athlete revenue to. Will be null
+     * @param collectionId collection ID to be queried.
+     * @param price Sale price of token.
+     * @return fantiumRevenue amount of revenue to be sent to FANtium
+     * @return fantiumAddress address to send FANtium revenue to
+     * @return athleteRevenue amount of revenue to be sent to athlete
+     * @return athleteAddress address to send athlete revenue to. Will be null
      * if no revenue is due to athlete (gas optimization).
      * @dev this always returns 2 addresses and 2 revenues, but if the
      * revenue is zero, the corresponding address will be address(0). It is up
      * to the contract performing the revenue split to handle this
      * appropriately.
      */
-    function getPrimaryRevenueSplits(uint256 _collectionId, uint256 _price)
+
+    /**
+     * @dev Returns the primary revenue splits for a given collection and price.
+     * @param collectionId collection ID to be queried.
+     * @param price Sale price of token.
+     * @return fantiumRevenue amount of revenue to be sent to FANtium
+     * @return fantiumAddress address to send FANtium revenue to
+     * @return athleteRevenue amount of revenue to be sent to athlete
+     * @return athleteAddress address to send athlete revenue to
+     */
+    function getPrimaryRevenueSplits(uint256 collectionId, uint256 price)
         public
         view
         returns (
-            uint256 fantiumRevenue_,
-            address payable fantiumAddress_,
-            uint256 athleteRevenue_,
-            address payable athleteAddress_
+            uint256 fantiumRevenue,
+            address payable fantiumAddress,
+            uint256 athleteRevenue,
+            address payable athleteAddress
         )
     {
         // get athlete address & revenue from collection
-        Collection memory collection = _collections[_collectionId];
+        Collection memory collection = _collections[collectionId];
 
         // calculate revenues
-        athleteRevenue_ = (_price * collection.athletePrimarySalesBPS) / 10000;
-
-        fantiumRevenue_ = _price - athleteRevenue_;
+        athleteRevenue = (price * collection.athletePrimarySalesBPS) / 10000;
+        fantiumRevenue = price - athleteRevenue;
 
         // set addresses from storage
-        fantiumAddress_ = collection.fantiumSalesAddress;
-        if (athleteRevenue_ > 0) {
-            athleteAddress_ = collection.athleteAddress;
-        }
+        fantiumAddress = collection.fantiumSalesAddress;
+        athleteAddress = collection.athleteAddress;
     }
 
     /**
@@ -415,8 +404,53 @@ contract FANtiumNFTV5 is
     }
 
     // ========================================================================
-    // ERC721 functions
+    // ERC721 overrides
     // ========================================================================
+    function setApprovalForAll(address operator, bool approved)
+        public
+        override(ERC721Upgradeable, IERC721Upgradeable)
+        whenNotPaused
+        onlyAllowedOperatorApproval(operator)
+    {
+        super.setApprovalForAll(operator, approved);
+    }
+
+    function approve(address operator, uint256 tokenId)
+        public
+        override(ERC721Upgradeable, IERC721Upgradeable)
+        whenNotPaused
+        onlyAllowedOperatorApproval(operator)
+    {
+        super.approve(operator, tokenId);
+    }
+
+    function transferFrom(address from, address to, uint256 tokenId)
+        public
+        override(ERC721Upgradeable, IERC721Upgradeable)
+        whenNotPaused
+        onlyAllowedOperator(from)
+    {
+        super.transferFrom(from, to, tokenId);
+    }
+
+    function safeTransferFrom(address from, address to, uint256 tokenId)
+        public
+        override(ERC721Upgradeable, IERC721Upgradeable)
+        whenNotPaused
+        onlyAllowedOperator(from)
+    {
+        super.safeTransferFrom(from, to, tokenId);
+    }
+
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data)
+        public
+        override(ERC721Upgradeable, IERC721Upgradeable)
+        whenNotPaused
+        onlyAllowedOperator(from)
+    {
+        super.safeTransferFrom(from, to, tokenId, data);
+    }
+
     function setBaseURI(string memory _baseURI) external whenNotPaused onlyPlatformManager {
         baseURI = _baseURI;
         emit PlatformUpdated(FILED_FANTIUM_BASE_URI);
@@ -625,7 +659,10 @@ contract FANtiumNFTV5 is
         onlyValidCollectionId(collectionId)
         onlyPlatformManager
     {
-        require(primaryMarketRoyalty <= 10000, "Max of 100%");
+        if (primaryMarketRoyalty > 10000) {
+            revert InvalidCollection(CollectionErrorReason.INVALID_PRIMARY_SALES_BPS);
+        }
+
         _collections[collectionId].athletePrimarySalesBPS = primaryMarketRoyalty;
     }
 
