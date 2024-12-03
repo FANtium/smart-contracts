@@ -278,15 +278,15 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
      * @notice Purchase NFTs from the sale with a custom price, checked
      * @param collectionId The collection ID to purchase from.
      * @param quantity The quantity of NFTs to purchase.
-     * @param amount The amount of tokens to purchase the NFTs with.
      * @param recipient The recipient of the NFTs.
+     * @param amount The amount of tokens to purchase the NFTs with.
      * @param signature The signature of the purchase request.
      */
     function mintTo(
         uint256 collectionId,
         uint24 quantity,
-        uint256 amount,
         address recipient,
+        uint256 amount,
         bytes memory signature
     )
         public
