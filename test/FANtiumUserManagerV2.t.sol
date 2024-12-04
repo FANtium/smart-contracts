@@ -2,8 +2,8 @@
 pragma solidity 0.8.28;
 
 import { Test } from "forge-std/Test.sol";
-import { FANtiumBaseUpgradable } from "src/FANtiumBaseUpgradable.sol";
 import { FANtiumUserManagerV2 } from "src/FANtiumUserManagerV2.sol";
+import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 
 contract FANtiumUserManagerV2Test is Test {
@@ -33,12 +33,6 @@ contract FANtiumUserManagerV2Test is Test {
         userManager.grantRole(userManager.KYC_MANAGER_ROLE(), kycManager);
         userManager.grantRole(userManager.ALLOWLIST_MANAGER_ROLE(), allowlistManager);
         vm.stopPrank();
-    }
-
-    // version
-    // ========================================================================
-    function test_version_ok() public view {
-        assertEq(userManager.version(), "2.0.0");
     }
 
     // setKYC
@@ -82,7 +76,7 @@ contract FANtiumUserManagerV2Test is Test {
 
         vm.startPrank(kycManager);
         vm.expectRevert(
-            abi.encodeWithSelector(FANtiumBaseUpgradable.ArrayLengthMismatch.selector, accounts.length, statuses.length)
+            abi.encodeWithSelector(IFANtiumUserManager.ArrayLengthMismatch.selector, accounts.length, statuses.length)
         );
         userManager.setBatchKYC(accounts, statuses);
         vm.stopPrank();
@@ -123,7 +117,7 @@ contract FANtiumUserManagerV2Test is Test {
 
         vm.startPrank(kycManager);
         vm.expectRevert(
-            abi.encodeWithSelector(FANtiumBaseUpgradable.ArrayLengthMismatch.selector, accounts.length, statuses.length)
+            abi.encodeWithSelector(IFANtiumUserManager.ArrayLengthMismatch.selector, accounts.length, statuses.length)
         );
         userManager.setBatchIDENT(accounts, statuses);
         vm.stopPrank();

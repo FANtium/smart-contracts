@@ -2,9 +2,7 @@
 pragma solidity 0.8.28;
 
 import { BaseTest } from "test/BaseTest.sol";
-import { FANtiumNFTV5 } from "src/FANtiumNFTV5.sol";
-import { IFANtiumNFT, Collection, CollectionData } from "src/interfaces/IFANtiumNFT.sol";
-import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
+import { Collection, CollectionData } from "src/interfaces/IFANtiumNFT.sol";
 import { FANtiumNFTFactory } from "test/setup/FANtiumNFTFactory.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 

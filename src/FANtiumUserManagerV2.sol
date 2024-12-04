@@ -2,18 +2,33 @@
 pragma solidity 0.8.28;
 
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
-import { FANtiumBaseUpgradable } from "src/FANtiumBaseUpgradable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 
 /**
  * @title FANtium User Manager contract V2.
  * @notice Used to manage user information such as KYC status, IDENT status, and allowlist allocations.
  * @dev KYC is "soft verification" and IDENT is "hard verification".
  * @author Mathieu Bour - FANtium, based on previous work by MTX Studio AG
+ * @custom:oz-upgrades-from FantiumUserManagerV1
  */
-contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
+contract FANtiumUserManagerV2 is
+    Initializable,
+    UUPSUpgradeable,
+    AccessControlUpgradeable,
+    PausableUpgradeable,
+    IFANtiumUserManager
+{
+    using StringsUpgradeable for uint256;
+
     // ========================================================================
     // Roles
     // ========================================================================
+    bytes32 public constant FORWARDER_ROLE = keccak256("FORWARDER_ROLE");
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
     bytes32 public constant ALLOWLIST_MANAGER_ROLE = keccak256("ALLOWLIST_MANAGER_ROLE");
 
@@ -44,15 +59,73 @@ contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
      * @custom:oz-upgrades-unsafe-allow constructor
      */
     constructor() {
-        // _disableInitializers(); // TODO: uncomment when we are on v6
+        _disableInitializers(); // TODO: uncomment when we are on v6
     }
 
-    function initialize(address _defaultAdmin) public initializer {
-        __FANtiumBaseUpgradable_init(_defaultAdmin);
+    function initialize(address admin) public initializer {
+        __UUPSUpgradeable_init();
+        __AccessControl_init();
+        __Pausable_init();
+
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
-    function version() public pure override returns (string memory) {
-        return "2.0.0";
+    /**
+     * @notice Implementation of the upgrade authorization logic
+     * @dev Restricted to the DEFAULT_ADMIN_ROLE
+     */
+    function _authorizeUpgrade(address) internal override {
+        _checkRole(DEFAULT_ADMIN_ROLE);
+    }
+
+    // ========================================================================
+    // Access control
+    // ========================================================================
+    modifier onlyRoleOrAdmin(bytes32 role) {
+        _checkRoleOrAdmin(role);
+        _;
+    }
+
+    modifier onlyAdmin() {
+        _checkRole(DEFAULT_ADMIN_ROLE);
+        _;
+    }
+
+    modifier onlyManagerOrAdmin() {
+        _checkRoleOrAdmin(MANAGER_ROLE);
+        _;
+    }
+
+    function _checkRoleOrAdmin(bytes32 role) internal view virtual {
+        if (!hasRole(role, msg.sender) && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
+            revert(
+                string(
+                    abi.encodePacked(
+                        "AccessControl: account ",
+                        StringsUpgradeable.toHexString(msg.sender),
+                        " is missing role ",
+                        StringsUpgradeable.toHexString(uint256(role), 32)
+                    )
+                )
+            );
+        }
+    }
+
+    // ========================================================================
+    // Pause
+    // ========================================================================
+    /**
+     * @notice Update contract pause status to `_paused`.
+     */
+    function pause() external onlyManagerOrAdmin {
+        _pause();
+    }
+
+    /**
+     * @notice Unpauses contract
+     */
+    function unpause() external onlyManagerOrAdmin {
+        _unpause();
     }
 
     // ========================================================================

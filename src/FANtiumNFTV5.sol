@@ -2,15 +2,12 @@
 pragma solidity 0.8.28;
 
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
-import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {
     ERC721Upgradeable,
     IERC165Upgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {
     IFANtiumNFT,
     Collection,
@@ -91,7 +88,7 @@ contract FANtiumNFTV5 is
      * @custom:oz-upgrades-unsafe-allow constructor
      */
     constructor() {
-        // _disableInitializers(); // TODO: uncomment when we are on v6
+        _disableInitializers(); // TODO: uncomment when we are on v6
     }
 
     /**
@@ -116,8 +113,8 @@ contract FANtiumNFTV5 is
      * @notice Implementation of the upgrade authorization logic
      * @dev Restricted to the DEFAULT_ADMIN_ROLE
      */
-    function _authorizeUpgrade(address) internal override onlyAdmin {
-        // no-op
+    function _authorizeUpgrade(address) internal override {
+        _checkRole(DEFAULT_ADMIN_ROLE);
     }
 
     // ========================================================================
@@ -154,67 +151,6 @@ contract FANtiumNFTV5 is
     }
 
     // ========================================================================
-    // Pause
-    // ========================================================================
-    /**
-     * @notice Update contract pause status to `_paused`.
-     */
-    function pause() external onlyManagerOrAdmin {
-        _pause();
-    }
-
-    /**
-     * @notice Unpauses contract
-     */
-    function unpause() external onlyManagerOrAdmin {
-        _unpause();
-    }
-
-    // ========================================================================
-    // Setters
-    // ========================================================================
-    function setBaseURI(string memory baseURI_) external whenNotPaused onlyManagerOrAdmin {
-        baseURI = baseURI_;
-    }
-
-    function setUserManager(address _userManager) external onlyManagerOrAdmin {
-        fantiumUserManager = _userManager;
-    }
-
-    // ========================================================================
-    // ERC721
-    // ========================================================================
-    /**
-     * @dev Returns the base URI for computing {tokenURI}.
-     * Necessary to use the default ERC721 tokenURI function from ERC721Upgradeable.
-     */
-    function _baseURI() internal view virtual override returns (string memory) {
-        return baseURI;
-    }
-
-    // ========================================================================
-    // Interface
-    // ========================================================================
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(IERC165Upgradeable, AccessControlUpgradeable, ERC721Upgradeable)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
-    }
-
-    /**
-     * @notice Sets the ERC20 payment token.
-     * @dev Restricted to manager or admin.
-     * @param _erc20PaymentToken The new ERC20 payment token.
-     */
-    function setERC20PaymentToken(address _erc20PaymentToken) external whenNotPaused onlyManagerOrAdmin {
-        erc20PaymentToken = _erc20PaymentToken;
-    }
-
-    // ========================================================================
     // Modifiers
     // ========================================================================
     modifier onlyAthleteOrManagerOrAdmin(uint256 collectionId) {
@@ -232,6 +168,23 @@ contract FANtiumNFTV5 is
             revert InvalidCollectionId(_collectionId);
         }
         _;
+    }
+
+    // ========================================================================
+    // Pause
+    // ========================================================================
+    /**
+     * @notice Update contract pause status to `_paused`.
+     */
+    function pause() external onlyManagerOrAdmin {
+        _pause();
+    }
+
+    /**
+     * @notice Unpauses contract
+     */
+    function unpause() external onlyManagerOrAdmin {
+        _unpause();
     }
 
     // ========================================================================
@@ -259,6 +212,50 @@ contract FANtiumNFTV5 is
         } else {
             return super._msgData();
         }
+    }
+
+    // ========================================================================
+    // Interface
+    // ========================================================================
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(IERC165Upgradeable, AccessControlUpgradeable, ERC721Upgradeable)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
+
+    // ========================================================================
+    // Setters
+    // ========================================================================
+    function setBaseURI(string memory baseURI_) external whenNotPaused onlyManagerOrAdmin {
+        baseURI = baseURI_;
+    }
+
+    function setUserManager(address _userManager) external onlyManagerOrAdmin {
+        fantiumUserManager = _userManager;
+    }
+
+    /**
+     * @notice Sets the ERC20 payment token.
+     * @dev Restricted to manager or admin.
+     * @param _erc20PaymentToken The new ERC20 payment token.
+     */
+    function setERC20PaymentToken(address _erc20PaymentToken) external whenNotPaused onlyManagerOrAdmin {
+        erc20PaymentToken = _erc20PaymentToken;
+    }
+
+    // ========================================================================
+    // ERC721
+    // ========================================================================
+    /**
+     * @dev Returns the base URI for computing {tokenURI}.
+     * Necessary to use the default ERC721 tokenURI function from ERC721Upgradeable.
+     */
+    function _baseURI() internal view virtual override returns (string memory) {
+        return baseURI;
     }
 
     // ========================================================================

@@ -17,15 +17,40 @@ import {
 } from "src/interfaces/IFANtiumClaiming.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
-import { FANtiumBaseUpgradable } from "src/FANtiumBaseUpgradable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
+import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 
 /**
+ * /**
  * @title FANtium Claining contract V2.
  * @notice This contract is used to manage distribution events and claim payouts for FAN token holders.
  * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
+ * @custom:oz-upgrades-from FantiumClaimingV1
  */
-contract FANtiumClaimingV2 is FANtiumBaseUpgradable, IFANtiumClaiming {
+contract FANtiumClaimingV2 is
+    Initializable,
+    UUPSUpgradeable,
+    AccessControlUpgradeable,
+    PausableUpgradeable,
+    IFANtiumClaiming
+{
+    using StringsUpgradeable for uint256;
     using SafeERC20 for IERC20;
+
+    // ========================================================================
+    // Constants
+    // ========================================================================
+    uint256 private constant BPS_BASE = 10_000;
+
+    // Roles
+    // ========================================================================
+    bytes32 public constant FORWARDER_ROLE = keccak256("FORWARDER_ROLE");
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     // ========================================================================
     // State variables
@@ -68,7 +93,7 @@ contract FANtiumClaimingV2 is FANtiumBaseUpgradable, IFANtiumClaiming {
      * @custom:oz-upgrades-unsafe-allow constructor
      */
     constructor() {
-        // _disableInitializers(); // TODO: uncomment when we are on v6
+        _disableInitializers(); // TODO: uncomment when we are on v6
     }
 
     function initialize(address admin) public initializer {
@@ -80,8 +105,49 @@ contract FANtiumClaimingV2 is FANtiumBaseUpgradable, IFANtiumClaiming {
         nextDistributionEventId = 1;
     }
 
-    function version() public pure override returns (string memory) {
-        return "2.0.0";
+    function initializeV5(address admin) internal initializer {
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
+    }
+
+    /**
+     * @notice Implementation of the upgrade authorization logic
+     * @dev Restricted to the DEFAULT_ADMIN_ROLE
+     */
+    function _authorizeUpgrade(address) internal override {
+        _checkRole(DEFAULT_ADMIN_ROLE);
+    }
+
+    // ========================================================================
+    // Access control
+    // ========================================================================
+    modifier onlyRoleOrAdmin(bytes32 role) {
+        _checkRoleOrAdmin(role);
+        _;
+    }
+
+    modifier onlyAdmin() {
+        _checkRole(DEFAULT_ADMIN_ROLE);
+        _;
+    }
+
+    modifier onlyManagerOrAdmin() {
+        _checkRoleOrAdmin(MANAGER_ROLE);
+        _;
+    }
+
+    function _checkRoleOrAdmin(bytes32 role) internal view virtual {
+        if (!hasRole(role, msg.sender) && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
+            revert(
+                string(
+                    abi.encodePacked(
+                        "AccessControl: account ",
+                        StringsUpgradeable.toHexString(msg.sender),
+                        " is missing role ",
+                        StringsUpgradeable.toHexString(uint256(role), 32)
+                    )
+                )
+            );
+        }
     }
 
     // ========================================================================
@@ -116,6 +182,23 @@ contract FANtiumClaimingV2 is FANtiumBaseUpgradable, IFANtiumClaiming {
     }
 
     // ========================================================================
+    // Pause
+    // ========================================================================
+    /**
+     * @notice Update contract pause status to `_paused`.
+     */
+    function pause() external onlyManagerOrAdmin {
+        _pause();
+    }
+
+    /**
+     * @notice Unpauses contract
+     */
+    function unpause() external onlyManagerOrAdmin {
+        _unpause();
+    }
+
+    // ========================================================================
     // Setters
     // ========================================================================
     function setFantiumNFT(IFANtiumNFT _fantiumNFT) external onlyManagerOrAdmin {
@@ -131,7 +214,7 @@ contract FANtiumClaimingV2 is FANtiumBaseUpgradable, IFANtiumClaiming {
     }
 
     // ========================================================================
-    // Distribution event        functions
+    // Distribution event
     // ========================================================================
     function distributionEvents(uint256 distributionEventId) public view returns (DistributionEvent memory) {
         return _distributionEvents[distributionEventId];
@@ -477,10 +560,6 @@ contract FANtiumClaimingV2 is FANtiumBaseUpgradable, IFANtiumClaiming {
         view
         returns (uint256 tournamentClaim, uint256 otherClaim)
     {
-        require(
-            (tournamentEarningsShare1e7 > 0) || (otherEarningShare1e7 > 0), "FANtiumClaimingV1: Token has no earnings"
-        );
-
         DistributionEvent memory distributionEvent = _distributionEvents[distributionEventId];
         tournamentClaim = ((distributionEvent.totalTournamentEarnings * tournamentEarningsShare1e7) / 1e7);
         otherClaim = ((distributionEvent.totalOtherEarnings * otherEarningShare1e7) / 1e7);

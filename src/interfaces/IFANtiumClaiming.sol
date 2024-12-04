@@ -93,6 +93,8 @@ interface IFANtiumClaiming {
     // ========================================================================
     // Events
     // ========================================================================
+    error ArrayLengthMismatch(uint256 lhs, uint256 rhs);
+
     event Claim(uint256 indexed _distributionEventId, uint256 indexed _tokenId, uint256 amount);
     event DistributionEventUpdate(uint256 indexed _distributionEventId, bytes32 indexed _field);
     event PayIn(uint256 indexed _distributionEventId, uint256 amount);

@@ -2,8 +2,8 @@
 pragma solidity 0.8.28;
 
 import { Test } from "forge-std/Test.sol";
-import { FANtiumBaseUpgradable } from "src/FANtiumBaseUpgradable.sol";
 import { FANtiumUserManagerV2 } from "src/FANtiumUserManagerV2.sol";
+import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 
 contract FANtiumUserManagerV2FuzzTest is Test {
@@ -42,7 +42,7 @@ contract FANtiumUserManagerV2FuzzTest is Test {
 
         vm.startPrank(kycManager);
         vm.expectRevert(
-            abi.encodeWithSelector(FANtiumBaseUpgradable.ArrayLengthMismatch.selector, accounts.length, statuses.length)
+            abi.encodeWithSelector(IFANtiumUserManager.ArrayLengthMismatch.selector, accounts.length, statuses.length)
         );
         userManager.setBatchIDENT(accounts, statuses);
         vm.stopPrank();

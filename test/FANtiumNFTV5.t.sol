@@ -4,8 +4,6 @@ pragma solidity 0.8.28;
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
-import { FANtiumNFTV5 } from "src/FANtiumNFTV5.sol";
-import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import {
     IFANtiumNFT,
@@ -22,8 +20,8 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
     using ECDSA for bytes32;
     using Strings for uint256;
 
-    address recipient = makeAddr("recipient");
-    address nobody = makeAddr("nobody");
+    address public recipient = makeAddr("recipient");
+    address public nobody = makeAddr("nobody");
 
     function setUp() public override {
         FANtiumNFTFactory.setUp();
