@@ -26,10 +26,10 @@ import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/ac
 import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 
 /**
- * /**
  * @title FANtium Claining contract V2.
  * @notice This contract is used to manage distribution events and claim payouts for FAN token holders.
  * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
+ *
  * @custom:oz-upgrades-from FantiumClaimingV1
  */
 contract FANtiumClaimingV2 is
@@ -56,31 +56,43 @@ contract FANtiumClaimingV2 is
     // State variables
     // ========================================================================
     address public globalPayoutToken;
+
+    /**
+     * @custom:oz-renamed-from trustedForwarder
+     */
     address private UNUSED_trustedForwarder; // Now handled by the FANtiumBaseUpgradable contract
+    /**
+     * @custom:oz-renamed-from fantiumNFTContract
+     */
     IFANtiumNFT public fantiumNFT;
+
     IFANtiumUserManager public fantiumUserManager;
 
     /**
      * @dev mapping of distributionEvent to DistributionEvent
      * Distribution Event ID -> Distribution Event
+     * @custom:oz-renamed-from distributionEvents
      */
     mapping(uint256 => DistributionEvent) private _distributionEvents;
 
     /**
      * @notice mapping of distributionEvent to baseTokenId to claimed
      * Distribution Event ID -> Base Token ID (token with version=0) -> Claimed
+     * @custom:oz-renamed-from distributionEventToBaseTokenToClaimed
      */
     mapping(uint256 => mapping(uint256 => bool)) private _distributionEventToBaseTokenToClaimed;
 
     /**
      * @notice mapping of distributionEvent to collectionId to CollectionInfo
      * Distribution Event ID -> Collection ID -> Collection Info
+     * @custom:oz-renamed-from distributionEventToCollectionInfo
      */
     mapping(uint256 => mapping(uint256 => CollectionInfo)) private _distributionEventToCollectionInfo;
 
     /**
      * @notice mapping of distributionEvent to payout token
      * Distribution Event ID -> Payout Token (IERC20)
+     * @custom:oz-renamed-from distributionEventToPayoutToken
      */
     mapping(uint256 => IERC20) private _distributionEventToPayoutToken;
 
@@ -113,7 +125,7 @@ contract FANtiumClaimingV2 is
      * @notice Implementation of the upgrade authorization logic
      * @dev Restricted to the DEFAULT_ADMIN_ROLE
      */
-    function _authorizeUpgrade(address) internal override {
+    function _authorizeUpgrade(address) internal view override {
         _checkRole(DEFAULT_ADMIN_ROLE);
     }
 
@@ -577,6 +589,20 @@ contract FANtiumClaimingV2 is
         uint256 holdersTournamentEarningsShare1e7;
         uint256 holdersOtherEarningsShare1e7;
 
+        /*
+        DE id 13
+        collection 1, 2, 3 -> bronze, silver and gold
+        bronze 0.01% silver 0.02% and gold 0.04%
+
+        #minted tokens bronze: 200, silver: 40, gold is 10
+
+        how much the distribution should get?
+
+        0.01%*201 + 0.02%*40 + 0.04%*10 = 2%+0.8%+0.4% = 3.2%
+
+        -> If you won 1M => 32,000USD
+        */
+
         for (uint256 i = 0; i < distributionEvent.collectionIds.length; i++) {
             uint256 collectionId = distributionEvent.collectionIds[i];
             Collection memory collection = fantiumNFT.collections(collectionId);
@@ -587,6 +613,8 @@ contract FANtiumClaimingV2 is
             );
 
             _distributionEventToCollectionInfo[distributionEventId][collectionId] = CollectionInfo({
+                // we record the current number of minted token to avoid user to purchase tokens afterwrads an be
+                // eligible for the distribution
                 mintedTokens: collection.invocations,
                 tokenTournamentClaim: tournamentClaim,
                 tokenOtherClaim: otherClaim

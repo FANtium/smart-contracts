@@ -12,7 +12,7 @@ interface IFANtiumUserManager {
     struct User {
         bool isKYCed;
         bool isIDENT;
-        mapping(uint256 => uint256) contractToAllowListToSpots;
+        mapping(address => mapping(uint256 => uint256)) contractToAllowlistToSpots;
     }
 
     // ========================================================================

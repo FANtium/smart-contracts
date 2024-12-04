@@ -16,6 +16,7 @@ contract FANtiumUserManagerV2Test is Test {
     address public allowlistManager = makeAddr("allowlistManager");
     address public user1 = makeAddr("user1");
     address public user2 = makeAddr("user2");
+    address public fantiumNFT = makeAddr("fantiumNFT");
 
     // Need to copy the events from the FANtiumUserManagerV2 contract
     event KYCUpdate(address indexed account, bool isKYCed);
@@ -32,6 +33,7 @@ contract FANtiumUserManagerV2Test is Test {
         vm.startPrank(admin);
         userManager.grantRole(userManager.KYC_MANAGER_ROLE(), kycManager);
         userManager.grantRole(userManager.ALLOWLIST_MANAGER_ROLE(), allowlistManager);
+        userManager.setFantiumNFT(fantiumNFT);
         vm.stopPrank();
     }
 

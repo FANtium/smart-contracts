@@ -13,7 +13,8 @@ import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/St
  * @notice Used to manage user information such as KYC status, IDENT status, and allowlist allocations.
  * @dev KYC is "soft verification" and IDENT is "hard verification".
  * @author Mathieu Bour - FANtium, based on previous work by MTX Studio AG
- * @custom:oz-upgrades-from FantiumUserManagerV1
+ *
+ * @custom:oz-upgrades-from FantiumUserManager
  */
 contract FANtiumUserManagerV2 is
     Initializable,
@@ -36,14 +37,19 @@ contract FANtiumUserManagerV2 is
     // State variables
     // ========================================================================
     mapping(address => User) public users;
+
     /**
      * @dev deprecated: replaced by the ALLOWLIST_MANAGER_ROLE
+     * @custom:oz-renamed-from allowedContracts
      */
-    mapping(address => bool) private _UNUSED_allowedContracts;
+    mapping(address => bool) private UNUSED_allowedContracts;
+
     /**
-     * @dev deprecated: handled by the base contract
+     * @custom:oz-renamed-from trustedForwarder
      */
-    address private _UNUSED_trustedForwarder;
+    address private UNUSED_trustedForwarder;
+
+    address public fantiumNFT;
 
     // ========================================================================
     // Events
@@ -74,7 +80,7 @@ contract FANtiumUserManagerV2 is
      * @notice Implementation of the upgrade authorization logic
      * @dev Restricted to the DEFAULT_ADMIN_ROLE
      */
-    function _authorizeUpgrade(address) internal override {
+    function _authorizeUpgrade(address) internal view override {
         _checkRole(DEFAULT_ADMIN_ROLE);
     }
 
@@ -126,6 +132,13 @@ contract FANtiumUserManagerV2 is
      */
     function unpause() external onlyManagerOrAdmin {
         _unpause();
+    }
+
+    // ========================================================================
+    // Setters
+    // ========================================================================
+    function setFantiumNFT(address _fantiumNFT) external onlyAdmin {
+        fantiumNFT = _fantiumNFT;
     }
 
     // ========================================================================
@@ -198,11 +211,11 @@ contract FANtiumUserManagerV2 is
     // AllowList functions
     // ========================================================================
     function allowlist(address account, uint256 collectionId) public view returns (uint256) {
-        return users[account].contractToAllowListToSpots[collectionId];
+        return users[account].contractToAllowlistToSpots[fantiumNFT][collectionId];
     }
 
     function _setAllowList(address account, uint256 collectionId, uint256 allocation) internal {
-        users[account].contractToAllowListToSpots[collectionId] = allocation;
+        users[account].contractToAllowlistToSpots[fantiumNFT][collectionId] = allocation;
         emit AllowListUpdate(account, collectionId, allocation);
     }
 

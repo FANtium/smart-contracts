@@ -113,7 +113,7 @@ contract FANtiumNFTV5 is
      * @notice Implementation of the upgrade authorization logic
      * @dev Restricted to the DEFAULT_ADMIN_ROLE
      */
-    function _authorizeUpgrade(address) internal override {
+    function _authorizeUpgrade(address) internal view override {
         _checkRole(DEFAULT_ADMIN_ROLE);
     }
 
