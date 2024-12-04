@@ -5,7 +5,14 @@ import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ER
 
 /**
  * @notice Collection struct
- * @dev /!\ Do not change the order of the struct fields!!
+ * @dev CAUTION: Do not change the order of the struct fields!!
+ *
+ * Difference between isMintable and isPaused:
+ * - isMintable false means that nobody can mint new tokens
+ * - isPaused true means that the collection is mintable only by member of the collection allowlist
+ *
+ * price does not take the token decimals into account, which means that if the price is 1,000UDSC,
+ * mintTo function will need to multiply the price by 10^decimals of the token.
  */
 struct Collection {
     bool exists;
@@ -28,7 +35,7 @@ struct Collection {
  * @notice Create collection struct
  * @dev Fields may be added.
  */
-struct CreateCollection {
+struct CollectionData {
     address payable athleteAddress;
     uint256 athletePrimarySalesBPS;
     uint256 athleteSecondarySalesBPS;
@@ -39,16 +46,6 @@ struct CreateCollection {
     uint256 otherEarningShare1e7;
     uint256 price;
     uint256 tournamentEarningShare1e7;
-}
-
-struct UpdateCollection {
-    uint256 athleteSecondarySalesBPS;
-    uint256 maxInvocations;
-    uint256 price;
-    uint256 tournamentEarningShare1e7;
-    uint256 otherEarningShare1e7;
-    address payable fantiumSalesAddress;
-    uint256 fantiumSecondarySalesBPS;
 }
 
 enum CollectionErrorReason {
@@ -64,49 +61,47 @@ enum CollectionErrorReason {
     INVALID_PRICE
 }
 
-/**
- * @dev Interface of the IFANtiumNFT
- */
+enum MintErrorReason {
+    INVALID_COLLECTION_ID,
+    COLLECTION_NOT_MINTABLE,
+    COLLECTION_NOT_LAUNCHED,
+    COLLECTION_PAUSED,
+    ACCOUNT_NOT_KYCED,
+    INVALID_SIGNATURE
+}
+
+enum UpgradeErrorReason {
+    INVALID_COLLECTION_ID,
+    VERSION_ID_TOO_HIGH
+}
+
 interface IFANtiumNFT is IERC721Upgradeable {
     // ========================================================================
     // Events
     // ========================================================================
-    event CollectionUpdated(uint256 indexed _collectionId, bytes32 indexed _update);
-    event PlatformUpdated(bytes32 indexed _field);
+    event CollectionCreated(uint256 indexed collectionId, Collection collection);
+    event CollectionUpdated(uint256 indexed collectionId, Collection collection);
 
     // ========================================================================
     // Errors
     // ========================================================================
     error InvalidCollectionId(uint256 collectionId);
-    error InvalidTokenId(uint256 tokenId);
-    error AccountNotKYCed(address recipient);
-    error CollectionDoesNotExist(uint256 collectionId);
-    error CollectionNotLaunched(uint256 collectionId);
-    error CollectionNotMintable(uint256 collectionId);
-    error CollectionPaused(uint256 collectionId);
-    error InvalidSignature();
-    error RoleNotGranted(address account, bytes32 role);
     error AthleteOnly(uint256 collectionId, address account, address expected);
     error InvalidCollection(CollectionErrorReason reason);
+    error InvalidMint(MintErrorReason reason);
+    error InvalidUpgrade(UpgradeErrorReason reason);
 
     // ========================================================================
     // Collection
     // ========================================================================
     function collections(uint256 collectionId) external view returns (Collection memory);
+    function createCollection(CollectionData memory data) external returns (uint256);
+    function updateCollection(uint256 collectionId, CollectionData memory data) external;
+    function setCollectionStatus(uint256 collectionId, bool isMintable, bool isPaused) external;
 
-    function createCollection(CreateCollection memory data) external returns (uint256);
-
-    function updateCollection(uint256 collectionId, UpdateCollection memory data) external;
-
-    function toggleCollectionPaused(uint256 collectionId) external;
-
-    /**
-     * @notice upgrades token version. Old token gets burned and new token gets minted to owner of Token
-     * @param _tokenId TokenID to be upgraded
-     * @return bool if upgrade successfull it returns true
-     */
-    function upgradeTokenVersion(uint256 _tokenId) external returns (bool);
-
+    // ========================================================================
+    // Revenue splits
+    // ========================================================================
     function getPrimaryRevenueSplits(
         uint256 _collectionId,
         uint256 _price
@@ -120,46 +115,9 @@ interface IFANtiumNFT is IERC721Upgradeable {
             address payable athleteAddress_
         );
 
-    /**
-     * @notice get royalties for secondary market transfers of token
-     * @param _tokenId tokenId of NFT
-     * @return recipients array of recepients of royalties
-     * @return bps array of bps of royalties
-     */
-    function getRoyalties(uint256 _tokenId)
-        external
-        view
-        returns (address payable[] memory recipients, uint256[] memory bps);
-
-    /**
-     * @notice get collection athlete address
-     * @param _collectionId collectionId of NFTs
-     * @return address of athlete
-     */
-    function getCollectionAthleteAddress(uint256 _collectionId) external view returns (address);
-
-    /**
-     * @notice get earnings share per token of collection
-     * @param _collectionId collectionId of NFT
-     * @return uint256 tournament share in 1e7 per token of collection
-     * @return uint256 other share in 1e7 per token of collection
-     */
-    function getEarningsShares1e7(uint256 _collectionId) external view returns (uint256, uint256);
-
-    /**
-     * @notice check if collection exists
-     * @param _collectionId collectionId of NFT
-     * @return bool true if collection exists
-     */
-    function getCollectionExists(uint256 _collectionId) external view returns (bool);
-
-    /**
-     * @notice get tokens minted per collection
-     * @param _collectionId collectionId of NFT
-     * @return uint24 returns amount of minted tokens of collection
-     */
-    function getMintedTokensOfCollection(uint256 _collectionId) external view returns (uint24);
-
+    // ========================================================================
+    // Minting
+    // ========================================================================
     function mintTo(uint256 collectionId, uint24 quantity, address recipient) external returns (uint256);
 
     function mintTo(
@@ -171,4 +129,9 @@ interface IFANtiumNFT is IERC721Upgradeable {
     )
         external
         returns (uint256);
+
+    // ========================================================================
+    // Claiming
+    // ========================================================================
+    function upgradeTokenVersion(uint256 tokenId) external returns (uint256);
 }

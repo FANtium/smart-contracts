@@ -9,7 +9,7 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import { IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
+import { IFANtiumNFT, Collection } from "src/interfaces/IFANtiumNFT.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 import { FANtiumBaseUpgradable } from "src/FANtiumBaseUpgradable.sol";
@@ -200,7 +200,7 @@ contract FANtiumClaimingV2 is FANtiumBaseUpgradable {
 
         //check if collection exists
         for (uint256 i = 0; i < _collectionIds.length; i++) {
-            bool collectionExists = IFANtiumNFT(fantiumNFTContract).getCollectionExists(_collectionIds[i]);
+            bool collectionExists = IFANtiumNFT(fantiumNFTContract).collections(_collectionIds[i]).exists;
             require(collectionExists, "FANtiumClaimingV1: collection does not exist");
         }
         // EFFECTS
@@ -321,7 +321,7 @@ contract FANtiumClaimingV2 is FANtiumBaseUpgradable {
         require(collectionIds.length > 0, "FANtiumClaimingV1: collectionIds length must be greater than 0");
 
         for (uint256 i = 0; i < collectionIds.length; i++) {
-            bool collectionExists = IFANtiumNFT(fantiumNFTContract).getCollectionExists(collectionIds[i]);
+            bool collectionExists = IFANtiumNFT(fantiumNFTContract).collections(collectionIds[i]).exists;
             require(collectionExists, "FANtiumClaimingV1: collection does not exist");
         }
 
@@ -470,7 +470,7 @@ contract FANtiumClaimingV2 is FANtiumBaseUpgradable {
 
         // INTERACTIONS
         //upgrade token to new version
-        require(IFANtiumNFT(fantiumNFTContract).upgradeTokenVersion(_tokenId), "FANtiumClaimingV1: upgrade failed");
+        IFANtiumNFT(fantiumNFTContract).upgradeTokenVersion(_tokenId);
         //transfer USDC to _msgSender()
         _splitFunds(claimAmount, _distributionEventId);
         emit Claim(_distributionEventId, _tokenId, claimAmount);
@@ -599,9 +599,11 @@ contract FANtiumClaimingV2 is FANtiumBaseUpgradable {
 
         for (uint256 i = 0; i < distributionEvents[_distributionEventId].collectionIds.length; i++) {
             uint256 collectionId = distributionEvents[_distributionEventId].collectionIds[i];
-            uint256 mintedTokens = IFANtiumNFT(fantiumNFTContract).getMintedTokensOfCollection(collectionId);
+            Collection memory collection = IFANtiumNFT(fantiumNFTContract).collections(collectionId);
+
+            uint256 mintedTokens = collection.invocations;
             (uint256 tournamentEarningShare1e7, uint256 otherEarningShare1e7) =
-                IFANtiumNFT(fantiumNFTContract).getEarningsShares1e7(collectionId);
+                (collection.tournamentEarningShare1e7, collection.otherEarningShare1e7);
 
             (uint256 tournamentClaim, uint256 otherClaim) =
                 calculateClaim(_distributionEventId, tournamentEarningShare1e7, otherEarningShare1e7);

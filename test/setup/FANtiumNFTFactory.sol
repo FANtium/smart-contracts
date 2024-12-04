@@ -4,7 +4,7 @@ pragma solidity ^0.8.27;
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import { Collection, CreateCollection } from "src/interfaces/IFANtiumNFT.sol";
+import { Collection, CollectionData } from "src/interfaces/IFANtiumNFT.sol";
 import { FANtiumNFTV5 } from "src/FANtiumNFTV5.sol";
 import { FANtiumUserManagerV2 } from "src/FANtiumUserManagerV2.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
@@ -41,6 +41,7 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
     address payable public fantiumNFT_athlete = payable(makeAddr("athlete"));
     address payable public fantiumNFT_treasuryPrimary = payable(makeAddr("treasuryPrimary"));
     address payable public fantiumNFT_treasurySecondary = payable(makeAddr("treasurySecondary"));
+    address public fantiumNFT_tokenUpgrader = makeAddr("tokenUpgrader");
     address public fantiumNFT_signer;
     uint256 public fantiumNFT_signerKey;
 
@@ -65,18 +66,20 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
         fantiumNFT.grantRole(fantiumNFT.MANAGER_ROLE(), fantiumNFT_manager);
         fantiumNFT.grantRole(fantiumNFT.FORWARDER_ROLE(), fantiumNFT_trustedForwarder);
         fantiumNFT.grantRole(fantiumNFT.SIGNER_ROLE(), fantiumNFT_signer);
+        fantiumNFT.grantRole(fantiumNFT.TOKEN_UPGRADER_ROLE(), fantiumNFT_tokenUpgrader);
         vm.stopPrank();
 
         vm.startPrank(fantiumNFT_manager);
         fantiumNFT.setERC20PaymentToken(address(usdc));
         fantiumNFT.setUserManager(fantiumUserManager_proxy);
+        fantiumNFT.setBaseURI("https://app.fantium.com/api/metadata/");
 
         // Configure collections
         CollectionJson[] memory collections = abi.decode(loadFixture("collections.json"), (CollectionJson[]));
         for (uint256 i = 0; i < collections.length; i++) {
             CollectionJson memory collection = collections[i];
             uint256 collectionId = fantiumNFT.createCollection(
-                CreateCollection({
+                CollectionData({
                     athleteAddress: collection.athleteAddress,
                     athletePrimarySalesBPS: collection.athletePrimarySalesBPS,
                     athleteSecondarySalesBPS: collection.athleteSecondarySalesBPS,
@@ -90,15 +93,8 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
                 })
             );
 
-            // By default, collections are not mintable, set them as mintable if needed
-            if (collection.isMintable) {
-                fantiumNFT.toggleCollectionMintable(collectionId);
-            }
-
-            // By default, collections are paused, unpause them if needed
-            if (!collection.isPaused) {
-                fantiumNFT.toggleCollectionPaused(collectionId);
-            }
+            // By default, collections are not mintable, set them as mintable/paused if needed
+            fantiumNFT.setCollectionStatus(collectionId, collection.isMintable, collection.isPaused);
         }
         vm.stopPrank();
     }
@@ -122,6 +118,9 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
 
         (fantiumRevenue, fantiumAddress, athleteRevenue, athleteAddress) =
             fantiumNFT.getPrimaryRevenueSplits(collectionId, amountUSDC);
+        if (block.timestamp < collection.launchTimestamp) {
+            vm.warp(collection.launchTimestamp + 1);
+        }
 
         deal(address(usdc), recipient, amountUSDC);
 
@@ -147,8 +146,13 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
             address athleteAddress
         )
     {
+        Collection memory collection = fantiumNFT.collections(collectionId);
         (fantiumRevenue, fantiumAddress, athleteRevenue, athleteAddress) =
             fantiumNFT.getPrimaryRevenueSplits(collectionId, amountUSDC);
+
+        if (block.timestamp < collection.launchTimestamp) {
+            vm.warp(collection.launchTimestamp + 1);
+        }
 
         deal(address(usdc), recipient, amountUSDC);
 

@@ -11,6 +11,7 @@ import { FANtiumBaseUpgradable } from "src/FANtiumBaseUpgradable.sol";
  * @author Mathieu Bour - FANtium, based on previous work by MTX Studio AG
  */
 contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {
+    // ========================================================================
     // Roles
     // ========================================================================
     bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");

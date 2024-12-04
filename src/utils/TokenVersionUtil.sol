@@ -9,17 +9,16 @@ pragma solidity 0.8.28;
 library TokenVersionUtil {
     uint256 private constant ONE_MILLION = 1_000_000;
     uint256 private constant TEN_THOUSAND = 10_000;
+    uint256 public constant MAX_VERSION = 99;
 
-    /*///////////////////////////////////////////////////////////////
-                            INTERNAL 
-    //////////////////////////////////////////////////////////////*/
-
-    function getTokenInfo(uint256 _tokenId) internal pure returns (uint256, uint256, uint256) {
-        uint256 collectionOfToken = _tokenId / ONE_MILLION;
-        uint256 versionOfToken = (_tokenId % ONE_MILLION) / TEN_THOUSAND;
-        uint256 tokenNr = _tokenId % TEN_THOUSAND;
-
-        return (collectionOfToken, versionOfToken, tokenNr);
+    function getTokenInfo(uint256 tokenId)
+        internal
+        pure
+        returns (uint256 collectionId, uint256 version, uint256 number)
+    {
+        collectionId = tokenId / ONE_MILLION;
+        version = (tokenId % ONE_MILLION) / TEN_THOUSAND;
+        number = tokenId % TEN_THOUSAND;
     }
 
     function createTokenId(

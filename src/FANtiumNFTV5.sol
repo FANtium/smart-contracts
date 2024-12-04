@@ -13,14 +13,13 @@ import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
-import { DefaultOperatorFiltererUpgradeable } from
-    "operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol";
 import {
     IFANtiumNFT,
     Collection,
-    CreateCollection,
-    UpdateCollection,
-    CollectionErrorReason
+    CollectionData,
+    CollectionErrorReason,
+    MintErrorReason,
+    UpgradeErrorReason
 } from "src/interfaces/IFANtiumNFT.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
@@ -30,7 +29,7 @@ import { FANtiumBaseUpgradable } from "src/FANtiumBaseUpgradable.sol";
  * @title FANtium ERC721 contract V5.
  * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
  */
-contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperatorFiltererUpgradeable, IFANtiumNFT {
+contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, IFANtiumNFT {
     using StringsUpgradeable for uint256;
     using ECDSAUpgradeable for bytes32;
 
@@ -40,13 +39,20 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
     string private constant NAME = "FANtium";
     string private constant SYMBOL = "FAN";
 
-    uint256 private constant ONE_MILLION = 1_000_000;
-    bytes4 private constant INTERFACE_ID_ERC2981_OVERRIDE = 0xbb3bafd6;
+    uint256 private constant BPS_BASE = 10_000;
+    uint256 private constant MAX_COLLECTIONS = 1_000_000;
+    uint256 private constant MAX_INVOCATIONS = 10_000;
 
     // Roles
     // ========================================================================
     bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
     bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
+
+    /**
+     * @notice Role for the token upgrader.
+     * @dev Used to upgrade the token to a new version.
+     */
+    bytes32 public constant TOKEN_UPGRADER_ROLE = keccak256("TOKEN_UPGRADER_ROLE");
 
     // ========================================================================
     // State variables
@@ -57,9 +63,9 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
     mapping(address => bool) private UNUSED_kycedAddresses;
     uint256 public nextCollectionId;
     address public erc20PaymentToken;
-    address public claimContract;
+    address private UNUSED_claimContract;
     address public fantiumUserManager;
-    address public trustedForwarder;
+    address private UNUSED_trustedForwarder;
 
     // ========================================================================
     // UUPS upgradeable pattern
@@ -88,7 +94,6 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
         __ERC721_init(_tokenName, _tokenSymbol);
         __UUPSUpgradeable_init();
         __AccessControl_init();
-        __DefaultOperatorFilterer_init();
         __Pausable_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
@@ -102,12 +107,23 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
     // ========================================================================
     // Setters
     // ========================================================================
-    function setClaimContract(address _claimContract) external onlyManagerOrAdmin {
-        claimContract = _claimContract;
+    function setBaseURI(string memory baseURI_) external whenNotPaused onlyManagerOrAdmin {
+        baseURI = baseURI_;
     }
 
     function setUserManager(address _userManager) external onlyManagerOrAdmin {
         fantiumUserManager = _userManager;
+    }
+
+    // ========================================================================
+    // ERC721
+    // ========================================================================
+    /**
+     * @dev Returns the base URI for computing {tokenURI}.
+     * Necessary to use the default ERC721 tokenURI function from ERC721Upgradeable.
+     */
+    function _baseURI() internal view virtual override returns (string memory) {
+        return baseURI;
     }
 
     // ========================================================================
@@ -120,13 +136,22 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
         override(IERC165Upgradeable, AccessControlUpgradeable, ERC721Upgradeable)
         returns (bool)
     {
-        return interfaceId == INTERFACE_ID_ERC2981_OVERRIDE || super.supportsInterface(interfaceId);
+        return super.supportsInterface(interfaceId);
+    }
+
+    /**
+     * @notice Sets the ERC20 payment token.
+     * @dev Restricted to manager or admin.
+     * @param _erc20PaymentToken The new ERC20 payment token.
+     */
+    function setERC20PaymentToken(address _erc20PaymentToken) external whenNotPaused onlyManagerOrAdmin {
+        erc20PaymentToken = _erc20PaymentToken;
     }
 
     // ========================================================================
     // Modifiers
     // ========================================================================
-    modifier onlyAthlete(uint256 collectionId) {
+    modifier onlyAthleteOrManagerOrAdmin(uint256 collectionId) {
         if (
             _msgSender() != _collections[collectionId].athleteAddress && !hasRole(MANAGER_ROLE, msg.sender)
                 && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)
@@ -139,13 +164,6 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
     modifier onlyValidCollectionId(uint256 _collectionId) {
         if (!_collections[_collectionId].exists) {
             revert InvalidCollectionId(_collectionId);
-        }
-        _;
-    }
-
-    modifier onlyValidTokenId(uint256 _tokenId) {
-        if (!_exists(_tokenId)) {
-            revert InvalidTokenId(_tokenId);
         }
         _;
     }
@@ -178,6 +196,205 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
     }
 
     // ========================================================================
+    // Collections
+    // ========================================================================
+    function collections(uint256 _collectionId) external view returns (Collection memory) {
+        return _collections[_collectionId];
+    }
+
+    function _checkCollectionData(CollectionData memory data) internal view {
+        // Validate the data
+        if (data.athleteAddress == address(0)) {
+            revert InvalidCollection(CollectionErrorReason.INVALID_ATHLETE_ADDRESS);
+        }
+
+        if (data.athletePrimarySalesBPS > BPS_BASE) {
+            revert InvalidCollection(CollectionErrorReason.INVALID_PRIMARY_SALES_BPS);
+        }
+
+        if (data.athleteSecondarySalesBPS + data.fantiumSecondarySalesBPS > BPS_BASE) {
+            revert InvalidCollection(CollectionErrorReason.INVALID_BPS_SUM);
+        }
+
+        if (data.fantiumSalesAddress == address(0)) {
+            revert InvalidCollection(CollectionErrorReason.INVALID_FANTIUM_SALES_ADDRESS);
+        }
+
+        if (data.maxInvocations >= MAX_INVOCATIONS) {
+            revert InvalidCollection(CollectionErrorReason.INVALID_MAX_INVOCATIONS);
+        }
+
+        if (data.otherEarningShare1e7 > 1e7) {
+            revert InvalidCollection(CollectionErrorReason.INVALID_OTHER_EARNING_SHARE);
+        }
+
+        // no check on the price
+
+        if (data.tournamentEarningShare1e7 > 1e7) {
+            revert InvalidCollection(CollectionErrorReason.INVALID_TOURNAMENT_EARNING_SHARE);
+        }
+
+        if (nextCollectionId >= MAX_COLLECTIONS) {
+            revert InvalidCollection(CollectionErrorReason.MAX_COLLECTIONS_REACHED);
+        }
+    }
+
+    /**
+     * @notice Creates a new collection.
+     * @dev Restricted to manager or admin.
+     * @param data The new collection data.
+     * @return collectionId The ID of the created collection.
+     */
+    function createCollection(CollectionData memory data) external whenNotPaused onlyManagerOrAdmin returns (uint256) {
+        _checkCollectionData(data);
+
+        uint256 collectionId = nextCollectionId++;
+        Collection memory newCollection = Collection({
+            athleteAddress: data.athleteAddress,
+            athletePrimarySalesBPS: data.athletePrimarySalesBPS,
+            athleteSecondarySalesBPS: data.athleteSecondarySalesBPS,
+            exists: true,
+            fantiumSalesAddress: data.fantiumSalesAddress,
+            fantiumSecondarySalesBPS: data.fantiumSecondarySalesBPS,
+            invocations: 0,
+            isMintable: false,
+            isPaused: true,
+            launchTimestamp: data.launchTimestamp,
+            maxInvocations: data.maxInvocations,
+            otherEarningShare1e7: data.otherEarningShare1e7,
+            price: data.price,
+            tournamentEarningShare1e7: data.tournamentEarningShare1e7
+        });
+        _collections[collectionId] = newCollection;
+        emit CollectionCreated(collectionId, newCollection);
+
+        return collectionId;
+    }
+
+    /**
+     * @notice Updates a collection.
+     * @dev Restricted to manager or admin.
+     * @param collectionId The collection ID to update.
+     * @param data The new collection data.
+     */
+    function updateCollection(
+        uint256 collectionId,
+        CollectionData memory data
+    )
+        external
+        onlyValidCollectionId(collectionId)
+        whenNotPaused
+        onlyManagerOrAdmin
+    {
+        _checkCollectionData(data);
+
+        // Ensure the max invocations is not decreased
+        Collection memory updatedCollection = _collections[collectionId];
+        if (data.maxInvocations < updatedCollection.invocations) {
+            revert InvalidCollection(CollectionErrorReason.INVALID_MAX_INVOCATIONS);
+        }
+
+        updatedCollection.athleteAddress = data.athleteAddress;
+        updatedCollection.athletePrimarySalesBPS = data.athletePrimarySalesBPS;
+        updatedCollection.athleteSecondarySalesBPS = data.athleteSecondarySalesBPS;
+        updatedCollection.fantiumSalesAddress = data.fantiumSalesAddress;
+        updatedCollection.fantiumSecondarySalesBPS = data.fantiumSecondarySalesBPS;
+        updatedCollection.launchTimestamp = data.launchTimestamp;
+        updatedCollection.maxInvocations = data.maxInvocations;
+        updatedCollection.otherEarningShare1e7 = data.otherEarningShare1e7;
+        updatedCollection.price = data.price;
+        updatedCollection.tournamentEarningShare1e7 = data.tournamentEarningShare1e7;
+        _collections[collectionId] = updatedCollection;
+
+        emit CollectionUpdated(collectionId, updatedCollection);
+    }
+
+    /**
+     * @notice Sets the mintable and paused state of collection `collectionId`.
+     * A non-mintable collection prevents any minting.
+     * A paused collection prevents regular accounts to mint tokens but allow members of the allowlist to mint.
+     * @dev Restricted to athlete or manager or admin.
+     * @param collectionId The collection ID to set the status of.
+     * @param isMintable The new mintable state of the collection.
+     * @param isPaused The new paused state of the collection.
+     */
+    function setCollectionStatus(
+        uint256 collectionId,
+        bool isMintable,
+        bool isPaused
+    )
+        external
+        onlyValidCollectionId(collectionId)
+        onlyAthleteOrManagerOrAdmin(collectionId)
+    {
+        _collections[collectionId].isMintable = isMintable;
+        _collections[collectionId].isPaused = isPaused;
+    }
+
+    // ========================================================================
+    // Revenue splits
+    // ========================================================================
+    /**
+     * @notice Returns the primary revenue splits for a given collection and amount.
+     * @dev The share formula is based on the BPS values set for the collection on a 10,000 basis.
+     * @param collectionId collection ID to be queried.
+     * @param amount The amount to share between the athlete and FANtium.
+     * @return fantiumRevenue amount of revenue to be sent to FANtium
+     * @return fantiumAddress address to send FANtium revenue to
+     * @return athleteRevenue amount of revenue to be sent to athlete
+     * @return athleteAddress address to send athlete revenue to
+     */
+    function getPrimaryRevenueSplits(
+        uint256 collectionId,
+        uint256 amount
+    )
+        public
+        view
+        returns (
+            uint256 fantiumRevenue,
+            address payable fantiumAddress,
+            uint256 athleteRevenue,
+            address payable athleteAddress
+        )
+    {
+        // get athlete address & revenue from collection
+        Collection memory collection = _collections[collectionId];
+
+        // calculate revenues
+        athleteRevenue = (amount * collection.athletePrimarySalesBPS) / BPS_BASE;
+        fantiumRevenue = amount - athleteRevenue;
+
+        // set addresses from storage
+        fantiumAddress = collection.fantiumSalesAddress;
+        athleteAddress = collection.athleteAddress;
+    }
+
+    /**
+     * @dev splits funds between sender (if refund),
+     * FANtium, and athlete for a token purchased on
+     * collection `_collectionId`.
+     */
+    function _splitFunds(uint256 _price, uint256 _collectionId, address _sender) internal {
+        // split funds between FANtium and athlete
+        (uint256 fantiumRevenue_, address fantiumAddress_, uint256 athleteRevenue_, address athleteAddress_) =
+            getPrimaryRevenueSplits(_collectionId, _price);
+
+        // FANtium payment
+        if (fantiumRevenue_ > 0) {
+            SafeERC20Upgradeable.safeTransferFrom(
+                IERC20Upgradeable(erc20PaymentToken), _sender, fantiumAddress_, fantiumRevenue_
+            );
+        }
+
+        // athlete payment
+        if (athleteRevenue_ > 0) {
+            SafeERC20Upgradeable.safeTransferFrom(
+                IERC20Upgradeable(erc20PaymentToken), _sender, athleteAddress_, athleteRevenue_
+            );
+        }
+    }
+
+    // ========================================================================
     // Minting
     // ========================================================================
     /**
@@ -196,18 +413,17 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
         onlyValidCollectionId(collectionId)
         returns (bool useAllowList)
     {
-        if (!IFANtiumUserManager(fantiumUserManager).isKYCed(_msgSender())) {
-            revert AccountNotKYCed(recipient);
-        }
-
         Collection memory collection = _collections[collectionId];
+        if (!collection.isMintable) {
+            revert InvalidMint(MintErrorReason.COLLECTION_NOT_MINTABLE);
+        }
 
         if (collection.launchTimestamp > block.timestamp) {
-            revert CollectionNotLaunched(collectionId);
+            revert InvalidMint(MintErrorReason.COLLECTION_NOT_LAUNCHED);
         }
 
-        if (!collection.isMintable) {
-            revert CollectionNotMintable(collectionId);
+        if (!IFANtiumUserManager(fantiumUserManager).isKYCed(_msgSender())) {
+            revert InvalidMint(MintErrorReason.ACCOUNT_NOT_KYCED);
         }
 
         // If the collection is paused, we need to check if the recipient is on the allowlist and has enough allocation
@@ -215,7 +431,7 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
             useAllowList = true;
             bool isAllowListed = IFANtiumUserManager(fantiumUserManager).allowlist(recipient, collectionId) >= quantity;
             if (!isAllowListed) {
-                revert CollectionPaused(collectionId);
+                revert InvalidMint(MintErrorReason.COLLECTION_PAUSED);
             }
         }
 
@@ -240,18 +456,15 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
         returns (uint256 lastTokenId)
     {
         Collection memory collection = _collections[collectionId];
-        uint256 tokenId = (collectionId * ONE_MILLION) + collection.invocations;
+        uint256 tokenId = (collectionId * MAX_COLLECTIONS) + collection.invocations;
 
-        // CHECKS (in the mintable function)
         bool useAllowList = mintable(collectionId, quantity, recipient);
 
-        // EFFECTS
         _collections[collectionId].invocations += quantity;
         if (useAllowList) {
             IFANtiumUserManager(fantiumUserManager).decreaseAllowList(recipient, collectionId, quantity);
         }
 
-        // INTERACTIONS
         // Send funds to the treasury and athlete account.
         _splitFunds(amount, collectionId, _msgSender());
 
@@ -296,487 +509,44 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, DefaultOperat
         bytes32 hash =
             keccak256(abi.encode(_msgSender(), collectionId, quantity, amount, recipient)).toEthSignedMessageHash();
         if (!hasRole(SIGNER_ROLE, hash.recover(signature))) {
-            revert InvalidSignature();
+            revert InvalidMint(MintErrorReason.INVALID_SIGNATURE);
         }
 
         return _mintTo(collectionId, quantity, amount, recipient);
-    }
-
-    /**
-     * @notice View function that returns appropriate revenue splits between
-     * different FANtium, athlete given a sale price of `_price` on collection `_collectionId`.
-     * This always returns two revenue amounts and two addresses, but if a
-     * revenue is zero for athlete, the corresponding
-     * address returned will also be null (for gas optimization).
-     * Does not account for refund if user overpays for a token
-     * @param collectionId collection ID to be queried.
-     * @param price Sale price of token.
-     * @return fantiumRevenue amount of revenue to be sent to FANtium
-     * @return fantiumAddress address to send FANtium revenue to
-     * @return athleteRevenue amount of revenue to be sent to athlete
-     * @return athleteAddress address to send athlete revenue to. Will be null
-     * if no revenue is due to athlete (gas optimization).
-     * @dev this always returns 2 addresses and 2 revenues, but if the
-     * revenue is zero, the corresponding address will be address(0). It is up
-     * to the contract performing the revenue split to handle this
-     * appropriately.
-     */
-
-    /**
-     * @dev Returns the primary revenue splits for a given collection and price.
-     * @param collectionId collection ID to be queried.
-     * @param price Sale price of token.
-     * @return fantiumRevenue amount of revenue to be sent to FANtium
-     * @return fantiumAddress address to send FANtium revenue to
-     * @return athleteRevenue amount of revenue to be sent to athlete
-     * @return athleteAddress address to send athlete revenue to
-     */
-    function getPrimaryRevenueSplits(
-        uint256 collectionId,
-        uint256 price
-    )
-        public
-        view
-        returns (
-            uint256 fantiumRevenue,
-            address payable fantiumAddress,
-            uint256 athleteRevenue,
-            address payable athleteAddress
-        )
-    {
-        // get athlete address & revenue from collection
-        Collection memory collection = _collections[collectionId];
-
-        // calculate revenues
-        athleteRevenue = (price * collection.athletePrimarySalesBPS) / 10_000;
-        fantiumRevenue = price - athleteRevenue;
-
-        // set addresses from storage
-        fantiumAddress = collection.fantiumSalesAddress;
-        athleteAddress = collection.athleteAddress;
-    }
-
-    /**
-     * @dev splits funds between sender (if refund),
-     * FANtium, and athlete for a token purchased on
-     * collection `_collectionId`.
-     */
-    function _splitFunds(uint256 _price, uint256 _collectionId, address _sender) internal {
-        // split funds between FANtium and athlete
-        (uint256 fantiumRevenue_, address fantiumAddress_, uint256 athleteRevenue_, address athleteAddress_) =
-            getPrimaryRevenueSplits(_collectionId, _price);
-
-        // FANtium payment
-        if (fantiumRevenue_ > 0) {
-            SafeERC20Upgradeable.safeTransferFrom(
-                IERC20Upgradeable(erc20PaymentToken), _sender, fantiumAddress_, fantiumRevenue_
-            );
-        }
-
-        // athlete payment
-        if (athleteRevenue_ > 0) {
-            SafeERC20Upgradeable.safeTransferFrom(
-                IERC20Upgradeable(erc20PaymentToken), _sender, athleteAddress_, athleteRevenue_
-            );
-        }
-    }
-
-    // ========================================================================
-    // ERC721 overrides
-    // ========================================================================
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    )
-        public
-        override(ERC721Upgradeable, IERC721Upgradeable)
-        whenNotPaused
-        onlyAllowedOperator(from)
-    {
-        super.safeTransferFrom(from, to, tokenId);
-    }
-
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes memory data
-    )
-        public
-        override(ERC721Upgradeable, IERC721Upgradeable)
-        whenNotPaused
-        onlyAllowedOperator(from)
-    {
-        super.safeTransferFrom(from, to, tokenId, data);
-    }
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    )
-        public
-        override(ERC721Upgradeable, IERC721Upgradeable)
-        whenNotPaused
-        onlyAllowedOperator(from)
-    {
-        super.transferFrom(from, to, tokenId);
-    }
-
-    function approve(
-        address operator,
-        uint256 tokenId
-    )
-        public
-        override(ERC721Upgradeable, IERC721Upgradeable)
-        whenNotPaused
-        onlyAllowedOperatorApproval(operator)
-    {
-        super.approve(operator, tokenId);
-    }
-
-    function setApprovalForAll(
-        address operator,
-        bool approved
-    )
-        public
-        override(ERC721Upgradeable, IERC721Upgradeable)
-        whenNotPaused
-        onlyAllowedOperatorApproval(operator)
-    {
-        super.setApprovalForAll(operator, approved);
-    }
-
-    function setBaseURI(string memory _baseURI) external whenNotPaused onlyManagerOrAdmin {
-        baseURI = _baseURI;
-    }
-
-    /**
-     * @notice Gets token URI for token ID `_tokenId`.
-     * @dev token URIs are the concatenation of the collection base URI and the
-     * token ID.
-     */
-    function tokenURI(uint256 _tokenId) public view override onlyValidTokenId(_tokenId) returns (string memory) {
-        return string(bytes.concat(bytes(baseURI), bytes(_tokenId.toString())));
-    }
-
-    // ========================================================================
-    // Collections
-    // ========================================================================
-    function collections(uint256 _collectionId) external view returns (Collection memory) {
-        return _collections[_collectionId];
-    }
-
-    function getCollectionAthleteAddress(uint256 _collectionId) external view returns (address) {
-        return _collections[_collectionId].athleteAddress;
-    }
-
-    function getEarningsShares1e7(uint256 _collectionId) external view returns (uint256, uint256) {
-        return (_collections[_collectionId].tournamentEarningShare1e7, _collections[_collectionId].otherEarningShare1e7);
-    }
-
-    function getCollectionExists(uint256 _collectionId) external view returns (bool) {
-        return _collections[_collectionId].exists;
-    }
-
-    function getMintedTokensOfCollection(uint256 _collectionId) external view returns (uint24) {
-        return _collections[_collectionId].invocations;
-    }
-
-    /**
-     * @notice Creates a new collection.
-     * @dev Restricted to platform manager.
-     */
-    function createCollection(CreateCollection memory data)
-        external
-        whenNotPaused
-        onlyManagerOrAdmin
-        returns (uint256)
-    {
-        // Validate the data
-        if (data.athleteSecondarySalesBPS + data.fantiumSecondarySalesBPS > 10_000) {
-            revert InvalidCollection(CollectionErrorReason.INVALID_BPS_SUM);
-        }
-
-        if (data.maxInvocations >= 10_000) {
-            revert InvalidCollection(CollectionErrorReason.INVALID_MAX_INVOCATIONS);
-        }
-
-        if (data.athletePrimarySalesBPS > 10_000) {
-            revert InvalidCollection(CollectionErrorReason.INVALID_PRIMARY_SALES_BPS);
-        }
-
-        if (nextCollectionId >= 1_000_000) {
-            revert InvalidCollection(CollectionErrorReason.MAX_COLLECTIONS_REACHED);
-        }
-
-        if (data.tournamentEarningShare1e7 > 1e7) {
-            revert InvalidCollection(CollectionErrorReason.INVALID_TOURNAMENT_EARNING_SHARE);
-        }
-
-        if (data.otherEarningShare1e7 > 1e7) {
-            revert InvalidCollection(CollectionErrorReason.INVALID_OTHER_EARNING_SHARE);
-        }
-
-        if (data.athleteAddress == address(0)) {
-            revert InvalidCollection(CollectionErrorReason.INVALID_ATHLETE_ADDRESS);
-        }
-
-        if (data.fantiumSalesAddress == address(0)) {
-            revert InvalidCollection(CollectionErrorReason.INVALID_FANTIUM_SALES_ADDRESS);
-        }
-
-        uint256 collectionId = nextCollectionId++;
-        Collection memory collection = Collection({
-            athleteAddress: data.athleteAddress,
-            athletePrimarySalesBPS: data.athletePrimarySalesBPS,
-            athleteSecondarySalesBPS: data.athleteSecondarySalesBPS,
-            exists: true,
-            fantiumSalesAddress: data.fantiumSalesAddress,
-            fantiumSecondarySalesBPS: data.fantiumSecondarySalesBPS,
-            invocations: 0,
-            isMintable: false,
-            isPaused: true,
-            launchTimestamp: data.launchTimestamp,
-            maxInvocations: data.maxInvocations,
-            otherEarningShare1e7: data.otherEarningShare1e7,
-            price: data.price,
-            tournamentEarningShare1e7: data.tournamentEarningShare1e7
-        });
-        _collections[collectionId] = collection;
-
-        return collectionId;
-    }
-
-    function updateCollection(
-        uint256 collectionId,
-        UpdateCollection memory data
-    )
-        external
-        onlyValidCollectionId(collectionId)
-        whenNotPaused
-        onlyManagerOrAdmin
-    {
-        if (data.price == 0) {
-            revert InvalidCollection(CollectionErrorReason.INVALID_PRICE);
-        }
-
-        if (data.tournamentEarningShare1e7 > 1e7) {
-            revert InvalidCollection(CollectionErrorReason.INVALID_TOURNAMENT_EARNING_SHARE);
-        }
-
-        if (data.otherEarningShare1e7 > 1e7) {
-            revert InvalidCollection(CollectionErrorReason.INVALID_OTHER_EARNING_SHARE);
-        }
-
-        if (data.maxInvocations >= 10_000) {
-            revert InvalidCollection(CollectionErrorReason.INVALID_MAX_INVOCATIONS);
-        }
-
-        if (data.fantiumSalesAddress == address(0)) {
-            revert InvalidCollection(CollectionErrorReason.INVALID_FANTIUM_SALES_ADDRESS);
-        }
-
-        if (data.athleteSecondarySalesBPS + data.fantiumSecondarySalesBPS > 10_000) {
-            revert InvalidCollection(CollectionErrorReason.INVALID_SECONDARY_SALES_BPS);
-        }
-
-        Collection memory existing = _collections[collectionId];
-        existing.fantiumSecondarySalesBPS = data.fantiumSecondarySalesBPS;
-        existing.maxInvocations = data.maxInvocations;
-        existing.price = data.price;
-        existing.tournamentEarningShare1e7 = data.tournamentEarningShare1e7;
-        existing.otherEarningShare1e7 = data.otherEarningShare1e7;
-        _collections[collectionId] = existing;
-    }
-
-    /**
-     * @notice Toggles isMintingPaused state of collection `_collectionId`.
-     */
-    function toggleCollectionPaused(uint256 collectionId)
-        external
-        onlyValidCollectionId(collectionId)
-        onlyAthlete(collectionId)
-    {
-        _collections[collectionId].isPaused = !_collections[collectionId].isPaused;
-    }
-
-    /**
-     * @notice Toggles isMintingPaused state of collection `_collectionId`.
-     */
-    function toggleCollectionMintable(uint256 collectionId)
-        external
-        onlyValidCollectionId(collectionId)
-        onlyAthlete(collectionId)
-    {
-        _collections[collectionId].isMintable = !_collections[collectionId].isMintable;
-    }
-
-    function updateCollectionAthleteAddress(
-        uint256 collectionId,
-        address payable athleteAddress
-    )
-        external
-        onlyValidCollectionId(collectionId)
-        onlyManagerOrAdmin
-    {
-        if (athleteAddress == address(0)) {
-            revert InvalidCollection(CollectionErrorReason.INVALID_ATHLETE_ADDRESS);
-        }
-
-        _collections[collectionId].athleteAddress = athleteAddress;
-    }
-
-    /**
-     * @notice Updates athlete primary market royalties for collection
-     * `_collectionId` to be `_primaryMarketRoyalty` percent.
-     * This DOES NOT include the primary market royalty percentages collected
-     * by FANtium; this is only the total percentage of royalties that will
-     * be split to athlete.
-     * @param collectionId collection ID.
-     * @param primaryMarketRoyalty Percent of primary sales revenue that will
-     * be sent to the athlete. This must be less than
-     * or equal to 100 percent.
-     */
-    function updateCollectionAthletePrimaryMarketRoyaltyBPS(
-        uint256 collectionId,
-        uint256 primaryMarketRoyalty
-    )
-        external
-        onlyValidCollectionId(collectionId)
-        onlyManagerOrAdmin
-    {
-        if (primaryMarketRoyalty > 10_000) {
-            revert InvalidCollection(CollectionErrorReason.INVALID_PRIMARY_SALES_BPS);
-        }
-
-        _collections[collectionId].athletePrimarySalesBPS = primaryMarketRoyalty;
-    }
-
-    /**
-     * @notice Updates athlete secondary market royalties for collection
-     * `_collectionId` to be `_secondMarketRoyalty` percent.
-     * This DOES NOT include the secondary market royalty percentages collected
-     * by FANtium; this is only the total percentage of royalties that will
-     * be split to athlete.
-     * @param collectionId collection ID.
-     * @param secondMarketRoyalty Percent of secondary sales revenue that will
-     * be sent to the athlete. This must be less than
-     * or equal to 95 percent.
-     */
-    function updateCollectionAthleteSecondaryMarketRoyaltyBPS(
-        uint256 collectionId,
-        uint256 secondMarketRoyalty
-    )
-        external
-        onlyValidCollectionId(collectionId)
-        onlyManagerOrAdmin
-    {
-        if (secondMarketRoyalty + _collections[collectionId].fantiumSecondarySalesBPS > 10_000) {
-            revert InvalidCollection(CollectionErrorReason.INVALID_SECONDARY_SALES_BPS);
-        }
-
-        _collections[collectionId].athleteSecondarySalesBPS = secondMarketRoyalty;
-    }
-
-    /**
-     * @notice Updates the launch timestamp of collection `_collectionId` to be
-     * `_launchTimestamp`.
-     */
-    function updateCollectionLaunchTimestamp(
-        uint256 _collectionId,
-        uint256 _launchTimestamp
-    )
-        external
-        onlyValidCollectionId(_collectionId)
-        onlyManagerOrAdmin
-    {
-        _collections[_collectionId].launchTimestamp = _launchTimestamp;
-    }
-
-    /*///////////////////////////////////////////////////////////////
-                        PLATFORM FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
-
-    function setERC20PaymentToken(address _erc20PaymentToken) external onlyManagerOrAdmin {
-        erc20PaymentToken = _erc20PaymentToken;
     }
 
     // ========================================================================
     // Claiming functions
     // ========================================================================
     /**
-     * @notice upgrade token version to new version in case of claim event
+     * @notice upgrade token version to new version in case of claim event.
+     * @dev Restricted to TOKEN_UPGRADER_ROLE.
+     * @param tokenId The token ID to upgrade.
      */
-    function upgradeTokenVersion(uint256 _tokenId) external whenNotPaused onlyValidTokenId(_tokenId) returns (bool) {
-        // only claim contract can call this function
-        require(claimContract != address(0), "Claim contract address is not set");
-
-        require(claimContract == msg.sender, "Only claim contract can call this function");
-
-        (uint256 _collectionId, uint256 _versionId, uint256 _tokenNr) = TokenVersionUtil.getTokenInfo(_tokenId);
-        require(_collections[_collectionId].exists, "Collection does not exist");
-        address tokenOwner = ownerOf(_tokenId);
-
-        // burn old token
-        _burn(_tokenId);
-        _versionId++;
-
-        require(_versionId < 100, "Version id cannot be greater than 99");
-
-        uint256 newTokenId = TokenVersionUtil.createTokenId(_collectionId, _versionId, _tokenNr);
-        // mint new token with new version
-        _mint(tokenOwner, newTokenId);
-        if (ownerOf(newTokenId) == tokenOwner) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    // ========================================================================
-    // Royalty functions
-    // ========================================================================
-    /**
-     * @notice Gets royalty Basis Points (BPS) for token ID `_tokenId`.
-     * This conforms to the IManifold interface designated in the Royalty
-     * Registry's RoyaltyEngineV1.sol contract.
-     * ref: https://github.com/manifoldxyz/royalty-registry-solidity
-     * @param _tokenId Token ID to be queried.
-     * @return recipients Array of royalty payment recipients
-     * @return bps Array of Basis Points (BPS) allocated to each recipient,
-     * aligned by index.
-     * @dev reverts if invalid _tokenId
-     * @dev only returns recipients that have a non-zero BPS allocation
-     */
-    function getRoyalties(uint256 _tokenId)
+    function upgradeTokenVersion(uint256 tokenId)
         external
-        view
-        onlyValidTokenId(_tokenId)
-        returns (address payable[] memory recipients, uint256[] memory bps)
+        onlyRole(TOKEN_UPGRADER_ROLE)
+        whenNotPaused
+        returns (uint256)
     {
-        // initialize arrays with maximum potential length
-        recipients = new address payable[](2);
-        bps = new uint256[](2);
+        (uint256 collectionId, uint256 tokenVersion, uint256 number) = TokenVersionUtil.getTokenInfo(tokenId);
+        tokenVersion++;
 
-        uint256 collectionId = _tokenId / ONE_MILLION;
-
-        Collection storage collection = _collections[collectionId];
-        // load values into memory
-        uint256 athleteBPS = collection.athleteSecondarySalesBPS;
-        uint256 fantiumBPS = collection.fantiumSecondarySalesBPS;
-        // populate arrays
-        uint256 payeeCount;
-        if (athleteBPS > 0) {
-            recipients[payeeCount] = collection.athleteAddress;
-            bps[payeeCount++] = athleteBPS;
-        }
-        if (fantiumBPS > 0) {
-            recipients[payeeCount] = collection.fantiumSalesAddress;
-            bps[payeeCount++] = fantiumBPS;
+        if (!_collections[collectionId].exists) {
+            revert InvalidUpgrade(UpgradeErrorReason.INVALID_COLLECTION_ID);
         }
 
-        return (recipients, bps);
+        _requireMinted(tokenId);
+
+        if (tokenVersion > TokenVersionUtil.MAX_VERSION) {
+            revert InvalidUpgrade(UpgradeErrorReason.VERSION_ID_TOO_HIGH);
+        }
+
+        address owner = ownerOf(tokenId);
+        _burn(tokenId); // burn old token
+
+        uint256 newTokenId = TokenVersionUtil.createTokenId(collectionId, tokenVersion, number);
+        _mint(owner, newTokenId);
+        return newTokenId;
     }
 }

@@ -3,7 +3,7 @@ pragma solidity 0.8.28;
 
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumNFTV5 } from "src/FANtiumNFTV5.sol";
-import { IFANtiumNFT, Collection, CreateCollection } from "src/interfaces/IFANtiumNFT.sol";
+import { IFANtiumNFT, Collection, CollectionData } from "src/interfaces/IFANtiumNFT.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { FANtiumNFTFactory } from "test/setup/FANtiumNFTFactory.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -111,7 +111,7 @@ contract FANtiumNFTV5FuzzTest is BaseTest, FANtiumNFTFactory {
 
         vm.startPrank(fantiumNFT_manager);
         uint256 collectionId = fantiumNFT.createCollection(
-            CreateCollection({
+            CollectionData({
                 athleteAddress: fantiumNFT_athlete,
                 athletePrimarySalesBPS: athletePrimarySalesBPS,
                 athleteSecondarySalesBPS: 0,
