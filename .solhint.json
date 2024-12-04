@@ -1,0 +1,10 @@
+{
+    "extends": "solhint:recommended",
+    "plugins": [],
+    "rules": {
+        "func-name-mixedcase": "off",
+        "no-inline-assembly": "off",
+        "var-name-mixedcase": "off",
+        "func-visibility": ["warn", { "ignoreConstructors": true }]
+    }
+}
