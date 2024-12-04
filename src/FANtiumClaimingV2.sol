@@ -60,13 +60,18 @@ contract FANtiumClaimingV2 is
     /**
      * @custom:oz-renamed-from trustedForwarder
      */
-    address private UNUSED_trustedForwarder; // Now handled by the FANtiumBaseUpgradable contract
+    address private UNUSED_trustedForwarder;
     /**
+     * @notice FANtium NFT contract address.
      * @custom:oz-renamed-from fantiumNFTContract
      */
     IFANtiumNFT public fantiumNFT;
 
-    IFANtiumUserManager public fantiumUserManager;
+    /**
+     * @notice User manager contract address
+     * @custom:oz-renamed-from fantiumUserManager
+     */
+    IFANtiumUserManager public userManager;
 
     /**
      * @dev mapping of distributionEvent to DistributionEvent
@@ -105,7 +110,7 @@ contract FANtiumClaimingV2 is
      * @custom:oz-upgrades-unsafe-allow constructor
      */
     constructor() {
-        _disableInitializers(); // TODO: uncomment when we are on v6
+        _disableInitializers();
     }
 
     function initialize(address admin) public initializer {
@@ -115,10 +120,6 @@ contract FANtiumClaimingV2 is
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         nextDistributionEventId = 1;
-    }
-
-    function initializeV5(address admin) internal initializer {
-        _grantRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
     /**
@@ -217,8 +218,8 @@ contract FANtiumClaimingV2 is
         fantiumNFT = _fantiumNFT;
     }
 
-    function setUserManager(IFANtiumUserManager _fantiumUserManager) external onlyManagerOrAdmin {
-        fantiumUserManager = _fantiumUserManager;
+    function setUserManager(IFANtiumUserManager _userManager) external onlyManagerOrAdmin {
+        userManager = _userManager;
     }
 
     function setGlobalPayoutToken(address _globalPayoutToken) external onlyManagerOrAdmin {
@@ -232,6 +233,10 @@ contract FANtiumClaimingV2 is
         return _distributionEvents[distributionEventId];
     }
 
+    /**
+     * @notice Check if the distribution event data is valid.
+     * @param data The distribution event data
+     */
     function _checkDistributionEvent(DistributionEventData memory data) private view {
         // Check if the provided times are valid
         if (
@@ -253,7 +258,7 @@ contract FANtiumClaimingV2 is
             }
         }
 
-        if (data.fantiumFeeBPS >= 10_000) {
+        if (data.fantiumFeeBPS >= BPS_BASE) {
             revert InvalidDistributionEvent(DistributionEventErrorReason.INVALID_FANTIUM_FEE_BPS);
         }
 
@@ -270,13 +275,26 @@ contract FANtiumClaimingV2 is
         }
     }
 
+    /**
+     * @notice Check if the distribution event has started.
+     * @param distributionEventId The ID of the distribution event
+     */
     function _checkDistributionNotStarted(uint256 distributionEventId) private view {
         if (_distributionEvents[distributionEventId].claimedAmount > 0) {
             revert InvalidDistributionEvent(DistributionEventErrorReason.PAYOUTS_STARTED);
         }
     }
 
-    function createDistributionEvent(DistributionEventData memory data) external onlyManagerOrAdmin whenNotPaused {
+    /**
+     * @notice Create a new distribution event.
+     * @param data The distribution event data
+     */
+    function createDistributionEvent(DistributionEventData memory data)
+        external
+        onlyManagerOrAdmin
+        whenNotPaused
+        returns (uint256)
+    {
         _checkDistributionEvent(data);
 
         uint256 distributionEventId = nextDistributionEventId++;
@@ -300,9 +318,16 @@ contract FANtiumClaimingV2 is
         _distributionEvents[distributionEventId] = newDistributionEvent;
 
         _distributionEventToPayoutToken[distributionEventId] = IERC20(globalPayoutToken);
-        _recomputeClaimShares(distributionEventId);
+        _computeShares(distributionEventId);
+        return distributionEventId;
     }
 
+    /**
+     * @notice Update a distribution event.
+     * @dev Only the manager can update a distribution event.
+     * @param distributionEventId The ID of the distribution event
+     * @param data The distribution event data
+     */
     function updateDistributionEvent(
         uint256 distributionEventId,
         DistributionEventData memory data
@@ -350,7 +375,7 @@ contract FANtiumClaimingV2 is
         existingDE.closeTime = data.closeTime;
 
         _distributionEvents[distributionEventId] = existingDE;
-        _recomputeClaimShares(distributionEventId);
+        _computeShares(distributionEventId);
 
         DistributionEvent memory updatedDE = _distributionEvents[distributionEventId];
         if (updatedDE.tournamentDistributionAmount + updatedDE.otherDistributionAmount > updatedDE.amountPaidIn) {
@@ -468,7 +493,7 @@ contract FANtiumClaimingV2 is
     }
 
     /**
-     * @notice Claim for a single token.
+     * @notice Claim rewards associated with a token of a specific distribution event.
      * @param tokenId The ID of the token
      * @param distributionEventId The ID of the distribution event
      */
@@ -493,7 +518,7 @@ contract FANtiumClaimingV2 is
             revert InvalidClaim(ClaimErrorReason.ONLY_TOKEN_OWNER);
         }
 
-        if (!fantiumUserManager.isIDENT(_msgSender())) {
+        if (!userManager.isIDENT(_msgSender())) {
             revert InvalidClaim(ClaimErrorReason.NOT_IDENTED);
         }
 
@@ -522,7 +547,7 @@ contract FANtiumClaimingV2 is
         fantiumNFT.upgradeTokenVersion(tokenId);
 
         // Split the claim amount between FANtium and the user
-        uint256 fantiumRevenue_ = ((claimAmount * existingDE.fantiumFeeBPS) / 10_000);
+        uint256 fantiumRevenue_ = ((claimAmount * existingDE.fantiumFeeBPS) / BPS_BASE);
         uint256 userRevenue_ = claimAmount - fantiumRevenue_;
 
         // set addresses from storage
@@ -578,39 +603,26 @@ contract FANtiumClaimingV2 is
     }
 
     /**
-     * @dev Triggers the claiming snapshot for a distribution event.
-     * Can only be run once per distribution event.
+     * @dev Recompute the amount to distribute to the holders for a distribution event based on the distribution event
+     * tournament and other earnings. Also saves a snapshot of the number of minted tokens for each collection to
+     * prevent users to mint tokens after the distribution event has started.
      * @param distributionEventId The ID of the distribution event
      */
-    function _recomputeClaimShares(uint256 distributionEventId) internal {
+    function _computeShares(uint256 distributionEventId) internal {
         DistributionEvent memory distributionEvent = _distributionEvents[distributionEventId];
 
         // Sum of all the holders' tournament and other earnings shares in 1e7
         uint256 holdersTournamentEarningsShare1e7;
         uint256 holdersOtherEarningsShare1e7;
 
-        /*
-        DE id 13
-        collection 1, 2, 3 -> bronze, silver and gold
-        bronze 0.01% silver 0.02% and gold 0.04%
-
-        #minted tokens bronze: 200, silver: 40, gold is 10
-
-        how much the distribution should get?
-
-        0.01%*201 + 0.02%*40 + 0.04%*10 = 2%+0.8%+0.4% = 3.2%
-
-        -> If you won 1M => 32,000USD
-        */
-
         for (uint256 i = 0; i < distributionEvent.collectionIds.length; i++) {
             uint256 collectionId = distributionEvent.collectionIds[i];
             Collection memory collection = fantiumNFT.collections(collectionId);
 
             // Compute the token's share of tournament and other earnings
-            (uint256 tournamentClaim, uint256 otherClaim) = computeShares(
-                distributionEventId, collection.tournamentEarningShare1e7, collection.otherEarningShare1e7
-            );
+            uint256 tournamentClaim =
+                ((distributionEvent.totalTournamentEarnings * collection.tournamentEarningShare1e7) / 1e7);
+            uint256 otherClaim = ((distributionEvent.totalOtherEarnings * collection.otherEarningShare1e7) / 1e7);
 
             _distributionEventToCollectionInfo[distributionEventId][collectionId] = CollectionInfo({
                 // we record the current number of minted token to avoid user to purchase tokens afterwrads an be
@@ -632,19 +644,20 @@ contract FANtiumClaimingV2 is
             (holdersOtherEarningsShare1e7 * distributionEvent.totalOtherEarnings) / 1e7;
 
         _distributionEvents[distributionEventId] = distributionEvent;
+        emit SnapShotTaken(distributionEventId);
     }
 
     /**
-     * @dev Triggers the claiming snapshot for a distribution event.
-     * Can only be run once per distribution event.
+     * @notice Call the _computeShares function.
+     * @dev Only managers or admins can call this function.
      * @param distributionEventId The ID of the distribution event
      */
-    function takeClaimingSnapshot(uint256 distributionEventId)
+    function computeShares(uint256 distributionEventId)
         external
+        whenNotPaused
         onlyManagerOrAdmin
         onlyValidDistributionEvent(distributionEventId)
     {
-        _recomputeClaimShares(distributionEventId);
-        emit SnapShotTaken(distributionEventId);
+        return _computeShares(distributionEventId);
     }
 }

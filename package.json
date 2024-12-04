@@ -11,15 +11,15 @@
         "lint:sol": "forge fmt --check && bun solhint \"{script,src,test}/**/*.sol\"",
         "prettier:check": "prettier --check \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
         "prettier:write": "prettier --write \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
-        "validate": "openzeppelin-upgrades-core validate out/build-info --exclude='src/archive/**/*.sol'--requireReference",
+        "validate": "openzeppelin-upgrades-core validate out/build-info --exclude='src/archive/**/*.sol'",
         "validate:rebuild": "forge clean && forge build && bun run validate",
         "test": "forge test",
         "test:coverage": "forge coverage --ir-minimum",
         "test:coverage:report": "forge coverage --ir-minimum --report lcov && lcov --remove lcov.info 'src/archive/*' 'test/*' --output-file lcov.info && genhtml lcov.info --branch-coverage --ignore-errors corrupt --output-dir coverage"
     },
     "dependencies": {
-        "@openzeppelin/contracts": "4.8.0",
-        "@openzeppelin/contracts-upgradeable": "4.8.1",
+        "@openzeppelin/contracts": "4.9.6",
+        "@openzeppelin/contracts-upgradeable": "4.9.6",
         "@openzeppelin/foundry-upgrades": "github:OpenZeppelin/openzeppelin-foundry-upgrades#v0.3.6",
         "operator-filter-registry": "1.4.2",
         "solidity-stringutils": "github:Arachnid/solidity-stringutils#4b2fcc43fa0426e19ce88b1f1ec16f5903a2e461"
@@ -28,7 +28,7 @@
         "@openzeppelin/upgrades-core": "^1.41.0",
         "forge-std": "github:foundry-rs/forge-std#v1.9.4",
         "lefthook": "^1.8.5",
-        "prettier": "^3.4.0",
+        "prettier": "^3.4.2",
         "solhint": "^5.0.3"
     },
     "packageManager": "bun@1.1.38"

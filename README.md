@@ -1,6 +1,20 @@
 # FANtium smart contracts
 
+## General informations
+
+This repository contains the smart contracts of the FANtium platform. Our smart contracts are based on [OpenZeppelin's contracts version 4](https://docs.openzeppelin.com/contracts/4.x/).
+
+Our team is fully doxxed on LinkedIn.
+
 ## Token IDs generation
+
+We use tokenId to encode the following information:
+
+- collection id
+- version
+- token number
+
+The collection id denotes the nature of the NFT and for FANtium tennis tokens, it can be seen as an integer specifiying the athlete and the associated rarity.
 
 ```
 1234 56 7890
@@ -13,59 +27,23 @@
  └────────────► collection id
 ```
 
-12 00 0002 burned
-12 01 0002 minted as a replacement
+## Token upgrade process
 
-3x distribution events
-start with 13 00 0001
+When owner of a token wants to claim the rewrads associated with a token, the token is burned and a new one is minted with an incremented token version.
 
-12 00 0001 burned
-12 01 0001 minted as a replacement
-12 01 0001 burned
-12 02 0001 minted as a replacement
-12 02 0001 burned
-12 03 0001 minted as a replacement => final token
+### Example
 
-1MATIC = 1e18
-1 500 000 ..000 = 1.5 MATIC
-
-6 decimals = 1,000,000 = 1 USDC
-
-tournamentEarningShare1e7=123 =>
+If we take the token 12000002, corresponds to the following info:
 
 ```
-   123
-----------
-10,000,000
+12 00 0002
+└┤ ├┘ └┬─┘
+ │ │   └────► token number = 2
+ │ └────────► version number = 0
+ └──────────► collection id = 12
 ```
 
-0,00635%
+When upgrading the token, the collection id and the version are incremented:
 
-$2M gain
-pershare = 2,000,000 \* 123 / 10,000,000
-
-BPS on a base 10,000
-
-If FANtium cutr is 5% it means that the athlete share is 95%
-
-Primary sales => value v
-fantium gets v _ fantium_cut
-athlete gets v _ (1 - fantium_cut)
-
-Secondary sales: three actors
-
-1. seller
-2. athlete takes x%
-3. FANtium takes y%
-
-FANtium gets v _ y
-athlete gets v _ x
-seller gets v \* (1 - x - y)
-
-exemple FANTIUM cut is 2% athelete cut is 5%, sale is $100
-
-FANtium gets 2
-athlete gets 5
-seller gets 93
-
-total 100
+- 12 00 0002 burned
+- 12 01 0002 minted as a replacement

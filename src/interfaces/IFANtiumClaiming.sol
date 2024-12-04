@@ -115,16 +115,18 @@ interface IFANtiumClaiming {
     // ========================================================================
     // Distribution Event
     // ========================================================================
-    function createDistributionEvent(DistributionEventData memory data) external;
+    function createDistributionEvent(DistributionEventData memory data)
+        external
+        returns (uint256 distributionEventId);
     function updateDistributionEvent(uint256 distributionEventId, DistributionEventData memory data) external;
     function fundDistributionEvent(uint256 distributionEventId) external;
     function batchFundDistributionEvent(uint256[] memory distributionEventIds) external;
     function closeDistribution(uint256 distributionEventId) external;
+    function computeShares(uint256 distributionEventId) external;
 
     // ========================================================================
     // Claiming
     // ========================================================================
     function claim(uint256 tokenId, uint256 distributionEventId) external;
     function batchClaim(uint256[] memory tokenIds, uint256[] memory distributionEventIds) external;
-    function takeClaimingSnapshot(uint256 distributionEventId) external;
 }

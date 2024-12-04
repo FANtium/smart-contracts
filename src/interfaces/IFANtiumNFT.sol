@@ -15,19 +15,62 @@ import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ER
  * mintTo function will need to multiply the price by 10^decimals of the token.
  */
 struct Collection {
+    /**
+     * @notice Always true if the collection exists.
+     */
     bool exists;
+    /**
+     * @notice UNIX timestamp of the collection launch.
+     */
     uint256 launchTimestamp;
+    /**
+     * @notice True if the collection is mintable.
+     */
     bool isMintable;
+    /**
+     * @notice True if the collection is paused.
+     */
     bool isPaused;
+    /**
+     * @notice Number of minted tokens.
+     */
     uint24 invocations;
+    /**
+     * @notice Price of a token in the collection without decimals, which means that this price must be multiplied by
+     * 10^decimals of the token.
+     */
     uint256 price;
+    /**
+     * @notice Maximum number of tokens that can be minted.
+     */
     uint256 maxInvocations;
+    /**
+     * @notice Tournament earnings share in 1e7 basis points.
+     */
     uint256 tournamentEarningShare1e7;
+    /**
+     * @notice Address of the athlete.
+     */
     address payable athleteAddress;
+    /**
+     * @notice Athlete primary sales share in 10,000 basis points.
+     */
     uint256 athletePrimarySalesBPS;
+    /**
+     * @notice Athlete secondary sales share in 10,000 basis points.
+     */
     uint256 athleteSecondarySalesBPS;
+    /**
+     * @notice Address of the FANtium sales.
+     */
     address payable fantiumSalesAddress;
+    /**
+     * @notice FANtium secondary sales share in 10,000 basis points.
+     */
     uint256 fantiumSecondarySalesBPS;
+    /**
+     * @notice Other earnings (e.g. sponsorships, royalties, etc.) share in 1e7 basis points.
+     */
     uint256 otherEarningShare1e7;
 }
 

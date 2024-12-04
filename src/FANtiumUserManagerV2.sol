@@ -65,7 +65,7 @@ contract FANtiumUserManagerV2 is
      * @custom:oz-upgrades-unsafe-allow constructor
      */
     constructor() {
-        _disableInitializers(); // TODO: uncomment when we are on v6
+        _disableInitializers();
     }
 
     function initialize(address admin) public initializer {

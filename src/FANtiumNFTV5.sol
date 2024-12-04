@@ -88,7 +88,7 @@ contract FANtiumNFTV5 is
      * @custom:oz-upgrades-unsafe-allow constructor
      */
     constructor() {
-        _disableInitializers(); // TODO: uncomment when we are on v6
+        _disableInitializers();
     }
 
     /**
@@ -103,10 +103,6 @@ contract FANtiumNFTV5 is
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         nextCollectionId = 1;
-    }
-
-    function initializeV5(address admin) internal initializer {
-        _grantRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
     /**
