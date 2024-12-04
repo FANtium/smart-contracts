@@ -15,7 +15,7 @@ contract DeployTestnetV5 is Script {
         vm.startBroadcast();
         FANtiumNFTV5(
             UnsafeUpgrades.deployUUPSProxy(
-                address(new FANtiumNFTV5()), abi.encodeCall(FANtiumNFTV5.initialize, (ADMIN, "FANtium", "FAN"))
+                address(new FANtiumNFTV5()), abi.encodeCall(FANtiumNFTV5.initialize, (ADMIN))
             )
         );
         vm.stopBroadcast();

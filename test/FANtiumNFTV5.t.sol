@@ -917,7 +917,7 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
         // Verify initial ownership
         assertEq(fantiumNFT.ownerOf(tokenId), recipient);
 
-        (, uint256 version, uint256 number) = TokenVersionUtil.getTokenInfo(tokenId);
+        (, uint256 version, uint256 number,) = TokenVersionUtil.getTokenInfo(tokenId);
         // Calculate expected new token ID (version incremented by 1)
         uint256 expectedNewTokenId = TokenVersionUtil.createTokenId(collectionId, version + 1, number);
 

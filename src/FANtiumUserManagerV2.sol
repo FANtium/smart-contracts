@@ -7,7 +7,7 @@ import { FANtiumBaseUpgradable } from "src/FANtiumBaseUpgradable.sol";
 /**
  * @title FANtium User Manager contract V2.
  * @notice Used to manage user information such as KYC status, IDENT status, and allowlist allocations.
- * @dev KYC is  "soft verification" and IDENT is "hard verification".
+ * @dev KYC is "soft verification" and IDENT is "hard verification".
  * @author Mathieu Bour - FANtium, based on previous work by MTX Studio AG
  */
 contract FANtiumUserManagerV2 is FANtiumBaseUpgradable, IFANtiumUserManager {

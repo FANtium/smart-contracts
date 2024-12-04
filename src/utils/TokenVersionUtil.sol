@@ -14,11 +14,12 @@ library TokenVersionUtil {
     function getTokenInfo(uint256 tokenId)
         internal
         pure
-        returns (uint256 collectionId, uint256 version, uint256 number)
+        returns (uint256 collectionId, uint256 version, uint256 number, uint256 baseTokenId)
     {
         collectionId = tokenId / ONE_MILLION;
         version = (tokenId % ONE_MILLION) / TEN_THOUSAND;
         number = tokenId % TEN_THOUSAND;
+        baseTokenId = collectionId * ONE_MILLION + number;
     }
 
     function createTokenId(

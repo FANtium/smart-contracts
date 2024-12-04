@@ -78,25 +78,16 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, IFANtiumNFT {
     }
 
     /**
-     * @notice Initializes contract.
-     * @param _tokenName Name of token.
-     * @param _tokenSymbol Token symbol.
-     * max(uint248) to avoid overflow when adding to it.
+     * @notice Initializes contract using the UUPS upgradeable pattern.
+     * @param admin The admin address.
      */
-    function initialize(
-        address _defaultAdmin,
-        string memory _tokenName,
-        string memory _tokenSymbol
-    )
-        public
-        initializer
-    {
-        __ERC721_init(_tokenName, _tokenSymbol);
+    function initialize(address admin) public initializer {
+        __ERC721_init(NAME, SYMBOL);
         __UUPSUpgradeable_init();
         __AccessControl_init();
         __Pausable_init();
 
-        _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
         nextCollectionId = 1;
     }
 
@@ -529,7 +520,7 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, IFANtiumNFT {
         whenNotPaused
         returns (uint256)
     {
-        (uint256 collectionId, uint256 tokenVersion, uint256 number) = TokenVersionUtil.getTokenInfo(tokenId);
+        (uint256 collectionId, uint256 tokenVersion, uint256 number,) = TokenVersionUtil.getTokenInfo(tokenId);
         tokenVersion++;
 
         if (!_collections[collectionId].exists) {
