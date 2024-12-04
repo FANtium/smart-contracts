@@ -1,0 +1,17 @@
+name: Setup
+description: Setup the project and optionally install dependencies
+inputs:
+    install:
+        description: Whether to install dependencies
+        required: false
+        default: "true"
+runs:
+    using: composite
+    steps:
+        - name: Install Foundry
+          uses: foundry-rs/foundry-toolchain@v1
+        - name: Install Bun
+          uses: oven-sh/setup-bun@v1
+        - name: Install the Node.js dependencies
+          shell: bash
+          run: bun install

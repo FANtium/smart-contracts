@@ -8,21 +8,17 @@ on:
             - main
 
 env:
-    API_KEY_ALCHEMY: ${{ secrets.API_KEY_ALCHEMY }}
     FOUNDRY_PROFILE: ci
 
 jobs:
     lint:
+        name: Lint and check formatting
         runs-on: ubuntu-24.04
         steps:
             - name: Check out the repo
               uses: actions/checkout@v4
-            - name: Install Foundry
-              uses: foundry-rs/foundry-toolchain@v1
-            - name: Install Bun
-              uses: oven-sh/setup-bun@v1
-            - name: Install the Node.js dependencies
-              run: bun install
+            - name: Set up workspace
+              uses: ./.github/actions/setup
             - name: Lint the code
               run: bun run lint
             - name: Add lint summary
@@ -31,16 +27,13 @@ jobs:
                   echo "✅ Passed" >> $GITHUB_STEP_SUMMARY
 
     build:
+        name: Build and check the size of the contracts
         runs-on: ubuntu-24.04
         steps:
             - name: Check out the repo
               uses: actions/checkout@v4
-            - name: Install Foundry
-              uses: foundry-rs/foundry-toolchain@v1
-            - name: Install Bun
-              uses: oven-sh/setup-bun@v1
-            - name: Install the Node.js dependencies
-              run: bun install
+            - name: Set up workspace
+              uses: ./.github/actions/setup
             - name: Build the contracts and print their size
               run: forge build --sizes
             - name: Add build summary
@@ -48,18 +41,29 @@ jobs:
                   echo "## Build result" >> $GITHUB_STEP_SUMMARY
                   echo "✅ Passed" >> $GITHUB_STEP_SUMMARY
 
-    test:
-        needs: [lint, build]
+    validate_upgradeability:
+        name: Validate upgradeability with the OpenZeppelin Foundry plugin
         runs-on: ubuntu-24.04
         steps:
             - name: Check out the repo
               uses: actions/checkout@v4
-            - name: Install Foundry
-              uses: foundry-rs/foundry-toolchain@v1
-            - name: Install Bun
-              uses: oven-sh/setup-bun@v1
-            - name: Install the Node.js dependencies
-              run: bun install
+            - name: Set up workspace
+              uses: ./.github/actions/setup
+            - name: Validate upgradeability
+              run: bun run validate:rebuild
+            - name: Add upgradeability summary
+              run: |
+                  echo "## Upgradeability result" >> $GITHUB_STEP_SUMMARY
+                  echo "✅ Passed" >> $GITHUB_STEP_SUMMARY
+
+    test:
+        name: Test with fuzzing
+        runs-on: ubuntu-24.04
+        steps:
+            - name: Check out the repo
+              uses: actions/checkout@v4
+            - name: Set up workspace
+              uses: ./.github/actions/setup
             - name: Show the Foundry config
               run: forge config
             - name: Generate a fuzz seed that changes weekly to avoid burning through RPC allowance
