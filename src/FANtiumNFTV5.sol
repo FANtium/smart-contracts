@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: Apache 2.0
 pragma solidity 0.8.28;
 
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
+import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {
     ERC721Upgradeable,
     IERC165Upgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
-import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
+import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {
     IFANtiumNFT,
     Collection,
@@ -22,14 +20,26 @@ import {
     UpgradeErrorReason
 } from "src/interfaces/IFANtiumNFT.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
-import { FANtiumBaseUpgradable } from "src/FANtiumBaseUpgradable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
  * @title FANtium ERC721 contract V5.
  * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
+ * @custom:oz-upgrades-from FantiumNFTV4
  */
-contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, IFANtiumNFT {
+contract FANtiumNFTV5 is
+    Initializable,
+    ERC721Upgradeable,
+    UUPSUpgradeable,
+    AccessControlUpgradeable,
+    PausableUpgradeable,
+    IFANtiumNFT
+{
     using StringsUpgradeable for uint256;
     using ECDSAUpgradeable for bytes32;
 
@@ -45,6 +55,8 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, IFANtiumNFT {
 
     // Roles
     // ========================================================================
+    bytes32 public constant FORWARDER_ROLE = keccak256("FORWARDER_ROLE");
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
     bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
 
@@ -57,14 +69,19 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, IFANtiumNFT {
     // ========================================================================
     // State variables
     // ========================================================================
+    /// @custom:oz-renamed-from collections
     mapping(uint256 => Collection) private _collections;
     string public baseURI;
+    /// @custom:oz-renamed-from collectionIdToAllowList
     mapping(uint256 => mapping(address => uint256)) private UNUSED_collectionIdToAllowList;
+    /// @custom:oz-renamed-from kycedAddresses
     mapping(address => bool) private UNUSED_kycedAddresses;
     uint256 public nextCollectionId;
     address public erc20PaymentToken;
+    /// @custom:oz-renamed-from claimContract
     address private UNUSED_claimContract;
     address public fantiumUserManager;
+    /// @custom:oz-renamed-from trustedForwarder
     address private UNUSED_trustedForwarder;
 
     // ========================================================================
@@ -91,8 +108,66 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, IFANtiumNFT {
         nextCollectionId = 1;
     }
 
-    function version() public pure override returns (string memory) {
-        return "5.0.0";
+    function initializeV5(address admin) internal initializer {
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
+    }
+
+    /**
+     * @notice Implementation of the upgrade authorization logic
+     * @dev Restricted to the DEFAULT_ADMIN_ROLE
+     */
+    function _authorizeUpgrade(address) internal override onlyAdmin {
+        // no-op
+    }
+
+    // ========================================================================
+    // Access control
+    // ========================================================================
+    modifier onlyRoleOrAdmin(bytes32 role) {
+        _checkRoleOrAdmin(role);
+        _;
+    }
+
+    modifier onlyAdmin() {
+        _checkRole(DEFAULT_ADMIN_ROLE);
+        _;
+    }
+
+    modifier onlyManagerOrAdmin() {
+        _checkRoleOrAdmin(MANAGER_ROLE);
+        _;
+    }
+
+    function _checkRoleOrAdmin(bytes32 role) internal view virtual {
+        if (!hasRole(role, msg.sender) && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
+            revert(
+                string(
+                    abi.encodePacked(
+                        "AccessControl: account ",
+                        StringsUpgradeable.toHexString(msg.sender),
+                        " is missing role ",
+                        StringsUpgradeable.toHexString(uint256(role), 32)
+                    )
+                )
+            );
+        }
+    }
+
+    // ========================================================================
+    // Pause
+    // ========================================================================
+    /**
+     * @notice Update contract pause status to `_paused`.
+     */
+    function pause() external onlyManagerOrAdmin {
+        _pause();
+    }
+
+    /**
+     * @notice Unpauses contract
+     */
+    function unpause() external onlyManagerOrAdmin {
+        _unpause();
     }
 
     // ========================================================================
@@ -160,30 +235,30 @@ contract FANtiumNFTV5 is FANtiumBaseUpgradable, ERC721Upgradeable, IFANtiumNFT {
     }
 
     // ========================================================================
-    // ERC2771: logic handled by FANtiumBaseUpgradable
+    // ERC2771
     // ========================================================================
-    function isTrustedForwarder(address forwarder) public view override returns (bool) {
-        return FANtiumBaseUpgradable.isTrustedForwarder(forwarder);
+    function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
+        return hasRole(FORWARDER_ROLE, forwarder);
     }
 
-    function _msgSender()
-        internal
-        view
-        virtual
-        override(ContextUpgradeable, FANtiumBaseUpgradable)
-        returns (address sender)
-    {
-        return FANtiumBaseUpgradable._msgSender();
+    function _msgSender() internal view virtual override returns (address sender) {
+        if (isTrustedForwarder(msg.sender)) {
+            // The assembly code is more direct than the Solidity version using `abi.decode`.
+            /// @solidity memory-safe-assembly
+            assembly {
+                sender := shr(96, calldataload(sub(calldatasize(), 20)))
+            }
+        } else {
+            return super._msgSender();
+        }
     }
 
-    function _msgData()
-        internal
-        view
-        virtual
-        override(ContextUpgradeable, FANtiumBaseUpgradable)
-        returns (bytes calldata)
-    {
-        return FANtiumBaseUpgradable._msgData();
+    function _msgData() internal view virtual override returns (bytes calldata) {
+        if (isTrustedForwarder(msg.sender)) {
+            return msg.data[:msg.data.length - 20];
+        } else {
+            return super._msgData();
+        }
     }
 
     // ========================================================================

@@ -31,9 +31,9 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
 
     // version
     // ========================================================================
-    function test_version() public view {
-        assertEq(fantiumNFT.version(), "5.0.0");
-    }
+    // function test_version() public view {
+    //     assertEq(fantiumNFT.version(), "5.0.0");
+    // }
 
     // name
     // ========================================================================

@@ -3,9 +3,11 @@
 [profile.default]
 ast = true
 auto_detect_solc = false
+build_info = true
 bytecode_hash = "none"
 evm_version = "shanghai"
-fs_permissions = [{ access = "read", path = "./test/fixtures"}]
+extra_output = ["storageLayout"]
+fs_permissions = [{ access = "read", path = "./test/fixtures"}, { access = "read", path = "./out"}]
 ffi = true
 fuzz = { runs = 1_000 }
 gas_reports = ["*"]
