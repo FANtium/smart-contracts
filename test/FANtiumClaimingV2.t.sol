@@ -6,6 +6,7 @@ import { IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumClaimingFactory } from "test/setup/FANtiumClaimingFactory.sol";
+import { DistributionEvent, DistributionEventData } from "src/interfaces/IFANtiumClaiming.sol";
 
 contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
     function setUp() public virtual override {
@@ -114,4 +115,35 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
 
         assertEq(address(fantiumClaiming.globalPayoutToken()), oldPayoutToken);
     }
+
+    // distributionEvents
+    // ========================================================================
+    function test_distributionEvents_non_existing_event() public {
+        // Test that a non-existent distribution event returns default/empty values
+        DistributionEvent memory event0 = fantiumClaiming.distributionEvents(9999);
+
+        assertEq(event0.exists, false, "Distribution event should not exist for ID 0");
+    }
+
+    // createDistributionEvent
+    // ========================================================================
+//    function test_createDistributionEvent_revert_INVALID_TIME() public {
+//        // Prepare distribution event data
+//        DistributionEventData memory data = DistributionEventData({
+//        collectionIds: new uint256[](1),
+//        athleteAddress: payable(makeAddr("athleteAddress")),
+//        totalTournamentEarnings: 10000 * 10**18,  // Example tournament earnings
+//        totalOtherEarnings: 5000 * 10**18,        // Example other earnings
+//        fantiumFeeBPS: 500,                       // 5% fee
+//        fantiumAddress:  payable(makeAddr("fantiumAddress")),
+//        startTime: block.timestamp + 2 days,      // Start in the future
+//        closeTime: block.timestamp + 1 days      // Close in the past
+//        });
+//
+//        vm.startPrank(fantiumClaiming_manager);
+//
+//        vm.expectRevert("INVALID_TIME");
+//
+//        fantiumClaiming.createDistributionEvent(data);
+//    }
 }
