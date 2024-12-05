@@ -3,12 +3,15 @@ pragma solidity 0.8.28;
 
 import { Test } from "forge-std/Test.sol";
 import { FANtiumUserManagerV2 } from "src/FANtiumUserManagerV2.sol";
+import { IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 
 contract FANtiumUserManagerV2Test is Test {
     uint256 public constant MAX_ARRAY_LENGTH = 10_000;
 
+    address public userManager_implementation;
+    address public userManager_proxy;
     FANtiumUserManagerV2 public userManager;
 
     address public admin = makeAddr("admin");
@@ -16,7 +19,8 @@ contract FANtiumUserManagerV2Test is Test {
     address public allowlistManager = makeAddr("allowlistManager");
     address public user1 = makeAddr("user1");
     address public user2 = makeAddr("user2");
-    address public fantiumNFT = makeAddr("fantiumNFT");
+
+    address public userManager_fantiumNFT = makeAddr("fantiumNFT");
 
     // Need to copy the events from the FANtiumUserManagerV2 contract
     event KYCUpdate(address indexed account, bool isKYCed);
@@ -24,16 +28,17 @@ contract FANtiumUserManagerV2Test is Test {
     event AllowListUpdate(address indexed account, uint256 indexed collectionId, uint256 amount);
 
     function setUp() public {
-        address implementation = address(new FANtiumUserManagerV2());
-        address proxy =
-            UnsafeUpgrades.deployUUPSProxy(implementation, abi.encodeCall(FANtiumUserManagerV2.initialize, (admin)));
-        userManager = FANtiumUserManagerV2(proxy);
+        address userManager_implementation = address(new FANtiumUserManagerV2());
+        address userManager_proxy = UnsafeUpgrades.deployUUPSProxy(
+            userManager_implementation, abi.encodeCall(FANtiumUserManagerV2.initialize, (admin))
+        );
+        userManager = FANtiumUserManagerV2(userManager_proxy);
 
         // Setup roles
         vm.startPrank(admin);
         userManager.grantRole(userManager.KYC_MANAGER_ROLE(), kycManager);
         userManager.grantRole(userManager.ALLOWLIST_MANAGER_ROLE(), allowlistManager);
-        userManager.setFantiumNFT(fantiumNFT);
+        userManager.setFANtiumNFT(IFANtiumNFT(userManager_fantiumNFT));
         vm.stopPrank();
     }
 

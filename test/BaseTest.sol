@@ -7,6 +7,8 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 contract BaseTest is Test {
     using Strings for uint256;
 
+    address public nobody = makeAddr("nobody");
+
     function loadFixture(string memory fixtureName) public view returns (bytes memory) {
         string memory path = string.concat(vm.projectRoot(), "/test/fixtures/", fixtureName);
         bytes memory data = vm.parseJson(vm.readFile(path));

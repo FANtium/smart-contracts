@@ -214,7 +214,7 @@ contract FANtiumClaimingV2 is
     // ========================================================================
     // Setters
     // ========================================================================
-    function setFantiumNFT(IFANtiumNFT _fantiumNFT) external onlyManagerOrAdmin {
+    function setFANtiumNFT(IFANtiumNFT _fantiumNFT) external onlyManagerOrAdmin {
         fantiumNFT = _fantiumNFT;
     }
 

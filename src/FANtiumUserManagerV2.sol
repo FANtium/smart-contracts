@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
-
+import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
+import { IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
 /**
  * @title FANtium User Manager contract V2.
  * @notice Used to manage user information such as KYC status, IDENT status, and allowlist allocations.
@@ -16,6 +16,7 @@ import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/St
  *
  * @custom:oz-upgrades-from FantiumUserManager
  */
+
 contract FANtiumUserManagerV2 is
     Initializable,
     UUPSUpgradeable,
@@ -49,7 +50,7 @@ contract FANtiumUserManagerV2 is
      */
     address private UNUSED_trustedForwarder;
 
-    address public fantiumNFT;
+    IFANtiumNFT public fantiumNFT;
 
     // ========================================================================
     // Events
@@ -137,7 +138,7 @@ contract FANtiumUserManagerV2 is
     // ========================================================================
     // Setters
     // ========================================================================
-    function setFantiumNFT(address _fantiumNFT) external onlyAdmin {
+    function setFANtiumNFT(IFANtiumNFT _fantiumNFT) external onlyAdmin {
         fantiumNFT = _fantiumNFT;
     }
 
@@ -211,11 +212,11 @@ contract FANtiumUserManagerV2 is
     // AllowList functions
     // ========================================================================
     function allowlist(address account, uint256 collectionId) public view returns (uint256) {
-        return users[account].contractToAllowlistToSpots[fantiumNFT][collectionId];
+        return users[account].contractToAllowlistToSpots[address(fantiumNFT)][collectionId];
     }
 
     function _setAllowList(address account, uint256 collectionId, uint256 allocation) internal {
-        users[account].contractToAllowlistToSpots[fantiumNFT][collectionId] = allocation;
+        users[account].contractToAllowlistToSpots[address(fantiumNFT)][collectionId] = allocation;
         emit AllowListUpdate(account, collectionId, allocation);
     }
 

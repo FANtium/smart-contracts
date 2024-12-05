@@ -65,6 +65,7 @@ contract DeployTestnetV5 is Script {
         fantiumNFT.grantRole(fantiumNFT.TOKEN_UPGRADER_ROLE(), address(fantiumClaim));
 
         // FANtiumUserManagerV2 setup
+        userManager.setFANtiumNFT(fantiumNFT);
         userManager.grantRole(userManager.FORWARDER_ROLE(), GELATO_RELAYER_ERC2771);
         for (uint256 i = 0; i < MANAGERS.length; i++) {
             userManager.grantRole(userManager.MANAGER_ROLE(), MANAGERS[i]);
@@ -73,7 +74,7 @@ contract DeployTestnetV5 is Script {
         userManager.grantRole(userManager.ALLOWLIST_MANAGER_ROLE(), BACKEND_SIGNER);
 
         // FANtiumClaimingV2 setup
-        fantiumClaim.setFantiumNFT(fantiumNFT);
+        fantiumClaim.setFANtiumNFT(fantiumNFT);
         fantiumClaim.setUserManager(userManager);
         fantiumClaim.setGlobalPayoutToken(USDC);
         for (uint256 i = 0; i < MANAGERS.length; i++) {

@@ -22,7 +22,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
     using Strings for uint256;
 
     address public recipient = makeAddr("recipient");
-    address public nobody = makeAddr("nobody");
 
     function setUp() public override {
         FANtiumNFTFactory.setUp();
