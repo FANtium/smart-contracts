@@ -3,10 +3,13 @@ pragma solidity ^0.8.0;
 
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
+import { IFANtiumClaiming } from "src/interfaces/IFANtiumClaiming.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumClaimingFactory } from "test/setup/FANtiumClaimingFactory.sol";
-import { DistributionEvent, DistributionEventData } from "src/interfaces/IFANtiumClaiming.sol";
+import {
+    DistributionEvent, DistributionEventData, DistributionEventErrorReason
+} from "src/interfaces/IFANtiumClaiming.sol";
 
 contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
     function setUp() public virtual override {
@@ -118,7 +121,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
 
     // distributionEvents
     // ========================================================================
-    function test_distributionEvents_non_existing_event() public {
+    function test_distributionEvents_non_existing_event() public view {
         // Test that a non-existent distribution event returns default/empty values
         DistributionEvent memory event0 = fantiumClaiming.distributionEvents(9999);
 
@@ -127,23 +130,26 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
 
     // createDistributionEvent
     // ========================================================================
-//    function test_createDistributionEvent_revert_INVALID_TIME() public {
-//        // Prepare distribution event data
-//        DistributionEventData memory data = DistributionEventData({
-//        collectionIds: new uint256[](1),
-//        athleteAddress: payable(makeAddr("athleteAddress")),
-//        totalTournamentEarnings: 10000 * 10**18,  // Example tournament earnings
-//        totalOtherEarnings: 5000 * 10**18,        // Example other earnings
-//        fantiumFeeBPS: 500,                       // 5% fee
-//        fantiumAddress:  payable(makeAddr("fantiumAddress")),
-//        startTime: block.timestamp + 2 days,      // Start in the future
-//        closeTime: block.timestamp + 1 days      // Close in the past
-//        });
-//
-//        vm.startPrank(fantiumClaiming_manager);
-//
-//        vm.expectRevert("INVALID_TIME");
-//
-//        fantiumClaiming.createDistributionEvent(data);
-//    }
+    function test_createDistributionEvent_revert_startTimeGreaterThanCloseTime() public {
+        // Prepare distribution event data
+        DistributionEventData memory data = DistributionEventData({
+            collectionIds: new uint256[](1),
+            athleteAddress: payable(makeAddr("athleteAddress")),
+            totalTournamentEarnings: 10_000 * 10 ** 18, // Example tournament earnings
+            totalOtherEarnings: 5000 * 10 ** 18, // Example other earnings
+            fantiumFeeBPS: 500, // 5% fee
+            fantiumAddress: payable(makeAddr("fantiumAddress")),
+            startTime: block.timestamp + 2 days, // Start in the future
+            closeTime: block.timestamp + 1 days // Close in the past
+         });
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IFANtiumClaiming.InvalidDistributionEvent.selector, DistributionEventErrorReason.INVALID_TIME
+            )
+        );
+
+        vm.prank(fantiumClaiming_manager);
+        fantiumClaiming.createDistributionEvent(data);
+    }
 }
