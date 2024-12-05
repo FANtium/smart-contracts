@@ -6,7 +6,7 @@ import { Collection, CollectionData } from "src/interfaces/IFANtiumNFT.sol";
 import { FANtiumNFTFactory } from "test/setup/FANtiumNFTFactory.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
-contract FANtiumNFTV5FuzzTest is BaseTest, FANtiumNFTFactory {
+contract FANtiumNFTV6FuzzTest is BaseTest, FANtiumNFTFactory {
     function setUp() public override {
         FANtiumNFTFactory.setUp();
     }

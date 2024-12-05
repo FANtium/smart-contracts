@@ -13,10 +13,11 @@ import {
     MintErrorReason,
     UpgradeErrorReason
 } from "src/interfaces/IFANtiumNFT.sol";
+import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 import { FANtiumNFTFactory } from "test/setup/FANtiumNFTFactory.sol";
 
-contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
+contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
     using ECDSA for bytes32;
     using Strings for uint256;
 
@@ -26,12 +27,6 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
     function setUp() public override {
         FANtiumNFTFactory.setUp();
     }
-
-    // version
-    // ========================================================================
-    // function test_version() public view {
-    //     assertEq(fantiumNFT.version(), "5.0.0");
-    // }
 
     // name
     // ========================================================================
@@ -51,16 +46,16 @@ contract FANtiumNFTV5Test is BaseTest, FANtiumNFTFactory {
         address newUserManager = makeAddr("newUserManager");
 
         vm.prank(fantiumNFT_manager);
-        fantiumNFT.setUserManager(newUserManager);
-        assertEq(fantiumNFT.fantiumUserManager(), newUserManager);
+        fantiumNFT.setUserManager(IFANtiumUserManager(newUserManager));
+        assertEq(address(fantiumNFT.userManager()), newUserManager);
     }
 
     function test_setUserManager_ok_admin() public {
         address newUserManager = makeAddr("newUserManager");
 
         vm.prank(fantiumNFT_admin);
-        fantiumNFT.setUserManager(newUserManager);
-        assertEq(fantiumNFT.fantiumUserManager(), newUserManager);
+        fantiumNFT.setUserManager(IFANtiumUserManager(newUserManager));
+        assertEq(address(fantiumNFT.userManager()), newUserManager);
     }
 
     // supportsInterface

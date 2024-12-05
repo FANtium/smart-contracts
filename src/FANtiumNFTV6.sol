@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache 2.0
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -25,11 +25,11 @@ import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
- * @title FANtium ERC721 contract V5.
+ * @title FANtium ERC721 contract V6.
  * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
- * @custom:oz-upgrades-from FantiumNFTV4
+ * @custom:oz-upgrades-from FantiumNFTV5
  */
-contract FANtiumNFTV5 is
+contract FANtiumNFTV6 is
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
@@ -66,19 +66,57 @@ contract FANtiumNFTV5 is
     // ========================================================================
     // State variables
     // ========================================================================
-    /// @custom:oz-renamed-from collections
+    /**
+     * @notice Mapping of collection IDs to collection data.
+     * @custom:oz-renamed-from collections
+     */
     mapping(uint256 => Collection) private _collections;
+
+    /**
+     * @notice The base URI for the token metadata.
+     */
     string public baseURI;
-    /// @custom:oz-renamed-from collectionIdToAllowList
+
+    /**
+     * @notice Mapping of collection IDs to allowlist allocations.
+     * @dev Deprecated: replaced by the userManager contract.
+     * @custom:oz-renamed-from collectionIdToAllowList
+     */
     mapping(uint256 => mapping(address => uint256)) private UNUSED_collectionIdToAllowList;
-    /// @custom:oz-renamed-from kycedAddresses
+
+    /**
+     * @notice Mapping of addresses that have been KYCed.
+     * @dev Deprecated: replaced by the userManager contract.
+     * @custom:oz-renamed-from kycedAddresses
+     */
     mapping(address => bool) private UNUSED_kycedAddresses;
+
+    /**
+     * @notice The next collection ID to be used.
+     */
     uint256 public nextCollectionId;
+
+    /**
+     * @notice The ERC20 token used for payments, usually a stablecoin.
+     */
     address public erc20PaymentToken;
-    /// @custom:oz-renamed-from claimContract
+
+    /**
+     * @dev Deprecated: replaced by the TOKEN_UPGRADER_ROLE.
+     * @custom:oz-renamed-from claimContract
+     */
     address private UNUSED_claimContract;
-    address public fantiumUserManager;
-    /// @custom:oz-renamed-from trustedForwarder
+
+    /**
+     * @dev Use to retrieve user information such as KYC status, IDENT status, and allowlist allocations.
+     * @custom:oz-renamed-from fantiumUserManager
+     */
+    IFANtiumUserManager public userManager;
+
+    /**
+     * @dev Deprecated: replaced by the FORWARDER_ROLE.
+     * @custom:oz-renamed-from trustedForwarder
+     */
     address private UNUSED_trustedForwarder;
 
     // ========================================================================
@@ -226,12 +264,22 @@ contract FANtiumNFTV5 is
     // ========================================================================
     // Setters
     // ========================================================================
+    /**
+     * @notice Sets the base URI for the token metadata.
+     * @dev Restricted to manager or admin.
+     * @param baseURI_ The new base URI.
+     */
     function setBaseURI(string memory baseURI_) external whenNotPaused onlyManagerOrAdmin {
         baseURI = baseURI_;
     }
 
-    function setUserManager(address _userManager) external onlyManagerOrAdmin {
-        fantiumUserManager = _userManager;
+    /**
+     * @notice Sets the user manager.
+     * @dev Restricted to manager or admin.
+     * @param _userManager The new user manager.
+     */
+    function setUserManager(IFANtiumUserManager _userManager) external whenNotPaused onlyManagerOrAdmin {
+        userManager = _userManager;
     }
 
     /**
@@ -383,6 +431,7 @@ contract FANtiumNFTV5 is
         bool isPaused
     )
         external
+        whenNotPaused
         onlyValidCollectionId(collectionId)
         onlyAthleteOrManagerOrAdmin(collectionId)
     {
@@ -481,14 +530,14 @@ contract FANtiumNFTV5 is
             revert InvalidMint(MintErrorReason.COLLECTION_NOT_LAUNCHED);
         }
 
-        if (!IFANtiumUserManager(fantiumUserManager).isKYCed(_msgSender())) {
+        if (!userManager.isKYCed(_msgSender())) {
             revert InvalidMint(MintErrorReason.ACCOUNT_NOT_KYCED);
         }
 
         // If the collection is paused, we need to check if the recipient is on the allowlist and has enough allocation
         if (collection.isPaused) {
             useAllowList = true;
-            bool isAllowListed = IFANtiumUserManager(fantiumUserManager).allowlist(recipient, collectionId) >= quantity;
+            bool isAllowListed = userManager.allowlist(recipient, collectionId) >= quantity;
             if (!isAllowListed) {
                 revert InvalidMint(MintErrorReason.COLLECTION_PAUSED);
             }
@@ -521,7 +570,7 @@ contract FANtiumNFTV5 is
 
         _collections[collectionId].invocations += quantity;
         if (useAllowList) {
-            IFANtiumUserManager(fantiumUserManager).decreaseAllowList(recipient, collectionId, quantity);
+            userManager.decreaseAllowList(recipient, collectionId, quantity);
         }
 
         // Send funds to the treasury and athlete account.

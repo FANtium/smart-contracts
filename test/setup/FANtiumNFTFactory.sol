@@ -4,7 +4,7 @@ pragma solidity ^0.8.27;
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { Collection, CollectionData } from "src/interfaces/IFANtiumNFT.sol";
-import { FANtiumNFTV5 } from "src/FANtiumNFTV5.sol";
+import { FANtiumNFTV6 } from "src/FANtiumNFTV6.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumUserManagerFactory } from "test/setup/FANtiumUserManagerFactory.sol";
@@ -46,18 +46,18 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
     ERC20 public usdc;
     address public fantiumNFT_implementation;
     address public fantiumNFT_proxy;
-    FANtiumNFTV5 public fantiumNFT;
+    FANtiumNFTV6 public fantiumNFT;
 
     function setUp() public virtual override {
         (fantiumNFT_signer, fantiumNFT_signerKey) = makeAddrAndKey("rewarder");
         FANtiumUserManagerFactory.setUp();
 
         usdc = new ERC20("USD Coin", "USDC");
-        fantiumNFT_implementation = address(new FANtiumNFTV5());
+        fantiumNFT_implementation = address(new FANtiumNFTV6());
         fantiumNFT_proxy = UnsafeUpgrades.deployUUPSProxy(
-            fantiumNFT_implementation, abi.encodeCall(FANtiumNFTV5.initialize, (fantiumNFT_admin))
+            fantiumNFT_implementation, abi.encodeCall(FANtiumNFTV6.initialize, (fantiumNFT_admin))
         );
-        fantiumNFT = FANtiumNFTV5(fantiumNFT_proxy);
+        fantiumNFT = FANtiumNFTV6(fantiumNFT_proxy);
 
         // Configure roles
         vm.startPrank(fantiumNFT_admin);
@@ -69,7 +69,7 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
 
         vm.startPrank(fantiumNFT_manager);
         fantiumNFT.setERC20PaymentToken(address(usdc));
-        fantiumNFT.setUserManager(fantiumUserManager_proxy);
+        fantiumNFT.setUserManager(fantiumUserManager);
         fantiumNFT.setBaseURI("https://app.fantium.com/api/metadata/");
 
         // Configure collections
