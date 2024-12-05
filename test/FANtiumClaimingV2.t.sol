@@ -53,7 +53,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         assertEq(address(fantiumClaiming.fantiumNFT()), oldFANtiumNFT);
     }
 
-    // setFANtiumNFT
+    // setUserManager
     // ========================================================================
     function test_setUserManager_ok_admin() public {
         address newUserManagerContract = makeAddr("newUserManagerContract");
@@ -82,5 +82,36 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         fantiumClaiming.setUserManager(IFANtiumUserManager(newUserManagerContract));
 
         assertEq(address(fantiumClaiming.userManager()), oldUserManagerContract);
+    }
+
+    // setGlobalPayoutToken
+    // ========================================================================
+    function test_setGlobalPayoutToken_ok_admin() public {
+        address newPayoutToken = makeAddr("newPayoutToken");
+
+        vm.prank(fantiumClaiming_admin);
+        fantiumClaiming.setGlobalPayoutToken(newPayoutToken);
+
+        assertEq(address(fantiumClaiming.globalPayoutToken()), newPayoutToken);
+    }
+
+    function test_setGlobalPayoutToken_ok_manager() public {
+        address newPayoutToken = makeAddr("newPayoutToken");
+
+        vm.prank(fantiumClaiming_manager);
+        fantiumClaiming.setGlobalPayoutToken(newPayoutToken);
+
+        assertEq(address(fantiumClaiming.globalPayoutToken()), newPayoutToken);
+    }
+
+    function test_setGlobalPayoutToken_revert_nobody() public {
+        address newPayoutToken = makeAddr("newPayoutToken");
+        address oldPayoutToken = address(fantiumClaiming.globalPayoutToken());
+
+        expectMissingRole(nobody, fantiumClaiming.MANAGER_ROLE());
+        vm.prank(nobody);
+        fantiumClaiming.setGlobalPayoutToken(newPayoutToken);
+
+        assertEq(address(fantiumClaiming.globalPayoutToken()), oldPayoutToken);
     }
 }
