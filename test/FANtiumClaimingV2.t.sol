@@ -140,12 +140,35 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
             fantiumFeeBPS: 500, // 5% fee
             fantiumAddress: payable(makeAddr("fantiumAddress")),
             startTime: block.timestamp + 2 days, // Start in the future
-            closeTime: block.timestamp + 1 days // Close in the past
+            closeTime: block.timestamp + 1 days // Close < Start
          });
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 IFANtiumClaiming.InvalidDistributionEvent.selector, DistributionEventErrorReason.INVALID_TIME
+            )
+        );
+
+        vm.prank(fantiumClaiming_manager);
+        fantiumClaiming.createDistributionEvent(data);
+    }
+
+    function test_createDistributionEvent_revert_invalid_collection_ids() public {
+        // Prepare distribution event data
+        DistributionEventData memory data = DistributionEventData({
+            collectionIds: new uint256[](0), // empty array
+            athleteAddress: payable(makeAddr("athleteAddress")),
+            totalTournamentEarnings: 10_000 * 10 ** 18, // Example tournament earnings
+            totalOtherEarnings: 5000 * 10 ** 18, // Example other earnings
+            fantiumFeeBPS: 500, // 5% fee
+            fantiumAddress: payable(makeAddr("fantiumAddress")),
+            startTime: block.timestamp + 1 days,
+            closeTime: block.timestamp + 2 days
+        });
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IFANtiumClaiming.InvalidDistributionEvent.selector, DistributionEventErrorReason.INVALID_COLLECTION_IDS
             )
         );
 
