@@ -69,7 +69,7 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
 
         vm.startPrank(fantiumNFT_manager);
         fantiumNFT.setERC20PaymentToken(address(usdc));
-        fantiumNFT.setUserManager(fantiumUserManager);
+        fantiumNFT.setUserManager(userManager);
         fantiumNFT.setBaseURI("https://app.fantium.com/api/metadata/");
 
         // Configure collections
@@ -122,8 +122,8 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
 
         deal(address(usdc), recipient, amountUSDC);
 
-        vm.prank(fantiumUserManager_kycManager);
-        fantiumUserManager.setKYC(recipient, true);
+        vm.prank(userManager_kycManager);
+        userManager.setKYC(recipient, true);
 
         vm.prank(recipient);
         usdc.approve(address(fantiumNFT), amountUSDC);
@@ -154,8 +154,8 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
 
         deal(address(usdc), recipient, amountUSDC);
 
-        vm.prank(fantiumUserManager_kycManager);
-        fantiumUserManager.setKYC(recipient, true);
+        vm.prank(userManager_kycManager);
+        userManager.setKYC(recipient, true);
 
         vm.prank(recipient);
         usdc.approve(address(fantiumNFT), amountUSDC);

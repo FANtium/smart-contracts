@@ -1,51 +1,32 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import { Test } from "forge-std/Test.sol";
 import { FANtiumUserManagerV2 } from "src/FANtiumUserManagerV2.sol";
 import { IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
+import { BaseTest } from "test/BaseTest.sol";
+import { FANtiumUserManagerFactory } from "test/setup/FANtiumUserManagerFactory.sol";
 
-contract FANtiumUserManagerV2Test is Test {
+contract FANtiumUserManagerV2Test is BaseTest, FANtiumUserManagerFactory {
     uint256 public constant MAX_ARRAY_LENGTH = 10_000;
 
-    address public userManager_implementation;
-    address public userManager_proxy;
-    FANtiumUserManagerV2 public userManager;
-
-    address public admin = makeAddr("admin");
-    address public kycManager = makeAddr("kycManager");
-    address public allowlistManager = makeAddr("allowlistManager");
     address public user1 = makeAddr("user1");
     address public user2 = makeAddr("user2");
-
-    address public userManager_fantiumNFT = makeAddr("fantiumNFT");
 
     // Need to copy the events from the FANtiumUserManagerV2 contract
     event KYCUpdate(address indexed account, bool isKYCed);
     event IDENTUpdate(address indexed account, bool isIDENT);
     event AllowListUpdate(address indexed account, uint256 indexed collectionId, uint256 amount);
 
-    function setUp() public {
-        address userManager_implementation = address(new FANtiumUserManagerV2());
-        address userManager_proxy = UnsafeUpgrades.deployUUPSProxy(
-            userManager_implementation, abi.encodeCall(FANtiumUserManagerV2.initialize, (admin))
-        );
-        userManager = FANtiumUserManagerV2(userManager_proxy);
-
-        // Setup roles
-        vm.startPrank(admin);
-        userManager.grantRole(userManager.KYC_MANAGER_ROLE(), kycManager);
-        userManager.grantRole(userManager.ALLOWLIST_MANAGER_ROLE(), allowlistManager);
-        userManager.setFANtiumNFT(IFANtiumNFT(userManager_fantiumNFT));
-        vm.stopPrank();
+    function setUp() public virtual override {
+        FANtiumUserManagerFactory.setUp();
     }
 
     // setKYC
     // ========================================================================
     function test_setKYC_OK() public {
-        vm.startPrank(kycManager);
+        vm.startPrank(userManager_kycManager);
         vm.expectEmit(true, false, false, true);
         emit KYCUpdate(user1, true);
         userManager.setKYC(user1, true);
@@ -70,7 +51,7 @@ contract FANtiumUserManagerV2Test is Test {
         statuses[0] = true;
         statuses[1] = false;
 
-        vm.startPrank(kycManager);
+        vm.startPrank(userManager_kycManager);
         userManager.setBatchKYC(accounts, statuses);
         assertTrue(userManager.isKYCed(user1));
         assertFalse(userManager.isKYCed(user2));
@@ -81,7 +62,7 @@ contract FANtiumUserManagerV2Test is Test {
         address[] memory accounts = new address[](2);
         bool[] memory statuses = new bool[](1);
 
-        vm.startPrank(kycManager);
+        vm.startPrank(userManager_kycManager);
         vm.expectRevert(
             abi.encodeWithSelector(IFANtiumUserManager.ArrayLengthMismatch.selector, accounts.length, statuses.length)
         );
@@ -92,7 +73,7 @@ contract FANtiumUserManagerV2Test is Test {
     // setIDENT
     // ========================================================================
     function test_setIDENT_OK() public {
-        vm.startPrank(kycManager);
+        vm.startPrank(userManager_kycManager);
         vm.expectEmit(true, false, false, true);
         emit IDENTUpdate(user1, true);
         userManager.setIDENT(user1, true);
@@ -110,7 +91,7 @@ contract FANtiumUserManagerV2Test is Test {
         statuses[0] = true;
         statuses[1] = false;
 
-        vm.startPrank(kycManager);
+        vm.startPrank(userManager_kycManager);
         userManager.setBatchIDENT(accounts, statuses);
         assertTrue(userManager.isIDENT(user1));
         assertFalse(userManager.isIDENT(user2));
@@ -122,7 +103,7 @@ contract FANtiumUserManagerV2Test is Test {
         address[] memory accounts = new address[](x);
         bool[] memory statuses = new bool[](y);
 
-        vm.startPrank(kycManager);
+        vm.startPrank(userManager_kycManager);
         vm.expectRevert(
             abi.encodeWithSelector(IFANtiumUserManager.ArrayLengthMismatch.selector, accounts.length, statuses.length)
         );
@@ -135,7 +116,7 @@ contract FANtiumUserManagerV2Test is Test {
     // ========================================================================
 
     function test_setAllowList_OK() public {
-        vm.startPrank(allowlistManager);
+        vm.startPrank(userManager_allowlistManager);
         vm.expectEmit(true, true, false, true);
         emit AllowListUpdate(user1, 1, 100);
         userManager.setAllowList(user1, 1, 100);
@@ -154,7 +135,7 @@ contract FANtiumUserManagerV2Test is Test {
         allocations[0] = 100;
         allocations[1] = 200;
 
-        vm.startPrank(allowlistManager);
+        vm.startPrank(userManager_allowlistManager);
         userManager.batchSetAllowList(accounts, collectionIds, allocations);
         assertEq(userManager.allowlist(user1, 1), 100);
         assertEq(userManager.allowlist(user2, 2), 200);
@@ -162,7 +143,7 @@ contract FANtiumUserManagerV2Test is Test {
     }
 
     function test_increaseAllowList_OK() public {
-        vm.startPrank(allowlistManager);
+        vm.startPrank(userManager_allowlistManager);
         userManager.setAllowList(user1, 1, 100);
         userManager.increaseAllowList(user1, 1, 50);
         assertEq(userManager.allowlist(user1, 1), 150);
@@ -170,7 +151,7 @@ contract FANtiumUserManagerV2Test is Test {
     }
 
     function test_decreaseAllowList_OK() public {
-        vm.startPrank(allowlistManager);
+        vm.startPrank(userManager_allowlistManager);
         userManager.setAllowList(user1, 1, 100);
         userManager.decreaseAllowList(user1, 1, 30);
         assertEq(userManager.allowlist(user1, 1), 70);
@@ -184,7 +165,7 @@ contract FANtiumUserManagerV2Test is Test {
     function testFuzz_setAllowList_OK(address account, uint256 collectionId, uint256 allocation) public {
         vm.assume(account != address(0));
 
-        vm.startPrank(allowlistManager);
+        vm.startPrank(userManager_allowlistManager);
         userManager.setAllowList(account, collectionId, allocation);
         assertEq(userManager.allowlist(account, collectionId), allocation);
         vm.stopPrank();
@@ -201,7 +182,7 @@ contract FANtiumUserManagerV2Test is Test {
         vm.assume(account != address(0));
         vm.assume(initialAmount < type(uint256).max - delta);
 
-        vm.startPrank(allowlistManager);
+        vm.startPrank(userManager_allowlistManager);
         userManager.setAllowList(account, collectionId, initialAmount);
         userManager.increaseAllowList(account, collectionId, delta);
         assertEq(userManager.allowlist(account, collectionId), initialAmount + delta);
@@ -221,7 +202,7 @@ contract FANtiumUserManagerV2Test is Test {
         vm.assume(delta > 0);
         initialAmount = bound(initialAmount, max - delta, max);
 
-        vm.startPrank(allowlistManager);
+        vm.startPrank(userManager_allowlistManager);
         userManager.setAllowList(account, collectionId, initialAmount);
         userManager.increaseAllowList(account, collectionId, delta);
         assertEq(userManager.allowlist(account, collectionId), type(uint256).max);
@@ -239,7 +220,7 @@ contract FANtiumUserManagerV2Test is Test {
         vm.assume(account != address(0));
         vm.assume(initialAmount >= delta);
 
-        vm.startPrank(allowlistManager);
+        vm.startPrank(userManager_allowlistManager);
         userManager.setAllowList(account, collectionId, initialAmount);
         userManager.decreaseAllowList(account, collectionId, delta);
         assertEq(userManager.allowlist(account, collectionId), initialAmount - delta);
@@ -274,11 +255,11 @@ contract FANtiumUserManagerV2Test is Test {
             allocationsArray[i] = allocations[i];
         }
 
-        vm.startPrank(kycManager);
+        vm.startPrank(userManager_kycManager);
         userManager.setBatchKYC(accountsArray, statusArray);
         vm.stopPrank();
 
-        vm.startPrank(allowlistManager);
+        vm.startPrank(userManager_allowlistManager);
         userManager.batchSetAllowList(accountsArray, collectionIdsArray, allocationsArray);
         vm.stopPrank();
 

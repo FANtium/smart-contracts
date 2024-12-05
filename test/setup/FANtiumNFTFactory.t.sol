@@ -6,6 +6,6 @@ import { BaseTest } from "test/BaseTest.sol";
 
 contract FANtiumNFTFactoryTest is BaseTest, FANtiumNFTFactory {
     function test_setUp_ok() public view {
-        assertEq(address(fantiumNFT.userManager()), fantiumUserManager_proxy);
+        assertEq(address(fantiumNFT.userManager()), userManager_proxy);
     }
 }

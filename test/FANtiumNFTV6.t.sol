@@ -677,8 +677,8 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
         }
 
         // set user as KYCed
-        vm.prank(fantiumUserManager_kycManager);
-        fantiumUserManager.setKYC(recipient, true);
+        vm.prank(userManager_kycManager);
+        userManager.setKYC(recipient, true);
 
         vm.prank(recipient);
         fantiumNFT.mintable(collectionId, quantity, recipient);
@@ -748,8 +748,8 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
         }
 
         // set user as KYCed
-        vm.prank(fantiumUserManager_kycManager);
-        fantiumUserManager.setKYC(recipient, true);
+        vm.prank(userManager_kycManager);
+        userManager.setKYC(recipient, true);
 
         vm.expectRevert(abi.encodeWithSelector(IFANtiumNFT.InvalidMint.selector, MintErrorReason.COLLECTION_PAUSED));
         vm.prank(recipient);

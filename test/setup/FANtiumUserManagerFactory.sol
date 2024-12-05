@@ -6,29 +6,28 @@ import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { BaseTest } from "test/BaseTest.sol";
 
 contract FANtiumUserManagerFactory is BaseTest {
-    address public fantiumUserManager_admin = makeAddr("admin");
-    address public fantiumUserManager_manager = makeAddr("manager");
-    address public fantiumUserManager_forwarder = makeAddr("forwarder");
-    address public fantiumUserManager_kycManager = makeAddr("kycManager");
-    address public fantiumUserManager_allowlistManager = makeAddr("allowlistManager");
+    address public userManager_admin = makeAddr("admin");
+    address public userManager_manager = makeAddr("manager");
+    address public userManager_forwarder = makeAddr("forwarder");
+    address public userManager_kycManager = makeAddr("kycManager");
+    address public userManager_allowlistManager = makeAddr("allowlistManager");
 
-    address public fantiumUserManager_implementation;
-    address public fantiumUserManager_proxy;
-    FANtiumUserManagerV2 public fantiumUserManager;
+    address public userManager_implementation;
+    address public userManager_proxy;
+    FANtiumUserManagerV2 public userManager;
 
     function setUp() public virtual {
-        fantiumUserManager_implementation = address(new FANtiumUserManagerV2());
-        fantiumUserManager_proxy = UnsafeUpgrades.deployUUPSProxy(
-            fantiumUserManager_implementation,
-            abi.encodeCall(FANtiumUserManagerV2.initialize, (fantiumUserManager_admin))
+        userManager_implementation = address(new FANtiumUserManagerV2());
+        userManager_proxy = UnsafeUpgrades.deployUUPSProxy(
+            userManager_implementation, abi.encodeCall(FANtiumUserManagerV2.initialize, (userManager_admin))
         );
-        fantiumUserManager = FANtiumUserManagerV2(fantiumUserManager_proxy);
+        userManager = FANtiumUserManagerV2(userManager_proxy);
 
-        vm.startPrank(fantiumUserManager_admin);
-        fantiumUserManager.grantRole(fantiumUserManager.MANAGER_ROLE(), fantiumUserManager_manager);
-        fantiumUserManager.grantRole(fantiumUserManager.FORWARDER_ROLE(), fantiumUserManager_forwarder);
-        fantiumUserManager.grantRole(fantiumUserManager.KYC_MANAGER_ROLE(), fantiumUserManager_kycManager);
-        fantiumUserManager.grantRole(fantiumUserManager.ALLOWLIST_MANAGER_ROLE(), fantiumUserManager_allowlistManager);
+        vm.startPrank(userManager_admin);
+        userManager.grantRole(userManager.MANAGER_ROLE(), userManager_manager);
+        userManager.grantRole(userManager.FORWARDER_ROLE(), userManager_forwarder);
+        userManager.grantRole(userManager.KYC_MANAGER_ROLE(), userManager_kycManager);
+        userManager.grantRole(userManager.ALLOWLIST_MANAGER_ROLE(), userManager_allowlistManager);
         vm.stopPrank();
     }
 }
