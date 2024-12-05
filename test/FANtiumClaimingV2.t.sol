@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
+import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumClaimingFactory } from "test/setup/FANtiumClaimingFactory.sol";
 
@@ -32,7 +33,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         assertEq(address(fantiumClaiming.fantiumNFT()), newFANtiumNFT);
     }
 
-    function test_setFANtiumNFT_ok_mamager() public {
+    function test_setFANtiumNFT_ok_manager() public {
         address newFANtiumNFT = makeAddr("newFANtiumNFT");
 
         vm.prank(fantiumClaiming_manager);
@@ -50,5 +51,36 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         fantiumClaiming.setFANtiumNFT(IFANtiumNFT(newFANtiumNFT));
 
         assertEq(address(fantiumClaiming.fantiumNFT()), oldFANtiumNFT);
+    }
+
+    // setFANtiumNFT
+    // ========================================================================
+    function test_setUserManager_ok_admin() public {
+        address newUserManagerContract = makeAddr("newUserManagerContract");
+
+        vm.prank(fantiumClaiming_admin);
+        fantiumClaiming.setUserManager(IFANtiumUserManager(newUserManagerContract));
+
+        assertEq(address(fantiumClaiming.userManager()), newUserManagerContract);
+    }
+
+    function test_setUserManager_ok_manager() public {
+        address newUserManagerContract = makeAddr("newUserManagerContract");
+
+        vm.prank(fantiumClaiming_manager);
+        fantiumClaiming.setUserManager(IFANtiumUserManager(newUserManagerContract));
+
+        assertEq(address(fantiumClaiming.userManager()), newUserManagerContract);
+    }
+
+    function test_setUserManager_revert_nobody() public {
+        address newUserManagerContract = makeAddr("newUserManagerContract");
+        address oldUserManagerContract = address(fantiumClaiming.userManager());
+
+        expectMissingRole(nobody, fantiumClaiming.MANAGER_ROLE());
+        vm.prank(nobody);
+        fantiumClaiming.setUserManager(IFANtiumUserManager(newUserManagerContract));
+
+        assertEq(address(fantiumClaiming.userManager()), oldUserManagerContract);
     }
 }
