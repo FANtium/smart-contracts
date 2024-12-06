@@ -29,6 +29,10 @@ contract FANtiumClaimingFactory is BaseTest, FANtiumNFTFactory {
         vm.startPrank(fantiumNFT_admin);
         fantiumClaiming.grantRole(fantiumClaiming.MANAGER_ROLE(), fantiumClaiming_manager);
         fantiumClaiming.grantRole(fantiumClaiming.FORWARDER_ROLE(), fantiumClaiming_trustedForwarder);
+
+        // Set FANtiumNFT created in the FANtiumNFTFactory
+        fantiumClaiming.setFANtiumNFT(fantiumNFT);
+        fantiumClaiming.setGlobalPayoutToken(address(usdc));
         vm.stopPrank();
     }
 }
