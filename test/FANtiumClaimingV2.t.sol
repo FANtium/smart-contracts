@@ -8,7 +8,10 @@ import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumClaimingFactory } from "test/setup/FANtiumClaimingFactory.sol";
 import {
-    DistributionEvent, DistributionEventData, DistributionEventErrorReason, DistributionEventFundingErrorReason
+    DistributionEvent,
+    DistributionEventData,
+    DistributionEventErrorReason,
+    DistributionEventFundingErrorReason
 } from "src/interfaces/IFANtiumClaiming.sol";
 
 contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
@@ -450,7 +453,10 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         vm.expectRevert();
         vm.expectRevert(
             abi.encodeWithSelector(
-                IFANtiumClaiming.AthleteOnly.selector, distEventId, payable(makeAddr("someRandomAddress")), payable(makeAddr("athleteAddress"))
+                IFANtiumClaiming.AthleteOnly.selector,
+                distEventId,
+                payable(makeAddr("someRandomAddress")),
+                payable(makeAddr("athleteAddress"))
             )
         );
 
@@ -480,7 +486,8 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IFANtiumClaiming.InvalidDistributionEventFunding.selector, DistributionEventFundingErrorReason.FUNDING_ALREADY_DONE
+                IFANtiumClaiming.InvalidDistributionEventFunding.selector,
+                DistributionEventFundingErrorReason.FUNDING_ALREADY_DONE
             )
         );
 
@@ -548,7 +555,8 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         uint256 distEventId = fantiumClaiming.createDistributionEvent(data);
 
         // todo: teh below is 0, so the test will revert with FUNDING_ALREADY_DONE. How can we update these properties?
-        uint256 totalAmount = fantiumClaiming.distributionEvents(distEventId).tournamentDistributionAmount + fantiumClaiming.distributionEvents(distEventId).otherDistributionAmount;
+        uint256 totalAmount = fantiumClaiming.distributionEvents(distEventId).tournamentDistributionAmount
+            + fantiumClaiming.distributionEvents(distEventId).otherDistributionAmount;
         uint256 missingAmount = totalAmount - fantiumClaiming.distributionEvents(distEventId).amountPaidIn;
 
         // Fund the distribution event
@@ -560,5 +568,4 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         DistributionEvent memory updatedEvent = fantiumClaiming.distributionEvents(distEventId);
         assertEq(updatedEvent.amountPaidIn, totalAmount, "Amount paid in should match total amount");
     }
-
 }
