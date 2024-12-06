@@ -24,7 +24,6 @@ import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
-import { console } from "forge-std/console.sol";
 
 /**
  * @title FANtium Claining contract V2.
@@ -254,9 +253,6 @@ contract FANtiumClaimingV2 is
 
         // Ensure all collections exist
         for (uint256 i = 0; i < data.collectionIds.length; i++) {
-            // todo: Print values during test
-            console.logBool(IFANtiumNFT(fantiumNFT).collections(data.collectionIds[i]).exists);
-            console.log("Debug: Value is", IFANtiumNFT(fantiumNFT).collections(data.collectionIds[i]).exists);
             if (!IFANtiumNFT(fantiumNFT).collections(data.collectionIds[i]).exists) {
                 revert InvalidDistributionEvent(DistributionEventErrorReason.INVALID_COLLECTION_IDS);
             }
@@ -441,7 +437,7 @@ contract FANtiumClaimingV2 is
         onlyManagerOrAdmin
         onlyValidDistributionEvent(distributionEventId)
     {
-        DistributionEvent memory existingDE = _distributionEvents[distributionEventId];
+        DistributionEvent storage existingDE = _distributionEvents[distributionEventId];
         if (existingDE.closed) {
             revert InvalidDistributionEventClose(DistributionEventCloseErrorReason.DISTRIBUTION_ALREADY_CLOSED);
         }
