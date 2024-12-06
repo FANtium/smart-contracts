@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
-import { IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
+import { IFANtiumNFT, CollectionData } from "src/interfaces/IFANtiumNFT.sol";
 import { IFANtiumClaiming } from "src/interfaces/IFANtiumClaiming.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { BaseTest } from "test/BaseTest.sol";
@@ -169,6 +169,131 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IFANtiumClaiming.InvalidDistributionEvent.selector, DistributionEventErrorReason.INVALID_COLLECTION_IDS
+            )
+        );
+
+        vm.prank(fantiumClaiming_manager);
+        fantiumClaiming.createDistributionEvent(data);
+    }
+
+    // todo: all below tests fail [FAIL: call reverted as expected, but without data]
+        function test_createDistributionEvent_revert_invalid_collection_ids_collection_does_not_exist() public {
+            CollectionData memory collectionData = CollectionData({
+                athleteAddress: payable(makeAddr("athlete")),
+                athletePrimarySalesBPS: 5000, // 50%
+                athleteSecondarySalesBPS: 1000, // 10%
+                fantiumSalesAddress: payable(makeAddr("fantiumSales")),
+                fantiumSecondarySalesBPS: 500, // 5%
+                launchTimestamp: block.timestamp + 1 days,
+                maxInvocations: 100,
+                otherEarningShare1e7: 5_000_000, // 50%
+                price: 100 ether,
+                tournamentEarningShare1e7: 2_500_000 // 25%
+            });
+
+            vm.prank(fantiumNFT_manager);
+            uint256 collectionId = fantiumNFT.createCollection(collectionData);
+
+            uint256[] memory collectionIdsArray = new uint256[](2);
+            collectionIdsArray[0] = collectionId;
+            collectionIdsArray[1] = 13; // collection doesn't exist
+
+            // Prepare distribution event data
+            DistributionEventData memory distributionEventData = DistributionEventData({
+                collectionIds: collectionIdsArray,
+                athleteAddress: payable(makeAddr("athleteAddress")),
+                totalTournamentEarnings: 10_000 * 10 ** 18, // Example tournament earnings
+                totalOtherEarnings: 5000 * 10 ** 18, // Example other earnings
+                fantiumFeeBPS: 500, // 5% fee
+                fantiumAddress: payable(makeAddr("fantiumAddress")),
+                startTime: block.timestamp + 1 days,
+                closeTime: block.timestamp + 2 days
+            });
+
+            vm.expectRevert(
+                abi.encodeWithSelector(
+                    IFANtiumClaiming.InvalidDistributionEvent.selector, DistributionEventErrorReason.INVALID_COLLECTION_IDS
+                )
+            );
+
+            vm.prank(fantiumClaiming_manager);
+            fantiumClaiming.createDistributionEvent(distributionEventData);
+        }
+
+    function test_createDistributionEvent_revert_invalid_fantium_fee_bps() public {
+        uint256[] memory collectionIdsArray = new uint256[](2);
+        collectionIdsArray[0] = 12;
+        collectionIdsArray[1] = 13;
+
+        // Prepare distribution event data
+        DistributionEventData memory data = DistributionEventData({
+            collectionIds: collectionIdsArray,
+            athleteAddress: payable(makeAddr("athleteAddress")),
+            totalTournamentEarnings: 10_000 * 10 ** 18, // Example tournament earnings
+            totalOtherEarnings: 5000 * 10 ** 18, // Example other earnings
+            fantiumFeeBPS: 20_000, // BPS > BPS_BASE
+            fantiumAddress: payable(makeAddr("fantiumAddress")),
+            startTime: block.timestamp + 1 days,
+            closeTime: block.timestamp + 2 days
+        });
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IFANtiumClaiming.InvalidDistributionEvent.selector, DistributionEventErrorReason.INVALID_FANTIUM_FEE_BPS
+            )
+        );
+
+        vm.prank(fantiumClaiming_manager);
+        fantiumClaiming.createDistributionEvent(data);
+    }
+
+    function test_createDistributionEvent_revert_invalid_address() public {
+        uint256[] memory collectionIdsArray = new uint256[](2);
+        collectionIdsArray[0] = 12;
+        collectionIdsArray[1] = 13;
+
+        // Prepare distribution event data
+        DistributionEventData memory data = DistributionEventData({
+            collectionIds: collectionIdsArray,
+            athleteAddress: payable(address(0)), // invalid address
+            totalTournamentEarnings: 10_000 * 10 ** 18, // Example tournament earnings
+            totalOtherEarnings: 5000 * 10 ** 18, // Example other earnings
+            fantiumFeeBPS: 500, // 5% fee
+            fantiumAddress: payable(makeAddr("fantiumAddress")),
+            startTime: block.timestamp + 1 days,
+            closeTime: block.timestamp + 2 days
+        });
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IFANtiumClaiming.InvalidDistributionEvent.selector, DistributionEventErrorReason.INVALID_ADDRESS
+            )
+        );
+
+        vm.prank(fantiumClaiming_manager);
+        fantiumClaiming.createDistributionEvent(data);
+    }
+
+    function test_createDistributionEvent_revert_invalid_amount() public {
+        uint256[] memory collectionIdsArray = new uint256[](2);
+        collectionIdsArray[0] = 12;
+        collectionIdsArray[1] = 13;
+
+        // Prepare distribution event data
+        DistributionEventData memory data = DistributionEventData({
+            collectionIds: collectionIdsArray,
+            athleteAddress: payable(makeAddr("athleteAddress")),
+            totalTournamentEarnings: 10_000_000_000 * 10 ** 18, // Too much money
+            totalOtherEarnings: 5000 * 10 ** 18, // Example other earnings
+            fantiumFeeBPS: 500, // 5% fee
+            fantiumAddress: payable(makeAddr("fantiumAddress")),
+            startTime: block.timestamp + 1 days,
+            closeTime: block.timestamp + 2 days
+        });
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IFANtiumClaiming.InvalidDistributionEvent.selector, DistributionEventErrorReason.INVALID_AMOUNT
             )
         );
 
