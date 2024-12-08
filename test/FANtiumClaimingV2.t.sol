@@ -127,8 +127,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
     function test_distributionEvents_non_existing_event() public view {
         // Test that a non-existent distribution event returns default/empty values
         DistributionEvent memory event0 = fantiumClaiming.distributionEvents(9999);
-
-        assertEq(event0.exists, false, "Distribution event should not exist for ID 0");
+        assertEq(event0.exists, false, "Distribution event should not exist for ID 9999");
     }
 
     // createDistributionEvent
