@@ -81,6 +81,8 @@ jobs:
     coverage:
         name: Test with coverage
         runs-on: ubuntu-24.04
+        env:
+            FOUNDRY_PROFILE: coverage
         steps:
             - name: Check out the repo
               uses: actions/checkout@v4

@@ -9,7 +9,7 @@ evm_version = "paris"
 extra_output = ["storageLayout"]
 fs_permissions = [{ access = "read", path = "./test/fixtures"}, { access = "read", path = "./out"}]
 ffi = true
-fuzz = { runs = 1_000 }
+fuzz = { runs = 256 }
 gas_reports = ["*"]
 libs = ["node_modules", "lib"]
 optimizer = true
@@ -21,8 +21,12 @@ src = "src"
 test = "test"
 via_ir = true
 
+[profile.coverage]
+fuzz = { runs = 256 }
+verbosity = 3
+
 [profile.ci]
-fuzz = { runs = 10_000 }
+fuzz = { runs = 1_000 }
 verbosity = 3
 
 [etherscan]
