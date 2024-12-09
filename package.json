@@ -15,7 +15,7 @@
         "validate:rebuild": "forge clean && forge build && bun run validate",
         "test": "forge test",
         "test:coverage": "forge coverage --ir-minimum",
-        "test:coverage:report": "forge coverage --ir-minimum --report lcov && lcov --remove lcov.info 'src/archive/*' 'test/*' --output-file lcov.info && genhtml lcov.info --branch-coverage --ignore-errors corrupt --output-dir coverage"
+        "test:coverage:report": "forge coverage --ir-minimum --report lcov && lcov --remove lcov.info 'src/archive/*' 'script/*' 'test/*' --output-file lcov.info && genhtml lcov.info --branch-coverage --ignore-errors corrupt --output-dir coverage"
     },
     "dependencies": {
         "@openzeppelin/contracts": "4.9.6",

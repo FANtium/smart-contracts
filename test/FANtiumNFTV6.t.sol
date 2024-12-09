@@ -828,7 +828,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
         uint256 amountUSDC = 200;
-        (bytes memory signature,,,,) = prepareSale(collectionId, quantity, recipient, amountUSDC);
+        (bytes memory signature,,,,,) = prepareSale(collectionId, quantity, recipient, amountUSDC);
 
         vm.prank(recipient);
         uint256 lastTokenId = fantiumNFT.mintTo(collectionId, quantity, recipient, amountUSDC, signature);
@@ -860,6 +860,23 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
         vm.expectRevert(abi.encodeWithSelector(IFANtiumNFT.InvalidMint.selector, MintErrorReason.INVALID_SIGNATURE));
         vm.prank(recipient);
         fantiumNFT.mintTo(collectionId, quantity, recipient, amountUSDC, forgedSignature);
+    }
+
+    function test_mintTo_revert_invalidNonce() public {
+        uint256 collectionId = 1; // collection 1 is mintable
+        uint24 quantity = 1;
+        uint256 amountUSDC = 200;
+        (bytes memory signature,,,,,) = prepareSale(collectionId, quantity, recipient, amountUSDC);
+
+        // First mint pass, and nonce is incremented
+        vm.prank(recipient);
+        uint256 lastTokenId = fantiumNFT.mintTo(collectionId, quantity, recipient, amountUSDC, signature);
+        assertEq(fantiumNFT.ownerOf(lastTokenId), recipient);
+
+        // Second mint fails, because nonce is incremented
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumNFT.InvalidMint.selector, MintErrorReason.INVALID_SIGNATURE));
+        vm.prank(recipient);
+        fantiumNFT.mintTo(collectionId, quantity, recipient, amountUSDC, signature);
     }
 
     // setBaseURI

@@ -119,6 +119,12 @@ contract FANtiumNFTV6 is
      */
     address private UNUSED_trustedForwarder;
 
+    /**
+     * @notice Mapping of addresses to their nonce.
+     * @dev Used to prevent replay attacks with the mintTo function.
+     */
+    mapping(address => uint256) public nonces;
+
     // ========================================================================
     // UUPS upgradeable pattern
     // ========================================================================
@@ -614,12 +620,14 @@ contract FANtiumNFTV6 is
         whenNotPaused
         returns (uint256)
     {
-        bytes32 hash =
-            keccak256(abi.encode(_msgSender(), collectionId, quantity, amount, recipient)).toEthSignedMessageHash();
+        bytes32 hash = keccak256(
+            abi.encode(_msgSender(), nonces[_msgSender()], collectionId, quantity, amount, recipient)
+        ).toEthSignedMessageHash();
         if (!hasRole(SIGNER_ROLE, hash.recover(signature))) {
             revert InvalidMint(MintErrorReason.INVALID_SIGNATURE);
         }
 
+        nonces[_msgSender()]++;
         return _mintTo(collectionId, quantity, amount, recipient);
     }
 

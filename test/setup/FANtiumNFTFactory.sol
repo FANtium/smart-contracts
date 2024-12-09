@@ -138,6 +138,7 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
         public
         returns (
             bytes memory signature,
+            uint256 nonce,
             uint256 fantiumRevenue,
             address fantiumAddress,
             uint256 athleteRevenue,
@@ -147,6 +148,7 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
         Collection memory collection = fantiumNFT.collections(collectionId);
         (fantiumRevenue, fantiumAddress, athleteRevenue, athleteAddress) =
             fantiumNFT.getPrimaryRevenueSplits(collectionId, amountUSDC);
+        nonce = fantiumNFT.nonces(recipient);
 
         if (block.timestamp < collection.launchTimestamp) {
             vm.warp(collection.launchTimestamp + 1);
@@ -161,7 +163,8 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
         usdc.approve(address(fantiumNFT), amountUSDC);
 
         return (
-            signMint(recipient, collectionId, quantity, amountUSDC),
+            signMint(recipient, nonce, collectionId, quantity, amountUSDC),
+            nonce,
             fantiumRevenue,
             fantiumAddress,
             athleteRevenue,
@@ -177,6 +180,7 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
 
     function signMint(
         address recipient,
+        uint256 nonce,
         uint256 collectionId,
         uint24 quantity,
         uint256 amount
@@ -186,7 +190,7 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
         returns (bytes memory)
     {
         bytes32 hash =
-            keccak256(abi.encode(recipient, collectionId, quantity, amount, recipient)).toEthSignedMessageHash();
+            keccak256(abi.encode(recipient, nonce, collectionId, quantity, amount, recipient)).toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(fantiumNFT_signerKey, hash);
         return abi.encodePacked(r, s, v);
     }
