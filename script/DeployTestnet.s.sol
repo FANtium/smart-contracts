@@ -20,9 +20,10 @@ contract DeployTestnetV5 is Script {
      * See https://docs.gelato.network/web3-services/relay/supported-networks#gelatorelay1balanceerc2771.sol
      */
     address public constant GELATO_RELAYER_ERC2771 = 0x70997970c59CFA74a39a1614D165A84609f564c7;
-    address[2] public MANAGERS = [
+    address[3] public MANAGERS = [
         0x65b3e69674927e10D6AFA307944F90580Df86b64, // @mat
-        0x514bcCad42f0F8584B7e1fEdccD2aaA4eE2f2c8E // @alex
+        0x514bcCad42f0F8584B7e1fEdccD2aaA4eE2f2c8E, // @alex
+        0xbb1937562c7243a02508e4BE008963a446C6C611 // @sylvain
     ];
 
     /**
