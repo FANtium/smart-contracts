@@ -77,3 +77,25 @@ jobs:
               run: |
                   echo "## Tests result" >> $GITHUB_STEP_SUMMARY
                   echo "✅ Passed" >> $GITHUB_STEP_SUMMARY
+
+    coverage:
+        name: Test with coverage
+        runs-on: ubuntu-24.04
+        steps:
+            - name: Check out the repo
+              uses: actions/checkout@v4
+            - name: Set up workspace
+              uses: ./.github/actions/setup
+            - name: Show the Foundry config
+              run: forge config
+            - name: Generate a fuzz seed that changes weekly to avoid burning through RPC allowance
+              run: >
+                  echo "FOUNDRY_FUZZ_SEED=$(
+                    echo $(($EPOCHSECONDS - $EPOCHSECONDS % 604800))
+                  )" >> $GITHUB_ENV
+            - name: Run the tests
+              run: bun run test:coverage:report
+            - name: Upload coverage reports to Codecov
+              uses: codecov/codecov-action@v5
+              with:
+                  token: ${{ secrets.CODECOV_TOKEN }}
