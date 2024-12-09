@@ -29,9 +29,10 @@ While we cannot offer a bounty for vulnerabilities on regular basis, we will aim
 
 ### Solidity
 
-We use [`forge fmt`](https://book.getfoundry.sh/forge/fmt/) to format the Solidity code. 
+We use [`forge fmt`](https://book.getfoundry.sh/forge/fmt/) to format the Solidity code.
 
 #### Natspec comments
+
 For Natspec comments, we only use the `/** ... */` style and we avoid the triple slash `///` style.
 
 ### Other languages
