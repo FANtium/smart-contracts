@@ -11,7 +11,8 @@ import {
     Distribution,
     DistributionData,
     DistributionErrorReason,
-    DistributionFundingErrorReason
+    DistributionFundingErrorReason,
+    DistributionCloseErrorReason
 } from "src/interfaces/IFANtiumClaiming.sol";
 
 contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
@@ -574,5 +575,71 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
 
         vm.prank(payable(makeAddr("athleteAddress")));
         fantiumClaiming.fundDistribution(distEventId);
+    }
+
+
+    // closeDistribution
+    // ========================================================================
+    function test_closeDistribution_ok_success() public {
+        uint256[] memory collectionIdsArray = new uint256[](2);
+        collectionIdsArray[0] = 1;
+        collectionIdsArray[1] = 2;
+
+        // Prepare distribution data
+        DistributionData memory data = DistributionData({
+            collectionIds: collectionIdsArray,
+            athleteAddress: payable(makeAddr("athleteAddress")),
+            totalTournamentEarnings: 10_000 * 10 ** 18,
+            totalOtherEarnings: 5000 * 10 ** 18,
+            fantiumFeeBPS: 500, // 5% fee
+            fantiumAddress: payable(makeAddr("fantiumAddress")),
+            startTime: block.timestamp + 1 days,
+            closeTime: block.timestamp + 2 days
+        });
+
+        vm.prank(fantiumClaiming_manager);
+        uint256 distEventId = fantiumClaiming.createDistribution(data);
+
+        // close the distribution
+        vm.prank(fantiumClaiming_manager);
+        fantiumClaiming.closeDistribution(distEventId);
+
+        assertTrue(fantiumClaiming.distributions(distEventId).closed, "Distr. event 'closed' property is updated");
+        // todo: test this line payOutToken.safeTransfer(existingDE.athleteAddress, closingAmount);
+    }
+
+    function test_closeDistribution_revert_alreadyClosed() public {
+        uint256[] memory collectionIdsArray = new uint256[](2);
+        collectionIdsArray[0] = 1;
+        collectionIdsArray[1] = 2;
+
+        // Prepare distribution data
+        DistributionData memory data = DistributionData({
+            collectionIds: collectionIdsArray,
+            athleteAddress: payable(makeAddr("athleteAddress")),
+            totalTournamentEarnings: 10_000 * 10 ** 18,
+            totalOtherEarnings: 5000 * 10 ** 18,
+            fantiumFeeBPS: 500, // 5% fee
+            fantiumAddress: payable(makeAddr("fantiumAddress")),
+            startTime: block.timestamp + 1 days,
+            closeTime: block.timestamp + 2 days
+        });
+
+        vm.prank(fantiumClaiming_manager);
+        uint256 distEventId = fantiumClaiming.createDistribution(data);
+
+        // Use the contract's method to close the distribution
+        vm.prank(fantiumClaiming_manager);
+        fantiumClaiming.closeDistribution(distEventId);
+        assertTrue(fantiumClaiming.distributions(distEventId).closed, "Distr. event 'closed' property is updated");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IFANtiumClaiming.InvalidDistributionClose.selector, DistributionCloseErrorReason.DISTRIBUTION_ALREADY_CLOSED
+            )
+        );
+
+        vm.prank(fantiumClaiming_manager);
+        fantiumClaiming.closeDistribution(distEventId);
     }
 }
