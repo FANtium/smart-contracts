@@ -437,7 +437,7 @@ contract FANtiumClaimingV2 is
         onlyManagerOrAdmin
         onlyValidDistributionEvent(distributionEventId)
     {
-        DistributionEvent memory existingDE = _distributionEvents[distributionEventId];
+        DistributionEvent storage existingDE = _distributionEvents[distributionEventId];
         if (existingDE.closed) {
             revert InvalidDistributionEventClose(DistributionEventCloseErrorReason.DISTRIBUTION_ALREADY_CLOSED);
         }
