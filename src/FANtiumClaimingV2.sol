@@ -7,11 +7,11 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IFANtiumNFT, Collection } from "src/interfaces/IFANtiumNFT.sol";
 import {
     IFANtiumClaiming,
-    DistributionEvent,
-    DistributionEventData,
-    DistributionEventErrorReason,
-    DistributionEventFundingErrorReason,
-    DistributionEventCloseErrorReason,
+    Distribution,
+    DistributionData,
+    DistributionErrorReason,
+    DistributionFundingErrorReason,
+    DistributionCloseErrorReason,
     ClaimErrorReason,
     CollectionInfo
 } from "src/interfaces/IFANtiumClaiming.sol";
@@ -27,7 +27,7 @@ import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/St
 
 /**
  * @title FANtium Claining contract V2.
- * @notice This contract is used to manage distribution events and claim payouts for FAN token holders.
+ * @notice This contract is used to manage distributions and claim payouts for FAN token holders.
  * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
  *
  * @custom:oz-upgrades-from FantiumClaimingV1
@@ -46,6 +46,10 @@ contract FANtiumClaimingV2 is
     // Constants
     // ========================================================================
     uint256 private constant BPS_BASE = 10_000;
+    /**
+     * @dev Even in our greatest dreams, we will never pay out more than a billion!
+     */
+    uint256 private constant MAX_FUNDING_AMOUNT = 1_000_000_000;
 
     // Roles
     // ========================================================================
@@ -74,34 +78,38 @@ contract FANtiumClaimingV2 is
     IFANtiumUserManager public userManager;
 
     /**
-     * @dev mapping of distributionEvent to DistributionEvent
+     * @dev mapping of distribution to Distribution
      * Distribution Event ID -> Distribution Event
      * @custom:oz-renamed-from distributionEvents
+     * @custom:oz-retyped-from mapping(uint256 => FantiumClaimingV1.DistributionEvent)
      */
-    mapping(uint256 => DistributionEvent) private _distributionEvents;
+    mapping(uint256 => Distribution) private _distributions;
 
     /**
-     * @notice mapping of distributionEvent to baseTokenId to claimed
+     * @notice mapping of distribution to baseTokenId to claimed
      * Distribution Event ID -> Base Token ID (token with version=0) -> Claimed
      * @custom:oz-renamed-from distributionEventToBaseTokenToClaimed
      */
-    mapping(uint256 => mapping(uint256 => bool)) private _distributionEventToBaseTokenToClaimed;
+    mapping(uint256 => mapping(uint256 => bool)) private _distributionToBaseTokenToClaimed;
 
     /**
-     * @notice mapping of distributionEvent to collectionId to CollectionInfo
+     * @notice mapping of distribution to collectionId to CollectionInfo
      * Distribution Event ID -> Collection ID -> Collection Info
      * @custom:oz-renamed-from distributionEventToCollectionInfo
      */
-    mapping(uint256 => mapping(uint256 => CollectionInfo)) private _distributionEventToCollectionInfo;
+    mapping(uint256 => mapping(uint256 => CollectionInfo)) private _distributionToCollectionInfo;
 
     /**
-     * @notice mapping of distributionEvent to payout token
+     * @notice mapping of distribution to payout token
      * Distribution Event ID -> Payout Token (IERC20)
      * @custom:oz-renamed-from distributionEventToPayoutToken
      */
-    mapping(uint256 => IERC20) private _distributionEventToPayoutToken;
+    mapping(uint256 => IERC20) private _distributionToPayoutToken;
 
-    uint256 private nextDistributionEventId;
+    /**
+     * @custom:oz-renamed-from nextDistributionEventId
+     */
+    uint256 private nextDistributionId;
 
     // ========================================================================
     // UUPS upgradeable pattern
@@ -119,7 +127,7 @@ contract FANtiumClaimingV2 is
         __Pausable_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
-        nextDistributionEventId = 1;
+        nextDistributionId = 1;
     }
 
     /**
@@ -166,30 +174,30 @@ contract FANtiumClaimingV2 is
     // ========================================================================
     // Modifiers
     // ========================================================================
-    modifier onlyAthlete(uint256 distributionEventId) {
-        if (_msgSender() != _distributionEvents[distributionEventId].athleteAddress) {
-            revert AthleteOnly(distributionEventId, msg.sender, _distributionEvents[distributionEventId].athleteAddress);
+    modifier onlyAthlete(uint256 distributionId) {
+        if (_msgSender() != _distributions[distributionId].athleteAddress) {
+            revert AthleteOnly(distributionId, msg.sender, _distributions[distributionId].athleteAddress);
         }
         _;
     }
 
     /**
      * @dev Modifier to check if the sender is the athlete, a manager or an admin.
-     * @param distributionEventId The ID of the distribution event
+     * @param distributionId The ID of the distribution
      */
-    modifier onlyAthleteOrManagerOrAdmin(uint256 distributionEventId) {
+    modifier onlyAthleteOrManagerOrAdmin(uint256 distributionId) {
         if (
-            _msgSender() != _distributionEvents[distributionEventId].athleteAddress
-                && !hasRole(MANAGER_ROLE, msg.sender) && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)
+            _msgSender() != _distributions[distributionId].athleteAddress && !hasRole(MANAGER_ROLE, msg.sender)
+                && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)
         ) {
-            revert AthleteOnly(distributionEventId, msg.sender, _distributionEvents[distributionEventId].athleteAddress);
+            revert AthleteOnly(distributionId, msg.sender, _distributions[distributionId].athleteAddress);
         }
         _;
     }
 
-    modifier onlyValidDistributionEvent(uint256 distributionEventId) {
-        if (!_distributionEvents[distributionEventId].exists) {
-            revert InvalidDistributionEventId(distributionEventId);
+    modifier onlyValidDistribution(uint256 distributionId) {
+        if (!_distributions[distributionId].exists) {
+            revert InvalidDistributionId(distributionId);
         }
         _;
     }
@@ -227,79 +235,82 @@ contract FANtiumClaimingV2 is
     }
 
     // ========================================================================
-    // Distribution event
+    // Distribution
     // ========================================================================
-    function distributionEvents(uint256 distributionEventId) public view returns (DistributionEvent memory) {
-        return _distributionEvents[distributionEventId];
+    /**
+     * @notice Get the distribution data.
+     * @param distributionId The ID of the distribution
+     */
+    function distributions(uint256 distributionId) public view returns (Distribution memory) {
+        return _distributions[distributionId];
     }
 
     /**
-     * @notice Check if the distribution event data is valid.
-     * @param data The distribution event data
+     * @notice Check if the distribution data is valid.
+     * @param data The distribution data
      */
-    function _checkDistributionEvent(DistributionEventData memory data) private view {
+    function _checkDistribution(DistributionData memory data) private view {
         // Check if the provided times are valid
         if (
             data.startTime == 0 || data.closeTime == 0 || data.startTime > data.closeTime
                 || block.timestamp > data.closeTime
         ) {
-            revert InvalidDistributionEvent(DistributionEventErrorReason.INVALID_TIME);
+            revert InvalidDistribution(DistributionErrorReason.INVALID_TIME);
         }
 
         // At least one collection is required
         if (data.collectionIds.length == 0) {
-            revert InvalidDistributionEvent(DistributionEventErrorReason.INVALID_COLLECTION_IDS);
+            revert InvalidDistribution(DistributionErrorReason.INVALID_COLLECTION_IDS);
         }
 
         // Ensure all collections exist
         for (uint256 i = 0; i < data.collectionIds.length; i++) {
             if (!IFANtiumNFT(fantiumNFT).collections(data.collectionIds[i]).exists) {
-                revert InvalidDistributionEvent(DistributionEventErrorReason.INVALID_COLLECTION_IDS);
+                revert InvalidDistribution(DistributionErrorReason.INVALID_COLLECTION_IDS);
             }
         }
 
         if (data.fantiumFeeBPS >= BPS_BASE) {
-            revert InvalidDistributionEvent(DistributionEventErrorReason.INVALID_FANTIUM_FEE_BPS);
+            revert InvalidDistribution(DistributionErrorReason.INVALID_FANTIUM_FEE_BPS);
         }
 
         if (data.athleteAddress == address(0) || data.fantiumAddress == address(0)) {
-            revert InvalidDistributionEvent(DistributionEventErrorReason.INVALID_ADDRESS);
+            revert InvalidDistribution(DistributionErrorReason.INVALID_ADDRESS);
         }
 
-        // Even in our greatest dreams, we will never pay out more than a billion
-        uint256 maxAmount = 1_000_000_000 * 10 ** IERC20Metadata(globalPayoutToken).decimals();
+        uint256 maxAmount = MAX_FUNDING_AMOUNT * 10 ** IERC20Metadata(globalPayoutToken).decimals();
         uint256 sum = data.totalTournamentEarnings + data.totalOtherEarnings;
 
         if (sum == 0 || sum >= maxAmount) {
-            revert InvalidDistributionEvent(DistributionEventErrorReason.INVALID_AMOUNT);
+            revert InvalidDistribution(DistributionErrorReason.INVALID_AMOUNT);
         }
     }
 
     /**
-     * @notice Check if the distribution event has started.
-     * @param distributionEventId The ID of the distribution event
+     * @notice Check if the distribution has started.
+     * @param distributionId The ID of the distribution
      */
-    function _checkDistributionNotStarted(uint256 distributionEventId) private view {
-        if (_distributionEvents[distributionEventId].claimedAmount > 0) {
-            revert InvalidDistributionEvent(DistributionEventErrorReason.PAYOUTS_STARTED);
+    function _checkDistributionNotStarted(uint256 distributionId) private view {
+        if (_distributions[distributionId].claimedAmount > 0) {
+            revert InvalidDistribution(DistributionErrorReason.PAYOUTS_STARTED);
         }
     }
 
     /**
-     * @notice Create a new distribution event.
-     * @param data The distribution event data
+     * @notice Create a new distribution.
+     * @param data The distribution data
      */
-    function createDistributionEvent(DistributionEventData memory data)
+    function createDistribution(DistributionData memory data)
         external
         onlyManagerOrAdmin
         whenNotPaused
         returns (uint256)
     {
-        _checkDistributionEvent(data);
+        _checkDistribution(data);
 
-        uint256 distributionEventId = nextDistributionEventId++;
-        DistributionEvent memory newDistributionEvent = DistributionEvent({
-            distributionEventId: distributionEventId,
+        uint256 distributionId = nextDistributionId++;
+        Distribution memory newDistribution = Distribution({
+            distributionId: distributionId,
             collectionIds: data.collectionIds,
             athleteAddress: data.athleteAddress,
             totalTournamentEarnings: data.totalTournamentEarnings,
@@ -315,34 +326,34 @@ contract FANtiumClaimingV2 is
             exists: true,
             closed: false
         });
-        _distributionEvents[distributionEventId] = newDistributionEvent;
+        _distributions[distributionId] = newDistribution;
 
-        _distributionEventToPayoutToken[distributionEventId] = IERC20(globalPayoutToken);
-        _computeShares(distributionEventId);
-        return distributionEventId;
+        _distributionToPayoutToken[distributionId] = IERC20(globalPayoutToken);
+        _computeShares(distributionId);
+        return distributionId;
     }
 
     /**
-     * @notice Update a distribution event.
-     * @dev Only the manager can update a distribution event.
-     * @param distributionEventId The ID of the distribution event
-     * @param data The distribution event data
+     * @notice Update a distribution.
+     * @dev Only the manager can update a distribution.
+     * @param distributionId The ID of the distribution
+     * @param data The distribution data
      */
-    function updateDistributionEvent(
-        uint256 distributionEventId,
-        DistributionEventData memory data
+    function updateDistribution(
+        uint256 distributionId,
+        DistributionData memory data
     )
         external
         onlyManagerOrAdmin
-        onlyValidDistributionEvent(distributionEventId)
+        onlyValidDistribution(distributionId)
     {
-        _checkDistributionEvent(data);
+        _checkDistribution(data);
 
-        DistributionEvent memory existingDE = _distributionEvents[distributionEventId];
+        Distribution memory existingDE = _distributions[distributionId];
 
-        // Check if the distribution event is closed
+        // Check if the distribution is closed
         if (existingDE.closed) {
-            revert InvalidDistributionEvent(DistributionEventErrorReason.ALREADY_CLOSED);
+            revert InvalidDistribution(DistributionErrorReason.ALREADY_CLOSED);
         }
 
         bool collectionIdsChanged = data.collectionIds.length != existingDE.collectionIds.length;
@@ -355,14 +366,14 @@ contract FANtiumClaimingV2 is
             }
         }
 
-        // earnings, fee, collectionIds may only be updated before the distribution event has started
+        // earnings, fee, collectionIds may only be updated before the distribution has started
         if (
             data.totalTournamentEarnings != existingDE.totalTournamentEarnings
                 || data.totalOtherEarnings != existingDE.totalOtherEarnings || collectionIdsChanged
                 || data.fantiumFeeBPS != existingDE.fantiumFeeBPS
         ) {
             // Earnings are updated - some extra checks are needed
-            _checkDistributionNotStarted(distributionEventId);
+            _checkDistributionNotStarted(distributionId);
         }
 
         existingDE.collectionIds = data.collectionIds;
@@ -374,76 +385,76 @@ contract FANtiumClaimingV2 is
         existingDE.startTime = data.startTime;
         existingDE.closeTime = data.closeTime;
 
-        _distributionEvents[distributionEventId] = existingDE;
-        _computeShares(distributionEventId);
+        _distributions[distributionId] = existingDE;
+        _computeShares(distributionId);
 
-        DistributionEvent memory updatedDE = _distributionEvents[distributionEventId];
+        Distribution memory updatedDE = _distributions[distributionId];
         if (updatedDE.tournamentDistributionAmount + updatedDE.otherDistributionAmount > updatedDE.amountPaidIn) {
-            revert InvalidDistributionEvent(DistributionEventErrorReason.INVALID_AMOUNT);
+            revert InvalidDistribution(DistributionErrorReason.INVALID_AMOUNT);
         }
     }
 
     /**
-     * @notice Pay the distribution amount for a distribution event.
-     * @param distributionEventId The ID of the distribution event
+     * @notice Pay the distribution amount for a distribution.
+     * @param distributionId The ID of the distribution
      */
-    function fundDistributionEvent(uint256 distributionEventId)
+    function fundDistribution(uint256 distributionId)
         public
         whenNotPaused
-        onlyValidDistributionEvent(distributionEventId)
-        onlyAthlete(distributionEventId)
+        onlyValidDistribution(distributionId)
+        onlyAthlete(distributionId)
     {
-        DistributionEvent memory existingDE = _distributionEvents[distributionEventId];
+        Distribution memory existingDE = _distributions[distributionId];
 
-        // check that the distribution event is open
+        // check that the distribution is open
         if (existingDE.closed) {
-            revert InvalidDistributionEventFunding(DistributionEventFundingErrorReason.CLOSED);
+            revert InvalidDistributionFunding(DistributionFundingErrorReason.CLOSED);
         }
 
         uint256 totalAmount = existingDE.tournamentDistributionAmount + existingDE.otherDistributionAmount;
         uint256 missingAmount = totalAmount - existingDE.amountPaidIn;
 
         if (missingAmount == 0) {
-            revert InvalidDistributionEventFunding(DistributionEventFundingErrorReason.FUNDING_ALREADY_DONE);
+            revert InvalidDistributionFunding(DistributionFundingErrorReason.FUNDING_ALREADY_DONE);
         }
 
         // Take the missing amount from the sender
-        IERC20 token = _distributionEventToPayoutToken[distributionEventId];
+        IERC20 token = _distributionToPayoutToken[distributionId];
         token.safeTransferFrom(_msgSender(), address(this), missingAmount);
 
         existingDE.amountPaidIn += missingAmount;
-        _distributionEvents[distributionEventId] = existingDE;
-        emit PayIn(distributionEventId, missingAmount);
+        _distributions[distributionId] = existingDE;
+        emit PayIn(distributionId, missingAmount);
     }
 
     /**
-     * @notice Batch fund distribution events.
+     * @notice Batch fund distributions.
      * @dev No modifier is needed here since the caller is already checked for being the athlete.
-     * @param distributionEventIds The IDs of the distribution events
+     * @param distributionIds The IDs of the distributions
      */
-    function batchFundDistributionEvent(uint256[] memory distributionEventIds) external {
-        for (uint256 i = 0; i < distributionEventIds.length; i++) {
-            fundDistributionEvent(distributionEventIds[i]);
+    function batchFundDistribution(uint256[] memory distributionIds) external {
+        for (uint256 i = 0; i < distributionIds.length; i++) {
+            fundDistribution(distributionIds[i]);
         }
     }
 
     /**
-     * @notice Close a distribution event, sending the remaining funds to the athlete.
-     * @param distributionEventId The ID of the distribution event
+     * @notice Close a distribution, sending the remaining funds to the athlete.
+     * @param distributionId The ID of the distribution
      */
-    function closeDistribution(uint256 distributionEventId)
+    function closeDistribution(uint256 distributionId)
         external
         whenNotPaused
         onlyManagerOrAdmin
-        onlyValidDistributionEvent(distributionEventId)
+        onlyValidDistribution(distributionId)
     {
-        DistributionEvent storage existingDE = _distributionEvents[distributionEventId];
+        Distribution storage existingDE = _distributions[distributionId];
         if (existingDE.closed) {
-            revert InvalidDistributionEventClose(DistributionEventCloseErrorReason.DISTRIBUTION_ALREADY_CLOSED);
+            revert InvalidDistributionClose(DistributionCloseErrorReason.DISTRIBUTION_ALREADY_CLOSED);
         }
 
         if (existingDE.athleteAddress == address(0)) {
-            revert InvalidDistributionEventClose(DistributionEventCloseErrorReason.ATHLETE_ADDRESS_NOT_SET);
+            revert InvalidDistributionClose(DistributionCloseErrorReason.ATHLETE_ADDRESS_NOT_SET);
         }
 
         existingDE.closed = true;
@@ -453,7 +464,7 @@ contract FANtiumClaimingV2 is
             return;
         }
 
-        IERC20 payOutToken = _distributionEventToPayoutToken[distributionEventId];
+        IERC20 payOutToken = _distributionToPayoutToken[distributionId];
         payOutToken.safeTransfer(existingDE.athleteAddress, closingAmount);
     }
 
@@ -462,12 +473,12 @@ contract FANtiumClaimingV2 is
     // ========================================================================
     /**
      * @notice To be eligiblem for a claim, a token:
-     * - must be part of one of the collections included in the distribution event
-     * - is number must be in the snapshot, e.g. it must have been minted before the distribution event started
-     * - must not have been claimed yet for that distribution event
+     * - must be part of one of the collections included in the distribution
+     * - is number must be in the snapshot, e.g. it must have been minted before the distribution started
+     * - must not have been claimed yet for that distribution
      */
-    function isEligibleForClaim(uint256 distributionEventId, uint256 tokenId) public view returns (bool) {
-        DistributionEvent memory existingDE = _distributionEvents[distributionEventId];
+    function isEligibleForClaim(uint256 distributionId, uint256 tokenId) public view returns (bool) {
+        Distribution memory existingDE = _distributions[distributionId];
         (uint256 collectionId,, uint256 number, uint256 baseTokenId) = TokenVersionUtil.getTokenInfo(tokenId);
 
         // Check if the token is from a valid collection
@@ -483,31 +494,31 @@ contract FANtiumClaimingV2 is
             return false;
         }
 
-        // Now, checkk if the token was minted before the distribution event started
-        if (number >= _distributionEventToCollectionInfo[distributionEventId][collectionId].mintedTokens) {
+        // Now, checkk if the token was minted before the distribution started
+        if (number >= _distributionToCollectionInfo[distributionId][collectionId].mintedTokens) {
             return false;
         }
 
-        // Finally, check if the token has already been claimed for this distribution event
-        return !_distributionEventToBaseTokenToClaimed[distributionEventId][baseTokenId];
+        // Finally, check if the token has already been claimed for this distribution
+        return !_distributionToBaseTokenToClaimed[distributionId][baseTokenId];
     }
 
     /**
-     * @notice Claim rewards associated with a token of a specific distribution event.
+     * @notice Claim rewards associated with a token of a specific distribution.
      * @param tokenId The ID of the token
-     * @param distributionEventId The ID of the distribution event
+     * @param distributionId The ID of the distribution
      */
     function claim(
         uint256 tokenId,
-        uint256 distributionEventId
+        uint256 distributionId
     )
         public
         whenNotPaused
-        onlyValidDistributionEvent(distributionEventId)
+        onlyValidDistribution(distributionId)
     {
-        DistributionEvent memory existingDE = _distributionEvents[distributionEventId];
+        Distribution memory existingDE = _distributions[distributionId];
         if (existingDE.closed) {
-            revert InvalidDistributionEventClose(DistributionEventCloseErrorReason.DISTRIBUTION_ALREADY_CLOSED);
+            revert InvalidDistributionClose(DistributionCloseErrorReason.DISTRIBUTION_ALREADY_CLOSED);
         }
 
         if (existingDE.amountPaidIn < existingDE.tournamentDistributionAmount + existingDE.otherDistributionAmount) {
@@ -526,22 +537,22 @@ contract FANtiumClaimingV2 is
             revert InvalidClaim(ClaimErrorReason.INVALID_TIME_FRAME);
         }
 
-        if (!isEligibleForClaim(distributionEventId, tokenId)) {
+        if (!isEligibleForClaim(distributionId, tokenId)) {
             revert InvalidClaim(ClaimErrorReason.NOT_ELIGIBLE);
         }
 
         // Mark the token as claimed
         (uint256 collectionId,,, uint256 baseTokenId) = TokenVersionUtil.getTokenInfo(tokenId);
-        _distributionEventToBaseTokenToClaimed[distributionEventId][baseTokenId] = true;
+        _distributionToBaseTokenToClaimed[distributionId][baseTokenId] = true;
 
         // Compute the claim amount
-        CollectionInfo memory collectionInfo = _distributionEventToCollectionInfo[distributionEventId][collectionId];
+        CollectionInfo memory collectionInfo = _distributionToCollectionInfo[distributionId][collectionId];
         uint256 claimAmount = collectionInfo.tokenTournamentClaim + collectionInfo.tokenOtherClaim;
 
         if (existingDE.claimedAmount + claimAmount > existingDE.amountPaidIn) {
             revert InvalidClaim(ClaimErrorReason.INVARIANT_EXCEED_PAID_IN);
         }
-        _distributionEvents[distributionEventId].claimedAmount += claimAmount;
+        _distributions[distributionId].claimedAmount += claimAmount;
 
         // Upgrade the token version
         fantiumNFT.upgradeTokenVersion(tokenId);
@@ -552,7 +563,7 @@ contract FANtiumClaimingV2 is
 
         // set addresses from storage
         address fantiumAddress_ = existingDE.fantiumFeeAddress;
-        IERC20 payOutToken = _distributionEventToPayoutToken[distributionEventId];
+        IERC20 payOutToken = _distributionToPayoutToken[distributionId];
 
         if (fantiumRevenue_ > 0) {
             payOutToken.safeTransfer(fantiumAddress_, fantiumRevenue_);
@@ -561,35 +572,35 @@ contract FANtiumClaimingV2 is
             payOutToken.safeTransfer(_msgSender(), userRevenue_);
         }
 
-        emit Claim(distributionEventId, tokenId, claimAmount);
+        emit Claim(distributionId, tokenId, claimAmount);
     }
 
     /**
      * @notice Batch claim for multiple tokens.
      * @param tokenIds The IDs of the tokens
-     * @param distributionEventIds The IDs of the distribution events
+     * @param distributionIds The IDs of the distributions
      */
-    function batchClaim(uint256[] memory tokenIds, uint256[] memory distributionEventIds) external whenNotPaused {
-        if (tokenIds.length != distributionEventIds.length) {
-            revert ArrayLengthMismatch(tokenIds.length, distributionEventIds.length);
+    function batchClaim(uint256[] memory tokenIds, uint256[] memory distributionIds) external whenNotPaused {
+        if (tokenIds.length != distributionIds.length) {
+            revert ArrayLengthMismatch(tokenIds.length, distributionIds.length);
         }
 
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            claim(tokenIds[i], distributionEventIds[i]);
+            claim(tokenIds[i], distributionIds[i]);
         }
     }
 
     /**
-     * @dev Given a distribution event ID, a token's share of tournament earnings and a token's share of other earnings,
+     * @dev Given a distribution ID, a token's share of tournament earnings and a token's share of other earnings,
      * this function calculates the amount to send to the user.
-     * @param distributionEventId The ID of the distribution event
+     * @param distributionId The ID of the distribution
      * @param tournamentEarningsShare1e7 The share of tournament earnings in 1e7
      * @param otherEarningShare1e7 The share of other earnings in 1e7
      * @return tournamentClaim The amount to send to the user for tournament earnings
      * @return otherClaim The amount to send to the user for other earnings
      */
     function computeShares(
-        uint256 distributionEventId,
+        uint256 distributionId,
         uint256 tournamentEarningsShare1e7,
         uint256 otherEarningShare1e7
     )
@@ -597,34 +608,34 @@ contract FANtiumClaimingV2 is
         view
         returns (uint256 tournamentClaim, uint256 otherClaim)
     {
-        DistributionEvent memory distributionEvent = _distributionEvents[distributionEventId];
-        tournamentClaim = ((distributionEvent.totalTournamentEarnings * tournamentEarningsShare1e7) / 1e7);
-        otherClaim = ((distributionEvent.totalOtherEarnings * otherEarningShare1e7) / 1e7);
+        Distribution memory distribution = _distributions[distributionId];
+        tournamentClaim = ((distribution.totalTournamentEarnings * tournamentEarningsShare1e7) / 1e7);
+        otherClaim = ((distribution.totalOtherEarnings * otherEarningShare1e7) / 1e7);
     }
 
     /**
-     * @dev Recompute the amount to distribute to the holders for a distribution event based on the distribution event
+     * @dev Recompute the amount to distribute to the holders for a distribution based on the distribution
      * tournament and other earnings. Also saves a snapshot of the number of minted tokens for each collection to
-     * prevent users to mint tokens after the distribution event has started.
-     * @param distributionEventId The ID of the distribution event
+     * prevent users to mint tokens after the distribution has started.
+     * @param distributionId The ID of the distribution
      */
-    function _computeShares(uint256 distributionEventId) internal {
-        DistributionEvent memory distributionEvent = _distributionEvents[distributionEventId];
+    function _computeShares(uint256 distributionId) internal {
+        Distribution memory distribution = _distributions[distributionId];
 
         // Sum of all the holders' tournament and other earnings shares in 1e7
         uint256 holdersTournamentEarningsShare1e7;
         uint256 holdersOtherEarningsShare1e7;
 
-        for (uint256 i = 0; i < distributionEvent.collectionIds.length; i++) {
-            uint256 collectionId = distributionEvent.collectionIds[i];
+        for (uint256 i = 0; i < distribution.collectionIds.length; i++) {
+            uint256 collectionId = distribution.collectionIds[i];
             Collection memory collection = fantiumNFT.collections(collectionId);
 
             // Compute the token's share of tournament and other earnings
             uint256 tournamentClaim =
-                ((distributionEvent.totalTournamentEarnings * collection.tournamentEarningShare1e7) / 1e7);
-            uint256 otherClaim = ((distributionEvent.totalOtherEarnings * collection.otherEarningShare1e7) / 1e7);
+                ((distribution.totalTournamentEarnings * collection.tournamentEarningShare1e7) / 1e7);
+            uint256 otherClaim = ((distribution.totalOtherEarnings * collection.otherEarningShare1e7) / 1e7);
 
-            _distributionEventToCollectionInfo[distributionEventId][collectionId] = CollectionInfo({
+            _distributionToCollectionInfo[distributionId][collectionId] = CollectionInfo({
                 // we record the current number of minted token to avoid user to purchase tokens afterwrads an be
                 // eligible for the distribution
                 mintedTokens: collection.invocations,
@@ -638,26 +649,25 @@ contract FANtiumClaimingV2 is
         }
 
         // Calculate the tournament and other distribution amounts
-        distributionEvent.tournamentDistributionAmount =
-            (holdersTournamentEarningsShare1e7 * distributionEvent.totalTournamentEarnings) / 1e7;
-        distributionEvent.otherDistributionAmount =
-            (holdersOtherEarningsShare1e7 * distributionEvent.totalOtherEarnings) / 1e7;
+        distribution.tournamentDistributionAmount =
+            (holdersTournamentEarningsShare1e7 * distribution.totalTournamentEarnings) / 1e7;
+        distribution.otherDistributionAmount = (holdersOtherEarningsShare1e7 * distribution.totalOtherEarnings) / 1e7;
 
-        _distributionEvents[distributionEventId] = distributionEvent;
-        emit SnapShotTaken(distributionEventId);
+        _distributions[distributionId] = distribution;
+        emit SnapShotTaken(distributionId);
     }
 
     /**
      * @notice Call the _computeShares function.
      * @dev Only managers or admins can call this function.
-     * @param distributionEventId The ID of the distribution event
+     * @param distributionId The ID of the distribution
      */
-    function computeShares(uint256 distributionEventId)
+    function computeShares(uint256 distributionId)
         external
         whenNotPaused
         onlyManagerOrAdmin
-        onlyValidDistributionEvent(distributionEventId)
+        onlyValidDistribution(distributionId)
     {
-        return _computeShares(distributionEventId);
+        return _computeShares(distributionId);
     }
 }

@@ -2,11 +2,14 @@
 pragma solidity 0.8.28;
 
 /**
- * @dev CAUTION: This struct is used to store the distribution event information.
+ * @dev CAUTION: This struct is used to store the distribution information.
  * Since it is used in the upgradeable contract, do not change the order of the fields.
  */
-struct DistributionEvent {
-    uint256 distributionEventId;
+struct Distribution {
+    /**
+     * @custom:oz-renamed-from distributionEventId
+     */
+    uint256 distributionId;
     /// @notice NFT collections allowed to claim
     uint256[] collectionIds;
     /// @notice athlete address that need to pay in amount
@@ -27,17 +30,17 @@ struct DistributionEvent {
     uint256 fantiumFeeBPS;
     /// @notice fantium fee address
     address payable fantiumFeeAddress;
-    /// @notice start time of distribution event (can be 0 if it starts immediately)
+    /// @notice start time of distribution (can be 0 if it starts immediately)
     uint256 startTime;
-    /// @notice close time of distribution event (can be 0 if it never closes)
+    /// @notice close time of distribution (can be 0 if it never closes)
     uint256 closeTime;
-    /// @notice if the distribution event exists
+    /// @notice if the distribution exists
     bool exists;
-    /// @notice if the distribution event is closed
+    /// @notice if the distribution is closed
     bool closed;
 }
 
-struct DistributionEventData {
+struct DistributionData {
     address payable athleteAddress;
     uint256 totalTournamentEarnings;
     uint256 totalOtherEarnings;
@@ -58,7 +61,7 @@ struct CollectionInfo {
     uint256 tokenOtherClaim;
 }
 
-enum DistributionEventErrorReason {
+enum DistributionErrorReason {
     INVALID_TIME,
     INVALID_COLLECTION_IDS,
     INVALID_FANTIUM_FEE_BPS,
@@ -68,13 +71,13 @@ enum DistributionEventErrorReason {
     PAYOUTS_STARTED
 }
 
-enum DistributionEventFundingErrorReason {
+enum DistributionFundingErrorReason {
     CLOSED,
     INVALID_AMOUNT,
     FUNDING_ALREADY_DONE
 }
 
-enum DistributionEventCloseErrorReason {
+enum DistributionCloseErrorReason {
     DISTRIBUTION_ALREADY_CLOSED,
     ATHLETE_ADDRESS_NOT_SET
 }
@@ -95,38 +98,36 @@ interface IFANtiumClaiming {
     // ========================================================================
     error ArrayLengthMismatch(uint256 lhs, uint256 rhs);
 
-    event Claim(uint256 indexed _distributionEventId, uint256 indexed _tokenId, uint256 amount);
-    event DistributionEventUpdate(uint256 indexed _distributionEventId, bytes32 indexed _field);
-    event PayIn(uint256 indexed _distributionEventId, uint256 amount);
-    event SnapShotTaken(uint256 indexed _distributionEventId);
+    event Claim(uint256 indexed _distributionId, uint256 indexed _tokenId, uint256 amount);
+    event DistributionUpdate(uint256 indexed _distributionId, bytes32 indexed _field);
+    event PayIn(uint256 indexed _distributionId, uint256 amount);
+    event SnapShotTaken(uint256 indexed _distributionId);
     event PlatformUpdate(bytes32 indexed _update);
 
     // ========================================================================
     // Errors
     // ========================================================================
     error InvariantTransferFailed(address token, address from, address to, uint256 amount);
-    error InvalidDistributionEventId(uint256 distributionEventId);
-    error InvalidDistributionEvent(DistributionEventErrorReason reason);
-    error InvalidDistributionEventFunding(DistributionEventFundingErrorReason reason);
-    error InvalidDistributionEventClose(DistributionEventCloseErrorReason reason);
+    error InvalidDistributionId(uint256 distributionId);
+    error InvalidDistribution(DistributionErrorReason reason);
+    error InvalidDistributionFunding(DistributionFundingErrorReason reason);
+    error InvalidDistributionClose(DistributionCloseErrorReason reason);
     error InvalidClaim(ClaimErrorReason reason);
-    error AthleteOnly(uint256 distributionEventId, address account, address expected);
+    error AthleteOnly(uint256 distributionId, address account, address expected);
 
     // ========================================================================
     // Distribution Event
     // ========================================================================
-    function createDistributionEvent(DistributionEventData memory data)
-        external
-        returns (uint256 distributionEventId);
-    function updateDistributionEvent(uint256 distributionEventId, DistributionEventData memory data) external;
-    function fundDistributionEvent(uint256 distributionEventId) external;
-    function batchFundDistributionEvent(uint256[] memory distributionEventIds) external;
-    function closeDistribution(uint256 distributionEventId) external;
-    function computeShares(uint256 distributionEventId) external;
+    function createDistribution(DistributionData memory data) external returns (uint256 distributionId);
+    function updateDistribution(uint256 distributionId, DistributionData memory data) external;
+    function fundDistribution(uint256 distributionId) external;
+    function batchFundDistribution(uint256[] memory distributionIds) external;
+    function closeDistribution(uint256 distributionId) external;
+    function computeShares(uint256 distributionId) external;
 
     // ========================================================================
     // Claiming
     // ========================================================================
-    function claim(uint256 tokenId, uint256 distributionEventId) external;
-    function batchClaim(uint256[] memory tokenIds, uint256[] memory distributionEventIds) external;
+    function claim(uint256 tokenId, uint256 distributionId) external;
+    function batchClaim(uint256[] memory tokenIds, uint256[] memory distributionIds) external;
 }
