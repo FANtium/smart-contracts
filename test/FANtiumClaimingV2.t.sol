@@ -31,7 +31,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
 
     // setFANtiumNFT
     // ========================================================================
-    function test_setFANtiumNFT_ok_admin() public {
+    function test_setFANtiumNFT_ok_asAdmin() public {
         address newFANtiumNFT = makeAddr("newFANtiumNFT");
 
         vm.prank(fantiumClaiming_admin);
@@ -40,7 +40,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         assertEq(address(fantiumClaiming.fantiumNFT()), newFANtiumNFT);
     }
 
-    function test_setFANtiumNFT_ok_manager() public {
+    function test_setFANtiumNFT_ok_asManager() public {
         address newFANtiumNFT = makeAddr("newFANtiumNFT");
 
         vm.prank(fantiumClaiming_manager);
@@ -49,7 +49,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         assertEq(address(fantiumClaiming.fantiumNFT()), newFANtiumNFT);
     }
 
-    function test_setFANtiumNFT_revert_nobody() public {
+    function test_setFANtiumNFT_revert_unauthorized() public {
         address newFANtiumNFT = makeAddr("newFANtiumNFT");
         address oldFANtiumNFT = address(fantiumClaiming.fantiumNFT());
 
@@ -62,7 +62,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
 
     // setUserManager
     // ========================================================================
-    function test_setUserManager_ok_admin() public {
+    function test_setUserManager_ok_asAdmin() public {
         address newUserManagerContract = makeAddr("newUserManagerContract");
 
         vm.prank(fantiumClaiming_admin);
@@ -71,7 +71,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         assertEq(address(fantiumClaiming.userManager()), newUserManagerContract);
     }
 
-    function test_setUserManager_ok_manager() public {
+    function test_setUserManager_ok_asManager() public {
         address newUserManagerContract = makeAddr("newUserManagerContract");
 
         vm.prank(fantiumClaiming_manager);
@@ -80,7 +80,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         assertEq(address(fantiumClaiming.userManager()), newUserManagerContract);
     }
 
-    function test_setUserManager_revert_nobody() public {
+    function test_setUserManager_revert_unauthorized() public {
         address newUserManagerContract = makeAddr("newUserManagerContract");
         address oldUserManagerContract = address(fantiumClaiming.userManager());
 
@@ -93,7 +93,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
 
     // setGlobalPayoutToken
     // ========================================================================
-    function test_setGlobalPayoutToken_ok_admin() public {
+    function test_setGlobalPayoutToken_ok_asAdmin() public {
         address newPayoutToken = makeAddr("newPayoutToken");
 
         vm.prank(fantiumClaiming_admin);
@@ -102,7 +102,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         assertEq(address(fantiumClaiming.globalPayoutToken()), newPayoutToken);
     }
 
-    function test_setGlobalPayoutToken_ok_manager() public {
+    function test_setGlobalPayoutToken_ok_asManager() public {
         address newPayoutToken = makeAddr("newPayoutToken");
 
         vm.prank(fantiumClaiming_manager);
@@ -111,7 +111,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         assertEq(address(fantiumClaiming.globalPayoutToken()), newPayoutToken);
     }
 
-    function test_setGlobalPayoutToken_revert_nobody() public {
+    function test_setGlobalPayoutToken_revert_unauthorized() public {
         address newPayoutToken = makeAddr("newPayoutToken");
         address oldPayoutToken = address(fantiumClaiming.globalPayoutToken());
 
@@ -124,7 +124,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
 
     // distributions
     // ========================================================================
-    function test_distributions_non_existing_event() public view {
+    function test_distributions_revert_nonExistingEvent() public view {
         // Test that a non-existent distribution returns default/empty values
         Distribution memory event0 = fantiumClaiming.distributions(9999);
         assertEq(event0.exists, false, "Distribution should not exist for ID 9999");
@@ -132,7 +132,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
 
     // createDistribution
     // ========================================================================
-    function test_createDistribution_revert_startTimeGreaterThanCloseTime() public {
+    function test_createDistribution_revert_invalidTime() public {
         // Prepare distribution data
         DistributionData memory data = DistributionData({
             collectionIds: new uint256[](1),
@@ -153,7 +153,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         fantiumClaiming.createDistribution(data);
     }
 
-    function test_createDistribution_revert_invalid_collection_ids() public {
+    function test_createDistribution_revert_emptyCollectionIds() public {
         // Prepare distribution data
         DistributionData memory data = DistributionData({
             collectionIds: new uint256[](0), // empty array
@@ -176,7 +176,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         fantiumClaiming.createDistribution(data);
     }
 
-    function test_createDistribution_revert_invalid_collection_ids_collection_does_not_exist() public {
+    function test_createDistribution_revert_nonExistentCollection() public {
         CollectionData memory collectionData = CollectionData({
             athleteAddress: payable(makeAddr("athlete")),
             athletePrimarySalesBPS: 5000, // 50%
@@ -219,7 +219,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         fantiumClaiming.createDistribution(distributionData);
     }
 
-    function test_createDistribution_revert_invalid_fantium_fee_bps() public {
+    function test_createDistribution_revert_invalidFeeBps() public {
         // These collections exist, see test/fixtures/collections.json
         uint256[] memory collectionIdsArray = new uint256[](2);
         collectionIdsArray[0] = 1;
@@ -247,7 +247,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         fantiumClaiming.createDistribution(data);
     }
 
-    function test_createDistribution_revert_invalid_address() public {
+    function test_createDistribution_revert_invalidAddress() public {
         // These collections exist, see test/fixtures/collections.json
         uint256[] memory collectionIdsArray = new uint256[](2);
         collectionIdsArray[0] = 1;
@@ -275,7 +275,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         fantiumClaiming.createDistribution(data);
     }
 
-    function test_createDistribution_revert_invalid_amount() public {
+    function test_createDistribution_revert_invalidAmount() public {
         // These collections exist, see test/fixtures/collections.json
         uint256[] memory collectionIdsArray = new uint256[](2);
         collectionIdsArray[0] = 1;
@@ -303,7 +303,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         fantiumClaiming.createDistribution(data);
     }
 
-    function test_createDistribution_ok_creates_distribution_event() public {
+    function test_createDistribution_ok_success() public {
         // These collections exist, see test/fixtures/collections.json
         uint256[] memory collectionIdsArray = new uint256[](2);
         collectionIdsArray[0] = 1;
@@ -327,7 +327,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         assertEq(distEventId, 1, "New distribution id");
     }
 
-    function test_updateDistribution_revert_event_closed() public {
+    function test_updateDistribution_revert_alreadyClosed() public {
         uint256[] memory collectionIdsArray = new uint256[](2);
         collectionIdsArray[0] = 1;
         collectionIdsArray[1] = 2;
@@ -363,7 +363,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         fantiumClaiming.updateDistribution(distEventId, data);
     }
 
-    function test_updateDistribution_ok_updated() public {
+    function test_updateDistribution_ok_success() public {
         uint256[] memory collectionIdsArray = new uint256[](2);
         collectionIdsArray[0] = 1;
         collectionIdsArray[1] = 2;
@@ -423,7 +423,59 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         assertEq(fantiumClaiming.distributions(distEventId).closeTime, block.timestamp + 3 days, "closeTime is updated");
     }
 
-    function test_fundDistribution_revert_only_athlete_can_fund() public {
+    // fundDistribution
+    // ========================================================================
+    function test_fundDistribution_ok_success() public {
+        address user1 = makeAddr("user1");
+        address user2 = makeAddr("user2");
+        address user3 = makeAddr("user3");
+        address athlete = makeAddr("athlete");
+
+        // Prepare distribution data
+        uint256 collectionId = 1;
+        uint256[] memory collectionIdsArray = new uint256[](1);
+        collectionIdsArray[0] = collectionId;
+
+        // We mint some tokens so the distribution has a value > 0
+        mintTo(collectionId, 1, user1);
+        mintTo(collectionId, 2, user2);
+        mintTo(collectionId, 3, user3);
+
+        DistributionData memory data = DistributionData({
+            collectionIds: collectionIdsArray,
+            athleteAddress: payable(athlete),
+            totalTournamentEarnings: 10_000 * 10 ** 18,
+            totalOtherEarnings: 5000 * 10 ** 18,
+            fantiumFeeBPS: 500,
+            fantiumAddress: payable(makeAddr("fantiumAddress")),
+            startTime: block.timestamp + 1 days,
+            closeTime: block.timestamp + 2 days
+        });
+
+        // Create distribution
+        vm.prank(fantiumClaiming_manager);
+        uint256 distEventId = fantiumClaiming.createDistribution(data);
+
+        uint256 totalAmount = fantiumClaiming.distributions(distEventId).tournamentDistributionAmount
+            + fantiumClaiming.distributions(distEventId).otherDistributionAmount;
+        assertGt(totalAmount, 0, "Total amount is greater than 0");
+
+        uint256 missingAmount = totalAmount - fantiumClaiming.distributions(distEventId).amountPaidIn;
+        assertGt(missingAmount, 0, "Missing amount is greater than 0");
+
+        // Fund the distribution
+        vm.startPrank(athlete);
+        deal(address(usdc), athlete, missingAmount);
+        usdc.approve(address(fantiumClaiming), missingAmount);
+        fantiumClaiming.fundDistribution(distEventId);
+        vm.stopPrank();
+
+        // Assertions
+        Distribution memory updatedEvent = fantiumClaiming.distributions(distEventId);
+        assertEq(updatedEvent.amountPaidIn, totalAmount, "Amount paid in should match total amount");
+    }
+
+    function test_fundDistribution_revert_nonAthlete() public {
         uint256[] memory collectionIdsArray = new uint256[](2);
         collectionIdsArray[0] = 1;
         collectionIdsArray[1] = 2;
@@ -457,7 +509,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         fantiumClaiming.fundDistribution(distEventId);
     }
 
-    function test_fundDistribution_revert_funding_done() public {
+    function test_fundDistribution_revert_alreadyFunded() public {
         uint256[] memory collectionIdsArray = new uint256[](2);
         collectionIdsArray[0] = 1;
         collectionIdsArray[1] = 2;
@@ -488,7 +540,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         fantiumClaiming.fundDistribution(distEventId);
     }
 
-    function test_fundDistribution_revert_event_closed() public {
+    function test_fundDistribution_revert_alreadyClosed() public {
         uint256[] memory collectionIdsArray = new uint256[](2);
         collectionIdsArray[0] = 1;
         collectionIdsArray[1] = 2;
@@ -523,42 +575,4 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         vm.prank(payable(makeAddr("athleteAddress")));
         fantiumClaiming.fundDistribution(distEventId);
     }
-
-    // todo
-    //    function test_fundDistribution_ok_success() public {
-    //        address athlete = makeAddr("athlete");
-    //
-    //        // Prepare distribution data
-    //        uint256[] memory collectionIdsArray = new uint256[](1);
-    //        collectionIdsArray[0] = 1;
-    //
-    //        DistributionData memory data = DistributionData({
-    //            collectionIds: collectionIdsArray,
-    //            athleteAddress: payable(athlete),
-    //            totalTournamentEarnings: 10_000 * 10 ** 18,
-    //            totalOtherEarnings: 5000 * 10 ** 18,
-    //            fantiumFeeBPS: 500,
-    //            fantiumAddress: payable(makeAddr("fantiumAddress")),
-    //            startTime: block.timestamp + 1 days,
-    //            closeTime: block.timestamp + 2 days
-    //        });
-    //
-    //        // Create distribution
-    //        vm.prank(fantiumClaiming_manager);
-    //        uint256 distEventId = fantiumClaiming.createDistribution(data);
-    //
-    //        // todo: below is 0, so the test reverts with FUNDING_ALREADY_DONE. How can we update these properties?
-    //        uint256 totalAmount = fantiumClaiming.distributions(distEventId).tournamentDistributionAmount
-    //            + fantiumClaiming.distributions(distEventId).otherDistributionAmount;
-    //        uint256 missingAmount = totalAmount - fantiumClaiming.distributions(distEventId).amountPaidIn;
-    //
-    //        // Fund the distribution
-    //        vm.startPrank(athlete);
-    //        fantiumClaiming.fundDistribution(distEventId);
-    //        vm.stopPrank();
-    //
-    //        // Assertions
-    //        Distribution memory updatedEvent = fantiumClaiming.distributions(distEventId);
-    //        assertEq(updatedEvent.amountPaidIn, totalAmount, "Amount paid in should match total amount");
-    //    }
 }
