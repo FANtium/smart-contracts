@@ -494,7 +494,7 @@ contract FANtiumClaimingV2 is
             return false;
         }
 
-        // Now, checkk if the token was minted before the distribution started
+        // Now, check if the token was minted before the distribution started
         if (number >= _distributionToCollectionInfo[distributionId][collectionId].mintedTokens) {
             return false;
         }

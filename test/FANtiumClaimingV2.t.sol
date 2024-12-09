@@ -610,7 +610,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
             collectionIds: collectionIdsArray,
             athleteAddress: payable(athlete),
             totalTournamentEarnings: 20_000 * 10 ** 18,
-            totalOtherEarnings: 10000 * 10 ** 18,
+            totalOtherEarnings: 10_000 * 10 ** 18,
             fantiumFeeBPS: 500,
             fantiumAddress: payable(makeAddr("fantiumAddress")),
             startTime: block.timestamp + 3 days,
@@ -630,7 +630,6 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         uint256 totalAmount1 = fantiumClaiming.distributions(distEventId1).tournamentDistributionAmount
             + fantiumClaiming.distributions(distEventId1).otherDistributionAmount;
         assertGt(totalAmount1, 0, "Total amount is greater than 0");
-
 
         uint256 totalAmount2 = fantiumClaiming.distributions(distEventId2).tournamentDistributionAmount
             + fantiumClaiming.distributions(distEventId2).otherDistributionAmount;
@@ -716,5 +715,94 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
 
         vm.prank(fantiumClaiming_manager);
         fantiumClaiming.closeDistribution(distEventId);
+    }
+
+    // isEligibleForClaim
+    // ========================================================================
+    function test_isEligibleForClaim_ok_returnsFalseCollectionDoesNotExist() public {
+        uint256[] memory collectionIdsArray = new uint256[](2);
+        collectionIdsArray[0] = 1;
+        collectionIdsArray[1] = 2;
+
+        // Prepare distribution data
+        DistributionData memory data = DistributionData({
+            collectionIds: collectionIdsArray,
+            athleteAddress: payable(makeAddr("athleteAddress")),
+            totalTournamentEarnings: 10_000 * 10 ** 18,
+            totalOtherEarnings: 5000 * 10 ** 18,
+            fantiumFeeBPS: 500, // 5% fee
+            fantiumAddress: payable(makeAddr("fantiumAddress")),
+            startTime: block.timestamp + 1 days,
+            closeTime: block.timestamp + 2 days
+        });
+
+        vm.prank(fantiumClaiming_manager);
+        uint256 distEventId = fantiumClaiming.createDistribution(data);
+
+        uint256 mockTokenId = 5010026; // Collection ID: 5, Version: 0, Number: 26
+
+        bool returnValue = fantiumClaiming.isEligibleForClaim(distEventId, mockTokenId);
+
+        assertFalse(returnValue);
+    }
+
+    function test_isEligibleForClaim_ok_returnsFalseTokenNumberBiggerThanMintedTokens() public {
+        uint256[] memory collectionIdsArray = new uint256[](1);
+        collectionIdsArray[0] = 1;
+
+        // Prepare distribution data
+        DistributionData memory data = DistributionData({
+            collectionIds: collectionIdsArray,
+            athleteAddress: payable(makeAddr("athleteAddress")),
+            totalTournamentEarnings: 10_000 * 10 ** 18,
+            totalOtherEarnings: 5000 * 10 ** 18,
+            fantiumFeeBPS: 500, // 5% fee
+            fantiumAddress: payable(makeAddr("fantiumAddress")),
+            startTime: block.timestamp + 1 days,
+            closeTime: block.timestamp + 2 days
+        });
+
+        vm.prank(fantiumClaiming_manager);
+        uint256 distEventId = fantiumClaiming.createDistribution(data);
+
+        uint256 mockTokenId = 1010226; // Collection ID: 1, Version: 2, Number: 26
+
+        // we minted 0 tokens
+        bool returnValue = fantiumClaiming.isEligibleForClaim(distEventId, mockTokenId);
+
+        assertFalse(returnValue);
+    }
+
+    function test_isEligibleForClaim_ok_returnsTrue() public {
+        address user1 = makeAddr("user1");
+
+        // Prepare distribution data
+        uint256 collectionId = 1;
+        uint256[] memory collectionIdsArray = new uint256[](1);
+        collectionIdsArray[0] = collectionId;
+
+        // We mint some tokens
+        mintTo(collectionId, 30, user1);
+
+        // Prepare distribution data
+        DistributionData memory data = DistributionData({
+            collectionIds: collectionIdsArray,
+            athleteAddress: payable(makeAddr("athleteAddress")),
+            totalTournamentEarnings: 10_000 * 10 ** 18,
+            totalOtherEarnings: 5000 * 10 ** 18,
+            fantiumFeeBPS: 500, // 5% fee
+            fantiumAddress: payable(makeAddr("fantiumAddress")),
+            startTime: block.timestamp + 1 days,
+            closeTime: block.timestamp + 2 days
+        });
+
+        vm.prank(fantiumClaiming_manager);
+        uint256 distEventId = fantiumClaiming.createDistribution(data);
+
+        uint256 mockTokenId = 1010026; // Collection ID: 1, Version: 0, Number: 26
+
+        bool returnValue = fantiumClaiming.isEligibleForClaim(distEventId, mockTokenId);
+
+        assertTrue(returnValue);
     }
 }
