@@ -577,6 +577,80 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         fantiumClaiming.fundDistribution(distEventId);
     }
 
+    // batchFundDistribution
+    // ========================================================================
+    function test_batchFundDistribution_ok_success() public {
+        address user1 = makeAddr("user1");
+        address user2 = makeAddr("user2");
+        address user3 = makeAddr("user3");
+        address athlete = makeAddr("athlete");
+
+        // Prepare distribution data
+        uint256 collectionId = 1;
+        uint256[] memory collectionIdsArray = new uint256[](1);
+        collectionIdsArray[0] = collectionId;
+
+        // We mint some tokens so the distribution has a value > 0
+        mintTo(collectionId, 1, user1);
+        mintTo(collectionId, 2, user2);
+        mintTo(collectionId, 3, user3);
+
+        DistributionData memory data1 = DistributionData({
+            collectionIds: collectionIdsArray,
+            athleteAddress: payable(athlete),
+            totalTournamentEarnings: 10_000 * 10 ** 18,
+            totalOtherEarnings: 5000 * 10 ** 18,
+            fantiumFeeBPS: 500,
+            fantiumAddress: payable(makeAddr("fantiumAddress")),
+            startTime: block.timestamp + 1 days,
+            closeTime: block.timestamp + 2 days
+        });
+
+        DistributionData memory data2 = DistributionData({
+            collectionIds: collectionIdsArray,
+            athleteAddress: payable(athlete),
+            totalTournamentEarnings: 20_000 * 10 ** 18,
+            totalOtherEarnings: 10000 * 10 ** 18,
+            fantiumFeeBPS: 500,
+            fantiumAddress: payable(makeAddr("fantiumAddress")),
+            startTime: block.timestamp + 3 days,
+            closeTime: block.timestamp + 4 days
+        });
+
+        // Create distribution events
+        vm.prank(fantiumClaiming_manager);
+        uint256 distEventId1 = fantiumClaiming.createDistribution(data1);
+        vm.prank(fantiumClaiming_manager);
+        uint256 distEventId2 = fantiumClaiming.createDistribution(data2);
+
+        uint256[] memory distributionEventIdsArray = new uint256[](2);
+        distributionEventIdsArray[0] = distEventId1;
+        distributionEventIdsArray[1] = distEventId2;
+
+        uint256 totalAmount1 = fantiumClaiming.distributions(distEventId1).tournamentDistributionAmount
+            + fantiumClaiming.distributions(distEventId1).otherDistributionAmount;
+        assertGt(totalAmount1, 0, "Total amount is greater than 0");
+
+
+        uint256 totalAmount2 = fantiumClaiming.distributions(distEventId2).tournamentDistributionAmount
+            + fantiumClaiming.distributions(distEventId2).otherDistributionAmount;
+        assertGt(totalAmount2, 0, "Total amount is greater than 0");
+
+        uint256 totalAmount = totalAmount1 + totalAmount2;
+
+        // batch fund distribution events
+        vm.startPrank(athlete);
+        deal(address(usdc), athlete, totalAmount);
+        usdc.approve(address(fantiumClaiming), totalAmount);
+        fantiumClaiming.batchFundDistribution(distributionEventIdsArray);
+        vm.stopPrank();
+
+        // Assertions
+        Distribution memory updatedEvent1 = fantiumClaiming.distributions(distEventId1);
+        Distribution memory updatedEvent2 = fantiumClaiming.distributions(distEventId2);
+        assertEq(updatedEvent1.amountPaidIn, totalAmount1, "Amount paid in should match total amount for 1st event");
+        assertEq(updatedEvent2.amountPaidIn, totalAmount2, "Amount paid in should match total amount for 2nd event");
+    }
 
     // closeDistribution
     // ========================================================================
@@ -635,7 +709,8 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IFANtiumClaiming.InvalidDistributionClose.selector, DistributionCloseErrorReason.DISTRIBUTION_ALREADY_CLOSED
+                IFANtiumClaiming.InvalidDistributionClose.selector,
+                DistributionCloseErrorReason.DISTRIBUTION_ALREADY_CLOSED
             )
         );
 
