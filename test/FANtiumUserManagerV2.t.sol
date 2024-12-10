@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import { FANtiumUserManagerV2 } from "src/FANtiumUserManagerV2.sol";
-import { IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
-import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumUserManagerFactory } from "test/setup/FANtiumUserManagerFactory.sol";
 
