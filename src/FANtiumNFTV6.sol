@@ -536,7 +536,7 @@ contract FANtiumNFTV6 is
             revert InvalidMint(MintErrorReason.COLLECTION_NOT_LAUNCHED);
         }
 
-        if (!userManager.isKYCed(_msgSender())) {
+        if (!userManager.isKYCed(recipient)) {
             revert InvalidMint(MintErrorReason.ACCOUNT_NOT_KYCED);
         }
 
@@ -620,14 +620,13 @@ contract FANtiumNFTV6 is
         whenNotPaused
         returns (uint256)
     {
-        bytes32 hash = keccak256(
-            abi.encode(_msgSender(), nonces[_msgSender()], collectionId, quantity, amount, recipient)
-        ).toEthSignedMessageHash();
+        bytes32 hash =
+            keccak256(abi.encode(collectionId, quantity, recipient, amount, nonces[recipient])).toEthSignedMessageHash();
         if (!hasRole(SIGNER_ROLE, hash.recover(signature))) {
             revert InvalidMint(MintErrorReason.INVALID_SIGNATURE);
         }
 
-        nonces[_msgSender()]++;
+        nonces[recipient]++;
         return _mintTo(collectionId, quantity, amount, recipient);
     }
 

@@ -23,11 +23,6 @@ contract DeployTestnetV5 is Script {
     address public constant FANTIUM_CLAIMING_PROXY = 0xB578fb2A0BC49892806DC7309Dbe809f23F4682F;
 
     function run() public {
-        uint256 size = FANTIUM_CLAIMING_PROXY.code.length;
-        if (size == 0) {
-            revert("FANTIUM_CLAIMING_PROXY is not deployed");
-        }
-
         vm.startBroadcast(vm.envUint("ADMIN_PRIVATE_KEY"));
         if (FANTIUM_NFT_UPGRADE) {
             Upgrades.upgradeProxy(FANTIUM_NFT_PROXY, "FANtiumNFTV6.sol:FANtiumNFTV6", "");

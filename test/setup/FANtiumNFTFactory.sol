@@ -189,8 +189,7 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
         view
         returns (bytes memory)
     {
-        bytes32 hash =
-            keccak256(abi.encode(recipient, nonce, collectionId, quantity, amount, recipient)).toEthSignedMessageHash();
+        bytes32 hash = keccak256(abi.encode(collectionId, quantity, recipient, amount, nonce)).toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(fantiumNFT_signerKey, hash);
         return abi.encodePacked(r, s, v);
     }
