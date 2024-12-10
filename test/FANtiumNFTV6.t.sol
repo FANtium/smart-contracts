@@ -16,7 +16,6 @@ import {
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 import { FANtiumNFTFactory } from "test/setup/FANtiumNFTFactory.sol";
-import { console } from "forge-std/console.sol";
 
 contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
     using ECDSA for bytes32;

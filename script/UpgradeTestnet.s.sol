@@ -2,10 +2,7 @@
 pragma solidity 0.8.28;
 
 import { Script } from "forge-std/Script.sol";
-import { FANtiumClaimingV2 } from "src/FANtiumClaimingV2.sol";
-import { FANtiumNFTV6 } from "src/FANtiumNFTV6.sol";
 import { Upgrades } from "@openzeppelin/foundry-upgrades/LegacyUpgrades.sol";
-import { FANtiumUserManagerV2 } from "src/FANtiumUserManagerV2.sol";
 
 /**
  * @notice Deploy a new instance of the FANtiumNFTV6 contract to the testnet.
