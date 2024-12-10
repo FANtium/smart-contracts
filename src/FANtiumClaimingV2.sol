@@ -662,6 +662,7 @@ contract FANtiumClaimingV2 is
      * @dev Only managers or admins can call this function.
      * @param distributionId The ID of the distribution
      */
+    // todo: rename to doComputeShares to avoid naming collision with computeShares fn above
     function computeShares(uint256 distributionId)
         external
         whenNotPaused
