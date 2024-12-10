@@ -768,7 +768,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
 
         uint256 mockTokenId = 1_000_026; // Collection ID: 1, Version: 0, Number: 26
 
-        // we minted 0 tokens, so _distributionToCollectionInfo[distributionId][collectionId].mintedTokens should return 0
+        // we minted 0 tokens, so _distributionToCollectionInfo[distributionId][collectionId].mintedTokens returns 0
         bool returnValue = fantiumClaiming.isEligibleForClaim(distEventId, mockTokenId);
 
         assertFalse(returnValue);
@@ -873,71 +873,68 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         // Create distribution events
         vm.prank(fantiumClaiming_manager);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
-        uint256 mockTokenId = 1010026; // Collection ID: 1, Version: 0, Number: 26
+        uint256 mockTokenId = 1_010_026; // Collection ID: 1, Version: 0, Number: 26
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IFANtiumClaiming.InvalidClaim.selector,
-                ClaimErrorReason.NOT_FULLY_PAID_IN
-            )
+            abi.encodeWithSelector(IFANtiumClaiming.InvalidClaim.selector, ClaimErrorReason.NOT_FULLY_PAID_IN)
         );
 
         vm.prank(user1);
         fantiumClaiming.claim(mockTokenId, distEventId);
     }
 
-    // todo: [FAIL: Error != expected error: ERC721: invalid token ID != InvalidClaim(2)]
-//    function test_claim_revert_notTokenOwner() public {
-//        address user1 = makeAddr("user1");
-//        address athlete = makeAddr("athlete");
-//
-//        // Prepare distribution data
-//        uint256 collectionId = 1;
-//        uint256[] memory collectionIdsArray = new uint256[](1);
-//        collectionIdsArray[0] = collectionId;
-//
-//        // We mint some tokens
-//        mintTo(collectionId, 10, user1);
-//
-//        DistributionData memory data = DistributionData({
-//            collectionIds: collectionIdsArray,
-//            athleteAddress: payable(athlete),
-//            totalTournamentEarnings: 10_000 * 10 ** 18,
-//            totalOtherEarnings: 5000 * 10 ** 18,
-//            fantiumFeeBPS: 500,
-//            fantiumAddress: payable(makeAddr("fantiumAddress")),
-//            startTime: block.timestamp + 1 days,
-//            closeTime: block.timestamp + 2 days
-//        });
-//
-//        // Create distribution events
-//        vm.prank(fantiumClaiming_manager);
-//        uint256 distEventId = fantiumClaiming.createDistribution(data);
-//        uint256 mockTokenId = 1010026; // Collection ID: 1, Version: 0, Number: 26
-//
-//
-//        // Fund the distribution
-//        uint256 totalAmount = fantiumClaiming.distributions(distEventId).tournamentDistributionAmount
-//            + fantiumClaiming.distributions(distEventId).otherDistributionAmount;
-//        assertGt(totalAmount, 0, "Total amount is greater than 0");
-//
-//        uint256 missingAmount = totalAmount - fantiumClaiming.distributions(distEventId).amountPaidIn;
-//        assertGt(missingAmount, 0, "Missing amount is greater than 0");
-//
-//        vm.startPrank(athlete);
-//        deal(address(usdc), athlete, missingAmount);
-//        usdc.approve(address(fantiumClaiming), missingAmount);
-//        fantiumClaiming.fundDistribution(distEventId);
-//        vm.stopPrank();
-//
-//        vm.expectRevert(
-//            abi.encodeWithSelector(
-//                IFANtiumClaiming.InvalidClaim.selector,
-//                ClaimErrorReason.ONLY_TOKEN_OWNER
-//            )
-//        );
-//
-//        vm.prank(payable(makeAddr("anotherUser")));
-//        fantiumClaiming.claim(mockTokenId, distEventId);
-//    }
+    function test_claim_revert_notTokenOwner() public {
+        address user1 = makeAddr("user1");
+        address user2 = makeAddr("user2");
+        address athlete = makeAddr("athlete");
+
+        // Prepare distribution data
+        uint256 collectionId = 1;
+        uint256[] memory collectionIdsArray = new uint256[](1);
+        collectionIdsArray[0] = collectionId;
+
+        // We mint some tokens
+        mintTo(collectionId, 10, user1);
+        mintTo(collectionId, 10, user2);
+
+        DistributionData memory data = DistributionData({
+            collectionIds: collectionIdsArray,
+            athleteAddress: payable(athlete),
+            totalTournamentEarnings: 10_000 * 10 ** 18,
+            totalOtherEarnings: 5000 * 10 ** 18,
+            fantiumFeeBPS: 500,
+            fantiumAddress: payable(makeAddr("fantiumAddress")),
+            startTime: block.timestamp + 1 days,
+            closeTime: block.timestamp + 2 days
+        });
+
+        // Create distribution events
+        vm.prank(fantiumClaiming_manager);
+        uint256 distEventId = fantiumClaiming.createDistribution(data);
+
+        // Fund the distribution
+        uint256 totalAmount = fantiumClaiming.distributions(distEventId).tournamentDistributionAmount
+            + fantiumClaiming.distributions(distEventId).otherDistributionAmount;
+        assertGt(totalAmount, 0, "Total amount is greater than 0");
+
+        uint256 missingAmount = totalAmount - fantiumClaiming.distributions(distEventId).amountPaidIn;
+        assertGt(missingAmount, 0, "Missing amount is greater than 0");
+
+        vm.startPrank(athlete);
+        deal(address(usdc), athlete, missingAmount);
+        usdc.approve(address(fantiumClaiming), missingAmount);
+        fantiumClaiming.fundDistribution(distEventId);
+        vm.stopPrank();
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IFANtiumClaiming.InvalidClaim.selector,
+                ClaimErrorReason.ONLY_TOKEN_OWNER
+            )
+        );
+
+        uint256 mockTokenId = 1000001; // Collection ID: 1, Version: 0, Number: 1
+        vm.prank(payable(user2));
+        fantiumClaiming.claim(mockTokenId, distEventId);
+    }
 }
