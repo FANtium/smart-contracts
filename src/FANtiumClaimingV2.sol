@@ -494,7 +494,7 @@ contract FANtiumClaimingV2 is
             return false;
         }
 
-        // Now, checkk if the token was minted before the distribution started
+        // Now, check if the token was minted before the distribution started
         if (number >= _distributionToCollectionInfo[distributionId][collectionId].mintedTokens) {
             return false;
         }
@@ -662,6 +662,7 @@ contract FANtiumClaimingV2 is
      * @dev Only managers or admins can call this function.
      * @param distributionId The ID of the distribution
      */
+    // todo: rename to doComputeShares to avoid naming collision with computeShares fn above
     function computeShares(uint256 distributionId)
         external
         whenNotPaused
