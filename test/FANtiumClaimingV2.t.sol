@@ -1031,7 +1031,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         uint256 otherEarningShare1e7 = 100;
 
         vm.prank(fantiumClaiming_manager);
-        fantiumClaiming.computeShares(distEventId);
+        fantiumClaiming.recomputeShares(distEventId);
 
         uint256 expectedTournamentDistributionAmount =
             invocationNumber * tournamentEarningsShare1e7 * totalTournamentEarnings / 1e7;

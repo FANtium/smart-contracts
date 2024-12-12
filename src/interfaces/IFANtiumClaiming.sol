@@ -123,7 +123,7 @@ interface IFANtiumClaiming {
     function fundDistribution(uint256 distributionId) external;
     function batchFundDistribution(uint256[] memory distributionIds) external;
     function closeDistribution(uint256 distributionId) external;
-    function computeShares(uint256 distributionId) external;
+    function recomputeShares(uint256 distributionId) external;
 
     // ========================================================================
     // Claiming

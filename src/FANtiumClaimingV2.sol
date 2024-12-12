@@ -246,6 +246,22 @@ contract FANtiumClaimingV2 is
     }
 
     /**
+     * @notice Get all the collection infos for a distribution.
+     * @param distributionId The ID of the distribution
+     */
+    function collectionInfos(uint256 distributionId) public view returns (CollectionInfo[] memory) {
+        Distribution memory distribution = _distributions[distributionId];
+        uint256 size = distribution.collectionIds.length;
+        CollectionInfo[] memory output = new CollectionInfo[](size);
+
+        for (uint256 i = 0; i < size; i++) {
+            output[i] = _distributionToCollectionInfo[distributionId][distribution.collectionIds[i]];
+        }
+
+        return output;
+    }
+
+    /**
      * @notice Check if the distribution data is valid.
      * @param data The distribution data
      */
@@ -658,12 +674,11 @@ contract FANtiumClaimingV2 is
     }
 
     /**
-     * @notice Call the _computeShares function.
+     * @notice Call the _computeShares function manually.
      * @dev Only managers or admins can call this function.
      * @param distributionId The ID of the distribution
      */
-    // todo: rename to doComputeShares to avoid naming collision with computeShares fn above
-    function computeShares(uint256 distributionId)
+    function recomputeShares(uint256 distributionId)
         external
         whenNotPaused
         onlyManagerOrAdmin
