@@ -630,6 +630,18 @@ contract FANtiumNFTV6 is
         return _mintTo(collectionId, quantity, amount, recipient);
     }
 
+    function batchTransferFrom(address from, address to, uint256[] memory tokenIds) public whenNotPaused {
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            transferFrom(from, to, tokenIds[i]);
+        }
+    }
+
+    function batchSafeTransferFrom(address from, address to, uint256[] memory tokenIds) public whenNotPaused {
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            safeTransferFrom(from, to, tokenIds[i]);
+        }
+    }
+
     // ========================================================================
     // Claiming functions
     // ========================================================================
