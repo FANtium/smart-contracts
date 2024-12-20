@@ -112,7 +112,7 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
         )
     {
         Collection memory collection = fantiumNFT.collections(collectionId);
-        amountUSDC = collection.price * quantity;
+        amountUSDC = collection.price * quantity * 10 ** usdc.decimals();
 
         (fantiumRevenue, fantiumAddress, athleteRevenue, athleteAddress) =
             fantiumNFT.getPrimaryRevenueSplits(collectionId, amountUSDC);

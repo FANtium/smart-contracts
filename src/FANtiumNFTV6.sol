@@ -8,6 +8,8 @@ import {
     IERC165Upgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import { IERC20MetadataUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import {
     IFANtiumNFT,
     Collection,
@@ -556,6 +558,7 @@ contract FANtiumNFTV6 is
      * @dev Internal function to mint tokens of a collection.
      * @param collectionId Collection ID.
      * @param quantity Amount of tokens to mint.
+     * @param amount Amount of ERC20 tokens to pay for the mint.
      * @param recipient Recipient of the mint.
      * @return lastTokenId The ID of the last minted token. Token range is [lastTokenId - quantity + 1, lastTokenId].
      */
@@ -597,7 +600,7 @@ contract FANtiumNFTV6 is
      */
     function mintTo(uint256 collectionId, uint24 quantity, address recipient) public whenNotPaused returns (uint256) {
         Collection memory collection = _collections[collectionId];
-        uint256 amount = collection.price * quantity;
+        uint256 amount = collection.price * quantity * 10 ** IERC20MetadataUpgradeable(erc20PaymentToken).decimals();
         return _mintTo(collectionId, quantity, amount, recipient);
     }
 
