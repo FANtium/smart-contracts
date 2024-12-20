@@ -11,7 +11,7 @@
         "lint:sol": "forge fmt --check && bun solhint \"{script,src,test}/**/*.sol\"",
         "prettier:check": "prettier --check \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
         "prettier:write": "prettier --write \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
-        "validate": "openzeppelin-upgrades-core validate out/build-info --exclude='src/archive/**/*.sol'",
+        "validate": "openzeppelin-upgrades-core validate out/build-info --exclude='src/archive/**/*.sol' --exclude='src/vendor/**/*.sol'",
         "validate:rebuild": "forge clean && forge build && bun run validate",
         "test": "forge test",
         "test:coverage": "forge coverage --ir-minimum",
