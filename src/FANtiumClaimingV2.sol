@@ -109,7 +109,7 @@ contract FANtiumClaimingV2 is
     /**
      * @custom:oz-renamed-from nextDistributionEventId
      */
-    uint256 private nextDistributionId;
+    uint256 public nextDistributionId;
 
     // ========================================================================
     // UUPS upgradeable pattern

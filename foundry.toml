@@ -7,6 +7,7 @@ build_info = true
 bytecode_hash = "none"
 evm_version = "paris"
 extra_output = ["storageLayout"]
+extra_output_files = ["metadata"]
 fs_permissions = [{ access = "read", path = "./test/fixtures"}, { access = "read", path = "./out"}]
 ffi = true
 fuzz = { runs = 256 }
