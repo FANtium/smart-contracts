@@ -7,9 +7,9 @@ import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumNFTFactory } from "test/setup/FANtiumNFTFactory.sol";
 
 contract FANtiumClaimingFactory is BaseTest, FANtiumNFTFactory {
-    address public fantiumClaiming_admin;
-    address public fantiumClaiming_manager;
-    address public fantiumClaiming_trustedForwarder;
+    address public fantiumClaiming_admin = makeAddr("fantiumClaiming_admin");
+    address public fantiumClaiming_manager = makeAddr("fantiumClaiming_manager");
+    address public fantiumClaiming_trustedForwarder = makeAddr("fantiumClaiming_trustedForwarder");
 
     address public fantiumClaiming_implementation;
     address public fantiumClaiming_proxy;
@@ -20,12 +20,12 @@ contract FANtiumClaimingFactory is BaseTest, FANtiumNFTFactory {
 
         fantiumClaiming_implementation = address(new FANtiumClaimingV2());
         fantiumClaiming_proxy = UnsafeUpgrades.deployUUPSProxy(
-            fantiumClaiming_implementation, abi.encodeCall(FANtiumClaimingV2.initialize, (fantiumNFT_admin))
+            fantiumClaiming_implementation, abi.encodeCall(FANtiumClaimingV2.initialize, (fantiumClaiming_admin))
         );
         fantiumClaiming = FANtiumClaimingV2(fantiumClaiming_proxy);
 
         // Configure roles
-        vm.startPrank(fantiumNFT_admin);
+        vm.startPrank(fantiumClaiming_admin);
         fantiumClaiming.grantRole(fantiumClaiming.MANAGER_ROLE(), fantiumClaiming_manager);
         fantiumClaiming.grantRole(fantiumClaiming.FORWARDER_ROLE(), fantiumClaiming_trustedForwarder);
 
