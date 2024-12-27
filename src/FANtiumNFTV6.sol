@@ -178,12 +178,12 @@ contract FANtiumNFTV6 is
     }
 
     function _checkRoleOrAdmin(bytes32 role) internal view virtual {
-        if (!hasRole(role, msg.sender) && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
+        if (!hasRole(role, _msgSender()) && !hasRole(DEFAULT_ADMIN_ROLE, _msgSender())) {
             revert(
                 string(
                     abi.encodePacked(
                         "AccessControl: account ",
-                        StringsUpgradeable.toHexString(msg.sender),
+                        StringsUpgradeable.toHexString(_msgSender()),
                         " is missing role ",
                         StringsUpgradeable.toHexString(uint256(role), 32)
                     )
@@ -197,10 +197,10 @@ contract FANtiumNFTV6 is
     // ========================================================================
     modifier onlyAthleteOrManagerOrAdmin(uint256 collectionId) {
         if (
-            _msgSender() != _collections[collectionId].athleteAddress && !hasRole(MANAGER_ROLE, msg.sender)
-                && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)
+            _msgSender() != _collections[collectionId].athleteAddress && !hasRole(MANAGER_ROLE, _msgSender())
+                && !hasRole(DEFAULT_ADMIN_ROLE, _msgSender())
         ) {
-            revert AthleteOnly(collectionId, msg.sender, _collections[collectionId].athleteAddress);
+            revert AthleteOnly(collectionId, _msgSender(), _collections[collectionId].athleteAddress);
         }
         _;
     }

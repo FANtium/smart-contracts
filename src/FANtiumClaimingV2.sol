@@ -157,12 +157,12 @@ contract FANtiumClaimingV2 is
     }
 
     function _checkRoleOrAdmin(bytes32 role) internal view virtual {
-        if (!hasRole(role, msg.sender) && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
+        if (!hasRole(role, _msgSender()) && !hasRole(DEFAULT_ADMIN_ROLE, _msgSender())) {
             revert(
                 string(
                     abi.encodePacked(
                         "AccessControl: account ",
-                        StringsUpgradeable.toHexString(msg.sender),
+                        StringsUpgradeable.toHexString(_msgSender()),
                         " is missing role ",
                         StringsUpgradeable.toHexString(uint256(role), 32)
                     )
@@ -176,7 +176,7 @@ contract FANtiumClaimingV2 is
     // ========================================================================
     modifier onlyAthlete(uint256 distributionId) {
         if (_msgSender() != _distributions[distributionId].athleteAddress) {
-            revert AthleteOnly(distributionId, msg.sender, _distributions[distributionId].athleteAddress);
+            revert AthleteOnly(distributionId, _msgSender(), _distributions[distributionId].athleteAddress);
         }
         _;
     }
@@ -187,10 +187,10 @@ contract FANtiumClaimingV2 is
      */
     modifier onlyAthleteOrManagerOrAdmin(uint256 distributionId) {
         if (
-            _msgSender() != _distributions[distributionId].athleteAddress && !hasRole(MANAGER_ROLE, msg.sender)
-                && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)
+            _msgSender() != _distributions[distributionId].athleteAddress && !hasRole(MANAGER_ROLE, _msgSender())
+                && !hasRole(DEFAULT_ADMIN_ROLE, _msgSender())
         ) {
-            revert AthleteOnly(distributionId, msg.sender, _distributions[distributionId].athleteAddress);
+            revert AthleteOnly(distributionId, _msgSender(), _distributions[distributionId].athleteAddress);
         }
         _;
     }
