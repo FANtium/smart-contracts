@@ -26,7 +26,7 @@ All of our smart contracts are deployed on the testnet and mainnet. You can find
 | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | [`FANtiumNFT`](src/FANtiumNFTV6.sol)                 | [`0x4d09f47fd98196CDFC816be9e84Fb15bCDB92612`](https://amoy.polygonscan.com/address/0x4d09f47fd98196CDFC816be9e84Fb15bCDB92612) | [`0x8e7Cf16DeB43D6AF7cB633D3976C2CE894Dc6CCB`](https://amoy.polygonscan.com/address/0x8e7Cf16DeB43D6AF7cB633D3976C2CE894Dc6CCB#code) |
 | [`FANtiumUserManager`](src/FANtiumUserManagerV2.sol) | [`0x54df3fb8b090a3fbf583e29e8fbd388a0179f4a2`](https://amoy.polygonscan.com/address/0x54df3fb8b090a3fbf583e29e8fbd388a0179f4a2) | [`0x621914d214a137187FD91c636cbfFA9BB9D31470`](https://amoy.polygonscan.com/address/0x621914d214a137187FD91c636cbfFA9BB9D31470#code) |
-| [`FANtiumClaim`](src/FANtiumClaimV2.sol)             | [`0xB578fb2A0BC49892806DC7309Dbe809f23F4682F`](https://amoy.polygonscan.com/address/0xB578fb2A0BC49892806DC7309Dbe809f23F4682F) | [`0xf9cb9686b03e4bc02fe17035ff9d60b6a8b6376e`](https://amoy.polygonscan.com/address/0xf9cb9686b03e4bc02fe17035ff9d60b6a8b6376e#code) |
+| [`FANtiumClaim`](src/FANtiumClaimV2.sol)             | [`0xB578fb2A0BC49892806DC7309Dbe809f23F4682F`](https://amoy.polygonscan.com/address/0xB578fb2A0BC49892806DC7309Dbe809f23F4682F) | [`0x1763dd0B4CC7D6570a972B7e90c0C011fdDfFCCd`](https://amoy.polygonscan.com/address/0x1763dd0B4CC7D6570a972B7e90c0C011fdDfFCCd#code) |
 
 ## Technical documentation
 
