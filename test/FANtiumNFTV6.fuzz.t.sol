@@ -2,7 +2,7 @@
 pragma solidity 0.8.28;
 
 import { BaseTest } from "test/BaseTest.sol";
-import { Collection, CollectionData } from "src/interfaces/IFANtiumNFT.sol";
+import { Collection, CollectionData, IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
 import { FANtiumNFTFactory } from "test/setup/FANtiumNFTFactory.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
@@ -31,6 +31,10 @@ contract FANtiumNFTV6FuzzTest is BaseTest, FANtiumNFTFactory {
         uint256 recipientBalanceBefore = usdc.balanceOf(recipient);
         uint256 fantiumBalanceBefore = usdc.balanceOf(fantiumAddress);
         uint256 athleteBalanceBefore = usdc.balanceOf(athleteAddress);
+
+        // Expect Sale event
+        vm.expectEmit(true, true, false, true, address(fantiumNFT));
+        emit IFANtiumNFT.Sale(collectionId, quantity, recipient, amountUSDC, 0);
 
         vm.prank(recipient);
         uint256 lastTokenId = fantiumNFT.mintTo(collectionId, quantity, recipient);
@@ -66,6 +70,10 @@ contract FANtiumNFTV6FuzzTest is BaseTest, FANtiumNFTFactory {
         emit IERC20Upgradeable.Transfer(recipient, fantiumAddress, fantiumRevenue);
         vm.expectEmit(true, true, false, true, address(usdc));
         emit IERC20Upgradeable.Transfer(recipient, athleteAddress, athleteRevenue);
+
+        // Expect Sale event
+        vm.expectEmit(true, true, false, true, address(fantiumNFT));
+        emit IFANtiumNFT.Sale(collectionId, quantity, recipient, amountUSDC, 0);
 
         vm.prank(recipient);
         uint256 lastTokenId = fantiumNFT.mintTo(collectionId, quantity, recipient);

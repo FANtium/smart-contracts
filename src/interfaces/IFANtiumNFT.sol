@@ -124,6 +124,9 @@ interface IFANtiumNFT is IERC721Upgradeable {
     // ========================================================================
     event CollectionCreated(uint256 indexed collectionId, Collection collection);
     event CollectionUpdated(uint256 indexed collectionId, Collection collection);
+    event Sale(
+        uint256 indexed collectionId, uint24 quantity, address indexed recipient, uint256 amount, uint256 discount
+    );
 
     // ========================================================================
     // Errors

@@ -555,6 +555,18 @@ contract FANtiumNFTV6 is
     }
 
     /**
+     * @notice Calculates the expected price in payment tokens for minting NFTs from a collection
+     * @dev Multiplies the collection's base price by quantity and adjusts for the payment token's decimals
+     * @param collectionId The ID of the collection to calculate the price for
+     * @param quantity The number of NFTs to be minted
+     * @return The total price in the smallest unit of the payment token (e.g., wei for ETH, cents for USDC)
+     */
+    function _expectedPrice(uint256 collectionId, uint24 quantity) internal view returns (uint256) {
+        Collection memory collection = _collections[collectionId];
+        return collection.price * quantity * 10 ** IERC20MetadataUpgradeable(erc20PaymentToken).decimals();
+    }
+
+    /**
      * @dev Internal function to mint tokens of a collection.
      * @param collectionId Collection ID.
      * @param quantity Amount of tokens to mint.
@@ -590,6 +602,11 @@ contract FANtiumNFTV6 is
         }
 
         lastTokenId = tokenId + quantity - 1;
+
+        uint256 expectedPrice = _expectedPrice(collectionId, quantity);
+        // expectedPrice can theoretically be higher than paid amount
+        uint256 discount = expectedPrice >= amount ? expectedPrice - amount : 0;
+        emit Sale(collectionId, quantity, recipient, amount, discount);
     }
 
     /**
@@ -599,8 +616,7 @@ contract FANtiumNFTV6 is
      * @param recipient The recipient of the NFTs.
      */
     function mintTo(uint256 collectionId, uint24 quantity, address recipient) public whenNotPaused returns (uint256) {
-        Collection memory collection = _collections[collectionId];
-        uint256 amount = collection.price * quantity * 10 ** IERC20MetadataUpgradeable(erc20PaymentToken).decimals();
+        uint256 amount = _expectedPrice(collectionId, quantity);
         return _mintTo(collectionId, quantity, amount, recipient);
     }
 
