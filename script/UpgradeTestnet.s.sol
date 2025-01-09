@@ -14,9 +14,9 @@ contract DeployTestnetV5 is Script {
 
     bool public FANTIUM_NFT_UPGRADE = true;
     address public constant FANTIUM_NFT_PROXY = 0x4d09f47fd98196CDFC816be9e84Fb15bCDB92612;
-    bool public FANTIUM_USER_MANAGER_UPGRADE = true;
+    bool public FANTIUM_USER_MANAGER_UPGRADE = false;
     address public constant FANTIUM_USER_MANAGER_PROXY = 0x54dF3fb8B090A3FBf583e29e8fBd388A0179F4A2;
-    bool public FANTIUM_CLAIMING_UPGRADE = true;
+    bool public FANTIUM_CLAIMING_UPGRADE = false;
     address public constant FANTIUM_CLAIMING_PROXY = 0xB578fb2A0BC49892806DC7309Dbe809f23F4682F;
 
     function run() public {
