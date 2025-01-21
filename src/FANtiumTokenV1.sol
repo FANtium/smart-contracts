@@ -20,7 +20,7 @@ contract FANtiumTokenV1 is
     OwnableRoles,
     IFANtiumToken
 {
-    uint256 private nextId = 0;
+    uint256 private nextId;
     Phase[] public phases;
     uint256 public currentPhaseIndex;
     address public treasury; // Safe that will receive all the funds
@@ -40,6 +40,7 @@ contract FANtiumTokenV1 is
         __UUPSUpgradeable_init();
         __ERC721A_init(NAME, SYMBOL);
         _initializeOwner(admin);
+        nextId = 0;
     }
 
     function pause() external onlyOwner {
