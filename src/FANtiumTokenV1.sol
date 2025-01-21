@@ -8,7 +8,7 @@ import { ERC721AQueryableUpgradeable } from "erc721a-upgradeable/extensions/ERC7
 import { OwnableRoles } from "solady/auth/OwnableRoles.sol";
 import { IFANtiumToken } from "./interfaces/IFANtiumToken.sol";
 import { IERC20MetadataUpgradeable } from
-"@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 contract FANtiumTokenV1 is
@@ -23,7 +23,7 @@ contract FANtiumTokenV1 is
     address public treasury; // Safe that will receive all the funds
 
     /**
-    * @notice The ERC20 token used for payments, dollar stable coin.
+     * @notice The ERC20 token used for payments, dollar stable coin.
      */
     address public erc20PaymentToken; // todo: add fn to set erc20PaymentToken
 
@@ -55,9 +55,10 @@ contract FANtiumTokenV1 is
      *
      * mintTo(0x123, 100) => please mint 100 FAN to 0x123
      */
-    function mintTo(address recipient, uint256 quantity) public whenNotPaused external {
+    function mintTo(address recipient, uint256 quantity) public external whenNotPaused {
         // calculate expected amount
-        uint256 expectedAmount = quantity * PRICE_PER_TOKEN * 10 ** IERC20MetadataUpgradeable(erc20PaymentToken).decimals();
+        uint256 expectedAmount =
+            quantity * PRICE_PER_TOKEN * 10 ** IERC20MetadataUpgradeable(erc20PaymentToken).decimals();
 
         // transfer stable coin from msg.sender to this treasury
         SafeERC20Upgradeable.safeTransferFrom(
