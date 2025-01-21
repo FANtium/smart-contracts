@@ -33,6 +33,9 @@ contract FANtiumTokenV1 is
     string private constant NAME = "FANtium Token";
     string private constant SYMBOL = "FAN";
 
+    // errors
+    error PhaseDoesNotExist(uint256 phaseIndex);
+
     function initialize(address admin) public initializerERC721A initializer {
         __UUPSUpgradeable_init();
         __ERC721A_init(NAME, SYMBOL);
@@ -137,9 +140,12 @@ contract FANtiumTokenV1 is
      * mintTo(0x123, 100) => please mint 100 FAN to 0x123
      */
     function mintTo(address recipient, uint256 quantity) external whenNotPaused {
-        // get current share
+        // get current phase
         Phase memory phase = phases[currentPhaseIndex];
-        if (!phase) return; // todo: how to throw error ?
+        // check that phase was found
+        if (phase.phaseId == 0 || phase.startTime == 0) {
+            revert PhaseDoesNotExist(currentPhaseIndex);
+        }
 
         // todo: check that phase is active
         // todo: check that current supply + quantity <= maxSupply
