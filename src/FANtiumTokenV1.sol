@@ -20,7 +20,9 @@ contract FANtiumTokenV1 is
     OwnableRoles,
     IFANtiumToken
 {
-    uint256 public constant PRICE_PER_TOKEN = 100; // USDC, todo: we'll remove hardcoded price later
+    uint256 private nextId = 0;
+    Phase[] public phases;
+    uint256 public currentPhaseIndex;
     address public treasury; // Safe that will receive all the funds
 
     /**
@@ -49,17 +51,97 @@ contract FANtiumTokenV1 is
         _checkOwner();
     }
 
+    function addPhase(
+        uint256 pricePerShare,
+        uint256 maxSupply,
+        uint256 startTime,
+        uint256 endTime
+    ) external onlyOwner {
+        // todo: check how to throw error correctly
+        // validate incoming data
+        // todo: check that startTime is date in the future
+        require(endTime > startTime, "End time must be after start time");
+        require(pricePerShare > 0, "Price per token must be greater than zero");
+        require(maxSupply > 0, "Max supply must be greater than zero");
+
+        // add new Phase
+        phases.push(Phase({
+            phaseId: nextId,
+            pricePerShare: pricePerShare,
+            maxSupply: maxSupply,
+            startTime: startTime,
+            endTime: endTime,
+            currentSupply: 0
+        }));
+
+        // increment counter
+        nextId++;
+    }
+
+    function removePhase(uint256 phaseIndex) external onlyOwner {
+        // todo: check how to throw error correctly
+        // check that phaseIndex is valid
+        require(phaseIndex < phases.length && phaseIndex >= 0, "Invalid phase index");
+        // todo: check that phase has not started yet
+
+        // Shift all elements after the index to the left
+        for (uint i = phaseIndex; i < phases.length - 1; i++) {
+            phases[i] = phases[i + 1];
+        }
+        phases.pop();  // Remove the last element
+    }
+
+    // todo: decide if it should be external or internal fn
+    function setCurrentPhase(uint256 phaseIndex) external onlyOwner {
+        // todo: check how to throw error correctly
+        // check that phaseIndex is valid
+        require(phaseIndex < phases.length && phaseIndex >= 0, "Invalid phase index");
+
+        currentPhaseIndex = phaseIndex;
+    }
+
+    /**
+     * Get current sale phase
+     */
+    function getCurrentPhase() external view returns (Phase memory) {
+        // todo: check how to throw error correctly
+        // check that there are phases
+        require(phases.length > 0, "No phases available");
+        // check that the current phase is active
+        require(
+            block.timestamp >= phases[currentPhaseIndex].startTime &&
+            block.timestamp <= phases[currentPhaseIndex].endTime,
+            "Current phase is not active"
+        );
+
+        return phases[currentPhaseIndex];
+    }
+
+    /**
+    * Helper to view all existing sale phases
+    */
+    function getAllPhases() public view returns (Phase[] memory) {
+        return phases;
+    }
+
     /**
      * Mint FANtiums to the recipient address.
-     * @param recipient The recipient of the FAN tokens (can be defifferent that the sender)
+     * @param recipient The recipient of the FAN tokens (can be different that the sender)
      * @param quantity The quantity of FAN tokens to mint
      *
      * mintTo(0x123, 100) => please mint 100 FAN to 0x123
      */
     function mintTo(address recipient, uint256 quantity) external whenNotPaused {
+        // get current share
+        Phase memory phase = phases[currentPhaseIndex];
+        if (!phase) return; // todo: how to throw error ?
+
+        // todo: check that phase is active
+        // todo: check that current supply + quantity <= maxSupply
+
         // calculate expected amount
         uint256 expectedAmount =
-            quantity * PRICE_PER_TOKEN * 10 ** IERC20MetadataUpgradeable(erc20PaymentToken).decimals();
+            quantity * phase.pricePerShare * 10 ** IERC20MetadataUpgradeable(erc20PaymentToken).decimals();
 
         // transfer stable coin from msg.sender to this treasury
         SafeERC20Upgradeable.safeTransferFrom(
@@ -69,11 +151,8 @@ contract FANtiumTokenV1 is
         // mint the FAN tokens to the recipient
         _mint(recipient, quantity);
 
-        // todo: remove the comments below
-        /*
-        const expectedAmount = quantity * PRICE_PER_TOKEN * 10**USDC_DECIMALS;
-        usdc.transferFrom(msg.sender, treasury, expectedAmount); // this might throw
-        this.mint(recipient, quantity);
-        */
+        // todo: change the currentSupply in the Phase
     }
+
+    // todo: implement this - Once the phase n is exhausted, the phase n+1 is automatically opened
 }
