@@ -55,7 +55,7 @@ contract FANtiumTokenV1 is
      *
      * mintTo(0x123, 100) => please mint 100 FAN to 0x123
      */
-    function mintTo(address recipient, uint256 quantity) public external whenNotPaused {
+    function mintTo(address recipient, uint256 quantity) external whenNotPaused {
         // calculate expected amount
         uint256 expectedAmount =
             quantity * PRICE_PER_TOKEN * 10 ** IERC20MetadataUpgradeable(erc20PaymentToken).decimals();
