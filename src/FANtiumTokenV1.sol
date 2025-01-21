@@ -56,7 +56,10 @@ contract FANtiumTokenV1 is
         uint256 maxSupply,
         uint256 startTime,
         uint256 endTime
-    ) external onlyOwner {
+    )
+        external
+        onlyOwner
+    {
         // todo: check how to throw error correctly
         // validate incoming data
         // todo: check that startTime is date in the future
@@ -65,14 +68,16 @@ contract FANtiumTokenV1 is
         require(maxSupply > 0, "Max supply must be greater than zero");
 
         // add new Phase
-        phases.push(Phase({
-            phaseId: nextId,
-            pricePerShare: pricePerShare,
-            maxSupply: maxSupply,
-            startTime: startTime,
-            endTime: endTime,
-            currentSupply: 0
-        }));
+        phases.push(
+            Phase({
+                phaseId: nextId,
+                pricePerShare: pricePerShare,
+                maxSupply: maxSupply,
+                startTime: startTime,
+                endTime: endTime,
+                currentSupply: 0
+            })
+        );
 
         // increment counter
         nextId++;
@@ -85,10 +90,10 @@ contract FANtiumTokenV1 is
         // todo: check that phase has not started yet
 
         // Shift all elements after the index to the left
-        for (uint i = phaseIndex; i < phases.length - 1; i++) {
+        for (uint256 i = phaseIndex; i < phases.length - 1; i++) {
             phases[i] = phases[i + 1];
         }
-        phases.pop();  // Remove the last element
+        phases.pop(); // Remove the last element
     }
 
     // todo: decide if it should be external or internal fn
@@ -109,8 +114,8 @@ contract FANtiumTokenV1 is
         require(phases.length > 0, "No phases available");
         // check that the current phase is active
         require(
-            block.timestamp >= phases[currentPhaseIndex].startTime &&
-            block.timestamp <= phases[currentPhaseIndex].endTime,
+            block.timestamp >= phases[currentPhaseIndex].startTime
+                && block.timestamp <= phases[currentPhaseIndex].endTime,
             "Current phase is not active"
         );
 
@@ -118,8 +123,8 @@ contract FANtiumTokenV1 is
     }
 
     /**
-    * Helper to view all existing sale phases
-    */
+     * Helper to view all existing sale phases
+     */
     function getAllPhases() public view returns (Phase[] memory) {
         return phases;
     }
