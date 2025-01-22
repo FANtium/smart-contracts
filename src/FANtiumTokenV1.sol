@@ -6,7 +6,7 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import { ERC721AQueryableUpgradeable } from "erc721a-upgradeable/extensions/ERC721AQueryableUpgradeable.sol";
 import { OwnableRoles } from "solady/auth/OwnableRoles.sol";
-import { IFANtiumToken } from "./interfaces/IFANtiumToken.sol";
+import { IFANtiumToken, Phase } from "./interfaces/IFANtiumToken.sol";
 import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
@@ -90,7 +90,7 @@ contract FANtiumTokenV1 is
     function removePhase(uint256 phaseIndex) external onlyOwner {
         // todo: check how to throw error correctly
         // check that phaseIndex is valid
-        require(phaseIndex < phases.length && phaseIndex >= 0, "Invalid phase index");
+        require(phaseIndex < phases.length, "Invalid phase index");
         // todo: check that phase has not started yet
 
         // Shift all elements after the index to the left
@@ -116,12 +116,6 @@ contract FANtiumTokenV1 is
         // todo: check how to throw error correctly
         // check that there are phases
         require(phases.length > 0, "No phases available");
-        // check that the current phase is active
-        require(
-            block.timestamp >= phases[currentPhaseIndex].startTime
-                && block.timestamp <= phases[currentPhaseIndex].endTime,
-            "Current phase is not active"
-        );
 
         return phases[currentPhaseIndex];
     }
