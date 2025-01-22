@@ -2,16 +2,16 @@
 pragma solidity 0.8.28;
 
 import "./interfaces/IFANtiumToken.sol";
-import {ERC721AQueryableUpgradeable} from "erc721a-upgradeable/extensions/ERC721AQueryableUpgradeable.sol";
-import {IERC20MetadataUpgradeable} from
-"@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
-import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import {IFANtiumToken, Phase} from "./interfaces/IFANtiumToken.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {OwnableRoles} from "solady/auth/OwnableRoles.sol";
-import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { ERC721AQueryableUpgradeable } from "erc721a-upgradeable/extensions/ERC721AQueryableUpgradeable.sol";
+import { IERC20MetadataUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import { IFANtiumToken, Phase } from "./interfaces/IFANtiumToken.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { OwnableRoles } from "solady/auth/OwnableRoles.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
  * @title FANtium Token (FAN) smart contract
@@ -58,7 +58,6 @@ contract FANtiumTokenV1 is
     error IncorrectStartTime(uint256 startTime);
     error ERC20PaymentTokenIsNotSet();
 
-
     function initialize(address admin) public initializerERC721A initializer {
         __UUPSUpgradeable_init();
         __ERC721A_init(NAME, SYMBOL);
@@ -79,12 +78,12 @@ contract FANtiumTokenV1 is
     }
 
     /**
-    * Add a new sale phase
-    * @param pricePerShare Price of a single share
-    * @param maxSupply Maximum amount of shares in the sale phase
-    * @param startTime Time of the sale start
-    * @param endTime Time of the sale end
-    */
+     * Add a new sale phase
+     * @param pricePerShare Price of a single share
+     * @param maxSupply Maximum amount of shares in the sale phase
+     * @param startTime Time of the sale start
+     * @param endTime Time of the sale end
+     */
     function addPhase(
         uint256 pricePerShare,
         uint256 maxSupply,
@@ -137,9 +136,9 @@ contract FANtiumTokenV1 is
     }
 
     /**
-    * Remove the existing sale phase
-    * @param phaseIndex The index of the sale phase
-    */
+     * Remove the existing sale phase
+     * @param phaseIndex The index of the sale phase
+     */
     // todo: test the removePhase fn extensively, especially the edge cases
     function removePhase(uint256 phaseIndex) external onlyOwner {
         // check that phaseIndex is valid
@@ -163,9 +162,9 @@ contract FANtiumTokenV1 is
     }
 
     /**
-    * Set current sale phase
-    * @param phaseIndex The index of the sale phase
-    */
+     * Set current sale phase
+     * @param phaseIndex The index of the sale phase
+     */
     function setCurrentPhase(uint256 phaseIndex) external onlyOwner {
         // check that phaseIndex is valid
         if (!(phaseIndex < phases.length) || !(phaseIndex >= 0)) {
@@ -186,7 +185,7 @@ contract FANtiumTokenV1 is
      */
     function getCurrentPhase() external view returns (Phase memory) {
         // check that there are phases
-        if (!(phases.length > 0 )) {
+        if (!(phases.length > 0)) {
             revert NoPhasesAdded();
         }
 
@@ -201,11 +200,11 @@ contract FANtiumTokenV1 is
     }
 
     /**
-    * Get phase from an array by phaseId
-    * @param id - phase id
-    */
+     * Get phase from an array by phaseId
+     * @param id - phase id
+     */
     function _findPhaseById(uint256 id) private view returns (Phase memory, uint256, bool) {
-        for (uint i = 0; i < phases.length; i++) {
+        for (uint256 i = 0; i < phases.length; i++) {
             if (phases[i].phaseId == id) {
                 return (phases[i], i, true); // Return Phase, index, true if phase is found
             }
@@ -215,10 +214,10 @@ contract FANtiumTokenV1 is
     }
 
     /**
-    * Change end time of the specific sale phase
-    * @param newEndTime new sale phase end time to be set
-    * @param phaseId id of the sale phase
-    */
+     * Change end time of the specific sale phase
+     * @param newEndTime new sale phase end time to be set
+     * @param phaseId id of the sale phase
+     */
     function changePhaseEndTime(uint256 newEndTime, uint256 phaseId) external onlyOwner {
         (Phase memory phase, uint256 memory phaseIndex, bool memory isFound) = _findPhaseById(phaseId);
 
@@ -248,10 +247,10 @@ contract FANtiumTokenV1 is
     }
 
     /**
-    * Change start time of the specific sale phase
-    * @param newStartTime new sale phase start time to be set
-    * @param phaseId id of the sale phase
-    */
+     * Change start time of the specific sale phase
+     * @param newStartTime new sale phase start time to be set
+     * @param phaseId id of the sale phase
+     */
     function changePhaseStartTime(uint256 newStartTime, uint256 phaseId) external onlyOwner {
         (Phase memory phase, uint256 memory phaseIndex, bool memory isFound) = _findPhaseById(phaseId);
 
@@ -280,9 +279,9 @@ contract FANtiumTokenV1 is
     }
 
     /**
-    * Change current supply of the active sale phase
-    * @param currentSupply how many tokens has been minted already
-    */
+     * Change current supply of the active sale phase
+     * @param currentSupply how many tokens has been minted already
+     */
     function _changePhaseCurrentSupply(uint256 currentSupply, uint256 phaseIndex) internal {
         Phase memory currentPhase = phases[phaseIndex];
         // check that currentSupply does not exceed the max limit
@@ -345,7 +344,8 @@ contract FANtiumTokenV1 is
         _changePhaseCurrentSupply(phase.currentSupply + quantity, currentPhaseIndex);
     }
 
-    // todo: Open question: if we sold out the tokens at a certain valuation, do we need to open the next stage automatically ?
+    // todo: Open question: if we sold out the tokens at a certain valuation, do we need to open the next stage
+    // automatically ?
     // if answer is YES - implement this: Once the phase n is exhausted, the phase n+1 is automatically opened
 
     // todo: shall we emit an event when Minting tokens ?
