@@ -219,7 +219,7 @@ contract FANtiumTokenV1 is
      * @param phaseId id of the sale phase
      */
     function changePhaseEndTime(uint256 newEndTime, uint256 phaseId) external onlyOwner {
-        (Phase memory phase, uint256 memory phaseIndex, bool memory isFound) = _findPhaseById(phaseId);
+        (Phase memory phase, uint256 phaseIndex, bool isFound) = _findPhaseById(phaseId);
 
         // ensure the phase exists
         if (!isFound) {
@@ -252,7 +252,7 @@ contract FANtiumTokenV1 is
      * @param phaseId id of the sale phase
      */
     function changePhaseStartTime(uint256 newStartTime, uint256 phaseId) external onlyOwner {
-        (Phase memory phase, uint256 memory phaseIndex, bool memory isFound) = _findPhaseById(phaseId);
+        (Phase memory phase, uint256 phaseIndex, bool isFound) = _findPhaseById(phaseId);
 
         if (!isFound) {
             revert PhaseWithIdDoesNotExist(phaseId);
