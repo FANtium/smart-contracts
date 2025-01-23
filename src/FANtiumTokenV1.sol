@@ -181,9 +181,9 @@ contract FANtiumTokenV1 is
     /**
      * Get phase from an array by phaseId
      * @param id - phase id
-    * @return bool true if sale phase is found, false - if not found.
-   * @return Phase which was found, or default values - if not found.
-    * @return uint256 index of the Phase in an array, 0 - if not found.
+     * @return bool true if sale phase is found, false - if not found.
+     * @return Phase which was found, or default values - if not found.
+     * @return uint256 index of the Phase in an array, 0 - if not found.
      */
     function _findPhaseById(uint256 id) private view returns (bool, Phase memory, uint256) {
         for (uint256 i = 0; i < phases.length; i++) {
@@ -262,10 +262,11 @@ contract FANtiumTokenV1 is
 
     /**
      * Change current supply of the active sale phase
+     * Internal function, which is only used by the mintTo function
      * @param currentSupply how many tokens has been minted already
      */
-    function _changePhaseCurrentSupply(uint256 currentSupply, uint256 phaseIndex) internal {
-        Phase memory currentPhase = phases[phaseIndex];
+    function _changePhaseCurrentSupply(uint256 currentSupply) internal {
+        Phase memory currentPhase = phases[currentPhaseIndex];
         // check that currentSupply does not exceed the max limit
         if (currentSupply > currentPhase.maxSupply) {
             revert MaxSupplyLimitExceeded(currentSupply);
