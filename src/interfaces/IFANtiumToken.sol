@@ -16,4 +16,24 @@ struct Phase {
 // Once the phase n is exhausted, the phase n+1 is automatically opened
 // The price per share of phase n is < the price per share at the phase n+1
 // When the last phase is exhausted, it’s not possible to purchase any further share
-interface IFANtiumToken is IERC721AQueryableUpgradeable { }
+interface IFANtiumToken is IERC721AQueryableUpgradeable {
+    // errors
+    error PhaseDoesNotExist(uint256 phaseIndex);
+    error CurrentPhaseIsNotActive(Phase phase);
+    error NoPhasesAdded();
+    error IncorrectStartOrEndTime(uint256 startTime, uint256 endTime);
+    error CannotRemovePhaseWhichAlreadyStarted();
+    error PreviousAndNextPhaseTimesOverlap();
+    error CannotSetEndedPhaseAsCurrentPhase();
+    error IncorrectSharePrice(uint256 price);
+    error IncorrectMaxSupply(uint256 maxSupply);
+    error IncorrectPhaseIndex(uint256 index);
+    error IncorrectTokenQuantity(uint256 quantity);
+    error QuantityExceedsMaxSupplyLimit(uint256 quantity);
+    error MaxSupplyLimitExceeded(uint256 supply);
+    error IncorrectSupplyValue(uint256 supply);
+    error PhaseWithIdDoesNotExist(uint256 id);
+    error IncorrectEndTime(uint256 endTime);
+    error IncorrectStartTime(uint256 startTime);
+    error ERC20PaymentTokenIsNotSet();
+}

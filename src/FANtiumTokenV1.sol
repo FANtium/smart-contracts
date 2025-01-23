@@ -25,7 +25,7 @@ contract FANtiumTokenV1 is
     OwnableRoles,
     IFANtiumToken
 {
-    uint256 private nextId;
+    uint256 private nextId; // has default value 0
     Phase[] public phases;
     uint256 public currentPhaseIndex;
     address public treasury; // Safe that will receive all the funds todo: add a fn to set the treasury address
@@ -38,31 +38,10 @@ contract FANtiumTokenV1 is
     string private constant NAME = "FANtium Token";
     string private constant SYMBOL = "FAN";
 
-    // errors
-    error PhaseDoesNotExist(uint256 phaseIndex);
-    error CurrentPhaseIsNotActive(Phase phase);
-    error NoPhasesAdded();
-    error IncorrectStartOrEndTime(uint256 startTime, uint256 endTime);
-    error CannotRemovePhaseWhichAlreadyStarted();
-    error PreviousAndNextPhaseTimesOverlap();
-    error CannotSetEndedPhaseAsCurrentPhase();
-    error IncorrectSharePrice(uint256 price);
-    error IncorrectMaxSupply(uint256 maxSupply);
-    error IncorrectPhaseIndex(uint256 index);
-    error IncorrectTokenQuantity(uint256 quantity);
-    error QuantityExceedsMaxSupplyLimit(uint256 quantity);
-    error MaxSupplyLimitExceeded(uint256 supply);
-    error IncorrectSupplyValue(uint256 supply);
-    error PhaseWithIdDoesNotExist(uint256 id);
-    error IncorrectEndTime(uint256 endTime);
-    error IncorrectStartTime(uint256 startTime);
-    error ERC20PaymentTokenIsNotSet();
-
     function initialize(address admin) public initializerERC721A initializer {
         __UUPSUpgradeable_init();
         __ERC721A_init(NAME, SYMBOL);
         _initializeOwner(admin);
-        nextId = 0;
     }
 
     function pause() external onlyOwner {
@@ -94,18 +73,18 @@ contract FANtiumTokenV1 is
         onlyOwner
     {
         // validate incoming data
-        if (!(endTime > startTime) || !(startTime > block.timestamp)) {
+        if (endTime <= startTime || startTime <= block.timestamp) {
             // End time must be after start time
             // StartTime should be a date in the future
             revert IncorrectStartOrEndTime(startTime, endTime);
         }
 
-        if (!(pricePerShare > 0)) {
+        if (pricePerShare == 0) {
             // Price per token must be greater than zero
             revert IncorrectSharePrice(pricePerShare);
         }
 
-        if (!(maxSupply > 0)) {
+        if (maxSupply == 0) {
             // Max supply must be greater than zero
             revert IncorrectMaxSupply(maxSupply);
         }
@@ -142,7 +121,7 @@ contract FANtiumTokenV1 is
     // todo: test the removePhase fn extensively, especially the edge cases
     function removePhase(uint256 phaseIndex) external onlyOwner {
         // check that phaseIndex is valid
-        if (!(phaseIndex < phases.length)) {
+        if (phaseIndex >= phases.length) {
             revert IncorrectPhaseIndex(phaseIndex);
         }
 
@@ -167,7 +146,7 @@ contract FANtiumTokenV1 is
      */
     function setCurrentPhase(uint256 phaseIndex) external onlyOwner {
         // check that phaseIndex is valid
-        if (!(phaseIndex < phases.length) || !(phaseIndex >= 0)) {
+        if (phaseIndex >= phases.length || phaseIndex < 0) {
             revert IncorrectPhaseIndex(phaseIndex);
         }
 
@@ -185,7 +164,7 @@ contract FANtiumTokenV1 is
      */
     function getCurrentPhase() external view returns (Phase memory) {
         // check that there are phases
-        if (!(phases.length > 0)) {
+        if (phases.length == 0) {
             revert NoPhasesAdded();
         }
 
@@ -227,7 +206,7 @@ contract FANtiumTokenV1 is
         }
 
         // validate newEndTime
-        if (!(newEndTime > phase.startTime) || block.timestamp > newEndTime) {
+        if (newEndTime <= phase.startTime || block.timestamp > newEndTime) {
             // End time must be after start time
             // End time should be a date in future
             revert IncorrectEndTime(newEndTime);
