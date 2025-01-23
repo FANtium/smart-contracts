@@ -2,6 +2,8 @@
 pragma solidity 0.8.28;
 
 import "./interfaces/IFANtiumToken.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import { ERC721AQueryableUpgradeable } from "erc721a-upgradeable/extensions/ERC721AQueryableUpgradeable.sol";
 import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
@@ -34,7 +36,7 @@ contract FANtiumTokenV1 is
      * @notice The ERC20 token used for payments, dollar stable coin.
      */
     // todo: open question: do we need to support multiple currencies
-    address public erc20PaymentToken; // todo: add fn to set erc20PaymentToken
+    address public erc20PaymentToken;
 
     string private constant NAME = "FANtium Token";
     string private constant SYMBOL = "FAN";
@@ -55,6 +57,30 @@ contract FANtiumTokenV1 is
 
     function _authorizeUpgrade(address) internal view override {
         _checkOwner();
+    }
+
+    /**
+     * Set payment token
+     * @param token - address of the contract to be set as the payment token
+     */
+    function setPaymentToken(address token) external onlyOwner {
+        // Ensure the token address is not zero
+        if (token == address(0)) {
+            revert InvalidPaymentTokenAddress(token);
+        }
+
+        // Check if the token address is a contract
+        if (!Address.isContract(token)) {
+            revert InvalidPaymentTokenAddress(token);
+        }
+
+        // check if the token implements the ERC20 interface
+        if (IERC20(token).totalSupply() == 0) {
+            revert InvalidPaymentTokenAddress(token);
+        }
+
+        // set the payment token
+        erc20PaymentToken = token;
     }
 
     /**
@@ -327,7 +353,7 @@ contract FANtiumTokenV1 is
         _mint(recipient, quantity);
 
         // change the currentSupply in the Phase
-        _changePhaseCurrentSupply(phase.currentSupply + quantity, currentPhaseIndex);
+        _changePhaseCurrentSupply(phase.currentSupply + quantity);
 
         // if we sold out the tokens at a certain valuation, we need to open the next stage
         // once the phase n is exhausted, the phase n+1 is automatically opened
