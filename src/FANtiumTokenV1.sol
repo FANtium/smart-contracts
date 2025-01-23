@@ -30,7 +30,7 @@ contract FANtiumTokenV1 is
     uint256 private nextId; // has default value 0
     Phase[] public phases;
     uint256 public currentPhaseIndex;
-    address public treasury; // Safe that will receive all the funds todo: add a fn to set the treasury address
+    address public treasury; // Safe that will receive all the funds
 
     /**
      * @notice The ERC20 token used for payments, dollar stable coin.
@@ -57,6 +57,33 @@ contract FANtiumTokenV1 is
 
     function _authorizeUpgrade(address) internal view override {
         _checkOwner();
+    }
+
+    /**
+     * Set treasury address - FANtium address where the funds should be transferred
+     * @param wallet - address of the treasury
+     */
+    function setTreasuryAddress(address wallet) external onlyOwner {
+        // Ensure the token address is not zero
+        if (wallet == address(0)) {
+            revert InvalidTreasuryAddress(wallet);
+        }
+
+        // Ensure the treasury address is not the same as the current one
+        if (wallet == treasury) {
+            revert TreasuryAddressAlreadySet(wallet);
+        }
+
+        // Ensure the treasury address is a contract
+        if (!Address.isContract(wallet)) {
+            revert InvalidTreasuryAddress(wallet);
+        }
+
+        // update the treasury address
+        treasury = wallet;
+
+        // emit an event for transparency
+        TreasuryAddressUpdate(wallet);
     }
 
     /**
