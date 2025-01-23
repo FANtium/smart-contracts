@@ -2,11 +2,13 @@
 pragma solidity 0.8.28;
 
 import { BaseTest } from "test/BaseTest.sol";
-import {FANtiumTokenV1} from "../../src/FANtiumTokenV1.sol";
+import { FANtiumTokenV1 } from "../../src/FANtiumTokenV1.sol";
 import { UnsafeUpgrades } from "../../src/upgrades/UnsafeUpgrades.sol";
 
 contract FANtiumTokenFactory is BaseTest {
     address public fantiumToken_admin = makeAddr("admin");
+
+    event TreasuryAddressUpdate(address newWalletAddress);
 
     address public fantiumToken_implementation;
     address public fantiumToken_proxy;
