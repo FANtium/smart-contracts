@@ -83,7 +83,7 @@ contract FANtiumTokenV1 is
         treasury = wallet;
 
         // emit an event for transparency
-        TreasuryAddressUpdate(wallet);
+        emit TreasuryAddressUpdate(wallet);
     }
 
     /**
@@ -335,6 +335,35 @@ contract FANtiumTokenV1 is
     }
 
     /**
+     * Change max supply of the sale phase
+     * External function, which can be used if business requirements change
+     * @param maxSupply - new max supply value
+     * @param phaseId - id of the phase to be edited
+     */
+    function changePhaseMaxSupply(uint256 maxSupply, uint256 phaseId) external onlyOwner {
+        (bool isFound, Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
+
+        // ensure the phase exists
+        if (!isFound) {
+            revert PhaseWithIdDoesNotExist(phaseId);
+        }
+
+        // max supply cannot be 0
+        // max supply should be bigger than currentSupply
+        if (maxSupply == 0 || maxSupply < phase.currentSupply) {
+            revert InvalidMaxSupplyValue(maxSupply);
+        }
+
+        // we cannot change the max supply for the ended sale phases
+        if (phase.endTime < block.timestamp) {
+            revert CannotUpdateEndedSalePhase();
+        }
+
+        // update the max supply value
+        phase.maxSupply = maxSupply;
+    }
+
+    /**
      * Mint FANtiums to the recipient address.
      * @param recipient The recipient of the FAN tokens (can be different that the sender)
      * @param quantity The quantity of FAN tokens to mint
@@ -391,6 +420,4 @@ contract FANtiumTokenV1 is
         // emit an event after minting tokens
         emit FANtiumTokenSale(quantity, recipient, expectedAmount);
     }
-
-    // todo: add function to change maxSupply for the phase
 }

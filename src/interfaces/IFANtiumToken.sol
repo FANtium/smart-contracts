@@ -43,4 +43,6 @@ interface IFANtiumToken is IERC721AQueryableUpgradeable {
     error InvalidPaymentTokenAddress(address token);
     error InvalidTreasuryAddress(address treasury);
     error TreasuryAddressAlreadySet(address wallet);
+    error InvalidMaxSupplyValue(uint256 maxSupply);
+    error CannotUpdateEndedSalePhase();
 }
