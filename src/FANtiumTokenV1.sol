@@ -141,10 +141,10 @@ contract FANtiumTokenV1 is
     }
 
     /**
-     * Set current sale phase
+     * Set currentPhaseIndex and therefore the current sale phase
      * @param phaseIndex The index of the sale phase
      */
-    function setCurrentPhase(uint256 phaseIndex) external onlyOwner {
+    function setCurrentPhase(uint256 phaseIndex) public onlyOwner {
         // check that phaseIndex is valid
         if (phaseIndex >= phases.length || phaseIndex < 0) {
             revert IncorrectPhaseIndex(phaseIndex);
@@ -295,25 +295,27 @@ contract FANtiumTokenV1 is
             revert PhaseDoesNotExist(currentPhaseIndex);
         }
         // check that phase is active
-        if (phase.startTime < block.timestamp || phase.endTime < block.timestamp) {
+        // should be phase.startTime < block.timestamp < phase.endTime
+        if (phase.startTime > block.timestamp || phase.endTime < block.timestamp) {
             revert CurrentPhaseIsNotActive(phase);
         }
         // check quantity
-        if (quantity <= 0) {
+        // no need to check if quantity is negative, because uint256 cannot be negative
+        if (quantity == 0) {
             revert IncorrectTokenQuantity(quantity);
         }
         if (phase.currentSupply + quantity > phase.maxSupply) {
             revert QuantityExceedsMaxSupplyLimit(quantity);
         }
 
-        // check that erc20PaymentToken is set
+        // payment token validation
         if (erc20PaymentToken == address(0)) {
             revert ERC20PaymentTokenIsNotSet();
         }
 
-        // calculate expected amount
-        uint256 expectedAmount =
-            quantity * phase.pricePerShare * 10 ** IERC20MetadataUpgradeable(erc20PaymentToken).decimals();
+        // price calculation
+        uint8 tokenDecimals = IERC20MetadataUpgradeable(erc20PaymentToken).decimals();
+        uint256 expectedAmount = quantity * phase.pricePerShare * 10 ** tokenDecimals;
 
         // transfer stable coin from msg.sender to this treasury
         SafeERC20Upgradeable.safeTransferFrom(
@@ -325,11 +327,15 @@ contract FANtiumTokenV1 is
 
         // change the currentSupply in the Phase
         _changePhaseCurrentSupply(phase.currentSupply + quantity, currentPhaseIndex);
+
+        // if we sold out the tokens at a certain valuation, we need to open the next stage
+        // once the phase n is exhausted, the phase n+1 is automatically opened
+        if (phase.currentSupply + quantity == phase.maxSupply) {
+            setCurrentPhase(currentPhaseIndex + 1);
+        }
     }
 
-    // todo: Open question: if we sold out the tokens at a certain valuation, do we need to open the next stage
-    // automatically ?
-    // if answer is YES - implement this: Once the phase n is exhausted, the phase n+1 is automatically opened
+    // todo: emit an event when Minting tokens
 
-    // todo: shall we emit an event when Minting tokens ?
+    // todo: add function to change maxSupply for the phase
 }
