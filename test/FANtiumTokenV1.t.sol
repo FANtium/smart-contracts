@@ -5,7 +5,7 @@ import "./setup/FANtiumTokenFactory.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { IFANtiumToken } from "src/interfaces/IFANtiumToken.sol";
 
-contract MockContract {}
+contract MockContract { }
 
 contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
     // setTreasuryAddress
