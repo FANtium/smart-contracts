@@ -181,15 +181,18 @@ contract FANtiumTokenV1 is
     /**
      * Get phase from an array by phaseId
      * @param id - phase id
+    * @return bool true if sale phase is found, false - if not found.
+   * @return Phase which was found, or default values - if not found.
+    * @return uint256 index of the Phase in an array, 0 - if not found.
      */
-    function _findPhaseById(uint256 id) private view returns (Phase memory, uint256, bool) {
+    function _findPhaseById(uint256 id) private view returns (bool, Phase memory, uint256) {
         for (uint256 i = 0; i < phases.length; i++) {
             if (phases[i].phaseId == id) {
-                return (phases[i], i, true); // Return Phase, index, true if phase is found
+                return (true, phases[i], i); // Return Phase, index, true if phase is found
             }
         }
 
-        return (Phase(0, 0, 0, 0, 0, 0), 0, false); // Return default values and `false` if not found
+        return (false, Phase(0, 0, 0, 0, 0, 0), 0); // Return default values and `false` if not found
     }
 
     /**
@@ -198,7 +201,7 @@ contract FANtiumTokenV1 is
      * @param phaseId id of the sale phase
      */
     function changePhaseEndTime(uint256 newEndTime, uint256 phaseId) external onlyOwner {
-        (Phase memory phase, uint256 phaseIndex, bool isFound) = _findPhaseById(phaseId);
+        (bool isFound, Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
 
         // ensure the phase exists
         if (!isFound) {
@@ -231,7 +234,7 @@ contract FANtiumTokenV1 is
      * @param phaseId id of the sale phase
      */
     function changePhaseStartTime(uint256 newStartTime, uint256 phaseId) external onlyOwner {
-        (Phase memory phase, uint256 phaseIndex, bool isFound) = _findPhaseById(phaseId);
+        (bool isFound, Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
 
         if (!isFound) {
             revert PhaseWithIdDoesNotExist(phaseId);
