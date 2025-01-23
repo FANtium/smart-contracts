@@ -33,6 +33,7 @@ contract FANtiumTokenV1 is
     /**
      * @notice The ERC20 token used for payments, dollar stable coin.
      */
+    // todo: open question: do we need to support multiple currencies
     address public erc20PaymentToken; // todo: add fn to set erc20PaymentToken
 
     string private constant NAME = "FANtium Token";
@@ -333,9 +334,10 @@ contract FANtiumTokenV1 is
         if (phase.currentSupply + quantity == phase.maxSupply) {
             setCurrentPhase(currentPhaseIndex + 1);
         }
-    }
 
-    // todo: emit an event when Minting tokens
+        // emit an event after minting tokens
+        emit FANtiumTokenSale(quantity, recipient, expectedAmount);
+    }
 
     // todo: add function to change maxSupply for the phase
 }

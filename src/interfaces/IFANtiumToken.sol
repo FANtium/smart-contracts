@@ -17,6 +17,9 @@ struct Phase {
 // The price per share of phase n is < the price per share at the phase n+1
 // When the last phase is exhausted, it’s not possible to purchase any further share
 interface IFANtiumToken is IERC721AQueryableUpgradeable {
+    // events
+    event FANtiumTokenSale( uint24 quantity, address indexed recipient, uint256 amount);
+
     // errors
     error PhaseDoesNotExist(uint256 phaseIndex);
     error CurrentPhaseIsNotActive(Phase phase);
