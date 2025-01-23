@@ -414,6 +414,7 @@ contract FANtiumTokenV1 is
         // if we sold out the tokens at a certain valuation, we need to open the next stage
         // once the phase n is exhausted, the phase n+1 is automatically opened
         if (phase.currentSupply + quantity == phase.maxSupply) {
+            // todo: add check if there is a phase with index = currentPhaseIndex + 1
             setCurrentPhase(currentPhaseIndex + 1);
         }
 
