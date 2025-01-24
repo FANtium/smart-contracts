@@ -35,7 +35,7 @@ contract FANtiumTokenV1 is
     /**
      * @notice The ERC20 token used for payments, dollar stable coin.
      */
-    // todo: open question: do we need to support multiple currencies
+    // todo: implement support of multiple currencies (198)
     address public erc20PaymentToken;
 
     string private constant NAME = "FANtium Token";
@@ -72,11 +72,6 @@ contract FANtiumTokenV1 is
         // Ensure the treasury address is not the same as the current one
         if (wallet == treasury) {
             revert TreasuryAddressAlreadySet(wallet);
-        }
-
-        // Ensure the treasury address is a contract
-        if (!Address.isContract(wallet)) {
-            revert InvalidTreasuryAddress(wallet);
         }
 
         // update the treasury address
