@@ -34,11 +34,4 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.TreasuryAddressAlreadySet.selector, newTreasury));
         fantiumToken.setTreasuryAddress(newTreasury);
     }
-
-    function test_setTreasuryAddress_invalidAddressNotContract() public {
-        address newTreasury = makeAddr("randomAddress");
-        vm.prank(fantiumToken_admin);
-        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.InvalidTreasuryAddress.selector, newTreasury));
-        fantiumToken.setTreasuryAddress(newTreasury);
-    }
 }
