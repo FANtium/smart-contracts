@@ -52,7 +52,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
 
     function test_setTreasuryAddress_nonOwner() public {
         address newTreasury = address(new MockContract());
-        address nonAdmin = makeAddr('random');
+        address nonAdmin = makeAddr("random");
         vm.prank(nonAdmin);
         vm.expectRevert();
         fantiumToken.setTreasuryAddress(newTreasury);
@@ -82,7 +82,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
 
     function test_addPaymentToken_nonOwner() public {
         address usdcAddress = address(new MockERC20());
-        address nonAdmin = makeAddr('random');
+        address nonAdmin = makeAddr("random");
         vm.prank(nonAdmin);
         vm.expectRevert();
         fantiumToken.addPaymentToken(usdcAddress);
@@ -119,7 +119,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         fantiumToken.addPaymentToken(usdcAddress);
         assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
 
-        address nonAdmin = makeAddr('random');
+        address nonAdmin = makeAddr("random");
         vm.prank(nonAdmin);
         vm.expectRevert();
         fantiumToken.removePaymentToken(usdcAddress);
@@ -219,7 +219,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         uint256 mockStartTime = uint256(block.timestamp + 1 days); // Use relative time from current block
         uint256 mockEndTime = uint256(block.timestamp + 30 days); // Use relative time from current block
 
-        address nonAdmin = makeAddr('random');
+        address nonAdmin = makeAddr("random");
         vm.prank(nonAdmin);
         vm.expectRevert();
         fantiumToken.addPhase(mockPricePerShare, mockMaxSupply, mockStartTime, mockEndTime);
@@ -337,7 +337,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         assertTrue(fantiumToken.getAllPhases().length == 1);
 
         // remove phase
-        address nonAdmin = makeAddr('random');
+        address nonAdmin = makeAddr("random");
         vm.prank(nonAdmin);
         vm.expectRevert();
         fantiumToken.removePhase(0);
