@@ -33,10 +33,10 @@ contract FANtiumTokenV1 is
     address public treasury; // Safe that will receive all the funds
 
     /**
-     * @notice The ERC20 token used for payments, dollar stable coin.
+     * @notice The ERC20 tokens used for payments, dollar stable coins (e.g. USDC, USDT, DAI).
+     * we count that all dollar stable coins have the same value 1:1
      */
-    // todo: implement support of multiple currencies (198)
-    address public erc20PaymentToken;
+    mapping(address => bool) public erc20PaymentTokens;
 
     string private constant NAME = "FANtium Token";
     string private constant SYMBOL = "FAN";
@@ -82,17 +82,12 @@ contract FANtiumTokenV1 is
     }
 
     /**
-     * Set payment token
+     * Add payment token
      * @param token - address of the contract to be set as the payment token
      */
-    function setPaymentToken(address token) external onlyOwner {
+    function addPaymentToken(address token) external onlyOwner {
         // Ensure the token address is not zero
         if (token == address(0)) {
-            revert InvalidPaymentTokenAddress(token);
-        }
-
-        // Check if the token address is a contract
-        if (!Address.isContract(token)) {
             revert InvalidPaymentTokenAddress(token);
         }
 
@@ -102,7 +97,15 @@ contract FANtiumTokenV1 is
         }
 
         // set the payment token
-        erc20PaymentToken = token;
+        erc20PaymentTokens[token] = true;
+    }
+
+    /**
+     * Delete payment token (remove an entry from the mapping)
+     * @param token - address of the contract to be set as the payment token
+     */
+    function removePaymentToken(address token) external onlyOwner {
+        delete erc20PaymentTokens[token];
     }
 
     /**
@@ -362,10 +365,11 @@ contract FANtiumTokenV1 is
      * Mint FANtiums to the recipient address.
      * @param recipient The recipient of the FAN tokens (can be different that the sender)
      * @param quantity The quantity of FAN tokens to mint
+     * @param paymentToken The address of the stable coin
      *
      * mintTo(0x123, 100) => please mint 100 FAN to 0x123
      */
-    function mintTo(address recipient, uint256 quantity) external whenNotPaused {
+    function mintTo(address recipient, uint256 quantity, address paymentToken) external whenNotPaused {
         // get current phase
         Phase memory phase = phases[currentPhaseIndex];
         // check that phase was found
@@ -387,17 +391,17 @@ contract FANtiumTokenV1 is
         }
 
         // payment token validation
-        if (erc20PaymentToken == address(0)) {
+        if (!erc20PaymentTokens[paymentToken]) {
             revert ERC20PaymentTokenIsNotSet();
         }
 
         // price calculation
-        uint8 tokenDecimals = IERC20MetadataUpgradeable(erc20PaymentToken).decimals();
+        uint8 tokenDecimals = IERC20MetadataUpgradeable(paymentToken).decimals();
         uint256 expectedAmount = quantity * phase.pricePerShare * 10 ** tokenDecimals;
 
         // transfer stable coin from msg.sender to this treasury
         SafeERC20Upgradeable.safeTransferFrom(
-            IERC20Upgradeable(erc20PaymentToken), msg.sender, treasury, expectedAmount
+            IERC20Upgradeable(paymentToken), msg.sender, treasury, expectedAmount
         );
 
         // mint the FAN tokens to the recipient
@@ -409,8 +413,11 @@ contract FANtiumTokenV1 is
         // if we sold out the tokens at a certain valuation, we need to open the next stage
         // once the phase n is exhausted, the phase n+1 is automatically opened
         if (phase.currentSupply + quantity == phase.maxSupply) {
-            // todo: add check if there is a phase with index = currentPhaseIndex + 1
-            setCurrentPhase(currentPhaseIndex + 1);
+            // check if there is a phase with index = currentPhaseIndex + 1
+            Phase memory nextPhase = phases[currentPhaseIndex + 1];
+            if (nextPhase.pricePerShare != 0 && nextPhase.maxSupply != 0) {
+                setCurrentPhase(currentPhaseIndex + 1);
+            }
         }
 
         // emit an event after minting tokens
