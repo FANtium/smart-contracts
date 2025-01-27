@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { ERC721AQueryableUpgradeable } from "erc721a-upgradeable/extensions/ERC721AQueryableUpgradeable.sol";
-import { OwnableRoles } from "solady/auth/OwnableRoles.sol";
-import { IFootballTokenV1, FootballCollection } from "src/interfaces/IFootballTokenV1.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {IERC20MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {ERC721AQueryableUpgradeable} from "erc721a-upgradeable/extensions/ERC721AQueryableUpgradeable.sol";
+import {OwnableRoles} from "solady/auth/OwnableRoles.sol";
+import {IFootballTokenV1, FootballCollection, CollectionErrorReason, MintErrorReason} from "src/interfaces/IFootballTokenV1.sol";
 
 contract FootballTokenV1 is
     Initializable,
@@ -17,9 +20,17 @@ contract FootballTokenV1 is
     OwnableRoles,
     IFootballTokenV1
 {
+    // ========================================================================
+    // Constants
+    // ========================================================================
     string private constant NAME = "FANtium Football";
     string private constant SYMBOL = "FANT";
 
+    // ========================================================================
+    // State variables
+    // ========================================================================
+    uint256 public currentIndex; // has default value 01
+    address public fantiumAddress;
     // collectionId => collection
     mapping(uint256 => FootballCollection) private _collections;
     // tokenId => collectionId
@@ -32,6 +43,7 @@ contract FootballTokenV1 is
         __UUPSUpgradeable_init();
         __Pausable_init();
         _initializeOwner(admin);
+        fantiumAddress = admin;
     }
 
     function pause() external onlyOwner {
@@ -46,25 +58,145 @@ contract FootballTokenV1 is
         _checkOwner();
     }
 
-    function tokenCollection(uint256 tokenId) external view returns (FootballCollection memory) { }
-
-    function mintTo(uint256 collectionId, uint256 quantity, address recipient) external {
-        _mint(recipient, quantity); // from ERC721A
-
-        // TODO: save collectionId
-        // TODO: transfer price in ERC20?
-        // accept DAI, USDC.e, USDC, USDT (considered as 1=1USD)
+    function tokenCollection(uint256 tokenId) external view returns (FootballCollection memory) {
+        return _collections[_tokenToCollection[tokenId]];
     }
 
-    // setAcceptedTokens([USDC], true) => allow USDC
-    // setAcceptedTokens([USDC], false) => disallow USDC
-    // setAcceptedTokens([USDC, USDT], true) => allow USDC and USDT
-    function setAcceptedTokens(address[] calldata tokens, bool accepted) external onlyOwner { }
+    function mintTo(uint256 collectionId, uint256 quantity, address recipient, address paymentToken) external {
+        if (collectionId < collectionId) {
+            revert MintError(MintErrorReason.COLLECTION_NOT_EXISTING);
+        }
 
-    // admin functions to manage collections
-    function createCollection(FootballCollection memory collection) external onlyOwner { }
+        if (recipient == address(0)) {
+            revert MintError(MintErrorReason.MINT_BAD_ADDRESS);
+        }
 
-    function updateCollection(uint256 collectionId, FootballCollection memory collection) external onlyOwner { }
+        if (acceptedTokens[paymentToken]) {
+            revert MintError(MintErrorReason.MINT_CLOSED);
+        }
 
-    // TODO: pause / unpause collection
+        FootballCollection memory currentCollection = _collections[collectionId];
+
+        if (currentCollection.startDate > block.timestamp) {
+            revert MintError(MintErrorReason.MINT_NOT_STARTED);
+        }
+
+        if (currentCollection.closeDate < block.timestamp) {
+            revert MintError(MintErrorReason.MINT_CLOSED);
+        }
+
+        uint256 decimals = IERC20MetadataUpgradeable(paymentToken).decimals();
+
+        if (currentCollection.priceUSD * quantity < IERC20MetadataUpgradeable(paymentToken).balanceOf(recipient)) {
+            revert MintError(MintErrorReason.MINT_NOT_ENOUGHT_MONEY);
+        }
+        if (currentCollection.maxSupply < currentCollection.supply + 1) {
+            revert MintError(MintErrorReason.MINT_MAX_SUPPLY_REACH);
+        }
+
+        SafeERC20Upgradeable.safeTransferFrom(
+            IERC20Upgradeable(paymentToken),
+            recipient,
+            fantiumAddress,
+            currentCollection.priceUSD * 10 ** decimals
+        );
+
+        _mint(recipient, quantity);
+
+        uint256 lastId = currentCollection.supply + 1;
+        uint256[] storage tokenIds;
+
+        for (uint256 i = 0; i < quantity; i++) {
+            uint256 lastTokenId = lastId + 1;
+            // tokenIds.push(lastTokenId);
+            _tokenToCollection[lastTokenId] = collectionId;
+        }
+
+        // update supply
+        FootballCollection memory updatedCollection = _collections[collectionId];
+        updatedCollection.supply = lastId + quantity;
+        _collections[collectionId] = updatedCollection;
+
+        // emit TokensMinted(collectionId, recipient, tokenIds);
+    }
+
+    function setAcceptedTokens(address[] calldata tokens, bool accepted) external onlyOwner {
+        for (uint256 i; i < tokens.length; i++) {
+            acceptedTokens[tokens[i]] = accepted;
+        }
+    }
+
+    // ========================================================================
+    // Collection Admin Functions
+    // ========================================================================
+
+    function _checkCollectionData(FootballCollection memory collection) internal pure {
+        if (collection.closeDate < collection.startDate) {
+            revert InvalidCollectionData(CollectionErrorReason.INVALID_DATES);
+        }
+
+        if (collection.priceUSD == 0) {
+            revert InvalidCollectionData(CollectionErrorReason.INVALID_PRICE);
+        }
+
+        if (collection.maxSupply == 0) {
+            revert InvalidCollectionData(CollectionErrorReason.INVALID_MAX_SUPPLY);
+        }
+
+        if (bytes(collection.name).length == 0) {
+            revert InvalidCollectionData(CollectionErrorReason.INVALID_NAME);
+        }
+    }
+
+    function createCollection(FootballCollection memory collection) external onlyOwner {
+        _checkCollectionData(collection);
+
+        FootballCollection memory newCollection = FootballCollection({
+            name: collection.name,
+            priceUSD: collection.priceUSD,
+            supply: 0,
+            maxSupply: collection.maxSupply,
+            startDate: collection.startDate,
+            closeDate: collection.closeDate,
+            isPaused: collection.isPaused
+        });
+
+        _collections[++currentIndex] = newCollection;
+
+        emit CollectionCreated(currentIndex, newCollection);
+    }
+
+    function updateCollection(uint256 collectionId, FootballCollection calldata collection) external onlyOwner {
+        _checkCollectionData(collection);
+
+        FootballCollection memory updatedCollection = _collections[collectionId];
+
+        if (collection.maxSupply < updatedCollection.supply) {
+            revert InvalidCollectionData(CollectionErrorReason.MAX_SUPPLY_BELOW_SUPPLY);
+        }
+
+        // Not sure about this one
+        if (updatedCollection.supply > 0 && collection.startDate != updatedCollection.startDate) {
+            revert InvalidCollectionData(CollectionErrorReason.START_DATE_MISMATCH);
+        }
+
+        updatedCollection.name = collection.name;
+        updatedCollection.priceUSD = collection.priceUSD;
+        updatedCollection.priceUSD = collection.priceUSD;
+        updatedCollection.priceUSD = collection.priceUSD;
+        updatedCollection.priceUSD = collection.priceUSD;
+        updatedCollection.priceUSD = collection.priceUSD;
+
+        _collections[collectionId] = updatedCollection;
+
+        emit CollectionUpdated(collectionId, updatedCollection);
+    }
+
+    function pauseCollection(uint256 collectionId, bool isPaused) external onlyOwner {
+        FootballCollection memory updatedCollection = _collections[collectionId];
+        updatedCollection.isPaused = isPaused;
+        _collections[collectionId] = updatedCollection;
+    }
+
+    // TODO Update Fantium Address
 }
