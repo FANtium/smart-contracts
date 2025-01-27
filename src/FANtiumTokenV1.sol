@@ -400,9 +400,7 @@ contract FANtiumTokenV1 is
         uint256 expectedAmount = quantity * phase.pricePerShare * 10 ** tokenDecimals;
 
         // transfer stable coin from msg.sender to this treasury
-        SafeERC20Upgradeable.safeTransferFrom(
-            IERC20Upgradeable(paymentToken), msg.sender, treasury, expectedAmount
-        );
+        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(paymentToken), msg.sender, treasury, expectedAmount);
 
         // mint the FAN tokens to the recipient
         _mint(recipient, quantity);
