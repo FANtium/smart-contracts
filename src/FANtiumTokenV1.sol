@@ -193,7 +193,6 @@ contract FANtiumTokenV1 is
      * Remove the existing sale phase
      * @param phaseIndex The index of the sale phase
      */
-    // todo: test the removePhase fn extensively, especially the edge cases
     function removePhase(uint256 phaseIndex) external onlyOwner {
         // check that phaseIndex is valid
         if (phaseIndex >= phases.length) {
@@ -207,12 +206,18 @@ contract FANtiumTokenV1 is
             revert CannotRemovePhaseWhichAlreadyStarted();
         }
 
-        // remove the phase from the array, preserve the order of the items
-        // shift all elements after the index to the left
-        for (uint256 i = phaseIndex; i < phases.length - 1; i++) {
-            phases[i] = phases[i + 1];
+        // If there's only one element or we're removing the last element,
+        // we can just pop it without shifting
+        if (phases.length == 1 || phaseIndex == phases.length - 1) {
+            phases.pop();
+        } else {
+            // remove the phase from the array, preserve the order of the items
+            // shift all elements after the index to the left
+            for (uint256 i = phaseIndex; i < phases.length - 1; i++) {
+                phases[i] = phases[i + 1];
+            }
+            phases.pop(); // remove the last element
         }
-        phases.pop(); // remove the last element
     }
 
     /**
