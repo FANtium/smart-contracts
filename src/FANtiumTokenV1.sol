@@ -164,8 +164,8 @@ contract FANtiumTokenV1 is
             revert IncorrectMaxSupply(maxSupply);
         }
 
-        // latestPhase will not exist initially
-        if (phases.length - 1 >= 0) {
+        // Check if there are any existing phases
+        if (phases.length > 0) {
             Phase memory latestPhase = phases[phases.length - 1];
             // check that previous and next phase do not overlap
             if (latestPhase.endTime >= startTime) {
