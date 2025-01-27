@@ -84,7 +84,6 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         assertFalse(fantiumToken.isValidPaymentToken(usdcAddress));
     }
 
-
     // removePaymentToken
     // ========================================================================
     function test_removePaymentToken_OK() public {
@@ -105,7 +104,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         uint256 mockPricePerShare = 100;
         uint256 mockMaxSupply = 1000;
         uint256 mockStartTime = uint256(block.timestamp + 1 days); // Use relative time from current block
-        uint256 mockEndTime = uint256(block.timestamp + 30 days);  // Use relative time from current block
+        uint256 mockEndTime = uint256(block.timestamp + 30 days); // Use relative time from current block
 
         // Check the initial state
         assertTrue(fantiumToken.getAllPhases().length == 0);
@@ -129,10 +128,12 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         uint256 mockPricePerShare = 100;
         uint256 mockMaxSupply = 1000;
         uint256 mockStartTime = uint256(block.timestamp + 2 days);
-        uint256 mockEndTime = uint256(block.timestamp + 1 days);  // incorrect: start time after end time
+        uint256 mockEndTime = uint256(block.timestamp + 1 days); // incorrect: start time after end time
 
         vm.prank(fantiumToken_admin);
-        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.IncorrectStartOrEndTime.selector, mockStartTime, mockEndTime));
+        vm.expectRevert(
+            abi.encodeWithSelector(IFANtiumToken.IncorrectStartOrEndTime.selector, mockStartTime, mockEndTime)
+        );
         fantiumToken.addPhase(mockPricePerShare, mockMaxSupply, mockStartTime, mockEndTime);
     }
 
@@ -165,7 +166,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         uint256 mockPricePerShare = 100;
         uint256 mockMaxSupply = 1000;
         uint256 mockStartTime = uint256(block.timestamp + 1 days); // Use relative time from current block
-        uint256 mockEndTime = uint256(block.timestamp + 30 days);  // Use relative time from current block
+        uint256 mockEndTime = uint256(block.timestamp + 30 days); // Use relative time from current block
 
         // Execute phase addition
         vm.prank(fantiumToken_admin);
@@ -179,7 +180,6 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
 
         vm.prank(fantiumToken_admin);
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.PreviousAndNextPhaseTimesOverlap.selector));
-
 
         fantiumToken.addPhase(mockPricePerShare, mockMaxSupply, mockStartTime2, mockEndTime2);
     }
