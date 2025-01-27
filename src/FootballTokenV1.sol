@@ -36,7 +36,7 @@ contract FootballTokenV1 is
     // State variables
     // ========================================================================
     uint256 public currentIndex; // has default value 01
-    address public fantiumAddress;
+    address public treasury;
     // collectionId => collection
     mapping(uint256 => FootballCollection) private _collections;
     // tokenId => collectionId
@@ -70,6 +70,7 @@ contract FootballTokenV1 is
 
     function mintTo(uint256 collectionId, uint256 quantity, address recipient, address paymentToken) external {
         if (collectionId < collectionId) {
+            // very villain
             revert MintError(MintErrorReason.COLLECTION_NOT_EXISTING);
         }
 
@@ -78,49 +79,55 @@ contract FootballTokenV1 is
         }
 
         if (acceptedTokens[paymentToken]) {
+            // miss !
             revert MintError(MintErrorReason.MINT_CLOSED);
         }
 
-        FootballCollection memory currentCollection = _collections[collectionId];
+        FootballCollection storage currentCollection = _collections[collectionId];
 
         if (currentCollection.startDate > block.timestamp) {
             revert MintError(MintErrorReason.MINT_NOT_STARTED);
         }
 
+        // group time
         if (currentCollection.closeDate < block.timestamp) {
             revert MintError(MintErrorReason.MINT_CLOSED);
         }
 
         uint256 decimals = IERC20MetadataUpgradeable(paymentToken).decimals();
 
-        if (currentCollection.priceUSD * quantity < IERC20MetadataUpgradeable(paymentToken).balanceOf(recipient)) {
-            revert MintError(MintErrorReason.MINT_NOT_ENOUGHT_MONEY);
-        }
         if (currentCollection.maxSupply < currentCollection.supply + 1) {
             revert MintError(MintErrorReason.MINT_MAX_SUPPLY_REACH);
         }
 
-        SafeERC20Upgradeable.safeTransferFrom(
-            IERC20Upgradeable(paymentToken), recipient, fantiumAddress, currentCollection.priceUSD * 10 ** decimals
-        );
+        uint256 price = currentCollection.priceUSD * quantity * 10 ** decimals;
+        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(paymentToken), recipient, fantiumAddress, price);
 
         _mint(recipient, quantity);
 
-        uint256 lastId = currentCollection.supply + 1;
-        uint256[] storage tokenIds;
+        uint256 lastId = _totalMinted() + 1; // -1 ? check if token start at 0 or 1
+        uint256[] memory tokenIds = new uint256[](quantity);
 
-        for (uint256 i = 0; i < quantity; i++) {
-            uint256 lastTokenId = lastId + 1;
-            // tokenIds.push(lastTokenId);
-            _tokenToCollection[lastTokenId] = collectionId;
+        // qty = 5
+        // lastId = 10
+        // 10, 9, 8, 7, 6
+        // collectionId = 12
+
+        // _tokenToCollection[10] = 12
+        // _tokenToCollection[9] = 12
+        // _tokenToCollection[8] = 12
+        // _tokenToCollection[7] = 12
+        // _tokenToCollection[6] = 12
+
+        for (uint256 tokenId = lastId; tokenId > lastId - quantity; tokenId--) {
+            _tokenToCollection[tokenId] = collectionId;
+            tokenIds[tokenId - lastId] = tokenId;
         }
 
         // update supply
-        FootballCollection memory updatedCollection = _collections[collectionId];
-        updatedCollection.supply = lastId + quantity;
-        _collections[collectionId] = updatedCollection;
+        currentCollection.supply = lastId + quantity;
 
-        // emit TokensMinted(collectionId, recipient, tokenIds);
+        emit TokensMinted(collectionId, recipient, tokenIds);
     }
 
     function setAcceptedTokens(address[] calldata tokens, bool accepted) external onlyOwner {
@@ -135,6 +142,7 @@ contract FootballTokenV1 is
 
     function _checkCollectionData(FootballCollection memory collection) internal pure {
         if (collection.closeDate < collection.startDate) {
+            // closeDate < startDate wrong order
             revert InvalidCollectionData(CollectionErrorReason.INVALID_DATES);
         }
 
