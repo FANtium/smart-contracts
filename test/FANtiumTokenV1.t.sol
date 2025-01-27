@@ -9,7 +9,7 @@ contract MockContract { }
 
 contract MockERC20 {
     function totalSupply() public returns (uint256) {
-        return 10**10;
+        return 10 ** 10;
     }
 
     function balanceOf(address wallet) public returns (uint256) {
@@ -52,7 +52,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
     // addPaymentToken
     // ========================================================================
     function test_addPaymentToken_OK() public {
-        address usdcAddress = address (new MockERC20());
+        address usdcAddress = address(new MockERC20());
         vm.prank(fantiumToken_admin);
         fantiumToken.addPaymentToken(usdcAddress);
         assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
@@ -65,7 +65,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
     }
 
     function test_addPaymentToken_InvalidPaymentTokenAddress_NonERC20() public {
-        address invalidAddress = address (new MockContract()); // this contract has no totalSupply fn
+        address invalidAddress = address(new MockContract()); // this contract has no totalSupply fn
         vm.prank(fantiumToken_admin);
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.InvalidPaymentTokenAddress.selector, invalidAddress));
         fantiumToken.addPaymentToken(invalidAddress);
@@ -74,12 +74,12 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
     // isValidPaymentToken
     // ========================================================================
     function test_isValidPaymentToken_true() public {
-        address usdcAddress = address (new MockERC20());
+        address usdcAddress = address(new MockERC20());
         assertTrue(fantiumToken.isValidPaymentToken(usdcAddress));
     }
 
     function test_isValidPaymentToken_false() public {
-        address usdcAddress = address (new MockContract());
+        address usdcAddress = address(new MockContract());
         assertFalse(fantiumToken.isValidPaymentToken(usdcAddress));
     }
 }
