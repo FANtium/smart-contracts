@@ -82,8 +82,31 @@ contract FANtiumTokenV1 is
     }
 
     /**
+     * Check if the token implements the ERC20 interface and has a totalSupply function
+     * @param tokenAddress - address of the contract on Polygon chain
+     * @return bool - true if token is ERC20
+     */
+    function isValidPaymentToken(address tokenAddress) public view returns (bool) {
+        try IERC20(tokenAddress).totalSupply() returns (uint256) {
+            // Try to call basic ERC20 view functions
+            try IERC20(tokenAddress).balanceOf(address(this)) returns (uint256) {
+                try IERC20(tokenAddress).allowance(address(this), address(this)) returns (uint256) {
+                    // If we get here, the basic view functions exist
+                    return true;
+                } catch {
+                    return false;
+                }
+            } catch {
+                return false;
+            }
+        } catch {
+            return false;
+        }
+    }
+
+    /**
      * Add payment token
-     * @param token - address of the contract to be set as the payment token
+     * @param token - address of the contract on Polygon chain to be set as the payment token
      */
     function addPaymentToken(address token) external onlyOwner {
         // Ensure the token address is not zero
@@ -92,7 +115,7 @@ contract FANtiumTokenV1 is
         }
 
         // check if the token implements the ERC20 interface
-        if (IERC20(token).totalSupply() == 0) {
+        if (!isValidPaymentToken(token) || IERC20(token).totalSupply() == 0) {
             revert InvalidPaymentTokenAddress(token);
         }
 
@@ -102,7 +125,7 @@ contract FANtiumTokenV1 is
 
     /**
      * Delete payment token (remove an entry from the mapping)
-     * @param token - address of the contract to be set as the payment token
+     * @param token - address of the contract to be removed
      */
     function removePaymentToken(address token) external onlyOwner {
         delete erc20PaymentTokens[token];
