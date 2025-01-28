@@ -432,4 +432,45 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.NoPhasesAdded.selector));
         fantiumToken.getCurrentPhase();
     }
+
+    // getAllPhases
+    // ========================================================================
+    function test_getAllPhases_ok() public {
+        // add 2 phases
+        uint256 mockPricePerShare = 100;
+        uint256 mockPricePerShare2 = 200;
+        uint256 mockMaxSupply = 1000;
+        uint256 mockMaxSupply2 = 2000;
+        uint256 mockStartTime = uint256(block.timestamp + 1 days); // Use relative time from current block
+        uint256 mockStartTime2 = uint256(block.timestamp + 31 days); // Use relative time from current block
+        uint256 mockEndTime = uint256(block.timestamp + 30 days); // Use relative time from current block
+        uint256 mockEndTime2 = uint256(block.timestamp + 60 days); // Use relative time from current block
+
+        // Check the initial state
+        assertTrue(fantiumToken.getAllPhases().length == 0);
+
+        // Execute phase 1 addition
+        vm.prank(fantiumToken_admin);
+        fantiumToken.addPhase(mockPricePerShare, mockMaxSupply, mockStartTime, mockEndTime);
+        // Verify phase data was stored correctly
+        assertTrue(fantiumToken.getAllPhases().length == 1);
+
+        // Execute phase 2 addition
+        vm.prank(fantiumToken_admin);
+        fantiumToken.addPhase(mockPricePerShare2, mockMaxSupply2, mockStartTime2, mockEndTime2);
+        // Verify phase data was stored correctly
+        assertTrue(fantiumToken.getAllPhases().length == 2);
+
+        // check that getAllPhases returns correct data
+        fantiumToken.getAllPhases();
+        Phase[] memory allPhases = fantiumToken.getAllPhases();
+        vm.assertEq(allPhases[0].phaseId, 0);
+        vm.assertEq(allPhases[0].pricePerShare, mockPricePerShare);
+        vm.assertEq(allPhases[0].maxSupply, mockMaxSupply);
+        vm.assertEq(allPhases[0].startTime, mockStartTime);
+        vm.assertEq(allPhases[1].phaseId, 1);
+        vm.assertEq(allPhases[1].pricePerShare, mockPricePerShare2);
+        vm.assertEq(allPhases[1].maxSupply, mockMaxSupply2);
+        vm.assertEq(allPhases[1].startTime, mockStartTime2);
+    }
 }
