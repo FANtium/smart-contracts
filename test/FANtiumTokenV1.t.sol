@@ -51,6 +51,19 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
     }
 
+    function test_setPaymentToken_ok_disableToken() public {
+        // we need to add some token first
+        address usdcAddress = address(usdc);
+        vm.prank(fantiumToken_admin);
+        fantiumToken.setPaymentToken(usdcAddress, true);
+        assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
+
+        // test that you can disable previously added payment token
+        vm.prank(fantiumToken_admin);
+        fantiumToken.setPaymentToken(usdcAddress, false);
+        assertFalse(fantiumToken.erc20PaymentTokens(usdcAddress));
+    }
+
     function test_setPaymentToken_revert_InvalidPaymentTokenAddress() public {
         vm.prank(fantiumToken_admin);
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.InvalidPaymentTokenAddress.selector, address(0)));
@@ -64,7 +77,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.expectRevert();
         fantiumToken.setPaymentToken(usdcAddress, true);
     }
-    // todo: test that you can disable previously added payment token
+
 
     // addPhase
     // ========================================================================
