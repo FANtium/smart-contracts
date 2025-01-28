@@ -82,25 +82,18 @@ contract FANtiumTokenV1 is
     }
 
     /**
-     * Add payment token
+     * Set payment token
      * @param token - address of the contract to be set as the payment token
+     * @param isEnabled - boolean, true if token should be enabled as a means of payment, otherwise - false
      */
-    function addPaymentToken(address token) external onlyOwner {
+    function setPaymentToken(address token, bool isEnabled) external onlyOwner {
         // Ensure the token address is not zero
         if (token == address(0)) {
             revert InvalidPaymentTokenAddress(token);
         }
 
         // set the payment token
-        erc20PaymentTokens[token] = true;
-    }
-
-    /**
-     * Delete payment token (remove an entry from the mapping)
-     * @param token - address of the contract to be set as the payment token
-     */
-    function removePaymentToken(address token) external onlyOwner {
-        delete erc20PaymentTokens[token];
+        erc20PaymentTokens[token] = isEnabled;
     }
 
     /**
