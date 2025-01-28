@@ -270,7 +270,7 @@ contract FANtiumTokenV1 is
         }
 
         // update end time
-        phase.endTime = newEndTime;
+        phases[phaseIndex].endTime = newEndTime;
     }
 
     /**
