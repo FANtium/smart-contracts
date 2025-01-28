@@ -394,4 +394,42 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.expectRevert();
         fantiumToken.setCurrentPhase(0);
     }
+
+    // getCurrentPhase
+    // ========================================================================
+    function test_getCurrentPhase_ok() public {
+        // add a phase
+        uint256 mockPricePerShare = 100;
+        uint256 mockMaxSupply = 1000;
+        uint256 mockStartTime = uint256(block.timestamp + 1 days); // Use relative time from current block
+        uint256 mockEndTime = uint256(block.timestamp + 30 days); // Use relative time from current block
+
+        // Check the initial state
+        assertTrue(fantiumToken.getAllPhases().length == 0);
+
+        // Execute phase addition
+        vm.prank(fantiumToken_admin);
+        fantiumToken.addPhase(mockPricePerShare, mockMaxSupply, mockStartTime, mockEndTime);
+        // Verify phase data was stored correctly
+        assertTrue(fantiumToken.getAllPhases().length == 1);
+
+        // set phase as current
+        vm.prank(fantiumToken_admin);
+        fantiumToken.setCurrentPhase(0);
+
+        // check that getCurrentPhase returns correct phase data
+        vm.assertEq(fantiumToken.getCurrentPhase().phaseId, 0);
+        vm.assertEq(fantiumToken.getCurrentPhase().pricePerShare, mockPricePerShare);
+        vm.assertEq(fantiumToken.getCurrentPhase().maxSupply, mockMaxSupply);
+        vm.assertEq(fantiumToken.getCurrentPhase().startTime, mockStartTime);
+        vm.assertEq(fantiumToken.getCurrentPhase().endTime, mockEndTime);
+    }
+
+    function test_getCurrentPhase_revert_NoPhasesAdded() public {
+        // Check the initial state - no phases added
+        assertTrue(fantiumToken.getAllPhases().length == 0);
+
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.NoPhasesAdded.selector));
+        fantiumToken.getCurrentPhase();
+    }
 }
