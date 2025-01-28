@@ -24,7 +24,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
     // setTreasuryAddress
     // ========================================================================
     function test_setTreasuryAddress_ok() public {
-        address newTreasury = makeAddr('newTreasury');
+        address newTreasury = makeAddr("newTreasury");
         vm.prank(fantiumToken_admin);
         vm.expectEmit(true, true, true, true);
         emit TreasuryAddressUpdate(newTreasury);
@@ -39,7 +39,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
     }
 
     function test_setTreasuryAddress_revert_sameTreasuryAddress() public {
-        address newTreasury = makeAddr('newTreasury');
+        address newTreasury = makeAddr("newTreasury");
         vm.prank(fantiumToken_admin);
         fantiumToken.setTreasuryAddress(newTreasury);
         assertEq(fantiumToken.treasury(), newTreasury);
@@ -49,7 +49,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
     }
 
     function test_setTreasuryAddress_revert_nonOwner() public {
-        address newTreasury = makeAddr('newTreasury');
+        address newTreasury = makeAddr("newTreasury");
         address nonAdmin = makeAddr("random");
         vm.prank(nonAdmin);
         vm.expectRevert();
