@@ -91,11 +91,6 @@ contract FANtiumTokenV1 is
             revert InvalidPaymentTokenAddress(token);
         }
 
-        // check if the token implements the ERC20 interface
-        if (IERC20(token).totalSupply() == 0) {
-            revert InvalidPaymentTokenAddress(token);
-        }
-
         // set the payment token
         erc20PaymentTokens[token] = true;
     }
