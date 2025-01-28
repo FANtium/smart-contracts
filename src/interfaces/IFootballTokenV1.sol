@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import { IERC721AQueryableUpgradeable } from "erc721a-upgradeable/interfaces/IERC721AQueryableUpgradeable.sol";
+import {IERC721AQueryableUpgradeable} from "erc721a-upgradeable/interfaces/IERC721AQueryableUpgradeable.sol";
 
 enum CollectionErrorReason {
     INVALID_DATES,
@@ -13,8 +13,7 @@ enum CollectionErrorReason {
 }
 
 enum MintErrorReason {
-    MINT_NOT_STARTED,
-    MINT_CLOSED,
+    MINT_NOT_OPENED,
     MINT_NOT_ENOUGHT_MONEY,
     MINT_PAUSED,
     MINT_BAD_ADDRESS,
@@ -23,8 +22,6 @@ enum MintErrorReason {
     MINT_MAX_SUPPLY_REACH
 }
 
-// TODO: open / close dates
-// TODO: isPaused
 struct FootballCollection {
     string name;
     uint256 priceUSD; // in USD (decimals = 0)
@@ -32,13 +29,18 @@ struct FootballCollection {
     uint256 maxSupply; // max number of tokens of this collection
     uint256 startDate; // Start date of the mint
     uint256 closeDate; // End date of the mint
-    bool isPaused; // Can pause the mint
+    bool isPaused; // is  mint collection paused
+    address team; // team treasury address
 }
 
-struct UpdateFootballCollection {
+struct FootballCollectionData {
     string name;
     uint256 priceUSD; // in USD (decimals = 0)
-    uint256 maxSupply; // max number of tokens of this collection}
+    uint256 maxSupply; // max number of tokens of this collection
+    uint256 startDate; // Start date of the mint
+    uint256 closeDate; // End date of the mint
+    bool isPaused; // is  mint collection paused
+    address team; // team treasury address
 }
 
 interface IFootballTokenV1 is IERC721AQueryableUpgradeable {
@@ -48,6 +50,9 @@ interface IFootballTokenV1 is IERC721AQueryableUpgradeable {
     event CollectionCreated(uint256 indexed collectionId, FootballCollection collection);
     event CollectionUpdated(uint256 indexed collectionId, FootballCollection collection);
     event TokensMinted(uint256 indexed collectionId, address indexed recipient, uint256[] tokens);
+    event TreasuryUpdated(address oldAddress, address newAddress);
+    event CollectionPausedUpdate(uint256 indexed collectionId, bool isPaused);
+
     // ========================================================================
     // Errors
     // ========================================================================
