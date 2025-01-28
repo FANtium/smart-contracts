@@ -269,7 +269,7 @@ contract FANtiumTokenV1 is
             }
         }
 
-        // update end time
+        // update the end time
         phases[phaseIndex].endTime = newEndTime;
     }
 
@@ -293,7 +293,7 @@ contract FANtiumTokenV1 is
         }
 
         // Explicitly check for out-of-bounds access when dealing with previousPhase
-        if (phaseIndex - 1 >= 0) {
+        if (phases.length > 1 && phaseIndex != 0) {
             // check that phases do not overlap
             Phase memory previousPhase = phases[phaseIndex - 1];
             if (previousPhase.endTime > newStartTime) {
@@ -302,7 +302,7 @@ contract FANtiumTokenV1 is
         }
 
         // change the start time
-        phase.startTime = newStartTime;
+        phases[phaseIndex].startTime = newStartTime;
     }
 
     /**
