@@ -6,8 +6,6 @@ import "./setup/FANtiumTokenFactory.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { IFANtiumToken } from "src/interfaces/IFANtiumToken.sol";
 
-contract MockContract { }
-
 contract MockERC20 {
     function totalSupply() public returns (uint256) {
         return 10 ** 10;
@@ -25,8 +23,8 @@ contract MockERC20 {
 contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
     // setTreasuryAddress
     // ========================================================================
-    function test_setTreasuryAddress_OK() public {
-        address newTreasury = address(new MockContract());
+    function test_setTreasuryAddress_ok() public {
+        address newTreasury = makeAddr('newTreasury');
         vm.prank(fantiumToken_admin);
         vm.expectEmit(true, true, true, true);
         emit TreasuryAddressUpdate(newTreasury);
@@ -34,14 +32,14 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         assertEq(fantiumToken.treasury(), newTreasury);
     }
 
-    function test_setTreasuryAddress_invalidAddress() public {
+    function test_setTreasuryAddress_revert_invalidAddress() public {
         vm.prank(fantiumToken_admin);
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.InvalidTreasuryAddress.selector, address(0)));
         fantiumToken.setTreasuryAddress(address(0));
     }
 
-    function test_setTreasuryAddress_sameTreasuryAddress() public {
-        address newTreasury = address(new MockContract());
+    function test_setTreasuryAddress_revert_sameTreasuryAddress() public {
+        address newTreasury = makeAddr('newTreasury');
         vm.prank(fantiumToken_admin);
         fantiumToken.setTreasuryAddress(newTreasury);
         assertEq(fantiumToken.treasury(), newTreasury);
@@ -50,84 +48,41 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         fantiumToken.setTreasuryAddress(newTreasury);
     }
 
-    function test_setTreasuryAddress_nonOwner() public {
-        address newTreasury = address(new MockContract());
+    function test_setTreasuryAddress_revert_nonOwner() public {
+        address newTreasury = makeAddr('newTreasury');
         address nonAdmin = makeAddr("random");
         vm.prank(nonAdmin);
         vm.expectRevert();
         fantiumToken.setTreasuryAddress(newTreasury);
     }
 
-    // addPaymentToken
+    // setPaymentToken
     // ========================================================================
-    function test_addPaymentToken_OK() public {
+    function test_setPaymentToken_ok() public {
         address usdcAddress = address(new MockERC20());
         vm.prank(fantiumToken_admin);
-        fantiumToken.addPaymentToken(usdcAddress);
+        fantiumToken.setPaymentToken(usdcAddress, true);
         assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
     }
 
-    function test_addPaymentToken_InvalidPaymentTokenAddress_ZeroAddress() public {
+    function test_setPaymentToken_revert_InvalidPaymentTokenAddress() public {
         vm.prank(fantiumToken_admin);
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.InvalidPaymentTokenAddress.selector, address(0)));
-        fantiumToken.addPaymentToken(address(0));
+        fantiumToken.setPaymentToken(address(0), true);
     }
 
-    function test_addPaymentToken_InvalidPaymentTokenAddress_NonERC20() public {
-        address invalidAddress = address(new MockContract()); // this contract has no totalSupply fn
-        vm.prank(fantiumToken_admin);
-        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.InvalidPaymentTokenAddress.selector, invalidAddress));
-        fantiumToken.addPaymentToken(invalidAddress);
-    }
-
-    function test_addPaymentToken_nonOwner() public {
+    function test_setPaymentToken_revert_nonOwner() public {
         address usdcAddress = address(new MockERC20());
         address nonAdmin = makeAddr("random");
         vm.prank(nonAdmin);
         vm.expectRevert();
-        fantiumToken.addPaymentToken(usdcAddress);
+        fantiumToken.setPaymentToken(usdcAddress, true);
     }
-
-    // isValidPaymentToken
-    // ========================================================================
-    function test_isValidPaymentToken_true() public {
-        address usdcAddress = address(new MockERC20());
-        assertTrue(fantiumToken.isValidPaymentToken(usdcAddress));
-    }
-
-    function test_isValidPaymentToken_false() public {
-        address usdcAddress = address(new MockContract());
-        assertFalse(fantiumToken.isValidPaymentToken(usdcAddress));
-    }
-
-    // removePaymentToken
-    // ========================================================================
-    function test_removePaymentToken_OK() public {
-        address usdcAddress = address(new MockERC20());
-        vm.prank(fantiumToken_admin);
-        fantiumToken.addPaymentToken(usdcAddress);
-        assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
-
-        vm.prank(fantiumToken_admin);
-        fantiumToken.removePaymentToken(usdcAddress);
-        assertFalse(fantiumToken.erc20PaymentTokens(usdcAddress));
-    }
-
-    function test_removePaymentToken_nonOwner() public {
-        address usdcAddress = address(new MockERC20());
-        vm.prank(fantiumToken_admin);
-        fantiumToken.addPaymentToken(usdcAddress);
-        assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
-
-        address nonAdmin = makeAddr("random");
-        vm.prank(nonAdmin);
-        vm.expectRevert();
-        fantiumToken.removePaymentToken(usdcAddress);
-    }
+    // todo: test that you can disable previously added payment token
 
     // addPhase
     // ========================================================================
-    function test_addPhase_OK() public {
+    function test_addPhase_ok() public {
         // Setup test data
         uint256 mockPricePerShare = 100;
         uint256 mockMaxSupply = 1000;
@@ -151,7 +106,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         assertEq(addedPhase.phaseId, 0); // initially set to 0
     }
 
-    function test_addPhase_IncorrectStartOrEndTime() public {
+    function test_addPhase_revert_IncorrectStartOrEndTime() public {
         // Setup test data
         uint256 mockPricePerShare = 100;
         uint256 mockMaxSupply = 1000;
@@ -165,7 +120,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         fantiumToken.addPhase(mockPricePerShare, mockMaxSupply, mockStartTime, mockEndTime);
     }
 
-    function test_addPhase_IncorrectSharePrice() public {
+    function test_addPhase_revert_IncorrectSharePrice() public {
         // Setup test data
         uint256 mockPricePerShare = 0; // incorrect
         uint256 mockMaxSupply = 1000;
@@ -177,7 +132,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         fantiumToken.addPhase(mockPricePerShare, mockMaxSupply, mockStartTime, mockEndTime);
     }
 
-    function test_addPhase_IncorrectMaxSupply() public {
+    function test_addPhase_revert_IncorrectMaxSupply() public {
         // Setup test data
         uint256 mockPricePerShare = 10;
         uint256 mockMaxSupply = 0; // incorrect
@@ -189,7 +144,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         fantiumToken.addPhase(mockPricePerShare, mockMaxSupply, mockStartTime, mockEndTime);
     }
 
-    function test_addPhase_PreviousAndNextPhaseTimesOverlap() public {
+    function test_addPhase_revert_PreviousAndNextPhaseTimesOverlap() public {
         // Setup test data for Phase 1
         uint256 mockPricePerShare = 100;
         uint256 mockMaxSupply = 1000;
@@ -212,7 +167,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         fantiumToken.addPhase(mockPricePerShare, mockMaxSupply, mockStartTime2, mockEndTime2);
     }
 
-    function test_addPhase_nonOwner() public {
+    function test_addPhase_revert_nonOwner() public {
         // Setup test data
         uint256 mockPricePerShare = 100;
         uint256 mockMaxSupply = 1000;
@@ -227,7 +182,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
 
     // removePhase
     // ========================================================================
-    function test_removePhase_OK_singlePhase() public {
+    function test_removePhase_ok_singlePhase() public {
         // Setup test data
         uint256 mockPricePerShare = 100;
         uint256 mockMaxSupply = 1000;
@@ -248,7 +203,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         assertTrue(fantiumToken.getAllPhases().length == 0);
     }
 
-    function test_removePhase_OK_multiplePhases() public {
+    function test_removePhase_ok_multiplePhases() public {
         // Setup test data Phase 1
         uint256 mockPricePerShare = 100;
         uint256 mockMaxSupply = 1000;
@@ -282,7 +237,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         assertEq(fantiumToken.getAllPhases()[0].pricePerShare, mockPricePerShare2);
     }
 
-    function test_removePhase_IncorrectPhaseIndex() public {
+    function test_removePhase_revert_IncorrectPhaseIndex() public {
         // Setup test data
         uint256 mockPricePerShare = 100;
         uint256 mockMaxSupply = 1000;
@@ -301,7 +256,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         fantiumToken.removePhase(2); // incorrect index
     }
 
-    function test_removePhase_CannotRemovePhaseWhichAlreadyStarted() public {
+    function test_removePhase_revert_CannotRemovePhaseWhichAlreadyStarted() public {
         // Setup test data
         uint256 mockPricePerShare = 100;
         uint256 mockMaxSupply = 1000;
@@ -323,7 +278,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         fantiumToken.removePhase(0);
     }
 
-    function test_removePhase_nonOwner() public {
+    function test_removePhase_revert_nonOwner() public {
         // Setup test data
         uint256 mockPricePerShare = 100;
         uint256 mockMaxSupply = 1000;
