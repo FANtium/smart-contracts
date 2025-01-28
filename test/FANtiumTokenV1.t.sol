@@ -708,4 +708,113 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         // check that it has been changed
         vm.assertEq(fantiumToken.getAllPhases()[0].startTime, mockNewStartTime);
     }
+
+    // changePhaseMaxSupply
+    // ========================================================================
+    function test_changePhaseMaxSupply_revert_PhaseWithIdDoesNotExist() public {
+        uint256 mockMaxSupply = 1000;
+
+        vm.prank(fantiumToken_admin);
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.PhaseWithIdDoesNotExist.selector, 1));
+        fantiumToken.changePhaseMaxSupply(mockMaxSupply, 1);
+    }
+
+    // InvalidMaxSupplyValue
+    function test_changePhaseMaxSupply_revert_InvalidMaxSupplyValue() public {
+        // add a phase
+        uint256 mockPricePerShare = 100;
+        uint256 mockMaxSupply = 1000;
+        uint256 mockStartTime = uint256(block.timestamp + 1 days); // Use relative time from current block
+        uint256 mockEndTime = uint256(block.timestamp + 30 days); // Use relative time from current block
+
+        // Check the initial state
+        assertTrue(fantiumToken.getAllPhases().length == 0);
+
+        // Execute phase addition
+        vm.prank(fantiumToken_admin);
+        fantiumToken.addPhase(mockPricePerShare, mockMaxSupply, mockStartTime, mockEndTime);
+        // Verify phase data was stored correctly
+        assertTrue(fantiumToken.getAllPhases().length == 1);
+
+        vm.prank(fantiumToken_admin);
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.InvalidMaxSupplyValue.selector, 0));
+        fantiumToken.changePhaseMaxSupply(0, 0); // passing maxSupply 0
+    }
+
+    // CannotUpdateEndedSalePhase
+    function test_changePhaseMaxSupply_revert_CannotUpdateEndedSalePhase() public {
+        // add a phase
+        uint256 mockPricePerShare = 100;
+        uint256 mockMaxSupply = 1000;
+        uint256 mockStartTime = uint256(block.timestamp + 1 days); // Use relative time from current block
+        uint256 mockEndTime = uint256(block.timestamp + 30 days); // Use relative time from current block
+
+        // Check the initial state
+        assertTrue(fantiumToken.getAllPhases().length == 0);
+
+        // Execute phase addition
+        vm.prank(fantiumToken_admin);
+        fantiumToken.addPhase(mockPricePerShare, mockMaxSupply, mockStartTime, mockEndTime);
+        // Verify phase data was stored correctly
+        assertTrue(fantiumToken.getAllPhases().length == 1);
+
+        // Warp time to after the phase has started
+        vm.warp(mockEndTime + 1 days); // phase has ended
+
+        uint256 newMockMaxSupply = 5000;
+
+        vm.prank(fantiumToken_admin);
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.CannotUpdateEndedSalePhase.selector));
+        fantiumToken.changePhaseMaxSupply(newMockMaxSupply, 0); // passing maxSupply 0
+    }
+
+    // nonOwner
+    function test_changePhaseMaxSupply_revert_nonOwner() public {
+        // add a phase
+        uint256 mockPricePerShare = 100;
+        uint256 mockMaxSupply = 1000;
+        uint256 mockStartTime = uint256(block.timestamp + 1 days); // Use relative time from current block
+        uint256 mockEndTime = uint256(block.timestamp + 30 days); // Use relative time from current block
+
+        // Check the initial state
+        assertTrue(fantiumToken.getAllPhases().length == 0);
+
+        // Execute phase addition
+        vm.prank(fantiumToken_admin);
+        fantiumToken.addPhase(mockPricePerShare, mockMaxSupply, mockStartTime, mockEndTime);
+        // Verify phase data was stored correctly
+        assertTrue(fantiumToken.getAllPhases().length == 1);
+
+        uint256 newMockMaxSupply = 5000;
+
+        address nonAdmin = makeAddr("random");
+        vm.prank(nonAdmin);
+        vm.expectRevert();
+        fantiumToken.changePhaseMaxSupply(newMockMaxSupply, 0);
+    }
+
+    // ok
+    function test_changePhaseMaxSupply_ok() public {
+        // add a phase
+        uint256 mockPricePerShare = 100;
+        uint256 mockMaxSupply = 1000;
+        uint256 mockStartTime = uint256(block.timestamp + 1 days); // Use relative time from current block
+        uint256 mockEndTime = uint256(block.timestamp + 30 days); // Use relative time from current block
+
+        // Check the initial state
+        assertTrue(fantiumToken.getAllPhases().length == 0);
+
+        // Execute phase addition
+        vm.prank(fantiumToken_admin);
+        fantiumToken.addPhase(mockPricePerShare, mockMaxSupply, mockStartTime, mockEndTime);
+        // Verify phase data was stored correctly
+        assertTrue(fantiumToken.getAllPhases().length == 1);
+
+        uint256 newMockMaxSupply = 5000;
+
+        // change max supply
+        vm.prank(fantiumToken_admin);
+        fantiumToken.changePhaseMaxSupply(newMockMaxSupply, 0);
+        vm.assertEq(fantiumToken.getAllPhases()[0].maxSupply, newMockMaxSupply);
+    }
 }

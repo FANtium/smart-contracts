@@ -322,7 +322,7 @@ contract FANtiumTokenV1 is
         }
 
         // change the currentSupply value
-        currentPhase.currentSupply = currentSupply;
+        phases[currentPhaseIndex].currentSupply = currentSupply;
     }
 
     /**
@@ -351,7 +351,7 @@ contract FANtiumTokenV1 is
         }
 
         // update the max supply value
-        phase.maxSupply = maxSupply;
+        phases[phaseIndex].maxSupply = maxSupply;
     }
 
     /**
