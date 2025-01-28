@@ -6,20 +6,6 @@ import "./setup/FANtiumTokenFactory.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { IFANtiumToken } from "src/interfaces/IFANtiumToken.sol";
 
-contract MockERC20 {
-    function totalSupply() public returns (uint256) {
-        return 10 ** 10;
-    }
-
-    function balanceOf(address wallet) public returns (uint256) {
-        return 0;
-    }
-
-    function allowance(address owner, address spender) public returns (uint256) {
-        return 0;
-    }
-}
-
 contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
     // setTreasuryAddress
     // ========================================================================
@@ -59,7 +45,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
     // setPaymentToken
     // ========================================================================
     function test_setPaymentToken_ok() public {
-        address usdcAddress = address(new MockERC20());
+        address usdcAddress = address(usdc);
         vm.prank(fantiumToken_admin);
         fantiumToken.setPaymentToken(usdcAddress, true);
         assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
@@ -72,7 +58,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
     }
 
     function test_setPaymentToken_revert_nonOwner() public {
-        address usdcAddress = address(new MockERC20());
+        address usdcAddress = address(usdc);
         address nonAdmin = makeAddr("random");
         vm.prank(nonAdmin);
         vm.expectRevert();
