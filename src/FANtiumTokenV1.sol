@@ -199,6 +199,17 @@ contract FANtiumTokenV1 is
     }
 
     /**
+     * Internal function to only be used in the mintTo function for auto phase switch
+     * We cannot use setCurrentPhase in mintTo because it's only available for owner
+     * Function sets currentPhaseIndex and therefore the current sale phase
+     * @param phaseIndex The index of the sale phase
+     */
+    function _setCurrentPhase(uint256 phaseIndex) internal {
+        // we do checks in mintTo, so no need to double-check here
+        currentPhaseIndex = phaseIndex;
+    }
+
+    /**
      * View to see the current sale phase
      */
     function getCurrentPhase() external view returns (Phase memory) {
@@ -360,13 +371,13 @@ contract FANtiumTokenV1 is
         // get current phase
         Phase memory phase = phases[currentPhaseIndex];
         // check that phase was found
-        if (phase.phaseId == 0 || phase.startTime == 0) {
+        if (phase.pricePerShare == 0 || phase.startTime == 0) {
             revert PhaseDoesNotExist(currentPhaseIndex);
         }
         // check that phase is active
         // should be phase.startTime < block.timestamp < phase.endTime
         if (phase.startTime > block.timestamp || phase.endTime < block.timestamp) {
-            revert CurrentPhaseIsNotActive(phase);
+            revert CurrentPhaseIsNotActive();
         }
         // check quantity
         // no need to check if quantity is negative, because uint256 cannot be negative
@@ -380,6 +391,11 @@ contract FANtiumTokenV1 is
         // payment token validation
         if (!erc20PaymentTokens[paymentToken]) {
             revert ERC20PaymentTokenIsNotSet();
+        }
+
+        // check if treasury is set
+        if (treasury == address(0)) {
+            revert TreasuryIsNotSet();
         }
 
         // price calculation
@@ -401,7 +417,7 @@ contract FANtiumTokenV1 is
             // check if there is a phase with index = currentPhaseIndex + 1
             Phase memory nextPhase = phases[currentPhaseIndex + 1];
             if (nextPhase.pricePerShare != 0 && nextPhase.maxSupply != 0) {
-                setCurrentPhase(currentPhaseIndex + 1);
+                _setCurrentPhase(currentPhaseIndex + 1);
             }
         }
 

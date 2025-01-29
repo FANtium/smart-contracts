@@ -7,14 +7,17 @@ import { FANtiumTokenV1 } from "../../src/FANtiumTokenV1.sol";
 import { UnsafeUpgrades } from "../../src/upgrades/UnsafeUpgrades.sol";
 
 contract FANtiumTokenFactory is BaseTest {
+    // addresses
     address public fantiumToken_admin = makeAddr("admin");
-
-    event TreasuryAddressUpdate(address newWalletAddress);
-
     address public fantiumToken_implementation;
     address public fantiumToken_proxy;
-    FANtiumTokenV1 public fantiumToken;
 
+    // events
+    event FANtiumTokenSale(uint256 quantity, address indexed recipient, uint256 amount);
+    event TreasuryAddressUpdate(address newWalletAddress);
+
+    // contracts
+    FANtiumTokenV1 public fantiumToken;
     ERC20 public usdc;
 
     function setUp() public virtual {
