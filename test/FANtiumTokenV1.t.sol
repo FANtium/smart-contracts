@@ -2,7 +2,7 @@
 pragma solidity 0.8.28;
 
 import { IERC20MetadataUpgradeable } from
-"@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import "../src/interfaces/IFANtiumToken.sol";
 import "./setup/FANtiumTokenFactory.sol";
 import { BaseTest } from "test/BaseTest.sol";
@@ -845,7 +845,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.stopPrank();
 
         // prepare sale
-        address recipient = makeAddr('recipient');
+        address recipient = makeAddr("recipient");
         uint256 quantity = 20;
         uint8 tokenDecimals = IERC20MetadataUpgradeable(usdcAddress).decimals();
         uint256 expectedAmount = quantity * pricePerShare * 10 ** tokenDecimals;
@@ -901,7 +901,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.stopPrank();
 
         // prepare sale
-        address recipient = makeAddr('recipient');
+        address recipient = makeAddr("recipient");
         uint256 quantity = 1000; // equal to maxSupply for the Phase 1
         uint8 tokenDecimals = IERC20MetadataUpgradeable(usdcAddress).decimals();
         uint256 expectedAmount = quantity * pricePerShare * 10 ** tokenDecimals;
@@ -945,7 +945,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.warp(endTime + 1 days); // phase has ended
 
         // try to mint
-        address recipient = makeAddr('recipient');
+        address recipient = makeAddr("recipient");
         address usdcAddress = address(usdc);
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.CurrentPhaseIsNotActive.selector));
         fantiumToken.mintTo(recipient, 10, usdcAddress);
@@ -966,7 +966,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         assertEq(fantiumToken.getAllPhases().length, 1);
 
         // try to mint
-        address recipient = makeAddr('recipient');
+        address recipient = makeAddr("recipient");
         address usdcAddress = address(usdc);
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.CurrentPhaseIsNotActive.selector));
         fantiumToken.mintTo(recipient, 10, usdcAddress);
@@ -991,7 +991,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.warp(startTime + 1 days); // phase is active
 
         // try to mint
-        address recipient = makeAddr('recipient');
+        address recipient = makeAddr("recipient");
         address usdcAddress = address(usdc);
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.IncorrectTokenQuantity.selector, 0));
         fantiumToken.mintTo(recipient, 0, usdcAddress); // passing quantity 0 !
@@ -1016,7 +1016,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.warp(startTime + 1 days); // phase is active
 
         // try to mint
-        address recipient = makeAddr('recipient');
+        address recipient = makeAddr("recipient");
         address usdcAddress = address(usdc);
         uint256 quantity = 1001; // more than maxSupply
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.QuantityExceedsMaxSupplyLimit.selector, quantity));
@@ -1042,7 +1042,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.warp(startTime + 1 days); // phase is active
 
         // try to mint
-        address recipient = makeAddr('recipient');
+        address recipient = makeAddr("recipient");
         address usdcAddress = address(usdc);
         uint256 quantity = 20;
         // we skip the step of setting the payment token
@@ -1075,7 +1075,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
 
         // try to mint
-        address recipient = makeAddr('recipient');
+        address recipient = makeAddr("recipient");
         uint256 quantity = 20;
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.TreasuryIsNotSet.selector));
         fantiumToken.mintTo(recipient, quantity, usdcAddress);
