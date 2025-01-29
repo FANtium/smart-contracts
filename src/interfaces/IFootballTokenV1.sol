@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import {IERC721AQueryableUpgradeable} from "erc721a-upgradeable/interfaces/IERC721AQueryableUpgradeable.sol";
+import { IERC721AQueryableUpgradeable } from "erc721a-upgradeable/interfaces/IERC721AQueryableUpgradeable.sol";
 
 enum CollectionErrorReason {
     INVALID_DATES,

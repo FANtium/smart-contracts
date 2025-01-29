@@ -11,7 +11,6 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {ERC721AQueryableUpgradeable} from "erc721a-upgradeable/extensions/ERC721AQueryableUpgradeable.sol";
 import {OwnableRoles} from "solady/auth/OwnableRoles.sol";
 import {IFootballTokenV1, FootballCollection, FootballCollectionData, CollectionErrorReason, MintErrorReason} from "src/interfaces/IFootballTokenV1.sol";
-
 /**
  * @title Footbal Token V1 smart contract
  * @author Sylvain Coulomb, Mathieu Bour - FANtium AG
@@ -40,7 +39,7 @@ contract FootballTokenV1 is
     address public treasury;
 
     // collectionId => collection
-    mapping(uint256 => FootballCollection) private _collections;
+    mapping(uint256 => FootballCollection) public collections;
     // tokenId => collectionId
     mapping(uint256 => uint256) private _tokenToCollection;
 
@@ -85,7 +84,7 @@ contract FootballTokenV1 is
      * @return The FootballCollection data associated with the token
      */
     function tokenCollection(uint256 tokenId) external view returns (FootballCollection memory) {
-        return _collections[_tokenToCollection[tokenId]];
+        return collections[_tokenToCollection[tokenId]];
     }
 
     /**
@@ -96,10 +95,9 @@ contract FootballTokenV1 is
      * @param paymentToken The ERC20 token address used for payment
      */
     function mintTo(uint256 collectionId, uint256 quantity, address recipient, address paymentToken) external {
-        if (!(collectionId <= nextCollectionIndex)) {
+        if ((collectionId > nextCollectionIndex)) {
             revert MintError(MintErrorReason.COLLECTION_NOT_EXISTING);
         }
-
         if (recipient == address(0)) {
             revert MintError(MintErrorReason.MINT_BAD_ADDRESS);
         }
@@ -108,9 +106,9 @@ contract FootballTokenV1 is
             revert MintError(MintErrorReason.MINT_ERC20_NOT_ACCEPTED);
         }
 
-        FootballCollection storage currentCollection = _collections[collectionId];
+        FootballCollection storage currentCollection = collections[collectionId];
 
-        if (currentCollection.startDate < block.timestamp || block.timestamp > currentCollection.closeDate) {
+        if (block.timestamp < currentCollection.startDate || block.timestamp > currentCollection.closeDate) {
             revert MintError(MintErrorReason.MINT_NOT_OPENED);
         }
 
@@ -121,6 +119,7 @@ contract FootballTokenV1 is
         }
 
         uint256 price = currentCollection.priceUSD * quantity * 10 ** decimals;
+
         SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(paymentToken), recipient, treasury, price);
         _mint(recipient, quantity);
 
@@ -153,7 +152,7 @@ contract FootballTokenV1 is
     // Collection Admin Functions
     // ========================================================================
     function _checkCollectionData(FootballCollectionData memory collection) internal pure {
-        if (collection.startDate < collection.startDate || collection.startDate > collection.startDate) {
+        if (collection.closeDate < collection.startDate) {
             revert InvalidCollectionData(CollectionErrorReason.INVALID_DATES);
         }
 
@@ -175,7 +174,7 @@ contract FootballTokenV1 is
      * @param collection The data to create the new football collection
      */
     function createCollection(FootballCollectionData memory collection) external onlyOwner {
-        _checkCollectionData(collection);
+        // _checkCollectionData(collection);
 
         FootballCollection memory newCollection = FootballCollection({
             name: collection.name,
@@ -188,7 +187,7 @@ contract FootballTokenV1 is
             team: collection.team
         });
 
-        _collections[++nextCollectionIndex] = newCollection;
+        collections[++nextCollectionIndex] = newCollection;
 
         emit CollectionCreated(nextCollectionIndex, newCollection);
     }
@@ -202,7 +201,7 @@ contract FootballTokenV1 is
     function updateCollection(uint256 collectionId, FootballCollectionData calldata collection) external onlyOwner {
         _checkCollectionData(collection);
 
-        FootballCollection memory updatedCollection = _collections[collectionId];
+        FootballCollection memory updatedCollection = collections[collectionId];
 
         if (collection.maxSupply < updatedCollection.supply) {
             revert InvalidCollectionData(CollectionErrorReason.MAX_SUPPLY_BELOW_SUPPLY);
@@ -220,7 +219,7 @@ contract FootballTokenV1 is
         updatedCollection.isPaused = collection.isPaused;
         updatedCollection.team = collection.team;
 
-        _collections[collectionId] = updatedCollection;
+        collections[collectionId] = updatedCollection;
 
         emit CollectionUpdated(collectionId, updatedCollection);
     }
@@ -230,20 +229,19 @@ contract FootballTokenV1 is
      * @param collectionId The ID of the collection to update
      * @param isPaused The new pause state
      */
-    function pauseCollection(uint256 collectionId, bool isPaused) external onlyOwner {
-        FootballCollection memory updatedCollection = _collections[collectionId];
+    function setPauseCollection(uint256 collectionId, bool isPaused) external onlyOwner {
+        FootballCollection storage updatedCollection = collections[collectionId];
         updatedCollection.isPaused = isPaused;
-        _collections[collectionId] = updatedCollection;
         emit CollectionPausedUpdate(collectionId, isPaused);
     }
 
     /**
      * @notice Updates the treasury address that receives payments
-     * @param newTreasuryAddress The new treasury address
+     * @param newTreasury The new treasury address
      */
-    function updateAddress(address newTreasuryAddress) external onlyOwner {
+    function setTreasury(address newTreasury) external onlyOwner {
         address oldAddress = treasury;
-        treasury = newTreasuryAddress;
-        emit TreasuryUpdated(oldAddress, newTreasuryAddress);
+        treasury = newTreasury;
+        emit TreasuryUpdated(oldAddress, newTreasury);
     }
 }
