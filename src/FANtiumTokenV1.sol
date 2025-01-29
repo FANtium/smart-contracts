@@ -171,18 +171,12 @@ contract FANtiumTokenV1 is
             revert CannotRemovePhaseWhichAlreadyStarted();
         }
 
-        // If there's only one element or we're removing the last element,
-        // we can just pop it without shifting
-        if (phases.length == 1 || phaseIndex == phases.length - 1) {
-            phases.pop();
-        } else {
-            // remove the phase from the array, preserve the order of the items
-            // shift all elements after the index to the left
-            for (uint256 i = phaseIndex; i < phases.length - 1; i++) {
-                phases[i] = phases[i + 1];
-            }
-            phases.pop(); // remove the last element
+        // remove the phase from the array, preserve the order of the items
+        // shift all elements after the index to the left
+        for (uint256 i = phaseIndex; i < phases.length - 1; i++) {
+            phases[i] = phases[i + 1];
         }
+        phases.pop(); // remove the last element
     }
 
     /**
