@@ -241,6 +241,38 @@ contract FANtiumTokenV1 is
     }
 
     /**
+     * Change start time of the specific sale phase
+     * @param newStartTime new sale phase start time to be set
+     * @param phaseId id of the sale phase
+     */
+    function changePhaseStartTime(uint256 newStartTime, uint256 phaseId) external onlyOwner {
+        (bool isFound, Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
+
+        if (!isFound) {
+            revert PhaseWithIdDoesNotExist(phaseId);
+        }
+
+        // validate newStartTime
+        if (newStartTime > phase.endTime || block.timestamp > newStartTime) {
+            // End time must be after start time
+            // Start time should be a date in future
+            revert IncorrectStartTime(newStartTime);
+        }
+
+        // Explicitly check for out-of-bounds access when dealing with previousPhase
+        if (phases.length > 1 && phaseIndex != 0) {
+            // check that phases do not overlap
+            Phase memory previousPhase = phases[phaseIndex - 1];
+            if (previousPhase.endTime > newStartTime) {
+                revert PreviousAndNextPhaseTimesOverlap();
+            }
+        }
+
+        // change the start time
+        phases[phaseIndex].startTime = newStartTime;
+    }
+
+    /**
      * Change end time of the specific sale phase
      * @param newEndTime new sale phase end time to be set
      * @param phaseId id of the sale phase
@@ -271,38 +303,6 @@ contract FANtiumTokenV1 is
 
         // update the end time
         phases[phaseIndex].endTime = newEndTime;
-    }
-
-    /**
-     * Change start time of the specific sale phase
-     * @param newStartTime new sale phase start time to be set
-     * @param phaseId id of the sale phase
-     */
-    function changePhaseStartTime(uint256 newStartTime, uint256 phaseId) external onlyOwner {
-        (bool isFound, Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
-
-        if (!isFound) {
-            revert PhaseWithIdDoesNotExist(phaseId);
-        }
-
-        // validate newStartTime
-        if (newStartTime > phase.endTime || block.timestamp > newStartTime) {
-            // End time must be after start time
-            // Start time should be a date in future
-            revert IncorrectStartTime(newStartTime);
-        }
-
-        // Explicitly check for out-of-bounds access when dealing with previousPhase
-        if (phases.length > 1 && phaseIndex != 0) {
-            // check that phases do not overlap
-            Phase memory previousPhase = phases[phaseIndex - 1];
-            if (previousPhase.endTime > newStartTime) {
-                revert PreviousAndNextPhaseTimesOverlap();
-            }
-        }
-
-        // change the start time
-        phases[phaseIndex].startTime = newStartTime;
     }
 
     /**
