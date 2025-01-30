@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import { IERC721AQueryableUpgradeable } from "erc721a-upgradeable/interfaces/IERC721AQueryableUpgradeable.sol";
+import {IERC721AQueryableUpgradeable} from "erc721a-upgradeable/interfaces/IERC721AQueryableUpgradeable.sol";
 
 enum CollectionErrorReason {
     INVALID_DATES,
@@ -64,7 +64,7 @@ interface IFootballTokenV1 is IERC721AQueryableUpgradeable {
     // ========================================================================
     // Public Methods
     // ========================================================================
-    function initialize(addres admin) external;
+    function initialize(address admin) external;
     function pause() external;
     function unpause() external;
     function tokenCollection(uint256 tokenId) external view returns (FootballCollection memory);
