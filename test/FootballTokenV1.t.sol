@@ -5,7 +5,6 @@ import {BaseTest} from "test/BaseTest.sol";
 import {FootballTokenV1} from "src/FootballTokenV1.sol";
 import {FootballCollection, FootballCollectionData, MintErrorReason, IFootballTokenV1} from "src/interfaces/IFootballTokenV1.sol";
 import {UnsafeUpgrades} from "src/upgrades/UnsafeUpgrades.sol";
-
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract MockUSDC is ERC20 {
@@ -69,14 +68,14 @@ contract FootballTokenV1Setup is BaseTest {
 }
 
 contract FootballTokenV1Test is FootballTokenV1Setup {
-    function test_Initialize_ok() public {
+    function test_initialize_ok() public {
         assertEq(footballToken.owner(), admin);
         assertEq(footballToken.treasury(), admin);
         assertEq(footballToken.name(), "FANtium Football");
         assertEq(footballToken.symbol(), "FANT");
     }
 
-    function test_CreateCollection_ok() public {
+    function test_createCollection_ok() public {
         FootballCollectionData memory collection = FootballCollectionData({
             name: "Test Collection",
             priceUSD: 700,
@@ -93,7 +92,7 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         assertEq(footballToken.nextCollectionIndex(), 1);
     }
 
-    function test_UpdateCollection_ok() public {
+    function test_updateCollection_ok() public {
         // Create initial collection
         FootballCollectionData memory collection = FootballCollectionData({
             name: "Test Collection",
@@ -134,6 +133,7 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         ) = footballToken.collections(1);
         assertEq(name, "Updated Collection");
         assertEq(priceUSD, 800);
+        assertEq(supply, 0);
         assertEq(maxSupply, 200);
         assertEq(startDate, block.timestamp + 1 days);
         assertEq(closeDate, block.timestamp + 14 days);
@@ -141,7 +141,7 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         assertEq(team, makeAddr("newTeam"));
     }
 
-    function test_SetAcceptedTokens_ok() public {
+    function test_setAcceptedTokens_ok() public {
         address[] memory tokens = new address[](2);
         tokens[0] = address(usdc);
         tokens[1] = address(erc20);
@@ -167,12 +167,12 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         usdc.approve(address(footballToken), type(uint256).max);
         erc20.approve(address(footballToken), type(uint256).max);
 
-        footballToken.mintTo(1, 1, user, address(usdc));
-        footballToken.mintTo(1, 1, user, address(erc20));
+        footballToken.mintTo(0, 1, user, address(usdc));
+        footballToken.mintTo(0, 1, user, address(erc20));
         vm.stopPrank();
     }
 
-    function test_SetPauseCollection_ok() public {
+    function test_setPauseCollection_ok() public {
         // Create collection
         FootballCollectionData memory collection = FootballCollectionData({
             name: "Test Collection",
@@ -191,16 +191,7 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         vm.prank(admin);
         footballToken.setPauseCollection(1, true);
 
-        (
-            string memory name,
-            uint256 priceUSD,
-            uint256 supply,
-            uint256 maxSupply,
-            uint256 startDate,
-            uint256 closeDate,
-            bool isPaused,
-            address team
-        ) = footballToken.collections(1);
+        (, , , , , , bool isPaused, ) = footballToken.collections(1);
 
         assertTrue(isPaused);
 
@@ -208,20 +199,11 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         vm.prank(admin);
         footballToken.setPauseCollection(1, false);
 
-        (
-            string memory nameUpdated,
-            uint256 priceUSDUpdated,
-            uint256 supplyUpdated,
-            uint256 maxSupplyUpdated,
-            uint256 startDateUpdated,
-            uint256 closeDateUpdated,
-            bool isPausedUpdated,
-            address teamUpdated
-        ) = footballToken.collections(1);
+        (, , , , , , bool isPausedUpdated, ) = footballToken.collections(1);
         assertFalse(isPausedUpdated);
     }
 
-    function test_MintTo_ok() public {
+    function test_mintTo_ok() public {
         // Create collection first
         FootballCollectionData memory collection = FootballCollectionData({
             name: "Test Collection",
@@ -244,14 +226,14 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         vm.warp(block.timestamp + 1 days);
 
         // Mint token
-        footballToken.mintTo(1, 1, user, address(usdc));
+        footballToken.mintTo(0, 1, user, address(usdc));
         vm.stopPrank();
 
         assertEq(footballToken.balanceOf(user), 1);
         assertEq(footballToken.ownerOf(0), user);
     }
 
-    function test_MintTo_ok_Multiple() public {
+    function test_mintTo_ok_multiple() public {
         // Create collection first
         FootballCollectionData memory collection = FootballCollectionData({
             name: "Test Collection",
@@ -274,7 +256,7 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         vm.warp(block.timestamp + 1 days);
 
         // Mint token
-        footballToken.mintTo(1, 5, user, address(usdc));
+        footballToken.mintTo(0, 5, user, address(usdc));
         vm.stopPrank();
 
         assertEq(footballToken.balanceOf(user), 5);
@@ -285,7 +267,181 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         assertEq(footballToken.ownerOf(4), user);
     }
 
-    function test_MintTo_revert_BeforeStartDate() public {
+    function test_mintTo_ok_multiplePeople() public {
+        // Create collection first
+        FootballCollectionData memory collection = FootballCollectionData({
+            name: "Test Collection",
+            priceUSD: 100,
+            maxSupply: 100,
+            startDate: block.timestamp + 1 days,
+            closeDate: block.timestamp + 7 days,
+            isPaused: false,
+            team: team
+        });
+
+        vm.prank(admin);
+        footballToken.createCollection(collection);
+
+        // Approve USDC spending
+        vm.prank(user);
+        usdc.approve(address(footballToken), type(uint256).max);
+        vm.prank(user2);
+        usdc.approve(address(footballToken), type(uint256).max);
+
+        // Warp to start date
+        vm.warp(block.timestamp + 1 days);
+
+        // Mint token
+        vm.prank(user);
+        footballToken.mintTo(0, 1, user, address(usdc));
+        vm.prank(user2);
+        footballToken.mintTo(0, 1, user2, address(usdc));
+        vm.prank(user);
+        footballToken.mintTo(0, 1, user, address(usdc));
+        vm.prank(user2);
+        footballToken.mintTo(0, 1, user2, address(usdc));
+        vm.prank(user);
+        footballToken.mintTo(0, 1, user, address(usdc));
+        vm.prank(user2);
+        footballToken.mintTo(0, 1, user2, address(usdc));
+
+        assertEq(footballToken.balanceOf(user), 3);
+        assertEq(footballToken.balanceOf(user2), 3);
+
+        assertEq(footballToken.ownerOf(0), user);
+        assertEq(footballToken.ownerOf(1), user2);
+        assertEq(footballToken.ownerOf(2), user);
+        assertEq(footballToken.ownerOf(3), user2);
+        assertEq(footballToken.ownerOf(4), user);
+        assertEq(footballToken.ownerOf(5), user2);
+    }
+
+    function test_mintTo_ok_twoCollections() public {
+        // Create first collection
+        FootballCollectionData memory collection1 = FootballCollectionData({
+            name: "Test Collection 1",
+            priceUSD: 100,
+            maxSupply: 100,
+            startDate: block.timestamp + 1 days,
+            closeDate: block.timestamp + 7 days,
+            isPaused: false,
+            team: team
+        });
+
+        // Create second collection
+        FootballCollectionData memory collection2 = FootballCollectionData({
+            name: "Test Collection 2",
+            priceUSD: 200,
+            maxSupply: 50,
+            startDate: block.timestamp + 1 days,
+            closeDate: block.timestamp + 7 days,
+            isPaused: false,
+            team: team
+        });
+
+        // Create both collections
+        vm.startPrank(admin);
+        footballToken.createCollection(collection1);
+        footballToken.createCollection(collection2);
+        vm.stopPrank();
+
+        (string memory name, , , , , , , ) = footballToken.collections(0);
+        (string memory name2, , , , , , , ) = footballToken.collections(1);
+
+        assertEq(name, "Test Collection 1");
+        assertEq(name2, "Test Collection 2");
+
+        // Approve USDC spending
+        vm.prank(user);
+        usdc.approve(address(footballToken), type(uint256).max);
+
+        // Warp to start date
+        vm.warp(block.timestamp + 1 days);
+
+        // Mint one token from each collection
+        vm.startPrank(user);
+        footballToken.mintTo(0, 1, user, address(usdc));
+        footballToken.mintTo(1, 1, user, address(usdc));
+        vm.stopPrank();
+
+        // Assert user owns one token from each collection
+        assertEq(footballToken.balanceOf(user), 2);
+        assertEq(footballToken.ownerOf(0), user);
+        assertEq(footballToken.ownerOf(1), user);
+
+        // // Assert tokens are from different collections
+        assertEq(footballToken.tokenToCollection(0), 0);
+        assertEq(footballToken.tokenToCollection(1), 1);
+    }
+
+    function test_mintTo_ok_multiplePeopleAndCollection() public {
+        // Create collection first
+        FootballCollectionData memory collection = FootballCollectionData({
+            name: "Test Collection",
+            priceUSD: 100,
+            maxSupply: 100,
+            startDate: block.timestamp + 1 days,
+            closeDate: block.timestamp + 7 days,
+            isPaused: false,
+            team: team
+        });
+
+        FootballCollectionData memory collection2 = FootballCollectionData({
+            name: "Test Collection 2",
+            priceUSD: 100,
+            maxSupply: 100,
+            startDate: block.timestamp + 1 days,
+            closeDate: block.timestamp + 7 days,
+            isPaused: false,
+            team: team
+        });
+
+        vm.startPrank(admin);
+        footballToken.createCollection(collection);
+        footballToken.createCollection(collection2);
+        vm.stopPrank();
+
+        // Approve USDC spending
+        vm.prank(user);
+        usdc.approve(address(footballToken), type(uint256).max);
+        vm.prank(user2);
+        usdc.approve(address(footballToken), type(uint256).max);
+
+        // Warp to start date
+        vm.warp(block.timestamp + 1 days);
+
+        // Mint token
+        vm.prank(user); //0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D
+        footballToken.mintTo(0, 1, user, address(usdc));
+        vm.prank(user2); // 0x537C8f3d3E18dF5517a58B3fB9D9143697996802
+        footballToken.mintTo(0, 1, user2, address(usdc));
+        vm.prank(user);
+        footballToken.mintTo(1, 1, user, address(usdc));
+        vm.prank(user2);
+        footballToken.mintTo(1, 1, user2, address(usdc));
+        vm.prank(user);
+        footballToken.mintTo(0, 1, user, address(usdc));
+        vm.prank(user2);
+        footballToken.mintTo(0, 1, user2, address(usdc));
+
+        assertEq(footballToken.balanceOf(user), 3);
+        assertEq(footballToken.balanceOf(user2), 3);
+        assertEq(footballToken.ownerOf(0), user);
+        assertEq(footballToken.ownerOf(1), user2);
+        assertEq(footballToken.ownerOf(2), user);
+        assertEq(footballToken.ownerOf(3), user2);
+        assertEq(footballToken.ownerOf(4), user);
+        assertEq(footballToken.ownerOf(5), user2);
+
+        assertEq(footballToken.tokenToCollection(0), 0);
+        assertEq(footballToken.tokenToCollection(1), 0);
+        assertEq(footballToken.tokenToCollection(2), 1);
+        assertEq(footballToken.tokenToCollection(3), 1);
+        assertEq(footballToken.tokenToCollection(4), 0);
+        assertEq(footballToken.tokenToCollection(5), 0);
+    }
+
+    function test_mintTo_revert_BeforeStartDate() public {
         // Create collection first
         FootballCollectionData memory collection = FootballCollectionData({
             name: "Test Collection",
@@ -306,7 +462,7 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         footballToken.mintTo(1, 1, user, address(usdc));
     }
 
-    function test_MintTo_revert_AfterCloseDate() public {
+    function test_mintTo_revert_AfterCloseDate() public {
         // Create collection first
         FootballCollectionData memory collection = FootballCollectionData({
             name: "Test Collection",
@@ -331,7 +487,7 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
     }
 
     // Non admin call admin function test
-    function test_CreateCollection_revert_NotAdmin() public {
+    function test_createCollection_revert_NotAdmin() public {
         FootballCollectionData memory collection = FootballCollectionData({
             name: "Test Collection",
             priceUSD: 100,
@@ -347,7 +503,7 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         footballToken.createCollection(collection);
     }
 
-    function test_UpdateCollection_revert_NotAdmin() public {
+    function test_updateCollection_revert_NotAdmin() public {
         // Create collection first as admin
         FootballCollectionData memory collection = FootballCollectionData({
             name: "Test Collection",
@@ -369,7 +525,7 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         footballToken.updateCollection(1, collection);
     }
 
-    function test_PauseCollection_revert_notAdmin() public {
+    function test_pauseCollection_revert_notAdmin() public {
         // Create collection first as admin
         FootballCollectionData memory collection = FootballCollectionData({
             name: "Test Collection",

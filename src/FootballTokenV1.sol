@@ -11,10 +11,12 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {ERC721AQueryableUpgradeable} from "erc721a-upgradeable/extensions/ERC721AQueryableUpgradeable.sol";
 import {OwnableRoles} from "solady/auth/OwnableRoles.sol";
 import {IFootballTokenV1, FootballCollection, FootballCollectionData, CollectionErrorReason, MintErrorReason} from "src/interfaces/IFootballTokenV1.sol";
+
 /**
  * @title Footbal Token V1 smart contract
  * @author Sylvain Coulomb, Mathieu Bour - FANtium AG
  */
+
 contract FootballTokenV1 is
     Initializable,
     UUPSUpgradeable,
@@ -41,7 +43,7 @@ contract FootballTokenV1 is
     // collectionId => collection
     mapping(uint256 => FootballCollection) public collections;
     // tokenId => collectionId
-    mapping(uint256 => uint256) private _tokenToCollection;
+    mapping(uint256 => uint256) public tokenToCollection;
 
     /**
      * @notice The ERC20 token used for payments, dollar stable coin.
@@ -84,7 +86,7 @@ contract FootballTokenV1 is
      * @return The FootballCollection data associated with the token
      */
     function tokenCollection(uint256 tokenId) external view returns (FootballCollection memory) {
-        return collections[_tokenToCollection[tokenId]];
+        return collections[tokenToCollection[tokenId]];
     }
 
     /**
@@ -119,17 +121,17 @@ contract FootballTokenV1 is
         }
 
         uint256 price = currentCollection.priceUSD * quantity * 10 ** decimals;
+        uint256 lastId = _totalMinted(); // start at  0;
 
         SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(paymentToken), recipient, treasury, price);
         _mint(recipient, quantity);
 
-        uint256 lastId = _totalMinted(); // start at  0;
-
         uint256[] memory tokenIds = new uint256[](quantity);
+        uint256 i = 0;
 
-        for (uint256 tokenId = lastId; tokenId > lastId - quantity; tokenId--) {
-            _tokenToCollection[tokenId] = collectionId;
-            tokenIds[tokenId - 1] = tokenId;
+        for (uint256 tokenId = lastId; tokenId < lastId + quantity; tokenId++) {
+            tokenToCollection[tokenId] = collectionId;
+            tokenIds[i++] = tokenId;
         }
 
         currentCollection.supply = lastId + quantity;
@@ -187,7 +189,7 @@ contract FootballTokenV1 is
             team: collection.team
         });
 
-        collections[++nextCollectionIndex] = newCollection;
+        collections[nextCollectionIndex++] = newCollection;
 
         emit CollectionCreated(nextCollectionIndex, newCollection);
     }
