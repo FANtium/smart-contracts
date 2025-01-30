@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import {BaseTest} from "test/BaseTest.sol";
-import {FootballTokenV1} from "src/FootballTokenV1.sol";
-import {FootballCollection, FootballCollectionData, MintErrorReason, CollectionErrorReason, IFootballTokenV1} from "src/interfaces/IFootballTokenV1.sol";
-import {UnsafeUpgrades} from "src/upgrades/UnsafeUpgrades.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { BaseTest } from "test/BaseTest.sol";
+import { FootballTokenV1 } from "src/FootballTokenV1.sol";
+import {
+    FootballCollection,
+    FootballCollectionData,
+    MintErrorReason,
+    CollectionErrorReason,
+    IFootballTokenV1
+} from "src/interfaces/IFootballTokenV1.sol";
+import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract MockUSDC is ERC20 {
     constructor() ERC20("Mock USDC", "USDC") {
@@ -44,10 +50,8 @@ contract FootballTokenV1Setup is BaseTest {
 
     function setUp() public virtual {
         football_implementation = address(new FootballTokenV1());
-        football_proxy = UnsafeUpgrades.deployUUPSProxy(
-            football_implementation,
-            abi.encodeCall(FootballTokenV1.initialize, (admin))
-        );
+        football_proxy =
+            UnsafeUpgrades.deployUUPSProxy(football_implementation, abi.encodeCall(FootballTokenV1.initialize, (admin)));
         footballToken = FootballTokenV1(football_proxy);
 
         usdc = new MockUSDC();
@@ -186,8 +190,7 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         vm.prank(admin);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IFootballTokenV1.InvalidCollectionData.selector,
-                CollectionErrorReason.INVALID_MAX_SUPPLY
+                IFootballTokenV1.InvalidCollectionData.selector, CollectionErrorReason.INVALID_MAX_SUPPLY
             )
         );
         footballToken.createCollection(collection);
@@ -258,14 +261,14 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         vm.prank(admin);
         footballToken.setPauseCollection(1, true);
 
-        (, , , , , , bool isPaused, ) = footballToken.collections(1);
+        (,,,,,, bool isPaused,) = footballToken.collections(1);
 
         assertTrue(isPaused);
 
         vm.prank(admin);
         footballToken.setPauseCollection(1, false);
 
-        (, , , , , , bool isPausedUpdated, ) = footballToken.collections(1);
+        (,,,,,, bool isPausedUpdated,) = footballToken.collections(1);
         assertFalse(isPausedUpdated);
     }
 
@@ -396,8 +399,8 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         footballToken.createCollection(collection2);
         vm.stopPrank();
 
-        (string memory name, , , , , , , ) = footballToken.collections(0);
-        (string memory name2, , , , , , , ) = footballToken.collections(1);
+        (string memory name,,,,,,,) = footballToken.collections(0);
+        (string memory name2,,,,,,,) = footballToken.collections(1);
 
         assertEq(name, "Test Collection 1");
         assertEq(name2, "Test Collection 2");
@@ -601,9 +604,7 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         vm.startPrank(user);
         usdc.approve(address(footballToken), type(uint256).max);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(IFootballTokenV1.MintError.selector, MintErrorReason.MINT_ZERO_QUANTITY)
-        );
+        vm.expectRevert(abi.encodeWithSelector(IFootballTokenV1.MintError.selector, MintErrorReason.MINT_ZERO_QUANTITY));
         footballToken.mintTo(0, 0, user, address(usdc));
         vm.stopPrank();
     }
