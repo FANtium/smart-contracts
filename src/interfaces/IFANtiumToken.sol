@@ -23,7 +23,7 @@ interface IFANtiumToken is IERC721AQueryableUpgradeable {
 
     // errors
     error PhaseDoesNotExist(uint256 phaseIndex);
-    error CurrentPhaseIsNotActive(Phase phase);
+    error CurrentPhaseIsNotActive();
     error NoPhasesAdded();
     error IncorrectStartOrEndTime(uint256 startTime, uint256 endTime);
     error CannotRemovePhaseWhichAlreadyStarted();
@@ -45,4 +45,5 @@ interface IFANtiumToken is IERC721AQueryableUpgradeable {
     error TreasuryAddressAlreadySet(address wallet);
     error InvalidMaxSupplyValue(uint256 maxSupply);
     error CannotUpdateEndedSalePhase();
+    error TreasuryIsNotSet();
 }

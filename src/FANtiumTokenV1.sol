@@ -129,8 +129,8 @@ contract FANtiumTokenV1 is
             revert IncorrectMaxSupply(maxSupply);
         }
 
-        // latestPhase will not exist initially
-        if (phases.length - 1 >= 0) {
+        // Check if there are any existing phases
+        if (phases.length > 0) {
             Phase memory latestPhase = phases[phases.length - 1];
             // check that previous and next phase do not overlap
             if (latestPhase.endTime >= startTime) {
@@ -158,7 +158,6 @@ contract FANtiumTokenV1 is
      * Remove the existing sale phase
      * @param phaseIndex The index of the sale phase
      */
-    // todo: test the removePhase fn extensively, especially the edge cases
     function removePhase(uint256 phaseIndex) external onlyOwner {
         // check that phaseIndex is valid
         if (phaseIndex >= phases.length) {
@@ -200,6 +199,17 @@ contract FANtiumTokenV1 is
     }
 
     /**
+     * Internal function to only be used in the mintTo function for auto phase switch
+     * We cannot use setCurrentPhase in mintTo because it's only available for owner
+     * Function sets currentPhaseIndex and therefore the current sale phase
+     * @param phaseIndex The index of the sale phase
+     */
+    function _setCurrentPhase(uint256 phaseIndex) internal {
+        // we do checks in mintTo, so no need to double-check here
+        currentPhaseIndex = phaseIndex;
+    }
+
+    /**
      * View to see the current sale phase
      */
     function getCurrentPhase() external view returns (Phase memory) {
@@ -236,6 +246,38 @@ contract FANtiumTokenV1 is
     }
 
     /**
+     * Change start time of the specific sale phase
+     * @param newStartTime new sale phase start time to be set
+     * @param phaseId id of the sale phase
+     */
+    function changePhaseStartTime(uint256 newStartTime, uint256 phaseId) external onlyOwner {
+        (bool isFound, Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
+
+        if (!isFound) {
+            revert PhaseWithIdDoesNotExist(phaseId);
+        }
+
+        // validate newStartTime
+        if (newStartTime > phase.endTime || block.timestamp > newStartTime) {
+            // End time must be after start time
+            // Start time should be a date in future
+            revert IncorrectStartTime(newStartTime);
+        }
+
+        // Explicitly check for out-of-bounds access when dealing with previousPhase
+        if (phases.length > 1 && phaseIndex != 0) {
+            // check that phases do not overlap
+            Phase memory previousPhase = phases[phaseIndex - 1];
+            if (previousPhase.endTime > newStartTime) {
+                revert PreviousAndNextPhaseTimesOverlap();
+            }
+        }
+
+        // change the start time
+        phases[phaseIndex].startTime = newStartTime;
+    }
+
+    /**
      * Change end time of the specific sale phase
      * @param newEndTime new sale phase end time to be set
      * @param phaseId id of the sale phase
@@ -264,40 +306,8 @@ contract FANtiumTokenV1 is
             }
         }
 
-        // update end time
-        phase.endTime = newEndTime;
-    }
-
-    /**
-     * Change start time of the specific sale phase
-     * @param newStartTime new sale phase start time to be set
-     * @param phaseId id of the sale phase
-     */
-    function changePhaseStartTime(uint256 newStartTime, uint256 phaseId) external onlyOwner {
-        (bool isFound, Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
-
-        if (!isFound) {
-            revert PhaseWithIdDoesNotExist(phaseId);
-        }
-
-        // validate newStartTime
-        if (newStartTime > phase.endTime || block.timestamp > newStartTime) {
-            // End time must be after start time
-            // Start time should be a date in future
-            revert IncorrectStartTime(newStartTime);
-        }
-
-        // Explicitly check for out-of-bounds access when dealing with previousPhase
-        if (phaseIndex - 1 >= 0) {
-            // check that phases do not overlap
-            Phase memory previousPhase = phases[phaseIndex - 1];
-            if (previousPhase.endTime > newStartTime) {
-                revert PreviousAndNextPhaseTimesOverlap();
-            }
-        }
-
-        // change the start time
-        phase.startTime = newStartTime;
+        // update the end time
+        phases[phaseIndex].endTime = newEndTime;
     }
 
     /**
@@ -317,7 +327,7 @@ contract FANtiumTokenV1 is
         }
 
         // change the currentSupply value
-        currentPhase.currentSupply = currentSupply;
+        phases[currentPhaseIndex].currentSupply = currentSupply;
     }
 
     /**
@@ -346,7 +356,7 @@ contract FANtiumTokenV1 is
         }
 
         // update the max supply value
-        phase.maxSupply = maxSupply;
+        phases[phaseIndex].maxSupply = maxSupply;
     }
 
     /**
@@ -361,13 +371,13 @@ contract FANtiumTokenV1 is
         // get current phase
         Phase memory phase = phases[currentPhaseIndex];
         // check that phase was found
-        if (phase.phaseId == 0 || phase.startTime == 0) {
+        if (phase.pricePerShare == 0 || phase.startTime == 0) {
             revert PhaseDoesNotExist(currentPhaseIndex);
         }
         // check that phase is active
         // should be phase.startTime < block.timestamp < phase.endTime
         if (phase.startTime > block.timestamp || phase.endTime < block.timestamp) {
-            revert CurrentPhaseIsNotActive(phase);
+            revert CurrentPhaseIsNotActive();
         }
         // check quantity
         // no need to check if quantity is negative, because uint256 cannot be negative
@@ -381,6 +391,11 @@ contract FANtiumTokenV1 is
         // payment token validation
         if (!erc20PaymentTokens[paymentToken]) {
             revert ERC20PaymentTokenIsNotSet();
+        }
+
+        // check if treasury is set
+        if (treasury == address(0)) {
+            revert TreasuryIsNotSet();
         }
 
         // price calculation
@@ -402,7 +417,7 @@ contract FANtiumTokenV1 is
             // check if there is a phase with index = currentPhaseIndex + 1
             Phase memory nextPhase = phases[currentPhaseIndex + 1];
             if (nextPhase.pricePerShare != 0 && nextPhase.maxSupply != 0) {
-                setCurrentPhase(currentPhaseIndex + 1);
+                _setCurrentPhase(currentPhaseIndex + 1);
             }
         }
 
