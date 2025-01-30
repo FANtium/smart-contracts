@@ -16,7 +16,6 @@ import {IFootballTokenV1, FootballCollection, FootballCollectionData, Collection
  * @title Footbal Token V1 smart contract
  * @author Sylvain Coulomb, Mathieu Bour - FANtium AG
  */
-
 contract FootballTokenV1 is
     Initializable,
     UUPSUpgradeable,
@@ -100,6 +99,10 @@ contract FootballTokenV1 is
         if ((collectionId > nextCollectionIndex)) {
             revert MintError(MintErrorReason.COLLECTION_NOT_EXISTING);
         }
+        if (quantity == 0) {
+            revert MintError(MintErrorReason.MINT_ZERO_QUANTITY);
+        }
+
         if (recipient == address(0)) {
             revert MintError(MintErrorReason.MINT_BAD_ADDRESS);
         }
@@ -116,7 +119,7 @@ contract FootballTokenV1 is
 
         uint256 decimals = IERC20MetadataUpgradeable(paymentToken).decimals();
 
-        if (currentCollection.maxSupply < currentCollection.supply + 1) {
+        if (currentCollection.maxSupply < currentCollection.supply + quantity) {
             revert MintError(MintErrorReason.MINT_MAX_SUPPLY_REACH);
         }
 
@@ -176,7 +179,7 @@ contract FootballTokenV1 is
      * @param collection The data to create the new football collection
      */
     function createCollection(FootballCollectionData memory collection) external onlyOwner {
-        // _checkCollectionData(collection);
+        _checkCollectionData(collection);
 
         FootballCollection memory newCollection = FootballCollection({
             name: collection.name,

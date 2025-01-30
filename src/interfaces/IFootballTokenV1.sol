@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import { IERC721AQueryableUpgradeable } from "erc721a-upgradeable/interfaces/IERC721AQueryableUpgradeable.sol";
+import {IERC721AQueryableUpgradeable} from "erc721a-upgradeable/interfaces/IERC721AQueryableUpgradeable.sol";
 
 enum CollectionErrorReason {
     INVALID_DATES,
@@ -19,7 +19,8 @@ enum MintErrorReason {
     MINT_BAD_ADDRESS,
     MINT_ERC20_NOT_ACCEPTED,
     COLLECTION_NOT_EXISTING,
-    MINT_MAX_SUPPLY_REACH
+    MINT_MAX_SUPPLY_REACH,
+    MINT_ZERO_QUANTITY
 }
 
 struct FootballCollection {
@@ -59,4 +60,18 @@ interface IFootballTokenV1 is IERC721AQueryableUpgradeable {
 
     error InvalidCollectionData(CollectionErrorReason errorReason);
     error MintError(MintErrorReason errorReason);
+
+    // ========================================================================
+    // Public Methods
+    // ========================================================================
+    function initialize(addres admin) external;
+    function pause() external;
+    function unpause() external;
+    function tokenCollection(uint256 tokenId) external view returns (FootballCollection memory);
+    function mintTo(uint256 collectionId, uint256 quantity, address recipient, address paymentToken) external;
+    function setAcceptedTokens(address[] calldata tokens, bool accepted) external;
+    function createCollection(FootballCollectionData memory collection) external;
+    function updateCollection(uint256 collectionId, FootballCollectionData calldata collection) external;
+    function setPauseCollection(uint256 collectionId, bool isPaused) external;
+    function setTreasury(address newTreasury) external;
 }
