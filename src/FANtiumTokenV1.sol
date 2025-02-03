@@ -27,6 +27,19 @@ contract FANtiumTokenV1 is
     OwnableRoles,
     IFANtiumToken
 {
+    // ========================================================================
+    // Constants
+    // ========================================================================
+    string private constant NAME = "FANtium Token";
+    string private constant SYMBOL = "FAN";
+
+    // Roles
+    // ========================================================================
+    uint256 public constant SIGNER_ROLE = _ROLE_0;
+
+    // ========================================================================
+    // State variables
+    // ========================================================================
     uint256 private nextId; // has default value 0
     Phase[] public phases;
     uint256 public currentPhaseIndex;
@@ -38,27 +51,71 @@ contract FANtiumTokenV1 is
      */
     mapping(address => bool) public erc20PaymentTokens;
 
-    string private constant NAME = "FANtium Token";
-    string private constant SYMBOL = "FAN";
-
     function initialize(address admin) public initializerERC721A initializer {
         __UUPSUpgradeable_init();
         __ERC721A_init(NAME, SYMBOL);
         _initializeOwner(admin);
     }
 
-    function pause() external onlyOwner {
-        _pause();
-    }
-
-    function unpause() external onlyOwner {
-        _unpause();
-    }
-
+    /**
+     * @notice Implementation of the upgrade authorization logic
+     * @dev Restricted to the owner
+     */
     function _authorizeUpgrade(address) internal view override {
         _checkOwner();
     }
 
+    // ========================================================================
+    // Pause
+    // ========================================================================
+    /**
+     * @notice Update contract pause status to `_paused`.
+     */
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /**
+     * @notice Unpauses contract
+     */
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
+    // ========================================================================
+    // ERC2771
+    // ========================================================================
+    function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
+        return hasAllRoles(forwarder, SIGNER_ROLE);
+    }
+
+    function _msgSender() internal view virtual override returns (address sender) {
+        if (isTrustedForwarder(msg.sender)) {
+            // The assembly code is more direct than the Solidity version using `abi.decode`.
+            /// @solidity memory-safe-assembly
+            assembly {
+                sender := shr(96, calldataload(sub(calldatasize(), 20)))
+            }
+        } else {
+            return super._msgSender();
+        }
+    }
+
+    function _msgSenderERC721A() internal view virtual override returns (address) {
+        return _msgSender();
+    }
+
+    function _msgData() internal view virtual override returns (bytes calldata) {
+        if (isTrustedForwarder(msg.sender)) {
+            return msg.data[:msg.data.length - 20];
+        } else {
+            return super._msgData();
+        }
+    }
+
+    // ========================================================================
+    // Setters
+    // ========================================================================
     /**
      * Set treasury address - FANtium address where the funds should be transferred
      * @param wallet - address of the treasury
@@ -403,7 +460,7 @@ contract FANtiumTokenV1 is
         uint256 expectedAmount = quantity * phase.pricePerShare * 10 ** tokenDecimals;
 
         // transfer stable coin from msg.sender to this treasury
-        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(paymentToken), msg.sender, treasury, expectedAmount);
+        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(paymentToken), _msgSender(), treasury, expectedAmount);
 
         // mint the FAN tokens to the recipient
         _mint(recipient, quantity);

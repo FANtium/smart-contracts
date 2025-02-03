@@ -37,6 +37,10 @@ contract FootballTokenV1 is
     string private constant NAME = "FANtium Football";
     string private constant SYMBOL = "FANT";
 
+    // Roles
+    // ========================================================================
+    uint256 public constant SIGNER_ROLE = _ROLE_0;
+
     // ========================================================================
     // State variables
     // ========================================================================
@@ -69,21 +73,83 @@ contract FootballTokenV1 is
     }
 
     /**
-     * @notice Pauses all contract operations
+     * @notice Implementation of the upgrade authorization logic
+     * @dev Restricted to the owner
+     */
+    function _authorizeUpgrade(address) internal view override {
+        _checkOwner();
+    }
+
+    // ========================================================================
+    // Pause
+    // ========================================================================
+    /**
+     * @notice Update contract pause status to `_paused`.
      */
     function pause() external onlyOwner {
         _pause();
     }
 
     /**
-     * @notice Unpauses all contract operations
+     * @notice Unpauses contract
      */
     function unpause() external onlyOwner {
         _unpause();
     }
 
-    function _authorizeUpgrade(address) internal view override {
-        _checkOwner();
+    // ========================================================================
+    // ERC2771
+    // ========================================================================
+    function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
+        return hasAllRoles(forwarder, SIGNER_ROLE);
+    }
+
+    function _msgSender() internal view virtual override returns (address sender) {
+        if (isTrustedForwarder(msg.sender)) {
+            // The assembly code is more direct than the Solidity version using `abi.decode`.
+            /// @solidity memory-safe-assembly
+            assembly {
+                sender := shr(96, calldataload(sub(calldatasize(), 20)))
+            }
+        } else {
+            return super._msgSender();
+        }
+    }
+
+    function _msgSenderERC721A() internal view virtual override returns (address) {
+        return _msgSender();
+    }
+
+    function _msgData() internal view virtual override returns (bytes calldata) {
+        if (isTrustedForwarder(msg.sender)) {
+            return msg.data[:msg.data.length - 20];
+        } else {
+            return super._msgData();
+        }
+    }
+
+    // ========================================================================
+    // Setters
+    // ========================================================================
+    /**
+     * @notice Sets which ERC20 tokens are accepted for payment
+     * @param tokens Array of token addresses to update
+     * @param accepted Whether the tokens should be accepted or not
+     */
+    function setAcceptedTokens(address[] calldata tokens, bool accepted) external onlyOwner {
+        for (uint256 i; i < tokens.length; i++) {
+            acceptedTokens[tokens[i]] = accepted;
+        }
+    }
+
+    /**
+     * @notice Updates the treasury address that receives payments
+     * @param newTreasury The new treasury address
+     */
+    function setTreasury(address newTreasury) external onlyOwner {
+        address oldAddress = treasury;
+        treasury = newTreasury;
+        emit TreasuryUpdated(oldAddress, newTreasury);
     }
 
     /**
@@ -133,7 +199,7 @@ contract FootballTokenV1 is
         uint256 price = currentCollection.priceUSD * quantity * 10 ** decimals;
         uint256 lastId = _totalMinted(); // start at  0;
 
-        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(paymentToken), recipient, treasury, price);
+        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(paymentToken), _msgSender(), treasury, price);
         _mint(recipient, quantity);
 
         uint256[] memory tokenIds = new uint256[](quantity);
@@ -147,17 +213,6 @@ contract FootballTokenV1 is
         currentCollection.supply = lastId + quantity;
 
         emit TokensMinted(collectionId, recipient, tokenIds);
-    }
-
-    /**
-     * @notice Sets which ERC20 tokens are accepted for payment
-     * @param tokens Array of token addresses to update
-     * @param accepted Whether the tokens should be accepted or not
-     */
-    function setAcceptedTokens(address[] calldata tokens, bool accepted) external onlyOwner {
-        for (uint256 i; i < tokens.length; i++) {
-            acceptedTokens[tokens[i]] = accepted;
-        }
     }
 
     // ========================================================================
@@ -245,15 +300,5 @@ contract FootballTokenV1 is
         FootballCollection storage updatedCollection = collections[collectionId];
         updatedCollection.isPaused = isPaused;
         emit CollectionPausedUpdate(collectionId, isPaused);
-    }
-
-    /**
-     * @notice Updates the treasury address that receives payments
-     * @param newTreasury The new treasury address
-     */
-    function setTreasury(address newTreasury) external onlyOwner {
-        address oldAddress = treasury;
-        treasury = newTreasury;
-        emit TreasuryUpdated(oldAddress, newTreasury);
     }
 }
