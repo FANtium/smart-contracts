@@ -5,3 +5,5 @@ forge-std/=node_modules/forge-std/src/
 @openzeppelin/contracts/=node_modules/@openzeppelin/contracts/
 @openzeppelin/foundry-upgrades/=node_modules/@openzeppelin/foundry-upgrades/src/
 operator-filter-registry/=node_modules/operator-filter-registry/
+erc721a-upgradeable/=node_modules/erc721a-upgradeable/contracts/
+solady/=node_modules/solady/src/

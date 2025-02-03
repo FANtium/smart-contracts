@@ -21,6 +21,8 @@
         "@openzeppelin/contracts": "4.9.6",
         "@openzeppelin/contracts-upgradeable": "4.9.6",
         "@openzeppelin/foundry-upgrades": "github:OpenZeppelin/openzeppelin-foundry-upgrades#v0.3.6",
+        "erc721a-upgradeable": "4.3.0",
+        "solady": "0.0.298",
         "solidity-stringutils": "github:Arachnid/solidity-stringutils#4b2fcc43fa0426e19ce88b1f1ec16f5903a2e461"
     },
     "devDependencies": {
@@ -30,6 +32,5 @@
         "operator-filter-registry": "1.4.2",
         "prettier": "^3.4.2",
         "solhint": "^5.0.3"
-    },
-    "packageManager": "bun@1.1.42"
+    }
 }

@@ -4,13 +4,15 @@ pragma solidity 0.8.28;
 import { Script } from "forge-std/Script.sol";
 import { FANtiumClaimingV2 } from "src/FANtiumClaimingV2.sol";
 import { FANtiumNFTV6 } from "src/FANtiumNFTV6.sol";
-import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
+import { FANtiumTokenV1 } from "src/FANtiumTokenV1.sol";
 import { FANtiumUserManagerV2 } from "src/FANtiumUserManagerV2.sol";
+import { FootballTokenV1 } from "src/FootballTokenV1.sol";
+import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 
 /**
  * @notice Deploy a new instance of the FANtiumNFTV6 contract to the testnet.
  */
-contract DeployTestnetV5 is Script {
+contract DeployTestnet is Script {
     address public constant ADMIN = 0xF00D14B2bf0b37177b6e13374aB4F34902Eb94fC;
     address public constant BACKEND_SIGNER = 0xCAFE914D4886B50edD339eee2BdB5d2350fdC809;
     address public constant DEPLOYER = 0xC0DE5408A46402B7Bd13678A43318c64E2c31EAA;
@@ -49,6 +51,20 @@ contract DeployTestnetV5 is Script {
         FANtiumClaimingV2 fantiumClaim = FANtiumClaimingV2(
             UnsafeUpgrades.deployUUPSProxy(
                 address(new FANtiumClaimingV2()), abi.encodeCall(FANtiumClaimingV2.initialize, (ADMIN))
+            )
+        );
+
+        // FANtiumTokenV1 fantiumToken =
+        FANtiumTokenV1(
+            UnsafeUpgrades.deployUUPSProxy(
+                address(new FANtiumTokenV1()), abi.encodeCall(FANtiumTokenV1.initialize, (ADMIN))
+            )
+        );
+
+        // FootballTokenV1 footballToken =
+        FootballTokenV1(
+            UnsafeUpgrades.deployUUPSProxy(
+                address(new FootballTokenV1()), abi.encodeCall(FootballTokenV1.initialize, (ADMIN))
             )
         );
         vm.stopBroadcast();
