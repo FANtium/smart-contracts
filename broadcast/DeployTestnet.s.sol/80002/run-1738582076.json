@@ -1,7 +1,7 @@
 {
     "transactions": [
         {
-            "hash": "0x63ecde522bf048b21cd0997be7cca83333a8372d187765013251f8eeddb382a7",
+            "hash": null,
             "transactionType": "CREATE",
             "contractName": "FootballTokenV1",
             "contractAddress": "0x986d3264b35b52a1cbbda36f3be7a23a9601ab27",
@@ -42,9 +42,9 @@
     ],
     "receipts": [],
     "libraries": [],
-    "pending": ["0x63ecde522bf048b21cd0997be7cca83333a8372d187765013251f8eeddb382a7"],
+    "pending": [],
     "returns": {},
-    "timestamp": 1738582246,
+    "timestamp": 1738582076,
     "chain": 80002,
     "commit": "8932cb7"
 }
