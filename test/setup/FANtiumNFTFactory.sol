@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import { IERC20MetadataUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { FANtiumNFTV7 } from "src/FANtiumNFTV7.sol";
 import { Collection, CollectionData } from "src/interfaces/IFANtiumNFT.sol";
-import { FANtiumNFTV6 } from "src/FANtiumNFTV6.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumUserManagerFactory } from "test/setup/FANtiumUserManagerFactory.sol";
@@ -46,29 +48,28 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
     ERC20 public usdc;
     address public fantiumNFT_implementation;
     address public fantiumNFT_proxy;
-    FANtiumNFTV6 public fantiumNFT;
+    FANtiumNFTV7 public fantiumNFT;
 
     function setUp() public virtual override {
         (fantiumNFT_signer, fantiumNFT_signerKey) = makeAddrAndKey("rewarder");
         FANtiumUserManagerFactory.setUp();
 
         usdc = new ERC20("USD Coin", "USDC");
-        fantiumNFT_implementation = address(new FANtiumNFTV6());
+        fantiumNFT_implementation = address(new FANtiumNFTV7());
         fantiumNFT_proxy = UnsafeUpgrades.deployUUPSProxy(
-            fantiumNFT_implementation, abi.encodeCall(FANtiumNFTV6.initialize, (fantiumNFT_admin))
+            fantiumNFT_implementation, abi.encodeCall(FANtiumNFTV7.initialize, (fantiumNFT_admin))
         );
-        fantiumNFT = FANtiumNFTV6(fantiumNFT_proxy);
+        fantiumNFT = FANtiumNFTV7(fantiumNFT_proxy);
 
         // Configure roles
         vm.startPrank(fantiumNFT_admin);
-        fantiumNFT.grantRole(fantiumNFT.MANAGER_ROLE(), fantiumNFT_manager);
         fantiumNFT.grantRole(fantiumNFT.FORWARDER_ROLE(), fantiumNFT_trustedForwarder);
         fantiumNFT.grantRole(fantiumNFT.SIGNER_ROLE(), fantiumNFT_signer);
         fantiumNFT.grantRole(fantiumNFT.TOKEN_UPGRADER_ROLE(), fantiumNFT_tokenUpgrader);
         vm.stopPrank();
 
         vm.startPrank(fantiumNFT_manager);
-        fantiumNFT.setERC20PaymentToken(address(usdc));
+        fantiumNFT.setERC20PaymentToken(IERC20MetadataUpgradeable(address(usdc)));
         fantiumNFT.setUserManager(userManager);
         fantiumNFT.setBaseURI("https://app.fantium.com/api/metadata/");
 
@@ -81,7 +82,6 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
                     athleteAddress: collection.athleteAddress,
                     athletePrimarySalesBPS: collection.athletePrimarySalesBPS,
                     athleteSecondarySalesBPS: collection.athleteSecondarySalesBPS,
-                    fantiumSalesAddress: collection.fantiumSalesAddress,
                     fantiumSecondarySalesBPS: collection.fantiumSecondarySalesBPS,
                     launchTimestamp: collection.launchTimestamp,
                     maxInvocations: collection.maxInvocations,

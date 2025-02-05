@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import { BaseTest } from "test/BaseTest.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { FootballTokenV1 } from "src/FootballTokenV1.sol";
 import {
+    CollectionErrorReason,
     FootballCollection,
     FootballCollectionData,
-    MintErrorReason,
-    CollectionErrorReason,
-    IFootballTokenV1
+    IFootballTokenV1,
+    MintErrorReason
 } from "src/interfaces/IFootballTokenV1.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { BaseTest } from "test/BaseTest.sol";
 
 contract MockUSDC is ERC20 {
     constructor() ERC20("Mock USDC", "USDC") {
