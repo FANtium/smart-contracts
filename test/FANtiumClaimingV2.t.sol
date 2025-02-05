@@ -191,7 +191,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
             tournamentEarningShare1e7: 2_500_000 // 25%
          });
 
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         uint256 collectionId = fantiumNFT.createCollection(collectionData);
 
         uint256[] memory collectionIdsArray = new uint256[](2);

@@ -7,5 +7,6 @@ import { FANtiumNFTFactory } from "test/setup/FANtiumNFTFactory.sol";
 contract FANtiumNFTFactoryTest is BaseTest, FANtiumNFTFactory {
     function test_setUp_ok() public view {
         assertEq(address(fantiumNFT.userManager()), userManager_proxy);
+        assertEq(address(fantiumNFT.erc20PaymentToken()), address(usdc));
     }
 }

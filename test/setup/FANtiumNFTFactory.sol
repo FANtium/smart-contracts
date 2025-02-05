@@ -36,7 +36,6 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
     using ECDSA for bytes32;
 
     address public fantiumNFT_admin = makeAddr("admin");
-    address public fantiumNFT_manager = makeAddr("platformManager");
     address public fantiumNFT_trustedForwarder = makeAddr("trustedForwarder");
     address payable public fantiumNFT_athlete = payable(makeAddr("athlete"));
     address payable public fantiumNFT_treasuryPrimary = payable(makeAddr("treasuryPrimary"));
@@ -66,12 +65,10 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
         fantiumNFT.grantRole(fantiumNFT.FORWARDER_ROLE(), fantiumNFT_trustedForwarder);
         fantiumNFT.grantRole(fantiumNFT.SIGNER_ROLE(), fantiumNFT_signer);
         fantiumNFT.grantRole(fantiumNFT.TOKEN_UPGRADER_ROLE(), fantiumNFT_tokenUpgrader);
-        vm.stopPrank();
-
-        vm.startPrank(fantiumNFT_manager);
         fantiumNFT.setERC20PaymentToken(IERC20MetadataUpgradeable(address(usdc)));
         fantiumNFT.setUserManager(userManager);
         fantiumNFT.setBaseURI("https://app.fantium.com/api/metadata/");
+        fantiumNFT.setTreasury(fantiumNFT_treasuryPrimary);
 
         // Configure collections
         CollectionJson[] memory collections = abi.decode(loadFixture("collections.json"), (CollectionJson[]));

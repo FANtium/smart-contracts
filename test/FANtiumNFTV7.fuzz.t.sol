@@ -115,7 +115,7 @@ contract FANtiumNFTV7FuzzTest is BaseTest, FANtiumNFTFactory {
         vm.assume(0 < athletePrimarySalesBPS && athletePrimarySalesBPS < 10_000);
         vm.assume(0 < price && price < 1_000_000 * 10 ** usdc.decimals());
 
-        vm.startPrank(fantiumNFT_manager);
+        vm.startPrank(fantiumNFT_admin);
         uint256 collectionId = fantiumNFT.createCollection(
             CollectionData({
                 athleteAddress: fantiumNFT_athlete,
