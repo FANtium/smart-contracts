@@ -14,7 +14,7 @@ import { IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
  * @dev KYC is "soft verification" and IDENT is "hard verification".
  * @author Mathieu Bour - FANtium, based on previous work by MTX Studio AG
  *
- * @custom:oz-upgrades-from FantiumUserManager
+ * @custom:oz-upgrades-from src/archive/FANtiumUserManagerV1.sol:FantiumUserManager
  */
 
 contract FANtiumUserManagerV2 is

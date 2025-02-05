@@ -30,7 +30,7 @@ import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/St
  * @notice This contract is used to manage distributions and claim payouts for FAN token holders.
  * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
  *
- * @custom:oz-upgrades-from FantiumClaimingV1
+ * @custom:oz-upgrades-from src/archive/FANtiumClaimingV1.sol:FantiumClaimingV1
  */
 contract FANtiumClaimingV2 is
     Initializable,

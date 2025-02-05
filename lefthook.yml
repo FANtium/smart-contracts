@@ -3,7 +3,7 @@ pre-commit:
     commands:
         prettier:
             glob: "*.{json,md,yml}"
-            run: prettier --write {staged_files}
+            run: prettier --write {staged_files} && git add {staged_files}
         forge_fmt:
             glob: "*.{sol}"
-            run: forge fmt {staged_files}
+            run: forge fmt {staged_files} && git add {staged_files}

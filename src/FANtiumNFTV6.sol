@@ -29,7 +29,8 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 /**
  * @title FANtium ERC721 contract V6.
  * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
- * @custom:oz-upgrades-from FantiumNFTV5
+ *
+ * @custom:oz-upgrades-from src/archive/FANtiumNFTV5.sol:FantiumNFTV5
  */
 contract FANtiumNFTV6 is
     Initializable,
