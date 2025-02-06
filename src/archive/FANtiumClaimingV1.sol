@@ -1684,7 +1684,9 @@ library StringsUpgradeable {
                     mstore8(ptr, byte(mod(value, 10), _SYMBOLS))
                 }
                 value /= 10;
-                if (value == 0) break;
+                if (value == 0) {
+                    break;
+                }
             }
             return buffer;
         }

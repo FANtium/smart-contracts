@@ -1,19 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IFANtiumNFT, CollectionData, Collection } from "src/interfaces/IFANtiumNFT.sol";
 import { IFANtiumClaiming } from "src/interfaces/IFANtiumClaiming.sol";
+
+import {
+    ClaimErrorReason,
+    Distribution,
+    DistributionCloseErrorReason,
+    DistributionData,
+    DistributionErrorReason,
+    DistributionFundingErrorReason
+} from "src/interfaces/IFANtiumClaiming.sol";
+import { Collection, CollectionData, IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumClaimingFactory } from "test/setup/FANtiumClaimingFactory.sol";
-import {
-    Distribution,
-    DistributionData,
-    DistributionErrorReason,
-    DistributionFundingErrorReason,
-    DistributionCloseErrorReason,
-    ClaimErrorReason
-} from "src/interfaces/IFANtiumClaiming.sol";
 
 contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
     function setUp() public virtual override {
@@ -182,7 +183,6 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
             athleteAddress: payable(makeAddr("athlete")),
             athletePrimarySalesBPS: 5000, // 50%
             athleteSecondarySalesBPS: 1000, // 10%
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 500, // 5%
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: 100,
@@ -191,7 +191,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
             tournamentEarningShare1e7: 2_500_000 // 25%
          });
 
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         uint256 collectionId = fantiumNFT.createCollection(collectionData);
 
         uint256[] memory collectionIdsArray = new uint256[](2);

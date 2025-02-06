@@ -3,10 +3,10 @@ pragma solidity 0.8.28;
 
 import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
-import "../src/interfaces/IFANtiumToken.sol";
-import "./setup/FANtiumTokenFactory.sol";
+
+import { IFANtiumToken, Phase } from "src/interfaces/IFANtiumToken.sol";
 import { BaseTest } from "test/BaseTest.sol";
-import { IFANtiumToken } from "src/interfaces/IFANtiumToken.sol";
+import { FANtiumTokenFactory } from "test/setup/FANtiumTokenFactory.sol";
 
 contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
     // setTreasuryAddress

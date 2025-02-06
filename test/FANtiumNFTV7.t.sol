@@ -2,22 +2,22 @@
 pragma solidity 0.8.28;
 
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
-import { BaseTest } from "test/BaseTest.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {
-    IFANtiumNFT,
     Collection,
     CollectionData,
     CollectionErrorReason,
+    IFANtiumNFT,
     MintErrorReason,
     UpgradeErrorReason
 } from "src/interfaces/IFANtiumNFT.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
+import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumNFTFactory } from "test/setup/FANtiumNFTFactory.sol";
 
-contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
+contract FANtiumNFTV7Test is BaseTest, FANtiumNFTFactory {
     using ECDSA for bytes32;
     using Strings for uint256;
 
@@ -39,12 +39,55 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
         assertEq(fantiumNFT.symbol(), "FAN");
     }
 
+    // pause
+    // ========================================================================
+    function test_pause_ok_admin() public {
+        vm.prank(fantiumNFT_admin);
+        fantiumNFT.pause();
+        assertTrue(fantiumNFT.paused());
+    }
+
+    function test_pause_revert_unauthorized() public {
+        address unauthorized = makeAddr("unauthorized");
+
+        expectMissingRole(unauthorized, fantiumNFT.DEFAULT_ADMIN_ROLE());
+        vm.prank(unauthorized);
+        fantiumNFT.pause();
+    }
+
+    // unpause
+    // ========================================================================
+    function test_unpause_ok_admin() public {
+        // First pause the contract
+        vm.prank(fantiumNFT_admin);
+        fantiumNFT.pause();
+        assertTrue(fantiumNFT.paused());
+
+        // Then unpause it
+        vm.prank(fantiumNFT_admin);
+        fantiumNFT.unpause();
+        assertFalse(fantiumNFT.paused());
+    }
+
+    function test_unpause_revert_unauthorized() public {
+        // First pause the contract
+        vm.prank(fantiumNFT_admin);
+        fantiumNFT.pause();
+        assertTrue(fantiumNFT.paused());
+
+        address unauthorized = makeAddr("unauthorized");
+
+        expectMissingRole(unauthorized, fantiumNFT.DEFAULT_ADMIN_ROLE());
+        vm.prank(unauthorized);
+        fantiumNFT.unpause();
+    }
+
     // setUserManager
     // ========================================================================
     function test_setUserManager_ok_manager() public {
         address newUserManager = makeAddr("newUserManager");
 
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.setUserManager(IFANtiumUserManager(newUserManager));
         assertEq(address(fantiumNFT.userManager()), newUserManager);
     }
@@ -88,7 +131,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(makeAddr("athlete")),
             athletePrimarySalesBPS: 5000, // 50%
             athleteSecondarySalesBPS: 1000, // 10%
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 500, // 5%
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: 100,
@@ -97,7 +139,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             tournamentEarningShare1e7: 2_500_000 // 25%
          });
 
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         uint256 collectionId = fantiumNFT.createCollection(data);
 
         Collection memory collection = fantiumNFT.collections(collectionId);
@@ -105,7 +147,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
         assertEq(collection.athletePrimarySalesBPS, data.athletePrimarySalesBPS);
         assertEq(collection.athleteSecondarySalesBPS, data.athleteSecondarySalesBPS);
         assertTrue(collection.exists);
-        assertEq(collection.fantiumSalesAddress, data.fantiumSalesAddress);
         assertEq(collection.fantiumSecondarySalesBPS, data.fantiumSecondarySalesBPS);
         assertEq(collection.invocations, 0);
         assertFalse(collection.isMintable);
@@ -122,7 +163,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(address(0)),
             athletePrimarySalesBPS: 5000,
             athleteSecondarySalesBPS: 1000,
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: 100,
@@ -136,7 +176,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
                 IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_ATHLETE_ADDRESS
             )
         );
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.createCollection(data);
     }
 
@@ -145,7 +185,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(makeAddr("athlete")),
             athletePrimarySalesBPS: 10_001, // > 100%
             athleteSecondarySalesBPS: 1000,
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: 100,
@@ -159,7 +198,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
                 IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_PRIMARY_SALES_BPS
             )
         );
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.createCollection(data);
     }
 
@@ -168,7 +207,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(makeAddr("athlete")),
             athletePrimarySalesBPS: 5000,
             athleteSecondarySalesBPS: 9000,
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 2000, // Sum > 100%
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: 100,
@@ -180,30 +218,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
         vm.expectRevert(
             abi.encodeWithSelector(IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_BPS_SUM)
         );
-        vm.prank(fantiumNFT_manager);
-        fantiumNFT.createCollection(data);
-    }
-
-    function test_createCollection_revert_invalidFantiumSalesAddress() public {
-        CollectionData memory data = CollectionData({
-            athleteAddress: payable(makeAddr("athlete")),
-            athletePrimarySalesBPS: 5000,
-            athleteSecondarySalesBPS: 1000,
-            fantiumSalesAddress: payable(address(0)),
-            fantiumSecondarySalesBPS: 500,
-            launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
-            otherEarningShare1e7: 5_000_000,
-            price: 100 ether,
-            tournamentEarningShare1e7: 2_500_000
-        });
-
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_FANTIUM_SALES_ADDRESS
-            )
-        );
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.createCollection(data);
     }
 
@@ -212,7 +227,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(makeAddr("athlete")),
             athletePrimarySalesBPS: 5000,
             athleteSecondarySalesBPS: 1000,
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: 10_000, // >= 10_000
@@ -226,7 +240,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
                 IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_MAX_INVOCATIONS
             )
         );
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.createCollection(data);
     }
 
@@ -235,7 +249,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(makeAddr("athlete")),
             athletePrimarySalesBPS: 5000,
             athleteSecondarySalesBPS: 1000,
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: 100,
@@ -249,7 +262,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
                 IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_OTHER_EARNING_SHARE
             )
         );
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.createCollection(data);
     }
 
@@ -258,7 +271,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(makeAddr("athlete")),
             athletePrimarySalesBPS: 5000,
             athleteSecondarySalesBPS: 1000,
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: 100,
@@ -272,7 +284,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
                 IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_TOURNAMENT_EARNING_SHARE
             )
         );
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.createCollection(data);
     }
 
@@ -281,7 +293,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(makeAddr("athlete")),
             athletePrimarySalesBPS: 5000,
             athleteSecondarySalesBPS: 1000,
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: 100,
@@ -291,7 +302,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
         });
 
         address unauthorized = makeAddr("unauthorized");
-        expectMissingRole(unauthorized, fantiumNFT.MANAGER_ROLE());
+        expectMissingRole(unauthorized, fantiumNFT.DEFAULT_ADMIN_ROLE());
         vm.prank(unauthorized);
         fantiumNFT.createCollection(data);
     }
@@ -304,7 +315,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(makeAddr("newAthlete")),
             athletePrimarySalesBPS: 6000, // 60%
             athleteSecondarySalesBPS: 1500, // 15%
-            fantiumSalesAddress: payable(makeAddr("newFantiumSales")),
             fantiumSecondarySalesBPS: 750, // 7.5%
             launchTimestamp: block.timestamp + 2 days,
             maxInvocations: 200, // Increased from original
@@ -315,7 +325,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
 
         Collection memory beforeCollection = fantiumNFT.collections(collectionId);
 
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.updateCollection(collectionId, data);
 
         Collection memory afterCollection = fantiumNFT.collections(collectionId);
@@ -324,7 +334,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
         assertEq(afterCollection.athleteAddress, data.athleteAddress);
         assertEq(afterCollection.athletePrimarySalesBPS, data.athletePrimarySalesBPS);
         assertEq(afterCollection.athleteSecondarySalesBPS, data.athleteSecondarySalesBPS);
-        assertEq(afterCollection.fantiumSalesAddress, data.fantiumSalesAddress);
         assertEq(afterCollection.fantiumSecondarySalesBPS, data.fantiumSecondarySalesBPS);
         assertEq(afterCollection.launchTimestamp, data.launchTimestamp);
         assertEq(afterCollection.maxInvocations, data.maxInvocations);
@@ -345,7 +354,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(makeAddr("athlete")),
             athletePrimarySalesBPS: 5000,
             athleteSecondarySalesBPS: 1000,
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: 100,
@@ -355,7 +363,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
         });
 
         vm.expectRevert(abi.encodeWithSelector(IFANtiumNFT.InvalidCollectionId.selector, invalidCollectionId));
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.updateCollection(invalidCollectionId, data);
     }
 
@@ -369,7 +377,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(makeAddr("athlete")),
             athletePrimarySalesBPS: 5000,
             athleteSecondarySalesBPS: 1000,
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: currentCollection.invocations - 1, // Try to decrease below current invocations
@@ -383,7 +390,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
                 IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_MAX_INVOCATIONS
             )
         );
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.updateCollection(collectionId, data);
     }
 
@@ -393,7 +400,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(address(0)),
             athletePrimarySalesBPS: 5000,
             athleteSecondarySalesBPS: 1000,
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: 100,
@@ -407,7 +413,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
                 IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_ATHLETE_ADDRESS
             )
         );
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.updateCollection(collectionId, data);
     }
 
@@ -417,7 +423,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(makeAddr("athlete")),
             athletePrimarySalesBPS: 10_001, // > 100%
             athleteSecondarySalesBPS: 1000,
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: 100,
@@ -431,7 +436,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
                 IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_PRIMARY_SALES_BPS
             )
         );
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.updateCollection(collectionId, data);
     }
 
@@ -441,7 +446,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(makeAddr("athlete")),
             athletePrimarySalesBPS: 5000,
             athleteSecondarySalesBPS: 9000,
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 2000, // Sum > 100%
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: 100,
@@ -453,31 +457,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
         vm.expectRevert(
             abi.encodeWithSelector(IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_BPS_SUM)
         );
-        vm.prank(fantiumNFT_manager);
-        fantiumNFT.updateCollection(collectionId, data);
-    }
-
-    function test_updateCollection_revert_invalidFantiumSalesAddress() public {
-        uint256 collectionId = 1;
-        CollectionData memory data = CollectionData({
-            athleteAddress: payable(makeAddr("athlete")),
-            athletePrimarySalesBPS: 5000,
-            athleteSecondarySalesBPS: 1000,
-            fantiumSalesAddress: payable(address(0)),
-            fantiumSecondarySalesBPS: 500,
-            launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
-            otherEarningShare1e7: 5_000_000,
-            price: 100 ether,
-            tournamentEarningShare1e7: 2_500_000
-        });
-
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_FANTIUM_SALES_ADDRESS
-            )
-        );
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.updateCollection(collectionId, data);
     }
 
@@ -487,7 +467,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(makeAddr("athlete")),
             athletePrimarySalesBPS: 5000,
             athleteSecondarySalesBPS: 1000,
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: 100,
@@ -501,7 +480,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
                 IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_OTHER_EARNING_SHARE
             )
         );
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.updateCollection(collectionId, data);
     }
 
@@ -511,7 +490,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(makeAddr("athlete")),
             athletePrimarySalesBPS: 5000,
             athleteSecondarySalesBPS: 1000,
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: 100,
@@ -525,7 +503,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
                 IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_TOURNAMENT_EARNING_SHARE
             )
         );
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.updateCollection(collectionId, data);
     }
 
@@ -535,7 +513,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(makeAddr("athlete")),
             athletePrimarySalesBPS: 5000,
             athleteSecondarySalesBPS: 1000,
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: 100,
@@ -545,7 +522,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
         });
 
         address unauthorized = makeAddr("unauthorized");
-        expectMissingRole(unauthorized, fantiumNFT.MANAGER_ROLE());
+        expectMissingRole(unauthorized, fantiumNFT.DEFAULT_ADMIN_ROLE());
         vm.prank(unauthorized);
         fantiumNFT.updateCollection(collectionId, data);
     }
@@ -570,7 +547,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
         bool isMintable = true;
         bool isPaused = false;
 
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.setCollectionStatus(collectionId, isMintable, isPaused);
 
         Collection memory collection = fantiumNFT.collections(collectionId);
@@ -630,7 +607,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(athlete1),
             athletePrimarySalesBPS: 5000,
             athleteSecondarySalesBPS: 1000,
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: 100,
@@ -643,7 +619,6 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             athleteAddress: payable(athlete2),
             athletePrimarySalesBPS: 5000,
             athleteSecondarySalesBPS: 1000,
-            fantiumSalesAddress: payable(makeAddr("fantiumSales")),
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
             maxInvocations: 100,
@@ -652,10 +627,10 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
             tournamentEarningShare1e7: 2_500_000
         });
 
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         uint256 collectionId1 = fantiumNFT.createCollection(data1);
 
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.createCollection(data2);
 
         // Try to set status of collection1 as athlete2
@@ -696,7 +671,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
 
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.setCollectionStatus(collectionId, false, true);
 
         vm.expectRevert(
@@ -773,7 +748,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
         assertEq(fantiumRevenue, price - athleteRevenue, "Incorrect fantium revenue");
 
         // Verify addresses
-        assertEq(fantiumAddress, collection.fantiumSalesAddress, "Incorrect fantium address");
+        assertEq(fantiumAddress, fantiumNFT.treasury(), "Incorrect treasury address");
         assertEq(athleteAddress, collection.athleteAddress, "Incorrect athlete address");
     }
 
@@ -889,7 +864,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
     // ========================================================================
     function test_setBaseURI_ok_manager() public {
         string memory newBaseURI = "https://new.com/";
-        vm.prank(fantiumNFT_manager);
+        vm.prank(fantiumNFT_admin);
         fantiumNFT.setBaseURI(newBaseURI);
         assertEq(fantiumNFT.baseURI(), newBaseURI, "Base URI should be set");
     }
@@ -907,7 +882,7 @@ contract FANtiumNFTV6Test is BaseTest, FANtiumNFTFactory {
 
         string memory baseURIBefore = fantiumNFT.baseURI();
 
-        expectMissingRole(unauthorized, fantiumNFT.MANAGER_ROLE());
+        expectMissingRole(unauthorized, fantiumNFT.DEFAULT_ADMIN_ROLE());
         vm.prank(unauthorized);
         fantiumNFT.setBaseURI(newBaseURI);
         assertEq(fantiumNFT.baseURI(), baseURIBefore, "Base URI should not change");

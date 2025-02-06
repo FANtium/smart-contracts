@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumTokenV1 } from "../../src/FANtiumTokenV1.sol";
 import { UnsafeUpgrades } from "../../src/upgrades/UnsafeUpgrades.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { BaseTest } from "test/BaseTest.sol";
 
 contract FANtiumTokenFactory is BaseTest {
     // addresses

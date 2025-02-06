@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import { Script } from "forge-std/Script.sol";
-import { Upgrades, UnsafeUpgrades } from "@openzeppelin/foundry-upgrades/LegacyUpgrades.sol"; // v4 contracts
+import { UnsafeUpgrades, Upgrades } from "@openzeppelin/foundry-upgrades/LegacyUpgrades.sol";
+import { Script } from "forge-std/Script.sol"; // v4 contracts
 import { FANtiumTokenV1 } from "src/FANtiumTokenV1.sol";
 import { FootballTokenV1 } from "src/FootballTokenV1.sol";
 

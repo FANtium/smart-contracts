@@ -2,37 +2,36 @@
 pragma solidity 0.8.28;
 
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import { IERC20MetadataUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {
     ERC721Upgradeable,
     IERC165Upgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import { IERC20MetadataUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
+import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
 import {
-    IFANtiumNFT,
     Collection,
     CollectionData,
     CollectionErrorReason,
+    IFANtiumNFT,
     MintErrorReason,
     UpgradeErrorReason
 } from "src/interfaces/IFANtiumNFT.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
-import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
- * @title FANtium ERC721 contract V6.
+ * @title FANtium ERC721 contract V7.
  * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
- *
- * @custom:oz-upgrades-from src/archive/FANtiumNFTV5.sol:FantiumNFTV5
+ * @custom:oz-upgrades-from src/archive/FANtiumNFTV6.sol:FANtiumNFTV6
  */
-contract FANtiumNFTV6 is
+contract FANtiumNFTV7 is
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
@@ -42,6 +41,7 @@ contract FANtiumNFTV6 is
 {
     using StringsUpgradeable for uint256;
     using ECDSAUpgradeable for bytes32;
+    using SafeERC20Upgradeable for IERC20MetadataUpgradeable;
 
     // ========================================================================
     // Constants
@@ -56,7 +56,6 @@ contract FANtiumNFTV6 is
     // Roles
     // ========================================================================
     bytes32 public constant FORWARDER_ROLE = keccak256("FORWARDER_ROLE");
-    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
     bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
 
@@ -71,7 +70,7 @@ contract FANtiumNFTV6 is
     // ========================================================================
     /**
      * @notice Mapping of collection IDs to collection data.
-     * @custom:oz-renamed-from collections
+     * @custom:oz-retyped-from mapping(uint256 => Collection)
      */
     mapping(uint256 => Collection) private _collections;
 
@@ -83,14 +82,12 @@ contract FANtiumNFTV6 is
     /**
      * @notice Mapping of collection IDs to allowlist allocations.
      * @dev Deprecated: replaced by the userManager contract.
-     * @custom:oz-renamed-from collectionIdToAllowList
      */
     mapping(uint256 => mapping(address => uint256)) private UNUSED_collectionIdToAllowList;
 
     /**
      * @notice Mapping of addresses that have been KYCed.
      * @dev Deprecated: replaced by the userManager contract.
-     * @custom:oz-renamed-from kycedAddresses
      */
     mapping(address => bool) private UNUSED_kycedAddresses;
 
@@ -102,23 +99,20 @@ contract FANtiumNFTV6 is
     /**
      * @notice The ERC20 token used for payments, usually a stablecoin.
      */
-    address public erc20PaymentToken;
+    IERC20MetadataUpgradeable public erc20PaymentToken;
 
     /**
      * @dev Deprecated: replaced by the TOKEN_UPGRADER_ROLE.
-     * @custom:oz-renamed-from claimContract
      */
     address private UNUSED_claimContract;
 
     /**
      * @dev Use to retrieve user information such as KYC status, IDENT status, and allowlist allocations.
-     * @custom:oz-renamed-from fantiumUserManager
      */
     IFANtiumUserManager public userManager;
 
     /**
      * @dev Deprecated: replaced by the FORWARDER_ROLE.
-     * @custom:oz-renamed-from trustedForwarder
      */
     address private UNUSED_trustedForwarder;
 
@@ -127,6 +121,11 @@ contract FANtiumNFTV6 is
      * @dev Used to prevent replay attacks with the mintTo function.
      */
     mapping(address => uint256) public nonces;
+
+    /**
+     * @dev The FANtium treasury address.
+     */
+    address payable public treasury;
 
     // ========================================================================
     // UUPS upgradeable pattern
@@ -173,11 +172,6 @@ contract FANtiumNFTV6 is
         _;
     }
 
-    modifier onlyManagerOrAdmin() {
-        _checkRoleOrAdmin(MANAGER_ROLE);
-        _;
-    }
-
     function _checkRoleOrAdmin(bytes32 role) internal view virtual {
         if (!hasRole(role, _msgSender()) && !hasRole(DEFAULT_ADMIN_ROLE, _msgSender())) {
             revert(
@@ -196,11 +190,8 @@ contract FANtiumNFTV6 is
     // ========================================================================
     // Modifiers
     // ========================================================================
-    modifier onlyAthleteOrManagerOrAdmin(uint256 collectionId) {
-        if (
-            _msgSender() != _collections[collectionId].athleteAddress && !hasRole(MANAGER_ROLE, _msgSender())
-                && !hasRole(DEFAULT_ADMIN_ROLE, _msgSender())
-        ) {
+    modifier onlyAthleteOrAdmin(uint256 collectionId) {
+        if (_msgSender() != _collections[collectionId].athleteAddress && !hasRole(DEFAULT_ADMIN_ROLE, _msgSender())) {
             revert AthleteOnly(collectionId, _msgSender(), _collections[collectionId].athleteAddress);
         }
         _;
@@ -219,14 +210,14 @@ contract FANtiumNFTV6 is
     /**
      * @notice Update contract pause status to `_paused`.
      */
-    function pause() external onlyManagerOrAdmin {
+    function pause() external onlyAdmin {
         _pause();
     }
 
     /**
      * @notice Unpauses contract
      */
-    function unpause() external onlyManagerOrAdmin {
+    function unpause() external onlyAdmin {
         _unpause();
     }
 
@@ -264,7 +255,7 @@ contract FANtiumNFTV6 is
         public
         view
         virtual
-        override(IERC165Upgradeable, AccessControlUpgradeable, ERC721Upgradeable)
+        override (IERC165Upgradeable, AccessControlUpgradeable, ERC721Upgradeable)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
@@ -275,29 +266,38 @@ contract FANtiumNFTV6 is
     // ========================================================================
     /**
      * @notice Sets the base URI for the token metadata.
-     * @dev Restricted to manager or admin.
+     * @dev Restricted to admin.
      * @param baseURI_ The new base URI.
      */
-    function setBaseURI(string memory baseURI_) external whenNotPaused onlyManagerOrAdmin {
+    function setBaseURI(string memory baseURI_) external whenNotPaused onlyAdmin {
         baseURI = baseURI_;
     }
 
     /**
      * @notice Sets the user manager.
-     * @dev Restricted to manager or admin.
+     * @dev Restricted to admin.
      * @param _userManager The new user manager.
      */
-    function setUserManager(IFANtiumUserManager _userManager) external whenNotPaused onlyManagerOrAdmin {
+    function setUserManager(IFANtiumUserManager _userManager) external whenNotPaused onlyAdmin {
         userManager = _userManager;
     }
 
     /**
      * @notice Sets the ERC20 payment token.
-     * @dev Restricted to manager or admin.
+     * @dev Restricted to admin.
      * @param _erc20PaymentToken The new ERC20 payment token.
      */
-    function setERC20PaymentToken(address _erc20PaymentToken) external whenNotPaused onlyManagerOrAdmin {
+    function setERC20PaymentToken(IERC20MetadataUpgradeable _erc20PaymentToken) external whenNotPaused onlyAdmin {
         erc20PaymentToken = _erc20PaymentToken;
+    }
+
+    /**
+     * @notice Sets the FANtium treasury address.
+     * @dev Restricted to admin.
+     * @param _treasury The new FANtium treasury address.
+     */
+    function setTreasury(address payable _treasury) external whenNotPaused onlyAdmin {
+        treasury = _treasury;
     }
 
     // ========================================================================
@@ -332,10 +332,6 @@ contract FANtiumNFTV6 is
             revert InvalidCollection(CollectionErrorReason.INVALID_BPS_SUM);
         }
 
-        if (data.fantiumSalesAddress == address(0)) {
-            revert InvalidCollection(CollectionErrorReason.INVALID_FANTIUM_SALES_ADDRESS);
-        }
-
         if (data.maxInvocations >= MAX_INVOCATIONS) {
             revert InvalidCollection(CollectionErrorReason.INVALID_MAX_INVOCATIONS);
         }
@@ -357,11 +353,11 @@ contract FANtiumNFTV6 is
 
     /**
      * @notice Creates a new collection.
-     * @dev Restricted to manager or admin.
+     * @dev Restricted to admin.
      * @param data The new collection data.
      * @return collectionId The ID of the created collection.
      */
-    function createCollection(CollectionData memory data) external whenNotPaused onlyManagerOrAdmin returns (uint256) {
+    function createCollection(CollectionData memory data) external whenNotPaused onlyAdmin returns (uint256) {
         _checkCollectionData(data);
 
         uint256 collectionId = nextCollectionId++;
@@ -370,7 +366,7 @@ contract FANtiumNFTV6 is
             athletePrimarySalesBPS: data.athletePrimarySalesBPS,
             athleteSecondarySalesBPS: data.athleteSecondarySalesBPS,
             exists: true,
-            fantiumSalesAddress: data.fantiumSalesAddress,
+            UNUSED_fantiumSalesAddress: payable(address(0)),
             fantiumSecondarySalesBPS: data.fantiumSecondarySalesBPS,
             invocations: 0,
             isMintable: false,
@@ -389,7 +385,7 @@ contract FANtiumNFTV6 is
 
     /**
      * @notice Updates a collection.
-     * @dev Restricted to manager or admin.
+     * @dev Restricted to admin.
      * @param collectionId The collection ID to update.
      * @param data The new collection data.
      */
@@ -400,7 +396,7 @@ contract FANtiumNFTV6 is
         external
         onlyValidCollectionId(collectionId)
         whenNotPaused
-        onlyManagerOrAdmin
+        onlyAdmin
     {
         _checkCollectionData(data);
 
@@ -413,7 +409,6 @@ contract FANtiumNFTV6 is
         updatedCollection.athleteAddress = data.athleteAddress;
         updatedCollection.athletePrimarySalesBPS = data.athletePrimarySalesBPS;
         updatedCollection.athleteSecondarySalesBPS = data.athleteSecondarySalesBPS;
-        updatedCollection.fantiumSalesAddress = data.fantiumSalesAddress;
         updatedCollection.fantiumSecondarySalesBPS = data.fantiumSecondarySalesBPS;
         updatedCollection.launchTimestamp = data.launchTimestamp;
         updatedCollection.maxInvocations = data.maxInvocations;
@@ -442,7 +437,7 @@ contract FANtiumNFTV6 is
         external
         whenNotPaused
         onlyValidCollectionId(collectionId)
-        onlyAthleteOrManagerOrAdmin(collectionId)
+        onlyAthleteOrAdmin(collectionId)
     {
         _collections[collectionId].isMintable = isMintable;
         _collections[collectionId].isPaused = isPaused;
@@ -482,7 +477,7 @@ contract FANtiumNFTV6 is
         fantiumRevenue = amount - athleteRevenue;
 
         // set addresses from storage
-        fantiumAddress = collection.fantiumSalesAddress;
+        fantiumAddress = treasury;
         athleteAddress = collection.athleteAddress;
     }
 
@@ -498,16 +493,12 @@ contract FANtiumNFTV6 is
 
         // FANtium payment
         if (fantiumRevenue_ > 0) {
-            SafeERC20Upgradeable.safeTransferFrom(
-                IERC20Upgradeable(erc20PaymentToken), _sender, fantiumAddress_, fantiumRevenue_
-            );
+            erc20PaymentToken.safeTransferFrom(_sender, fantiumAddress_, fantiumRevenue_);
         }
 
         // athlete payment
         if (athleteRevenue_ > 0) {
-            SafeERC20Upgradeable.safeTransferFrom(
-                IERC20Upgradeable(erc20PaymentToken), _sender, athleteAddress_, athleteRevenue_
-            );
+            erc20PaymentToken.safeTransferFrom(_sender, athleteAddress_, athleteRevenue_);
         }
     }
 

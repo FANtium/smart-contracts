@@ -63,7 +63,7 @@ struct Collection {
     /**
      * @notice Address of the FANtium sales.
      */
-    address payable fantiumSalesAddress;
+    address payable UNUSED_fantiumSalesAddress;
     /**
      * @notice FANtium secondary sales share in 10,000 basis points.
      */
@@ -82,7 +82,6 @@ struct CollectionData {
     address payable athleteAddress;
     uint256 athletePrimarySalesBPS;
     uint256 athleteSecondarySalesBPS;
-    address payable fantiumSalesAddress;
     uint256 fantiumSecondarySalesBPS;
     uint256 launchTimestamp;
     uint256 maxInvocations;

@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
+import { IERC20MetadataUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { Script } from "forge-std/Script.sol";
 import { FANtiumClaimingV2 } from "src/FANtiumClaimingV2.sol";
-import { FANtiumNFTV6 } from "src/FANtiumNFTV6.sol";
+import { FANtiumNFTV7 } from "src/FANtiumNFTV7.sol";
 import { FANtiumTokenV1 } from "src/FANtiumTokenV1.sol";
 import { FANtiumUserManagerV2 } from "src/FANtiumUserManagerV2.sol";
 import { FootballTokenV1 } from "src/FootballTokenV1.sol";
@@ -22,12 +24,6 @@ contract DeployTestnet is Script {
      * See https://docs.gelato.network/web3-services/relay/supported-networks#gelatorelay1balanceerc2771.sol
      */
     address public constant GELATO_RELAYER_ERC2771 = 0x70997970c59CFA74a39a1614D165A84609f564c7;
-    address[3] public MANAGERS = [
-        0x65b3e69674927e10D6AFA307944F90580Df86b64, // @mat
-        0x514bcCad42f0F8584B7e1fEdccD2aaA4eE2f2c8E, // @alex
-        0xbb1937562c7243a02508e4BE008963a446C6C611 // @sylvain
-    ];
-
     /**
      * @dev USDC token on Polygon Amoy.
      * See Circle announcement: https://developers.circle.com/stablecoins/migrate-from-mumbai-to-amoy-testnet
@@ -36,9 +32,9 @@ contract DeployTestnet is Script {
 
     function run() public {
         vm.startBroadcast(vm.envUint("DEPLOYER_PRIVATE_KEY"));
-        FANtiumNFTV6 fantiumNFT = FANtiumNFTV6(
+        FANtiumNFTV7 fantiumNFT = FANtiumNFTV7(
             UnsafeUpgrades.deployUUPSProxy(
-                address(new FANtiumNFTV6()), abi.encodeCall(FANtiumNFTV6.initialize, (ADMIN))
+                address(new FANtiumNFTV7()), abi.encodeCall(FANtiumNFTV7.initialize, (ADMIN))
             )
         );
 
@@ -72,11 +68,8 @@ contract DeployTestnet is Script {
         vm.startBroadcast(vm.envUint("ADMIN_PRIVATE_KEY"));
         // FANtiumNFTV6 setup
         fantiumNFT.setUserManager(userManager);
-        fantiumNFT.setERC20PaymentToken(USDC);
+        fantiumNFT.setERC20PaymentToken(IERC20MetadataUpgradeable(USDC));
 
-        for (uint256 i = 0; i < MANAGERS.length; i++) {
-            fantiumNFT.grantRole(fantiumNFT.MANAGER_ROLE(), MANAGERS[i]);
-        }
         fantiumNFT.grantRole(fantiumNFT.FORWARDER_ROLE(), GELATO_RELAYER_ERC2771);
         fantiumNFT.grantRole(fantiumNFT.SIGNER_ROLE(), BACKEND_SIGNER);
         fantiumNFT.grantRole(fantiumNFT.TOKEN_UPGRADER_ROLE(), address(fantiumClaim));
@@ -84,9 +77,6 @@ contract DeployTestnet is Script {
         // FANtiumUserManagerV2 setup
         userManager.setFANtiumNFT(fantiumNFT);
         userManager.grantRole(userManager.FORWARDER_ROLE(), GELATO_RELAYER_ERC2771);
-        for (uint256 i = 0; i < MANAGERS.length; i++) {
-            userManager.grantRole(userManager.MANAGER_ROLE(), MANAGERS[i]);
-        }
         userManager.grantRole(userManager.KYC_MANAGER_ROLE(), BACKEND_SIGNER);
         userManager.grantRole(userManager.ALLOWLIST_MANAGER_ROLE(), BACKEND_SIGNER);
 
@@ -94,9 +84,6 @@ contract DeployTestnet is Script {
         fantiumClaim.setFANtiumNFT(fantiumNFT);
         fantiumClaim.setUserManager(userManager);
         fantiumClaim.setGlobalPayoutToken(USDC);
-        for (uint256 i = 0; i < MANAGERS.length; i++) {
-            fantiumClaim.grantRole(fantiumClaim.MANAGER_ROLE(), MANAGERS[i]);
-        }
 
         vm.stopBroadcast();
     }

@@ -1890,7 +1890,9 @@ library StringsUpgradeable {
                     mstore8(ptr, byte(mod(value, 10), _SYMBOLS))
                 }
                 value /= 10;
-                if (value == 0) break;
+                if (value == 0) {
+                    break;
+                }
             }
             return buffer;
         }
@@ -3287,7 +3289,7 @@ contract ERC721Upgradeable is
         public
         view
         virtual
-        override(ERC165Upgradeable, IERC165Upgradeable)
+        override (ERC165Upgradeable, IERC165Upgradeable)
         returns (bool)
     {
         return interfaceId == type(IERC721Upgradeable).interfaceId
@@ -3803,7 +3805,7 @@ contract FantiumNFTV4 is
         public
         view
         virtual
-        override(AccessControlUpgradeable, ERC721Upgradeable)
+        override (AccessControlUpgradeable, ERC721Upgradeable)
         returns (bool)
     {
         return interfaceId == _INTERFACE_ID_ERC2981_OVERRIDE || super.supportsInterface(interfaceId);

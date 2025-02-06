@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import { BaseTest } from "test/BaseTest.sol";
-import { Collection, CollectionData, IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
-import { FANtiumNFTFactory } from "test/setup/FANtiumNFTFactory.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import { Collection, CollectionData, IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
+import { BaseTest } from "test/BaseTest.sol";
+import { FANtiumNFTFactory } from "test/setup/FANtiumNFTFactory.sol";
 
-contract FANtiumNFTV6FuzzTest is BaseTest, FANtiumNFTFactory {
+contract FANtiumNFTV7FuzzTest is BaseTest, FANtiumNFTFactory {
     function setUp() public override {
         FANtiumNFTFactory.setUp();
     }
@@ -107,7 +107,7 @@ contract FANtiumNFTV6FuzzTest is BaseTest, FANtiumNFTFactory {
         assertEq(fantiumRevenue, price - athleteRevenue, "Incorrect fantium revenue");
 
         // Verify addresses
-        assertEq(fantiumAddress, collection.fantiumSalesAddress, "Incorrect fantium address");
+        assertEq(fantiumAddress, fantiumNFT.treasury(), "Incorrect treasury address");
         assertEq(athleteAddress, collection.athleteAddress, "Incorrect athlete address");
     }
 
@@ -115,13 +115,12 @@ contract FANtiumNFTV6FuzzTest is BaseTest, FANtiumNFTFactory {
         vm.assume(0 < athletePrimarySalesBPS && athletePrimarySalesBPS < 10_000);
         vm.assume(0 < price && price < 1_000_000 * 10 ** usdc.decimals());
 
-        vm.startPrank(fantiumNFT_manager);
+        vm.startPrank(fantiumNFT_admin);
         uint256 collectionId = fantiumNFT.createCollection(
             CollectionData({
                 athleteAddress: fantiumNFT_athlete,
                 athletePrimarySalesBPS: athletePrimarySalesBPS,
                 athleteSecondarySalesBPS: 0,
-                fantiumSalesAddress: fantiumNFT_treasuryPrimary,
                 fantiumSecondarySalesBPS: 0,
                 launchTimestamp: block.timestamp,
                 maxInvocations: 1000,
