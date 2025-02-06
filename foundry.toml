@@ -29,10 +29,6 @@ verbosity = 3
 fuzz = { runs = 1_000 }
 verbosity = 3
 
-[etherscan]
-amoy = { key = "${API_KEY_ETHERSCAN}" }
-polygon = { key = "${API_KEY_ETHERSCAN}" }
-
 [fmt]
 bracket_spacing = true
 hex_underscores = "remove"
@@ -48,5 +44,10 @@ tab_width = 4
 wrap_comments = true
 
 [rpc_endpoints]
-amoy = "https://polygon-amoy.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 polygon = "https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
+# amoy = "https://polygon-amoy.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
+amoy = "https://polygon-amoy.g.alchemy.com/v2/UurQT_ACJmrq7V1qhfR43IAypZlMeeLm"
+
+[etherscan]
+polygon = { key = "${ETHERSCAN_API_KEY}" }
+amoy = { key = "${ETHERSCAN_API_KEY}", url = "https://api-amoy.polygonscan.com/api" }
