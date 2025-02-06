@@ -70,7 +70,7 @@ contract FANtiumNFTV7 is
     // ========================================================================
     /**
      * @notice Mapping of collection IDs to collection data.
-     * @custom:oz-renamed-from collections
+     * @custom:oz-retyped-from mapping(uint256 => Collection)
      */
     mapping(uint256 => Collection) private _collections;
 
@@ -82,14 +82,12 @@ contract FANtiumNFTV7 is
     /**
      * @notice Mapping of collection IDs to allowlist allocations.
      * @dev Deprecated: replaced by the userManager contract.
-     * @custom:oz-renamed-from collectionIdToAllowList
      */
     mapping(uint256 => mapping(address => uint256)) private UNUSED_collectionIdToAllowList;
 
     /**
      * @notice Mapping of addresses that have been KYCed.
      * @dev Deprecated: replaced by the userManager contract.
-     * @custom:oz-renamed-from kycedAddresses
      */
     mapping(address => bool) private UNUSED_kycedAddresses;
 
@@ -105,27 +103,29 @@ contract FANtiumNFTV7 is
 
     /**
      * @dev Deprecated: replaced by the TOKEN_UPGRADER_ROLE.
-     * @custom:oz-renamed-from claimContract
      */
     address private UNUSED_claimContract;
 
     /**
      * @dev Use to retrieve user information such as KYC status, IDENT status, and allowlist allocations.
-     * @custom:oz-renamed-from fantiumUserManager
      */
     IFANtiumUserManager public userManager;
 
     /**
-     * @dev The FANtium treasury address.
-     * @custom:oz-renamed-from UNUSED_trustedForwarder
+     * @dev Deprecated: replaced by the FORWARDER_ROLE.
      */
-    address payable public treasury;
+    address private UNUSED_trustedForwarder;
 
     /**
      * @notice Mapping of addresses to their nonce.
      * @dev Used to prevent replay attacks with the mintTo function.
      */
     mapping(address => uint256) public nonces;
+
+    /**
+     * @dev The FANtium treasury address.
+     */
+    address payable public treasury;
 
     // ========================================================================
     // UUPS upgradeable pattern
