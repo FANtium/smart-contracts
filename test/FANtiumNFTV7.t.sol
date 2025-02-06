@@ -39,6 +39,49 @@ contract FANtiumNFTV7Test is BaseTest, FANtiumNFTFactory {
         assertEq(fantiumNFT.symbol(), "FAN");
     }
 
+    // pause
+    // ========================================================================
+    function test_pause_ok_admin() public {
+        vm.prank(fantiumNFT_admin);
+        fantiumNFT.pause();
+        assertTrue(fantiumNFT.paused());
+    }
+
+    function test_pause_revert_unauthorized() public {
+        address unauthorized = makeAddr("unauthorized");
+
+        expectMissingRole(unauthorized, fantiumNFT.DEFAULT_ADMIN_ROLE());
+        vm.prank(unauthorized);
+        fantiumNFT.pause();
+    }
+
+    // unpause
+    // ========================================================================
+    function test_unpause_ok_admin() public {
+        // First pause the contract
+        vm.prank(fantiumNFT_admin);
+        fantiumNFT.pause();
+        assertTrue(fantiumNFT.paused());
+
+        // Then unpause it
+        vm.prank(fantiumNFT_admin);
+        fantiumNFT.unpause();
+        assertFalse(fantiumNFT.paused());
+    }
+
+    function test_unpause_revert_unauthorized() public {
+        // First pause the contract
+        vm.prank(fantiumNFT_admin);
+        fantiumNFT.pause();
+        assertTrue(fantiumNFT.paused());
+
+        address unauthorized = makeAddr("unauthorized");
+
+        expectMissingRole(unauthorized, fantiumNFT.DEFAULT_ADMIN_ROLE());
+        vm.prank(unauthorized);
+        fantiumNFT.unpause();
+    }
+
     // setUserManager
     // ========================================================================
     function test_setUserManager_ok_manager() public {
