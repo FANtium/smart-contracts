@@ -3,15 +3,15 @@ pragma solidity 0.8.28;
 
 import { UnsafeUpgrades, Upgrades } from "@openzeppelin/foundry-upgrades/LegacyUpgrades.sol";
 import { Script } from "forge-std/Script.sol"; // v4 contracts
-
-import { console } from "forge-std/console.sol";
 import { FANtiumTokenV1 } from "src/FANtiumTokenV1.sol";
 import { FootballTokenV1 } from "src/FootballTokenV1.sol";
+
 /**
  * @notice Deploy a new instance of the FANtiumNFTV6 contract to the testnet.
  */
-
 contract DeployTestnet is Script {
+    error OnlyPolygonAmoyTestnet();
+
     address public constant ADMIN = 0xF00D14B2bf0b37177b6e13374aB4F34902Eb94fC;
     address public constant BACKEND_SIGNER = 0xCAFE914D4886B50edD339eee2BdB5d2350fdC809;
     address public constant DEPLOYER = 0xC0DE5408A46402B7Bd13678A43318c64E2c31EAA;
@@ -33,7 +33,7 @@ contract DeployTestnet is Script {
 
     function run() public {
         if (block.chainid != 80_002) {
-            revert("This script is only for the Polygon Amoy testnet");
+            revert OnlyPolygonAmoyTestnet();
         }
 
         vm.createSelectFork(vm.rpcUrl("amoy"));

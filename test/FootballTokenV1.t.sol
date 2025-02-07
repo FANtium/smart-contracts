@@ -5,7 +5,6 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { FootballTokenV1 } from "src/FootballTokenV1.sol";
 import {
     CollectionErrorReason,
-    FootballCollection,
     FootballCollectionData,
     IFootballTokenV1,
     MintErrorReason
