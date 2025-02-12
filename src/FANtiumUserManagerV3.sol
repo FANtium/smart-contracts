@@ -6,19 +6,18 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
-
 import { IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
+
 /**
- * @title FANtium User Manager contract V2.
+ * @title FANtium User Manager contract V3.
  * @notice Used to manage user information such as KYC status, IDENT status, and allowlist allocations.
  * @dev KYC is "soft verification" and IDENT is "hard verification".
  * @author Mathieu Bour - FANtium, based on previous work by MTX Studio AG
  *
- * @custom:oz-upgrades-from src/archive/FANtiumUserManagerV1.sol:FantiumUserManager
+ * @custom:oz-upgrades-from src/archive/FANtiumUserManagerV2.sol:FANtiumUserManagerV2
  */
-
-contract FANtiumUserManagerV2 is
+contract FANtiumUserManagerV3 is
     Initializable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
@@ -31,7 +30,6 @@ contract FANtiumUserManagerV2 is
     // Roles
     // ========================================================================
     bytes32 public constant FORWARDER_ROLE = keccak256("FORWARDER_ROLE");
-    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
     bytes32 public constant ALLOWLIST_MANAGER_ROLE = keccak256("ALLOWLIST_MANAGER_ROLE");
 
@@ -99,11 +97,6 @@ contract FANtiumUserManagerV2 is
         _;
     }
 
-    modifier onlyManagerOrAdmin() {
-        _checkRoleOrAdmin(MANAGER_ROLE);
-        _;
-    }
-
     function _checkRoleOrAdmin(bytes32 role) internal view virtual {
         if (!hasRole(role, _msgSender()) && !hasRole(DEFAULT_ADMIN_ROLE, _msgSender())) {
             revert(
@@ -125,14 +118,14 @@ contract FANtiumUserManagerV2 is
     /**
      * @notice Update contract pause status to `_paused`.
      */
-    function pause() external onlyManagerOrAdmin {
+    function pause() external onlyAdmin {
         _pause();
     }
 
     /**
      * @notice Unpauses contract
      */
-    function unpause() external onlyManagerOrAdmin {
+    function unpause() external onlyAdmin {
         _unpause();
     }
 

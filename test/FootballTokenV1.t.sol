@@ -68,7 +68,7 @@ contract FootballTokenV1Setup is BaseTest {
 }
 
 contract FootballTokenV1Test is FootballTokenV1Setup {
-    function test_initialize_ok() public {
+    function test_initialize_ok() public view {
         assertEq(footballToken.owner(), admin);
         assertEq(footballToken.treasury(), admin);
         assertEq(footballToken.name(), "FANtium Football");

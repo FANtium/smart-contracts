@@ -5,13 +5,13 @@ import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumUserManagerFactory } from "test/setup/FANtiumUserManagerFactory.sol";
 
-contract FANtiumUserManagerV2Test is BaseTest, FANtiumUserManagerFactory {
+contract FANtiumUserManagerV3Test is BaseTest, FANtiumUserManagerFactory {
     uint256 public constant MAX_ARRAY_LENGTH = 10_000;
 
     address public user1 = makeAddr("user1");
     address public user2 = makeAddr("user2");
 
-    // Need to copy the events from the FANtiumUserManagerV2 contract
+    // Need to copy the events from the FANtiumUserManagerV3 contract
     event KYCUpdate(address indexed account, bool isKYCed);
     event IDENTUpdate(address indexed account, bool isIDENT);
     event AllowListUpdate(address indexed account, uint256 indexed collectionId, uint256 amount);

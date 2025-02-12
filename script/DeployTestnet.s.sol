@@ -7,7 +7,7 @@ import { Script } from "forge-std/Script.sol";
 import { FANtiumClaimingV2 } from "src/FANtiumClaimingV2.sol";
 import { FANtiumNFTV7 } from "src/FANtiumNFTV7.sol";
 import { FANtiumTokenV1 } from "src/FANtiumTokenV1.sol";
-import { FANtiumUserManagerV2 } from "src/FANtiumUserManagerV2.sol";
+import { FANtiumUserManagerV3 } from "src/FANtiumUserManagerV3.sol";
 import { FootballTokenV1 } from "src/FootballTokenV1.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 
@@ -38,9 +38,9 @@ contract DeployTestnet is Script {
             )
         );
 
-        FANtiumUserManagerV2 userManager = FANtiumUserManagerV2(
+        FANtiumUserManagerV3 userManager = FANtiumUserManagerV3(
             UnsafeUpgrades.deployUUPSProxy(
-                address(new FANtiumUserManagerV2()), abi.encodeCall(FANtiumUserManagerV2.initialize, (ADMIN))
+                address(new FANtiumUserManagerV3()), abi.encodeCall(FANtiumUserManagerV3.initialize, (ADMIN))
             )
         );
 
@@ -74,7 +74,7 @@ contract DeployTestnet is Script {
         fantiumNFT.grantRole(fantiumNFT.SIGNER_ROLE(), BACKEND_SIGNER);
         fantiumNFT.grantRole(fantiumNFT.TOKEN_UPGRADER_ROLE(), address(fantiumClaim));
 
-        // FANtiumUserManagerV2 setup
+        // FANtiumUserManagerV3 setup
         userManager.setFANtiumNFT(fantiumNFT);
         userManager.grantRole(userManager.FORWARDER_ROLE(), GELATO_RELAYER_ERC2771);
         userManager.grantRole(userManager.KYC_MANAGER_ROLE(), BACKEND_SIGNER);

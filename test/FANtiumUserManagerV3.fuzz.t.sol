@@ -1,29 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import { FANtiumUserManagerV2 } from "src/FANtiumUserManagerV2.sol";
+import { FANtiumUserManagerV3 } from "src/FANtiumUserManagerV3.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumUserManagerFactory } from "test/setup/FANtiumUserManagerFactory.sol";
 
-contract FANtiumUserManagerV2FuzzTest is BaseTest, FANtiumUserManagerFactory {
+contract FANtiumUserManagerV3FuzzTest is BaseTest, FANtiumUserManagerFactory {
     uint256 public constant MAX_ARRAY_LENGTH = 10_000;
 
     address public user1 = makeAddr("user1");
     address public user2 = makeAddr("user2");
 
-    // Need to copy the events from the FANtiumUserManagerV2 contract
+    // Need to copy the events from the FANtiumUserManagerV3 contract
     event KYCUpdate(address indexed account, bool isKYCed);
     event IDENTUpdate(address indexed account, bool isIDENT);
     event AllowListUpdate(address indexed account, uint256 indexed collectionId, uint256 amount);
 
     function setUp() public virtual override {
-        address implementation = address(new FANtiumUserManagerV2());
+        address implementation = address(new FANtiumUserManagerV3());
         address proxy = UnsafeUpgrades.deployUUPSProxy(
-            implementation, abi.encodeCall(FANtiumUserManagerV2.initialize, (userManager_admin))
+            implementation, abi.encodeCall(FANtiumUserManagerV3.initialize, (userManager_admin))
         );
-        userManager = FANtiumUserManagerV2(proxy);
+        userManager = FANtiumUserManagerV3(proxy);
 
         // Setup roles
         vm.startPrank(userManager_admin);

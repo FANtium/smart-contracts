@@ -55,7 +55,6 @@ contract FANtiumNFTV7 is
     // Roles
     // ========================================================================
     bytes32 public constant FORWARDER_ROLE = keccak256("FORWARDER_ROLE");
-    bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
     bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
 
     /**
