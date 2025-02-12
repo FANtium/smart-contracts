@@ -19,7 +19,7 @@ contract DeployTestnet is Script {
     bool public FANTIUM_NFT_UPGRADE = true;
     address public constant FANTIUM_NFT_PROXY = 0x4d09f47fd98196CDFC816be9e84Fb15bCDB92612;
 
-    bool public FANTIUM_USER_MANAGER_UPGRADE = false;
+    bool public FANTIUM_USER_MANAGER_UPGRADE = true;
     address public constant FANTIUM_USER_MANAGER_PROXY = 0x54dF3fb8B090A3FBf583e29e8fBd388A0179F4A2;
 
     bool public FANTIUM_CLAIMING_UPGRADE = false;
