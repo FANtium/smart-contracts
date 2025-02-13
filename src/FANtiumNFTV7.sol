@@ -160,29 +160,9 @@ contract FANtiumNFTV7 is
     // ========================================================================
     // Access control
     // ========================================================================
-    modifier onlyRoleOrAdmin(bytes32 role) {
-        _checkRoleOrAdmin(role);
-        _;
-    }
-
     modifier onlyAdmin() {
         _checkRole(DEFAULT_ADMIN_ROLE);
         _;
-    }
-
-    function _checkRoleOrAdmin(bytes32 role) internal view virtual {
-        if (!hasRole(role, _msgSender()) && !hasRole(DEFAULT_ADMIN_ROLE, _msgSender())) {
-            revert(
-                string(
-                    abi.encodePacked(
-                        "AccessControl: account ",
-                        StringsUpgradeable.toHexString(_msgSender()),
-                        " is missing role ",
-                        StringsUpgradeable.toHexString(uint256(role), 32)
-                    )
-                )
-            );
-        }
     }
 
     // ========================================================================
