@@ -25,10 +25,10 @@ contract DeployTestnet is Script {
     bool public FANTIUM_CLAIMING_UPGRADE = false;
     address public constant FANTIUM_CLAIMING_PROXY = 0xB578fb2A0BC49892806DC7309Dbe809f23F4682F;
 
-    bool public FANTIUM_TOKEN_UPGRADE = true;
+    bool public FANTIUM_TOKEN_UPGRADE = false;
     address public constant FANTIUM_TOKEN_PROXY = 0xd5E5cFf4858AD04D40Cbac54413fADaF8b717914;
 
-    bool public FOOTBALL_TOKEN_UPGRADE = true;
+    bool public FOOTBALL_TOKEN_UPGRADE = false;
     address public constant FOOTBALL_TOKEN_PROXY = 0x1BDc15D1c0eDfc14E2CD8CE0Ac8a6610bB28f456;
 
     function run() public {
