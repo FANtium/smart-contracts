@@ -162,60 +162,6 @@ contract FootballTokenV1 is
         return collections[tokenToCollection[tokenId]];
     }
 
-    /**
-     * @notice Mints new tokens from a collection to a recipient address
-     * @param collectionId The ID of the collection to mint from
-     * @param quantity The number of tokens to mint
-     * @param recipient The address that will receive the minted tokens
-     * @param paymentToken The ERC20 token address used for payment
-     */
-    function mintTo(uint256 collectionId, uint256 quantity, address recipient, address paymentToken) external {
-        if ((collectionId > nextCollectionIndex)) {
-            revert MintError(MintErrorReason.COLLECTION_NOT_EXISTING);
-        }
-        if (quantity == 0) {
-            revert MintError(MintErrorReason.MINT_ZERO_QUANTITY);
-        }
-
-        if (recipient == address(0)) {
-            revert MintError(MintErrorReason.MINT_BAD_ADDRESS);
-        }
-
-        if (!acceptedTokens[paymentToken]) {
-            revert MintError(MintErrorReason.MINT_ERC20_NOT_ACCEPTED);
-        }
-
-        FootballCollection storage currentCollection = collections[collectionId];
-
-        if (block.timestamp < currentCollection.startDate || block.timestamp > currentCollection.closeDate) {
-            revert MintError(MintErrorReason.MINT_NOT_OPENED);
-        }
-
-        uint256 decimals = IERC20MetadataUpgradeable(paymentToken).decimals();
-
-        if (currentCollection.maxSupply < currentCollection.supply + quantity) {
-            revert MintError(MintErrorReason.MINT_MAX_SUPPLY_REACH);
-        }
-
-        uint256 price = currentCollection.priceUSD * quantity * 10 ** decimals;
-        uint256 lastId = _totalMinted(); // start at  0;
-
-        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(paymentToken), _msgSender(), treasury, price);
-        _mint(recipient, quantity);
-
-        uint256[] memory tokenIds = new uint256[](quantity);
-        uint256 i = 0;
-
-        for (uint256 tokenId = lastId; tokenId < lastId + quantity; tokenId++) {
-            tokenToCollection[tokenId] = collectionId;
-            tokenIds[i++] = tokenId;
-        }
-
-        currentCollection.supply = lastId + quantity;
-
-        emit TokensMinted(collectionId, recipient, tokenIds);
-    }
-
     // ========================================================================
     // Collection Admin Functions
     // ========================================================================
@@ -301,5 +247,89 @@ contract FootballTokenV1 is
         FootballCollection storage updatedCollection = collections[collectionId];
         updatedCollection.isPaused = isPaused;
         emit CollectionPausedUpdate(collectionId, isPaused);
+    }
+
+    // ========================================================================
+    // Minting
+    // ========================================================================
+    /**
+     * @notice Mints new tokens from a collection to a recipient address
+     * @param collectionId The ID of the collection to mint from
+     * @param quantity The number of tokens to mint
+     * @param recipient The address that will receive the minted tokens
+     * @param paymentToken The ERC20 token address used for payment
+     */
+    function mintTo(uint256 collectionId, uint256 quantity, address recipient, address paymentToken) external {
+        if ((collectionId > nextCollectionIndex)) {
+            revert MintError(MintErrorReason.COLLECTION_NOT_EXISTING);
+        }
+        if (quantity == 0) {
+            revert MintError(MintErrorReason.MINT_ZERO_QUANTITY);
+        }
+
+        if (recipient == address(0)) {
+            revert MintError(MintErrorReason.MINT_BAD_ADDRESS);
+        }
+
+        if (!acceptedTokens[paymentToken]) {
+            revert MintError(MintErrorReason.MINT_ERC20_NOT_ACCEPTED);
+        }
+
+        FootballCollection storage currentCollection = collections[collectionId];
+
+        if (block.timestamp < currentCollection.startDate || block.timestamp > currentCollection.closeDate) {
+            revert MintError(MintErrorReason.MINT_NOT_OPENED);
+        }
+
+        uint256 decimals = IERC20MetadataUpgradeable(paymentToken).decimals();
+
+        if (currentCollection.maxSupply < currentCollection.supply + quantity) {
+            revert MintError(MintErrorReason.MINT_MAX_SUPPLY_REACH);
+        }
+
+        uint256 price = currentCollection.priceUSD * quantity * 10 ** decimals;
+        uint256 lastId = _totalMinted(); // start at  0;
+
+        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(paymentToken), _msgSender(), treasury, price);
+        _mint(recipient, quantity);
+
+        uint256[] memory tokenIds = new uint256[](quantity);
+        uint256 i = 0;
+
+        for (uint256 tokenId = lastId; tokenId < lastId + quantity; tokenId++) {
+            tokenToCollection[tokenId] = collectionId;
+            tokenIds[i++] = tokenId;
+        }
+
+        currentCollection.supply = lastId + quantity;
+
+        emit TokensMinted(collectionId, recipient, tokenIds);
+    }
+
+    // ========================================================================
+    // Batch transfer functions
+    // ========================================================================
+    /**
+     * @notice Batch transfer NFTs from one address to another.
+     * @param from The address to transfer the NFTs from.
+     * @param to The address to transfer the NFTs to.
+     * @param tokenIds The IDs of the NFTs to transfer.
+     */
+    function batchTransferFrom(address from, address to, uint256[] memory tokenIds) public whenNotPaused {
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            transferFrom(from, to, tokenIds[i]);
+        }
+    }
+
+    /**
+     * @notice Batch safe transfer NFTs from one address to another.
+     * @param from The address to transfer the NFTs from.
+     * @param to The address to transfer the NFTs to.
+     * @param tokenIds The IDs of the NFTs to transfer.
+     */
+    function batchSafeTransferFrom(address from, address to, uint256[] memory tokenIds) public whenNotPaused {
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            safeTransferFrom(from, to, tokenIds[i]);
+        }
     }
 }

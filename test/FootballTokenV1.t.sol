@@ -68,6 +68,8 @@ contract FootballTokenV1Setup is BaseTest {
 }
 
 contract FootballTokenV1Test is FootballTokenV1Setup {
+    // initialize
+    // ========================================================================
     function test_initialize_ok() public view {
         assertEq(footballToken.owner(), admin);
         assertEq(footballToken.treasury(), admin);
@@ -75,6 +77,83 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         assertEq(footballToken.symbol(), "FANT");
     }
 
+    // TODO: test_initialize_revert_alreadyInitialized
+
+    // pause
+    // ========================================================================
+    function test_pause_unpause_ok() public {
+        vm.prank(admin);
+        footballToken.pause();
+        assertTrue(footballToken.paused());
+
+        vm.prank(admin);
+        footballToken.unpause();
+        assertFalse(footballToken.paused());
+    }
+
+    // TODO: test_pause_revert_notOwner
+    // TODO: test_unpause_revert_notOwner
+    // TODO: test_pause_revert_alreadyPaused
+    // TODO: test_unpause_revert_notPaused
+
+    // setAcceptedTokens
+    // ========================================================================
+    function test_setAcceptedTokens_ok() public {
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(usdc);
+        tokens[1] = address(erc20);
+
+        vm.prank(admin);
+        footballToken.setAcceptedTokens(tokens, true);
+
+        FootballCollectionData memory collection = FootballCollectionData({
+            name: "Test Collection",
+            priceUSD: 100,
+            maxSupply: 100,
+            startDate: block.timestamp,
+            closeDate: block.timestamp + 7 days,
+            isPaused: false,
+            team: team
+        });
+
+        vm.prank(admin);
+        footballToken.createCollection(collection);
+
+        vm.startPrank(user);
+        usdc.approve(address(footballToken), type(uint256).max);
+        erc20.approve(address(footballToken), type(uint256).max);
+
+        footballToken.mintTo(0, 1, user, address(usdc));
+        footballToken.mintTo(0, 1, user, address(erc20));
+        vm.stopPrank();
+    }
+
+    // TODO: test_setAcceptedTokens_revert_notOwner
+    // TODO: test_setAcceptedTokens_revert_zeroAddress
+
+    // setTreasury
+    // ========================================================================
+    function test_setTreasury_ok() public {
+        address newTreasury = makeAddr("newTreasury");
+
+        vm.prank(admin);
+        footballToken.setTreasury(newTreasury);
+
+        assertEq(footballToken.treasury(), newTreasury);
+    }
+
+    function test_setTreasury_revert_notAdmin() public {
+        address newTreasury = makeAddr("newTreasury");
+
+        vm.prank(user);
+        vm.expectRevert();
+        footballToken.setTreasury(newTreasury);
+    }
+
+    // TODO: test_setTreasury_revert_zeroAddress
+
+    // createCollection
+    // ========================================================================
     function test_createCollection_ok() public {
         FootballCollectionData memory collection = FootballCollectionData({
             name: "Test Collection",
@@ -90,53 +169,6 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         footballToken.createCollection(collection);
 
         assertEq(footballToken.nextCollectionIndex(), 1);
-    }
-
-    function test_updateCollection_ok() public {
-        FootballCollectionData memory collection = FootballCollectionData({
-            name: "Test Collection",
-            priceUSD: 700,
-            maxSupply: 100,
-            startDate: block.timestamp + 1 days,
-            closeDate: block.timestamp + 7 days,
-            isPaused: false,
-            team: team
-        });
-
-        vm.prank(admin);
-        footballToken.createCollection(collection);
-
-        FootballCollectionData memory updatedCollection = FootballCollectionData({
-            name: "Updated Collection",
-            priceUSD: 800,
-            maxSupply: 200,
-            startDate: block.timestamp + 1 days,
-            closeDate: block.timestamp + 14 days,
-            isPaused: true,
-            team: makeAddr("newTeam")
-        });
-
-        vm.prank(admin);
-        footballToken.updateCollection(1, updatedCollection);
-
-        (
-            string memory name,
-            uint256 priceUSD,
-            uint256 supply,
-            uint256 maxSupply,
-            uint256 startDate,
-            uint256 closeDate,
-            bool isPaused,
-            address team
-        ) = footballToken.collections(1);
-        assertEq(name, "Updated Collection");
-        assertEq(priceUSD, 800);
-        assertEq(supply, 0);
-        assertEq(maxSupply, 200);
-        assertEq(startDate, block.timestamp + 1 days);
-        assertEq(closeDate, block.timestamp + 14 days);
-        assertEq(isPaused, true);
-        assertEq(team, makeAddr("newTeam"));
     }
 
     function test_createCollection_revert_invalidDates() public {
@@ -213,19 +245,28 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         footballToken.createCollection(collection);
     }
 
-    function test_setAcceptedTokens_ok() public {
-        address[] memory tokens = new address[](2);
-        tokens[0] = address(usdc);
-        tokens[1] = address(erc20);
-
-        vm.prank(admin);
-        footballToken.setAcceptedTokens(tokens, true);
-
+    function test_createCollection_revert_notAdmin() public {
         FootballCollectionData memory collection = FootballCollectionData({
             name: "Test Collection",
             priceUSD: 100,
             maxSupply: 100,
-            startDate: block.timestamp,
+            startDate: block.timestamp + 1 days,
+            closeDate: block.timestamp + 7 days,
+            isPaused: false,
+            team: team
+        });
+
+        vm.prank(user);
+        vm.expectRevert();
+        footballToken.createCollection(collection);
+    }
+
+    function test_updateCollection_ok() public {
+        FootballCollectionData memory collection = FootballCollectionData({
+            name: "Test Collection",
+            priceUSD: 700,
+            maxSupply: 100,
+            startDate: block.timestamp + 1 days,
             closeDate: block.timestamp + 7 days,
             isPaused: false,
             team: team
@@ -234,15 +275,65 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         vm.prank(admin);
         footballToken.createCollection(collection);
 
-        vm.startPrank(user);
-        usdc.approve(address(footballToken), type(uint256).max);
-        erc20.approve(address(footballToken), type(uint256).max);
+        FootballCollectionData memory updatedCollection = FootballCollectionData({
+            name: "Updated Collection",
+            priceUSD: 800,
+            maxSupply: 200,
+            startDate: block.timestamp + 1 days,
+            closeDate: block.timestamp + 14 days,
+            isPaused: true,
+            team: makeAddr("newTeam")
+        });
 
-        footballToken.mintTo(0, 1, user, address(usdc));
-        footballToken.mintTo(0, 1, user, address(erc20));
-        vm.stopPrank();
+        vm.prank(admin);
+        footballToken.updateCollection(1, updatedCollection);
+
+        (
+            string memory name,
+            uint256 priceUSD,
+            uint256 supply,
+            uint256 maxSupply,
+            uint256 startDate,
+            uint256 closeDate,
+            bool isPaused,
+            address team
+        ) = footballToken.collections(1);
+        assertEq(name, "Updated Collection");
+        assertEq(priceUSD, 800);
+        assertEq(supply, 0);
+        assertEq(maxSupply, 200);
+        assertEq(startDate, block.timestamp + 1 days);
+        assertEq(closeDate, block.timestamp + 14 days);
+        assertEq(isPaused, true);
+        assertEq(team, makeAddr("newTeam"));
     }
 
+    function test_updateCollection_revert_notAdmin() public {
+        FootballCollectionData memory collection = FootballCollectionData({
+            name: "Test Collection",
+            priceUSD: 100,
+            maxSupply: 100,
+            startDate: block.timestamp + 1 days,
+            closeDate: block.timestamp + 7 days,
+            isPaused: false,
+            team: team
+        });
+
+        vm.prank(admin);
+        footballToken.createCollection(collection);
+
+        collection.name = "Updated Collection";
+        vm.prank(user);
+        vm.expectRevert();
+        footballToken.updateCollection(1, collection);
+    }
+
+    // TODO: test_updateCollection_revert_nonexistentCollection
+    // TODO: test_updateCollection_revert_whenPaused
+    // TODO: test_updateCollection_revert_startDateAfterMinting
+
+    // setPauseCollection
+    // ========================================================================
     function test_setPauseCollection_ok() public {
         FootballCollectionData memory collection = FootballCollectionData({
             name: "Test Collection",
@@ -261,7 +352,6 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         footballToken.setPauseCollection(1, true);
 
         (,,,,,, bool isPaused,) = footballToken.collections(1);
-
         assertTrue(isPaused);
 
         vm.prank(admin);
@@ -271,6 +361,31 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         assertFalse(isPausedUpdated);
     }
 
+    function test_pauseCollection_revert_notAdmin() public {
+        FootballCollectionData memory collection = FootballCollectionData({
+            name: "Test Collection",
+            priceUSD: 100,
+            maxSupply: 100,
+            startDate: block.timestamp + 1 days,
+            closeDate: block.timestamp + 7 days,
+            isPaused: false,
+            team: team
+        });
+
+        vm.prank(admin);
+        footballToken.createCollection(collection);
+
+        vm.prank(user);
+        vm.expectRevert();
+        footballToken.setPauseCollection(1, true);
+    }
+
+    // TODO: test_setPauseCollection_revert_nonexistentCollection
+    // TODO: test_setPauseCollection_revert_whenContractPaused
+    // TODO: test_setPauseCollection_revert_alreadyInRequestedState
+
+    // mintTo
+    // ========================================================================
     function test_mintTo_ok() public {
         FootballCollectionData memory collection = FootballCollectionData({
             name: "Test Collection",
@@ -630,75 +745,27 @@ contract FootballTokenV1Test is FootballTokenV1Setup {
         vm.stopPrank();
     }
 
-    function test_createCollection_revert_notAdmin() public {
-        FootballCollectionData memory collection = FootballCollectionData({
-            name: "Test Collection",
-            priceUSD: 100,
-            maxSupply: 100,
-            startDate: block.timestamp + 1 days,
-            closeDate: block.timestamp + 7 days,
-            isPaused: false,
-            team: team
-        });
+    // TODO: test_mintTo_revert_whenContractPaused
+    // TODO: test_mintTo_revert_whenCollectionPaused
+    // TODO: test_mintTo_revert_insufficientAllowance
+    // TODO: test_mintTo_revert_insufficientBalance
 
-        vm.prank(user);
-        vm.expectRevert();
-        footballToken.createCollection(collection);
-    }
+    // tokenCollection
+    // ========================================================================
+    // TODO: test_tokenCollection_ok
+    // TODO: test_tokenCollection_revert_nonexistentToken
 
-    function test_updateCollection_revert_notAdmin() public {
-        FootballCollectionData memory collection = FootballCollectionData({
-            name: "Test Collection",
-            priceUSD: 100,
-            maxSupply: 100,
-            startDate: block.timestamp + 1 days,
-            closeDate: block.timestamp + 7 days,
-            isPaused: false,
-            team: team
-        });
+    // batchTransferFrom
+    // ========================================================================
+    // TODO: test_batchTransferFrom_ok
+    // TODO: test_batchTransferFrom_revert_whenPaused
+    // TODO: test_batchTransferFrom_revert_notOwnerOrApproved
+    // TODO: test_batchTransferFrom_revert_toZeroAddress
 
-        vm.prank(admin);
-        footballToken.createCollection(collection);
-
-        collection.name = "Updated Collection";
-        vm.prank(user);
-        vm.expectRevert();
-        footballToken.updateCollection(1, collection);
-    }
-
-    function test_pauseCollection_revert_notAdmin() public {
-        FootballCollectionData memory collection = FootballCollectionData({
-            name: "Test Collection",
-            priceUSD: 100,
-            maxSupply: 100,
-            startDate: block.timestamp + 1 days,
-            closeDate: block.timestamp + 7 days,
-            isPaused: false,
-            team: team
-        });
-
-        vm.prank(admin);
-        footballToken.createCollection(collection);
-
-        vm.prank(user);
-        vm.expectRevert();
-        footballToken.setPauseCollection(1, true);
-    }
-
-    function test_setTreasury_ok() public {
-        address newTreasury = makeAddr("newTreasury");
-
-        vm.prank(admin);
-        footballToken.setTreasury(newTreasury);
-
-        assertEq(footballToken.treasury(), newTreasury);
-    }
-
-    function test_setTreasury_revert_notAdmin() public {
-        address newTreasury = makeAddr("newTreasury");
-
-        vm.prank(user);
-        vm.expectRevert();
-        footballToken.setTreasury(newTreasury);
-    }
+    // batchSafeTransferFrom
+    // ========================================================================
+    // TODO: test_batchSafeTransferFrom_ok
+    // TODO: test_batchSafeTransferFrom_revert_whenPaused
+    // TODO: test_batchSafeTransferFrom_revert_notOwnerOrApproved
+    // TODO: test_batchSafeTransferFrom_revert_toZeroAddress
 }

@@ -82,24 +82,6 @@ contract FANtiumNFTV7Test is BaseTest, FANtiumNFTFactory {
         fantiumNFT.unpause();
     }
 
-    // setUserManager
-    // ========================================================================
-    function test_setUserManager_ok_manager() public {
-        address newUserManager = makeAddr("newUserManager");
-
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.setUserManager(IFANtiumUserManager(newUserManager));
-        assertEq(address(fantiumNFT.userManager()), newUserManager);
-    }
-
-    function test_setUserManager_ok_admin() public {
-        address newUserManager = makeAddr("newUserManager");
-
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.setUserManager(IFANtiumUserManager(newUserManager));
-        assertEq(address(fantiumNFT.userManager()), newUserManager);
-    }
-
     // supportsInterface
     // ========================================================================
     function test_supportsInterface_ok() public view {
@@ -122,6 +104,52 @@ contract FANtiumNFTV7Test is BaseTest, FANtiumNFTFactory {
         // Random interface ID (should return false)
         bytes4 randomInterfaceId = 0x12345678;
         assertFalse(fantiumNFT.supportsInterface(randomInterfaceId), "Should not support random interface");
+    }
+
+    // setBaseURI
+    // ========================================================================
+    function test_setBaseURI_ok_manager() public {
+        string memory newBaseURI = "https://new.com/";
+        vm.prank(fantiumNFT_admin);
+        fantiumNFT.setBaseURI(newBaseURI);
+        assertEq(fantiumNFT.baseURI(), newBaseURI, "Base URI should be set");
+    }
+
+    function test_setBaseURI_ok_admin() public {
+        string memory newBaseURI = "https://new.com/";
+        vm.prank(fantiumNFT_admin);
+        fantiumNFT.setBaseURI(newBaseURI);
+        assertEq(fantiumNFT.baseURI(), newBaseURI, "Base URI should be set");
+    }
+
+    function test_setBaseURI_unauthorized() public {
+        string memory newBaseURI = "https://new.com/";
+        address unauthorized = makeAddr("unauthorized");
+
+        string memory baseURIBefore = fantiumNFT.baseURI();
+
+        expectMissingRole(unauthorized, fantiumNFT.DEFAULT_ADMIN_ROLE());
+        vm.prank(unauthorized);
+        fantiumNFT.setBaseURI(newBaseURI);
+        assertEq(fantiumNFT.baseURI(), baseURIBefore, "Base URI should not change");
+    }
+
+    // setUserManager
+    // ========================================================================
+    function test_setUserManager_ok_manager() public {
+        address newUserManager = makeAddr("newUserManager");
+
+        vm.prank(fantiumNFT_admin);
+        fantiumNFT.setUserManager(IFANtiumUserManager(newUserManager));
+        assertEq(address(fantiumNFT.userManager()), newUserManager);
+    }
+
+    function test_setUserManager_ok_admin() public {
+        address newUserManager = makeAddr("newUserManager");
+
+        vm.prank(fantiumNFT_admin);
+        fantiumNFT.setUserManager(IFANtiumUserManager(newUserManager));
+        assertEq(address(fantiumNFT.userManager()), newUserManager);
     }
 
     // createCollection
@@ -860,32 +888,144 @@ contract FANtiumNFTV7Test is BaseTest, FANtiumNFTFactory {
         fantiumNFT.mintTo(collectionId, quantity, recipient, amountUSDC, signature);
     }
 
-    // setBaseURI
+    // batchTransferFrom
     // ========================================================================
-    function test_setBaseURI_ok_manager() public {
-        string memory newBaseURI = "https://new.com/";
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.setBaseURI(newBaseURI);
-        assertEq(fantiumNFT.baseURI(), newBaseURI, "Base URI should be set");
+    function test_batchTransferFrom_ok() public {
+        // Mint multiple tokens to the recipient
+        uint256 collectionId = 1;
+        uint24 quantity = 5;
+        uint256 lastTokenId = mintTo(collectionId, quantity, recipient);
+        uint256 firstTokenId = lastTokenId - quantity + 1;
+
+        address newOwner = makeAddr("newOwner");
+        uint256[] memory tokenIds = new uint256[](quantity);
+        for (uint256 i = 0; i < quantity; i++) {
+            tokenIds[i] = firstTokenId + i;
+        }
+
+        // Approve operator
+        vm.prank(recipient);
+        fantiumNFT.setApprovalForAll(address(this), true);
+
+        fantiumNFT.batchTransferFrom(recipient, newOwner, tokenIds);
+
+        // Verify ownership transfer
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            assertEq(fantiumNFT.ownerOf(tokenIds[i]), newOwner);
+        }
     }
 
-    function test_setBaseURI_ok_admin() public {
-        string memory newBaseURI = "https://new.com/";
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.setBaseURI(newBaseURI);
-        assertEq(fantiumNFT.baseURI(), newBaseURI, "Base URI should be set");
+    function test_batchTransferFrom_revert_unauthorized() public {
+        // Mint multiple tokens to the recipient
+        uint256 collectionId = 1;
+        uint24 quantity = 5;
+        uint256 lastTokenId = mintTo(collectionId, quantity, recipient);
+        uint256 firstTokenId = lastTokenId - quantity + 1;
+
+        address newOwner = makeAddr("newOwner");
+        uint256[] memory tokenIds = new uint256[](quantity);
+        for (uint256 i = 0; i < quantity; i++) {
+            tokenIds[i] = firstTokenId + i;
+        }
+
+        // Don't approve operator
+        vm.expectRevert("ERC721: caller is not token owner or approved");
+        fantiumNFT.batchTransferFrom(recipient, newOwner, tokenIds);
     }
 
-    function test_setBaseURI_unauthorized() public {
-        string memory newBaseURI = "https://new.com/";
-        address unauthorized = makeAddr("unauthorized");
+    function test_batchTransferFrom_revert_whenPaused() public {
+        // Mint multiple tokens to the recipient
+        uint256 collectionId = 1;
+        uint24 quantity = 5;
+        uint256 lastTokenId = mintTo(collectionId, quantity, recipient);
+        uint256 firstTokenId = lastTokenId - quantity + 1;
 
-        string memory baseURIBefore = fantiumNFT.baseURI();
+        address newOwner = makeAddr("newOwner");
+        uint256[] memory tokenIds = new uint256[](quantity);
+        for (uint256 i = 0; i < quantity; i++) {
+            tokenIds[i] = firstTokenId + i;
+        }
 
-        expectMissingRole(unauthorized, fantiumNFT.DEFAULT_ADMIN_ROLE());
-        vm.prank(unauthorized);
-        fantiumNFT.setBaseURI(newBaseURI);
-        assertEq(fantiumNFT.baseURI(), baseURIBefore, "Base URI should not change");
+        // Approve operator
+        vm.prank(recipient);
+        fantiumNFT.setApprovalForAll(address(this), true);
+
+        // Pause the contract
+        vm.prank(fantiumNFT_admin);
+        fantiumNFT.pause();
+
+        vm.expectRevert("Pausable: paused");
+        fantiumNFT.batchTransferFrom(recipient, newOwner, tokenIds);
+    }
+
+    // batchSafeTransferFrom
+    // ========================================================================
+    function test_batchSafeTransferFrom_ok_to_eoa() public {
+        // Mint multiple tokens to the recipient
+        uint256 collectionId = 1;
+        uint24 quantity = 5;
+        uint256 lastTokenId = mintTo(collectionId, quantity, recipient);
+        uint256 firstTokenId = lastTokenId - quantity + 1;
+
+        address newOwner = makeAddr("newOwner");
+        uint256[] memory tokenIds = new uint256[](quantity);
+        for (uint256 i = 0; i < quantity; i++) {
+            tokenIds[i] = firstTokenId + i;
+        }
+
+        // Approve operator
+        vm.prank(recipient);
+        fantiumNFT.setApprovalForAll(address(this), true);
+
+        fantiumNFT.batchSafeTransferFrom(recipient, newOwner, tokenIds);
+
+        // Verify ownership transfer
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            assertEq(fantiumNFT.ownerOf(tokenIds[i]), newOwner);
+        }
+    }
+
+    function test_batchSafeTransferFrom_revert_unauthorized() public {
+        // Mint multiple tokens to the recipient
+        uint256 collectionId = 1;
+        uint24 quantity = 5;
+        uint256 lastTokenId = mintTo(collectionId, quantity, recipient);
+        uint256 firstTokenId = lastTokenId - quantity + 1;
+
+        address newOwner = makeAddr("newOwner");
+        uint256[] memory tokenIds = new uint256[](quantity);
+        for (uint256 i = 0; i < quantity; i++) {
+            tokenIds[i] = firstTokenId + i;
+        }
+
+        // Don't approve operator
+        vm.expectRevert("ERC721: caller is not token owner or approved");
+        fantiumNFT.batchSafeTransferFrom(recipient, newOwner, tokenIds);
+    }
+
+    function test_batchSafeTransferFrom_revert_whenPaused() public {
+        // Mint multiple tokens to the recipient
+        uint256 collectionId = 1;
+        uint24 quantity = 5;
+        uint256 lastTokenId = mintTo(collectionId, quantity, recipient);
+        uint256 firstTokenId = lastTokenId - quantity + 1;
+
+        address newOwner = makeAddr("newOwner");
+        uint256[] memory tokenIds = new uint256[](quantity);
+        for (uint256 i = 0; i < quantity; i++) {
+            tokenIds[i] = firstTokenId + i;
+        }
+
+        // Approve operator
+        vm.prank(recipient);
+        fantiumNFT.setApprovalForAll(address(this), true);
+
+        // Pause the contract
+        vm.prank(fantiumNFT_admin);
+        fantiumNFT.pause();
+
+        vm.expectRevert("Pausable: paused");
+        fantiumNFT.batchSafeTransferFrom(recipient, newOwner, tokenIds);
     }
 
     // tokenURI

@@ -639,12 +639,27 @@ contract FANtiumNFTV7 is
         return _mintTo(collectionId, quantity, amount, recipient);
     }
 
+    // ========================================================================
+    // Batch transfer functions
+    // ========================================================================
+    /**
+     * @notice Batch transfer NFTs from one address to another.
+     * @param from The address to transfer the NFTs from.
+     * @param to The address to transfer the NFTs to.
+     * @param tokenIds The IDs of the NFTs to transfer.
+     */
     function batchTransferFrom(address from, address to, uint256[] memory tokenIds) public whenNotPaused {
         for (uint256 i = 0; i < tokenIds.length; i++) {
             transferFrom(from, to, tokenIds[i]);
         }
     }
 
+    /**
+     * @notice Batch safe transfer NFTs from one address to another.
+     * @param from The address to transfer the NFTs from.
+     * @param to The address to transfer the NFTs to.
+     * @param tokenIds The IDs of the NFTs to transfer.
+     */
     function batchSafeTransferFrom(address from, address to, uint256[] memory tokenIds) public whenNotPaused {
         for (uint256 i = 0; i < tokenIds.length; i++) {
             safeTransferFrom(from, to, tokenIds[i]);
