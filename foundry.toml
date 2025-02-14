@@ -8,7 +8,10 @@ bytecode_hash = "none"
 evm_version = "paris"
 extra_output = ["storageLayout"]
 extra_output_files = ["metadata"]
-fs_permissions = [{ access = "read", path = "./test/fixtures"}, { access = "read", path = "./out"}]
+fs_permissions = [
+    { access = "read", path = "./test/fixtures" },
+    { access = "read", path = "./out" },
+]
 ffi = true
 fuzz = { runs = 256 }
 gas_reports = ["*"]
@@ -45,8 +48,7 @@ wrap_comments = true
 
 [rpc_endpoints]
 polygon = "https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
-# amoy = "https://polygon-amoy.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
-amoy = "https://polygon-amoy.g.alchemy.com/v2/UurQT_ACJmrq7V1qhfR43IAypZlMeeLm"
+amoy = "https://polygon-amoy.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 
 [etherscan]
 polygon = { key = "${ETHERSCAN_API_KEY}" }
