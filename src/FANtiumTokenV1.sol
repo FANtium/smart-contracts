@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
+import "./interfaces/IFANtiumToken.sol"; // todo: remove this import
+
 import { IFANtiumToken, Package, Phase, PhaseView } from "./interfaces/IFANtiumToken.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { ERC721AQueryableUpgradeable } from "erc721a-upgradeable/extensions/ERC721AQueryableUpgradeable.sol";
 import { OwnableRoles } from "solady/auth/OwnableRoles.sol";
@@ -37,7 +41,8 @@ contract FANtiumTokenV1 is
     // ========================================================================
     // State variables
     // ========================================================================
-    uint256 private nextId; // has default value 0
+    uint256 private nextPhaseId; // has default value 0
+    uint256 private nextPackageId; // has default value 0
     Phase[] public phases;
     uint256 public currentPhaseIndex;
     address public treasury; // Safe that will receive all the funds
@@ -200,7 +205,7 @@ contract FANtiumTokenV1 is
         uint256 lastIndex = phases.length - 1;
 
         // Then set all the values individually
-        phases[lastIndex].phaseId = nextId;
+        phases[lastIndex].phaseId = nextPhaseId;
         phases[lastIndex].pricePerShare = pricePerShare;
         phases[lastIndex].maxSupply = maxSupply;
         phases[lastIndex].reservedSupply = 0;
@@ -210,7 +215,68 @@ contract FANtiumTokenV1 is
         // The mapping 'packages' will be automatically initialized as empty
 
         // increment counter
-        nextId++;
+        nextPhaseId++;
+    }
+
+    /**
+     * Add a new package to the sale phase
+     * @param name Name of the package, e.g. Premium
+     * @param price Price of the package
+     * @param shareCount Number of shares per package
+     * @param maxSupply Number of packages
+     * @param phaseId id of the sale phase, where we want to add the package
+     */
+    function addPackage(
+        string calldata name,
+        uint256 price,
+        uint256 shareCount,
+        uint256 maxSupply,
+        uint256 phaseId
+    )
+        external
+        onlyOwner
+    {
+        // validate input data
+        // Solidity does not support direct comparison (==) between strings. Instead, you need to use keccak256()
+        // hashing to compare strings
+        if (keccak256(abi.encodePacked(name)) == keccak256(abi.encodePacked(""))) {
+            revert IncorrectPackageName(name);
+        }
+
+        if (price == 0) {
+            // Price must be greater than zero
+            revert IncorrectPackagePrice(price);
+        }
+
+        if (shareCount <= 1) {
+            // There should be more than 1 share per package
+            revert IncorrectShareCount(shareCount);
+        }
+
+        if (maxSupply == 0) {
+            // Max supply must be greater than zero
+            revert IncorrectMaxSupply(maxSupply);
+        }
+
+        // get phase
+        (bool isFound, Phase storage phase,) = _findPhaseById(phaseId);
+
+        if (!isFound) {
+            revert PhaseWithIdDoesNotExist(phaseId);
+        }
+
+        // phase was found, add new package
+        phase.packages[nextPackageId] = Package({
+            packageId: nextPackageId,
+            name: name,
+            price: price,
+            shareCount: shareCount,
+            currentSupply: 0,
+            maxSupply: maxSupply
+        });
+
+        // increment counter
+        nextPackageId++;
     }
 
     /**

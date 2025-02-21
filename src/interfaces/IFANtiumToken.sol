@@ -9,7 +9,7 @@ import { IERC721AQueryableUpgradeable } from "erc721a-upgradeable/interfaces/IER
 // 3. change addPhase function - done
 // 4. change removePhase function - done
 // 5. change getCurrentPhase function - done
-// 6. add addPackage function
+// 6. add addPackage function - done
 // 7. add removePackage function
 // 8. add view function which will return packages
 // 9. add changeReservedSupply function
@@ -20,9 +20,9 @@ struct Package {
     uint256 packageId;
     string name; // "Classic", "Advanced", "Premium"
     uint256 price; // Package price
-    uint256 shareCount; // Number of shares included in the package
-    uint256 maxSupply; // Max number of times this package can be purchased
+    uint256 shareCount; // Number of shares included in 1 package
     uint256 currentSupply; // Number of times this package has been purchased
+    uint256 maxSupply; // Max number of times this package can be purchased
 }
 
 struct Phase {
@@ -84,4 +84,7 @@ interface IFANtiumToken is IERC721AQueryableUpgradeable {
     error PackageDoesNotExist(uint256 packageId);
     error PackageQuantityExceedsMaxSupplyLimit(uint256 quantity);
     error PhaseNotFound(uint256 phaseId);
+    error IncorrectPackagePrice(uint256 price);
+    error IncorrectPackageName(string name);
+    error IncorrectShareCount(uint256 shareCount);
 }
