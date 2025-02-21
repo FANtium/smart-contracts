@@ -280,6 +280,27 @@ contract FANtiumTokenV1 is
     }
 
     /**
+     * Remove existing package from the sale phase
+     * @param phaseId id of the phase
+     * @param packageId id of the package to be removed
+     */
+    function removePackage(uint256 phaseId, uint256 packageId) external onlyOwner {
+        // check that phase exists
+        (bool isFound, Phase storage phase,) = _findPhaseById(phaseId);
+        if (!isFound) {
+            revert PhaseWithIdDoesNotExist(phaseId);
+        }
+        // check that package exists
+        Package storage package = phase.packages[packageId];
+        if (package.price == 0 || package.shareCount == 0) {
+            revert PackageDoesNotExist(packageId);
+        }
+
+        // remove the package from the phase
+        delete phase.packages[packageId];
+    }
+
+    /**
      * Internal function to only be used in the removePhase function
      * this function manually copies package mapping
      * otherwise we cannot remove the phase, because it contains nested mapping
@@ -413,7 +434,7 @@ contract FANtiumTokenV1 is
     function _findPhaseById(uint256 id) private view returns (bool, Phase storage, uint256) {
         for (uint256 i = 0; i < phases.length; i++) {
             if (phases[i].phaseId == id) {
-                return (true, phases[i], i); // Return Phase, index, true if phase is found
+                return (true, phases[i], i); // Return (true, Phase, index) if phase is found
             }
         }
 
