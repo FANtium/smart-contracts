@@ -425,6 +425,43 @@ contract FANtiumTokenV1 is
     }
 
     /**
+     * Helper to view all existing packages in the sale phase
+     * @param phaseId - sale phase id
+     * @return Package[] - packages array
+     */
+    function getAllPackagesForPhase(uint256 phaseId) public view returns (Package[] memory) {
+        // check that phase exists
+        (bool isFound, Phase storage phase,) = _findPhaseById(phaseId);
+        if (!isFound) {
+            revert PhaseWithIdDoesNotExist(phaseId);
+        }
+
+        uint256 packageCount = 0;
+
+        // First: Count valid packages
+        for (uint256 i = 0; i < nextPackageId; i++) {
+            if (phase.packages[i].maxSupply > 0 && phase.packages[i].price > 0) {
+                packageCount++;
+            }
+        }
+
+        // Second: create array. We must specify the array size when creating a new fixed-size memory array
+        Package[] memory packages = new Package[](packageCount);
+        uint256 index = 0;
+
+        // Third: populate array
+        for (uint256 i = 0; i < nextPackageId; i++) {
+            if (phase.packages[i].maxSupply > 0) {
+                packages[index] = phase.packages[i];
+                index++;
+            }
+        }
+
+        // return all packages
+        return packages;
+    }
+
+    /**
      * Get phase from an array by phaseId
      * @param id - phase id
      * @return bool true if sale phase is found, false - if not found.
