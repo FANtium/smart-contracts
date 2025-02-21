@@ -6,7 +6,7 @@ import { Collection, CollectionData, IFANtiumNFT } from "src/interfaces/IFANtium
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumNFTFactory } from "test/setup/FANtiumNFTFactory.sol";
 
-contract FANtiumNFTV7FuzzTest is BaseTest, FANtiumNFTFactory {
+contract FANtiumNFTV8FuzzTest is BaseTest, FANtiumNFTFactory {
     function setUp() public override {
         FANtiumNFTFactory.setUp();
     }
@@ -49,8 +49,13 @@ contract FANtiumNFTV7FuzzTest is BaseTest, FANtiumNFTFactory {
         vm.assume(recipient != address(0));
 
         uint256 collectionId = 1; // collection 1 is mintable
-        Collection memory collection = fantiumNFT.collections(collectionId);
-        quantity = uint24(bound(uint256(quantity), 1, collection.maxInvocations - collection.invocations));
+        quantity = uint24(
+            bound(
+                uint256(quantity),
+                1,
+                fantiumNFT.collections(collectionId).maxInvocations - fantiumNFT.collections(collectionId).invocations
+            )
+        );
 
         (
             uint256 amountUSDC,
@@ -61,9 +66,9 @@ contract FANtiumNFTV7FuzzTest is BaseTest, FANtiumNFTFactory {
         ) = prepareSale(collectionId, quantity, recipient);
         vm.assume(recipient != fantiumAddress && recipient != athleteAddress);
 
-        uint256 recipientBalanceBefore = usdc.balanceOf(recipient);
-        uint256 fantiumBalanceBefore = usdc.balanceOf(fantiumAddress);
-        uint256 athleteBalanceBefore = usdc.balanceOf(athleteAddress);
+        // Store initial balances
+        uint256[3] memory balancesBefore =
+            [usdc.balanceOf(recipient), usdc.balanceOf(fantiumAddress), usdc.balanceOf(athleteAddress)];
 
         // Expect ERC20 Transfer events
         vm.expectEmit(true, true, false, true, address(usdc));
@@ -77,17 +82,16 @@ contract FANtiumNFTV7FuzzTest is BaseTest, FANtiumNFTFactory {
 
         vm.prank(recipient);
         uint256 lastTokenId = fantiumNFT.mintTo(collectionId, quantity, recipient);
-        uint256 firstTokenId = lastTokenId - quantity + 1;
 
         // Verify ownership
-        for (uint256 tokenId = firstTokenId; tokenId <= lastTokenId; tokenId++) {
-            assertEq(fantiumNFT.ownerOf(tokenId), recipient);
+        for (uint256 i = 0; i < quantity; i++) {
+            assertEq(fantiumNFT.ownerOf(lastTokenId - i), recipient);
         }
 
         // Verify ERC20 transfers
-        assertEq(usdc.balanceOf(recipient), recipientBalanceBefore - amountUSDC);
-        assertEq(usdc.balanceOf(fantiumAddress), fantiumBalanceBefore + fantiumRevenue);
-        assertEq(usdc.balanceOf(athleteAddress), athleteBalanceBefore + athleteRevenue);
+        assertEq(usdc.balanceOf(recipient), balancesBefore[0] - amountUSDC);
+        assertEq(usdc.balanceOf(fantiumAddress), balancesBefore[1] + fantiumRevenue);
+        assertEq(usdc.balanceOf(athleteAddress), balancesBefore[2] + athleteRevenue);
     }
 
     // getPrimaryRevenueSplits

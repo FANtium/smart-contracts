@@ -39,7 +39,7 @@ contract DeployTestnet is Script {
         vm.createSelectFork(vm.rpcUrl("amoy"));
         vm.startBroadcast(vm.envUint("ADMIN_PRIVATE_KEY"));
         if (FANTIUM_NFT_UPGRADE) {
-            Upgrades.upgradeProxy(FANTIUM_NFT_PROXY, "FANtiumNFTV7.sol:FANtiumNFTV7", "");
+            Upgrades.upgradeProxy(FANTIUM_NFT_PROXY, "FANtiumNFTV8.sol:FANtiumNFTV8", "");
         }
 
         if (FANTIUM_USER_MANAGER_UPGRADE) {

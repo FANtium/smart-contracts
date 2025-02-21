@@ -496,7 +496,6 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         vm.prank(fantiumClaiming_manager);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
 
-        vm.expectRevert();
         vm.expectRevert(
             abi.encodeWithSelector(
                 IFANtiumClaiming.AthleteOnly.selector,
