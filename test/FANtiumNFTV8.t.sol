@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -13,11 +14,12 @@ import {
     UpgradeErrorReason
 } from "src/interfaces/IFANtiumNFT.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
+import { IRescue } from "src/interfaces/IRescue.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumNFTFactory } from "test/setup/FANtiumNFTFactory.sol";
 
-contract FANtiumNFTV7Test is BaseTest, FANtiumNFTFactory {
+contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
     using ECDSA for bytes32;
     using Strings for uint256;
 
@@ -1121,5 +1123,103 @@ contract FANtiumNFTV7Test is BaseTest, FANtiumNFTFactory {
         vm.expectRevert("Pausable: paused");
         vm.prank(fantiumNFT_tokenUpgrader);
         fantiumNFT.upgradeTokenVersion(tokenId);
+    }
+
+    // rescue
+    // ========================================================================
+    function test_rescue_ok() public {
+        uint256 collectionId = 1;
+        uint256 tokenId = mintTo(collectionId, 1, recipient);
+        string memory reason = "Emergency rescue needed";
+
+        // Verify initial ownership
+        assertEq(fantiumNFT.ownerOf(tokenId), recipient);
+
+        vm.prank(fantiumNFT_admin);
+        vm.expectEmit(true, true, false, true, address(fantiumNFT));
+        emit IRescue.Rescued(tokenId, fantiumNFT_admin, reason);
+        fantiumNFT.rescue(tokenId, reason);
+
+        // Verify ownership transfer
+        assertEq(fantiumNFT.ownerOf(tokenId), fantiumNFT_admin);
+    }
+
+    function test_rescue_revert_unauthorized() public {
+        uint256 collectionId = 1;
+        uint256 tokenId = mintTo(collectionId, 1, recipient);
+        string memory reason = "Emergency rescue needed";
+
+        address unauthorized = makeAddr("unauthorized");
+
+        expectMissingRole(unauthorized, fantiumNFT.DEFAULT_ADMIN_ROLE());
+        vm.prank(unauthorized);
+        fantiumNFT.rescue(tokenId, reason);
+    }
+
+    function test_rescue_revert_invalidTokenId() public {
+        uint256 invalidTokenId = 999_999;
+        string memory reason = "Emergency rescue needed";
+
+        vm.expectRevert("ERC721: invalid token ID");
+        vm.prank(fantiumNFT_admin);
+        fantiumNFT.rescue(invalidTokenId, reason);
+    }
+
+    // rescueBatch
+    // ========================================================================
+    function test_rescueBatch_ok() public {
+        uint256 collectionId = 1;
+        uint24 quantity = 5;
+        uint256 lastTokenId = mintTo(collectionId, quantity, recipient);
+        uint256 firstTokenId = lastTokenId - quantity + 1;
+        string memory reason = "Emergency batch rescue needed";
+
+        uint256[] memory tokenIds = new uint256[](quantity);
+        for (uint256 i = 0; i < quantity; i++) {
+            tokenIds[i] = firstTokenId + i;
+            // Verify initial ownership
+            assertEq(fantiumNFT.ownerOf(tokenIds[i]), recipient);
+        }
+
+        vm.prank(fantiumNFT_admin);
+        vm.expectEmit(true, true, false, true, address(fantiumNFT));
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            emit IRescue.Rescued(tokenIds[i], fantiumNFT_admin, reason);
+        }
+        fantiumNFT.rescueBatch(tokenIds, reason);
+
+        // Verify ownership transfers
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            assertEq(fantiumNFT.ownerOf(tokenIds[i]), fantiumNFT_admin);
+        }
+    }
+
+    function test_rescueBatch_revert_unauthorized() public {
+        uint256 collectionId = 1;
+        uint24 quantity = 5;
+        uint256 lastTokenId = mintTo(collectionId, quantity, recipient);
+        uint256 firstTokenId = lastTokenId - quantity + 1;
+        string memory reason = "Emergency batch rescue needed";
+
+        uint256[] memory tokenIds = new uint256[](quantity);
+        for (uint256 i = 0; i < quantity; i++) {
+            tokenIds[i] = firstTokenId + i;
+        }
+
+        address unauthorized = makeAddr("unauthorized");
+
+        expectMissingRole(unauthorized, fantiumNFT.DEFAULT_ADMIN_ROLE());
+        vm.prank(unauthorized);
+        fantiumNFT.rescueBatch(tokenIds, reason);
+    }
+
+    function test_rescueBatch_revert_invalidTokenId() public {
+        uint256[] memory invalidTokenIds = new uint256[](1);
+        invalidTokenIds[0] = 999_999;
+        string memory reason = "Emergency batch rescue needed";
+
+        vm.expectRevert("ERC721: invalid token ID");
+        vm.prank(fantiumNFT_admin);
+        fantiumNFT.rescueBatch(invalidTokenIds, reason);
     }
 }

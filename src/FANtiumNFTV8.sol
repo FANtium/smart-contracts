@@ -10,7 +10,8 @@ import { IERC20MetadataUpgradeable } from
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {
     ERC721Upgradeable,
-    IERC165Upgradeable
+    IERC165Upgradeable,
+    IERC721Upgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
@@ -23,19 +24,21 @@ import {
     UpgradeErrorReason
 } from "src/interfaces/IFANtiumNFT.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
+import { Rescue } from "src/utils/Rescue.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 
 /**
- * @title FANtium ERC721 contract V7.
+ * @title FANtium ERC721 contract V8.
  * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
- * @custom:oz-upgrades-from src/archive/FANtiumNFTV6.sol:FANtiumNFTV6
+ * @custom:oz-upgrades-from src/archive/FANtiumNFTV7.sol:FANtiumNFTV7
  */
-contract FANtiumNFTV7 is
+contract FANtiumNFTV8 is
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
     PausableUpgradeable,
+    Rescue,
     IFANtiumNFT
 {
     using StringsUpgradeable for uint256;
@@ -679,5 +682,24 @@ contract FANtiumNFTV7 is
         uint256 newTokenId = TokenVersionUtil.createTokenId(collectionId, tokenVersion, number);
         _mint(owner, newTokenId);
         return newTokenId;
+    }
+
+    // ========================================================================
+    // Rescue functions
+    // ========================================================================
+    /**
+     * @notice Authorizes a rescue of a token by checking if the sender has the DEFAULT_ADMIN_ROLE
+     */
+    function _authorizeRescue(uint256, address, string calldata) internal view override {
+        _checkRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+
+    /**
+     * @notice Rescues a single token by transferring it to a specified address
+     * @param tokenId The ID of the token to rescue
+     * @param recipient The address that received the rescued token
+     */
+    function _rescue(uint256 tokenId, address recipient, string calldata) internal override {
+        _transfer(ownerOf(tokenId), recipient, tokenId);
     }
 }

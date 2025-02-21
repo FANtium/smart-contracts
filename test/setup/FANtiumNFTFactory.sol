@@ -5,7 +5,7 @@ import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import { FANtiumNFTV7 } from "src/FANtiumNFTV7.sol";
+import { FANtiumNFTV8 } from "src/FANtiumNFTV8.sol";
 import { Collection, CollectionData } from "src/interfaces/IFANtiumNFT.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { BaseTest } from "test/BaseTest.sol";
@@ -47,18 +47,18 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
     ERC20 public usdc;
     address public fantiumNFT_implementation;
     address public fantiumNFT_proxy;
-    FANtiumNFTV7 public fantiumNFT;
+    FANtiumNFTV8 public fantiumNFT;
 
     function setUp() public virtual override {
         (fantiumNFT_signer, fantiumNFT_signerKey) = makeAddrAndKey("rewarder");
         FANtiumUserManagerFactory.setUp();
 
         usdc = new ERC20("USD Coin", "USDC");
-        fantiumNFT_implementation = address(new FANtiumNFTV7());
+        fantiumNFT_implementation = address(new FANtiumNFTV8());
         fantiumNFT_proxy = UnsafeUpgrades.deployUUPSProxy(
-            fantiumNFT_implementation, abi.encodeCall(FANtiumNFTV7.initialize, (fantiumNFT_admin))
+            fantiumNFT_implementation, abi.encodeCall(FANtiumNFTV8.initialize, (fantiumNFT_admin))
         );
-        fantiumNFT = FANtiumNFTV7(fantiumNFT_proxy);
+        fantiumNFT = FANtiumNFTV8(fantiumNFT_proxy);
 
         // Configure roles
         vm.startPrank(fantiumNFT_admin);
