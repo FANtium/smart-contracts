@@ -12,7 +12,7 @@ import { IERC721AQueryableUpgradeable } from "erc721a-upgradeable/interfaces/IER
 // 6. add addPackage function - done
 // 7. add removePackage function - done
 // 8. add view function getAllPackagesForPhase - done
-// 9. add changeReservedSupply function
+// 9. add setReservedSupplyForPhase function - done
 // 10. fix broken unit tests
 // 11. add new unit tests
 

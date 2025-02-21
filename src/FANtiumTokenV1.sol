@@ -156,6 +156,23 @@ contract FANtiumTokenV1 is
     }
 
     /**
+     * Set reserved supply for sale phase.
+     * @param phaseId - id of the sale phase
+     * @param reservedSupply - the amount of shares which should be allocated for packages
+     */
+    function setReservedSupplyForPhase(uint256 phaseId, uint256 reservedSupply) external onlyOwner {
+        // check if phase exists
+        (bool isFound, Phase storage phase,) = _findPhaseById(phaseId);
+
+        if (!isFound) {
+            revert PhaseWithIdDoesNotExist(phaseId);
+        }
+
+        // set the reserved supply
+        phase.reservedSupply = reservedSupply;
+    }
+
+    /**
      * Add a new sale phase
      * @param pricePerShare Price of a single share
      * @param maxSupply Maximum amount of shares in the sale phase
