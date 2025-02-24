@@ -11,19 +11,13 @@ import { IERC20MetadataUpgradeable } from
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { ERC721AQueryableUpgradeable } from "erc721a-upgradeable/extensions/ERC721AQueryableUpgradeable.sol";
 import { OwnableRoles } from "solady/auth/OwnableRoles.sol";
+import { ERC20 } from "solady/tokens/ERC20.sol";
 
 /**
  * @title FANtium Token (FAN) smart contract
  * @author Alex Chernetsky, Mathieu Bour - FANtium AG
  */
-contract FANtiumTokenV1 is
-    Initializable,
-    UUPSUpgradeable,
-    PausableUpgradeable,
-    ERC721AQueryableUpgradeable,
-    OwnableRoles,
-    IFANtiumToken
-{
+contract FANtiumTokenV1 is Initializable, UUPSUpgradeable, PausableUpgradeable, ERC20, OwnableRoles, IFANtiumToken {
     // ========================================================================
     // Constants
     // ========================================================================
@@ -48,9 +42,8 @@ contract FANtiumTokenV1 is
      */
     mapping(address => bool) public erc20PaymentTokens;
 
-    function initialize(address admin) public initializerERC721A initializer {
+    function initialize(address admin) public initializer {
         __UUPSUpgradeable_init();
-        __ERC721A_init(NAME, SYMBOL);
         _initializeOwner(admin);
     }
 
@@ -60,6 +53,38 @@ contract FANtiumTokenV1 is
      */
     function _authorizeUpgrade(address) internal view override {
         _checkOwner();
+    }
+
+    // ========================================================================
+    // ERC20
+    // ========================================================================
+    /**
+     * @dev Returns the name of the token.
+     */
+    function name() public pure override returns (string memory) {
+        return NAME;
+    }
+
+    /**
+     * @dev Returns the symbol of the token.
+     */
+    function symbol() public pure override returns (string memory) {
+        return SYMBOL;
+    }
+
+    /**
+     * @notice In our case, a share cannot be divided, setting the decimals to zero.
+     * @dev Returns the decimals places of the token.
+     */
+    function decimals() public pure override returns (uint8) {
+        return 0;
+    }
+
+    /**
+     * @dev Fix the Uniswap's Permit2 contract's allowance at infinity.
+     */
+    function _givePermit2InfiniteAllowance() internal pure override returns (bool) {
+        return true;
     }
 
     // ========================================================================
@@ -96,10 +121,6 @@ contract FANtiumTokenV1 is
         } else {
             return super._msgSender();
         }
-    }
-
-    function _msgSenderERC721A() internal view virtual override returns (address) {
-        return _msgSender();
     }
 
     function _msgData() internal view virtual override returns (bytes calldata) {
@@ -477,32 +498,5 @@ contract FANtiumTokenV1 is
 
         // emit an event after minting tokens
         emit FANtiumTokenSale(quantity, recipient, expectedAmount);
-    }
-
-    // ========================================================================
-    // Batch transfer functions
-    // ========================================================================
-    /**
-     * @notice Batch transfer NFTs from one address to another.
-     * @param from The address to transfer the NFTs from.
-     * @param to The address to transfer the NFTs to.
-     * @param tokenIds The IDs of the NFTs to transfer.
-     */
-    function batchTransferFrom(address from, address to, uint256[] memory tokenIds) public whenNotPaused {
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            transferFrom(from, to, tokenIds[i]);
-        }
-    }
-
-    /**
-     * @notice Batch safe transfer NFTs from one address to another.
-     * @param from The address to transfer the NFTs from.
-     * @param to The address to transfer the NFTs to.
-     * @param tokenIds The IDs of the NFTs to transfer.
-     */
-    function batchSafeTransferFrom(address from, address to, uint256[] memory tokenIds) public whenNotPaused {
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            safeTransferFrom(from, to, tokenIds[i]);
-        }
     }
 }
