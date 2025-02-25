@@ -18,9 +18,6 @@ contract DeployMainnetV8 is Script {
 
         Options memory opts;
         Core.prepareUpgrade("FANtiumNFTV8.sol", opts);
-        Core.prepareUpgrade("FANtiumClaimingV2.sol", opts);
-        // Core.prepareUpgrade("FANtiumUserManagerV2.sol", opts);
-
         vm.stopBroadcast();
     }
 }
