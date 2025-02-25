@@ -468,45 +468,45 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
     // getAllPhases
     // ========================================================================
     // TODO: test_getAllPhases_ok_empty
-    // todo: fix test
-    //    function test_getAllPhases_ok() public {
-    //        // add 2 phases
-    //        uint256 pricePerShare = 100;
-    //        uint256 pricePerShare2 = 200;
-    //        uint256 maxSupply = 1000;
-    //        uint256 maxSupply2 = 2000;
-    //        uint256 startTime = uint256(block.timestamp + 1 days); // Use relative time from current block
-    //        uint256 startTime2 = uint256(block.timestamp + 31 days); // Use relative time from current block
-    //        uint256 endTime = uint256(block.timestamp + 30 days); // Use relative time from current block
-    //        uint256 endTime2 = uint256(block.timestamp + 60 days); // Use relative time from current block
-    //
-    //        // Check the initial state
-    //        assertEq(fantiumToken.getAllPhases().length, 0);
-    //
-    //        // Execute phase 1 addition
-    //        vm.prank(fantiumToken_admin);
-    //        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
-    //        // Verify phase data was stored correctly
-    //        assertEq(fantiumToken.getAllPhases().length, 1);
-    //
-    //        // Execute phase 2 addition
-    //        vm.prank(fantiumToken_admin);
-    //        fantiumToken.addPhase(pricePerShare2, maxSupply2, startTime2, endTime2);
-    //        // Verify phase data was stored correctly
-    //        assertEq(fantiumToken.getAllPhases().length, 2);
-    //
-    //        // check that getAllPhases returns correct data
-    //        fantiumToken.getAllPhases();
-    //        Phase[] memory allPhases = fantiumToken.getAllPhases();
-    //        vm.assertEq(allPhases[0].phaseId, 0);
-    //        vm.assertEq(allPhases[0].pricePerShare, pricePerShare);
-    //        vm.assertEq(allPhases[0].maxSupply, maxSupply);
-    //        vm.assertEq(allPhases[0].startTime, startTime);
-    //        vm.assertEq(allPhases[1].phaseId, 1);
-    //        vm.assertEq(allPhases[1].pricePerShare, pricePerShare2);
-    //        vm.assertEq(allPhases[1].maxSupply, maxSupply2);
-    //        vm.assertEq(allPhases[1].startTime, startTime2);
-    //    }
+
+    function test_getAllPhases_ok() public {
+        // add 2 phases
+        uint256 pricePerShare = 100;
+        uint256 pricePerShare2 = 200;
+        uint256 maxSupply = 1000;
+        uint256 maxSupply2 = 2000;
+        uint256 startTime = uint256(block.timestamp + 1 days); // Use relative time from current block
+        uint256 startTime2 = uint256(block.timestamp + 31 days); // Use relative time from current block
+        uint256 endTime = uint256(block.timestamp + 30 days); // Use relative time from current block
+        uint256 endTime2 = uint256(block.timestamp + 60 days); // Use relative time from current block
+
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+
+        // Execute phase 1 addition
+        vm.prank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase data was stored correctly
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // Execute phase 2 addition
+        vm.prank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare2, maxSupply2, startTime2, endTime2);
+        // Verify phase data was stored correctly
+        assertEq(fantiumToken.getAllPhases().length, 2);
+
+        // check that getAllPhases returns correct data
+        fantiumToken.getAllPhases();
+        Phase[] memory allPhases = fantiumToken.getAllPhases();
+        vm.assertEq(allPhases[0].phaseId, 0);
+        vm.assertEq(allPhases[0].pricePerShare, pricePerShare);
+        vm.assertEq(allPhases[0].maxSupply, maxSupply);
+        vm.assertEq(allPhases[0].startTime, startTime);
+        vm.assertEq(allPhases[1].phaseId, 1);
+        vm.assertEq(allPhases[1].pricePerShare, pricePerShare2);
+        vm.assertEq(allPhases[1].maxSupply, maxSupply2);
+        vm.assertEq(allPhases[1].startTime, startTime2);
+    }
 
     // TODO: test_getAllPhases_ok_withPhases
 
@@ -934,36 +934,35 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         fantiumToken.mintTo(recipient, quantity, usdcAddress, 0);
     }
 
-    // todo: fix test
-    //    function test_mintTo_revert_TreasuryIsNotSet() public {
-    //        // add a phase
-    //        uint256 pricePerShare = 100;
-    //        uint256 maxSupply = 1000;
-    //        uint256 startTime = uint256(block.timestamp + 1 days);
-    //        uint256 endTime = uint256(block.timestamp + 30 days);
-    //        // Check the initial state
-    //        assertEq(fantiumToken.getAllPhases().length, 0);
-    //        // Execute phase addition
-    //        vm.prank(fantiumToken_admin);
-    //        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
-    //        // Verify phase data was stored correctly
-    //        assertEq(fantiumToken.getAllPhases().length, 1);
-    //
-    //        // Warp time
-    //        vm.warp(startTime + 1 days); // phase is active
-    //
-    //        // set the payment token
-    //        address usdcAddress = address(usdc);
-    //        vm.prank(fantiumToken_admin);
-    //        fantiumToken.setPaymentToken(usdcAddress, true);
-    //        assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
-    //
-    //        // try to mint
-    //        address recipient = makeAddr("recipient");
-    //        uint256 quantity = 20;
-    //        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.TreasuryIsNotSet.selector));
-    //        fantiumToken.mintTo(recipient, quantity, usdcAddress);
-    //    }
+    function test_mintTo_revert_TreasuryIsNotSet() public {
+        // add a phase
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days);
+        uint256 endTime = uint256(block.timestamp + 30 days);
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.prank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase data was stored correctly
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // Warp time
+        vm.warp(startTime + 1 days); // phase is active
+
+        // set the payment token
+        address usdcAddress = address(usdc);
+        vm.prank(fantiumToken_admin);
+        fantiumToken.setPaymentToken(usdcAddress, true);
+        assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
+
+        // try to mint
+        address recipient = makeAddr("recipient");
+        uint256 quantity = 20;
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.TreasuryIsNotSet.selector));
+        fantiumToken.mintTo(recipient, quantity, usdcAddress, 0);
+    }
 
     // TODO: test_mintTo_revert_whenPaused
     // TODO: test_mintTo_revert_insufficientAllowance
