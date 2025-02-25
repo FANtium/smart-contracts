@@ -2,18 +2,17 @@
 pragma solidity 0.8.28;
 
 import "./interfaces/IFANtiumToken.sol"; // todo: remove this import
+import { ERC721AQueryableUpgradeable } from "erc721a-upgradeable/extensions/ERC721AQueryableUpgradeable.sol";
 
-import { IFANtiumToken, Package, Phase, PhaseView } from "./interfaces/IFANtiumToken.sol";
+import { IFANtiumToken, Package, Phase } from "./interfaces/IFANtiumToken.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import { ERC721AQueryableUpgradeable } from "erc721a-upgradeable/extensions/ERC721AQueryableUpgradeable.sol";
 import { OwnableRoles } from "solady/auth/OwnableRoles.sol";
 
 /**
@@ -42,7 +41,6 @@ contract FANtiumTokenV1 is
     // State variables
     // ========================================================================
     uint256 private nextPhaseId; // has default value 0
-    uint256 private nextPackageId; // has default value 0
     Phase[] public phases;
     uint256 public currentPhaseIndex;
     address public treasury; // Safe that will receive all the funds
@@ -156,23 +154,6 @@ contract FANtiumTokenV1 is
     }
 
     /**
-     * Set reserved supply for sale phase.
-     * @param phaseId - id of the sale phase
-     * @param reservedSupply - the amount of shares which should be allocated for packages
-     */
-    function setReservedSupplyForPhase(uint256 phaseId, uint256 reservedSupply) external onlyOwner {
-        // check if phase exists
-        (bool isFound, Phase storage phase,) = _findPhaseById(phaseId);
-
-        if (!isFound) {
-            revert PhaseWithIdDoesNotExist(phaseId);
-        }
-
-        // set the reserved supply
-        phase.reservedSupply = reservedSupply;
-    }
-
-    /**
      * Add a new sale phase
      * @param pricePerShare Price of a single share
      * @param maxSupply Maximum amount of shares in the sale phase
@@ -214,6 +195,7 @@ contract FANtiumTokenV1 is
             }
         }
 
+        // todo: revert back
         // add new Phase
         // In Solidity, you cannot initialize a struct that contains a mapping using the struct constructor syntax
         // Phase({ ... })
@@ -225,7 +207,6 @@ contract FANtiumTokenV1 is
         phases[lastIndex].phaseId = nextPhaseId;
         phases[lastIndex].pricePerShare = pricePerShare;
         phases[lastIndex].maxSupply = maxSupply;
-        phases[lastIndex].reservedSupply = 0;
         phases[lastIndex].currentSupply = 0;
         phases[lastIndex].startTime = startTime;
         phases[lastIndex].endTime = endTime;
@@ -254,9 +235,8 @@ contract FANtiumTokenV1 is
         onlyOwner
     {
         // validate input data
-        // Solidity does not support direct comparison (==) between strings. Instead, you need to use keccak256()
-        // hashing to compare strings
-        if (keccak256(abi.encodePacked(name)) == keccak256(abi.encodePacked(""))) {
+        // calldata strings do not support .length
+        if (bytes(name).length == 0) {
             revert IncorrectPackageName(name);
         }
 
@@ -283,17 +263,42 @@ contract FANtiumTokenV1 is
         }
 
         // phase was found, add new package
-        phase.packages[nextPackageId] = Package({
-            packageId: nextPackageId,
-            name: name,
-            price: price,
-            shareCount: shareCount,
-            currentSupply: 0,
-            maxSupply: maxSupply
-        });
+        phase.packages.push(
+            Package({
+                packageId: phase.nextPackageId,
+                name: name,
+                price: price,
+                shareCount: shareCount,
+                currentSupply: 0,
+                maxSupply: maxSupply
+            })
+        );
 
         // increment counter
-        nextPackageId++;
+        phase.nextPackageId++;
+    }
+
+    /**
+     * Private function that helps to find a package in an array of packages by id
+     * @param packageId id of the package
+     * @param packages array of all packages
+     * @return (isFound, package, index) - boolean indicating whether the package was found, package that was found, the
+     * index of the found package
+     */
+    function _findPackageById(
+        uint256 packageId,
+        Package[] storage packages
+    )
+        private
+        view
+        returns (bool, Package storage, uint256)
+    {
+        for (uint256 i = 0; i < packages.length; i++) {
+            if (packages[i].packageId == packageId) {
+                return (true, packages[i], i);
+            }
+        }
+        revert PackageDoesNotExist(packageId);
     }
 
     /**
@@ -308,13 +313,16 @@ contract FANtiumTokenV1 is
             revert PhaseWithIdDoesNotExist(phaseId);
         }
         // check that package exists
-        Package storage package = phase.packages[packageId];
-        if (package.price == 0 || package.shareCount == 0) {
+        (bool isPackageFound,, uint256 index) = _findPackageById(packageId, phase.packages);
+        if (!isPackageFound) {
             revert PackageDoesNotExist(packageId);
         }
 
         // remove the package from the phase
-        delete phase.packages[packageId];
+        // Swap with the last element
+        phase.packages[index] = phase.packages[phase.packages.length - 1];
+        // Remove the last element
+        phase.packages.pop();
     }
 
     /**
@@ -328,7 +336,6 @@ contract FANtiumTokenV1 is
         target.phaseId = source.phaseId;
         target.pricePerShare = source.pricePerShare;
         target.maxSupply = source.maxSupply;
-        target.reservedSupply = source.reservedSupply;
         target.currentSupply = source.currentSupply;
         target.startTime = source.startTime;
         target.endTime = source.endTime;
@@ -401,7 +408,7 @@ contract FANtiumTokenV1 is
     /**
      * View to see the current sale phase (without packages mapping)
      */
-    function getCurrentPhase() external view returns (PhaseView memory) {
+    function getCurrentPhase() external view returns (Phase memory) {
         // check that there are phases
         if (phases.length == 0) {
             revert NoPhasesAdded();
@@ -409,36 +416,15 @@ contract FANtiumTokenV1 is
 
         Phase storage phase = phases[currentPhaseIndex];
 
-        return PhaseView({
-            phaseId: phase.phaseId,
-            pricePerShare: phase.pricePerShare,
-            maxSupply: phase.maxSupply,
-            reservedSupply: phase.reservedSupply,
-            currentSupply: phase.currentSupply,
-            startTime: phase.startTime,
-            endTime: phase.endTime
-        });
+        return phase;
     }
 
     /**
      * Helper to view all existing sale phases
+     * @return phases - array of all sale phases
      */
-    function getAllPhases() public view returns (PhaseView[] memory) {
-        PhaseView[] memory phaseViews;
-
-        for (uint256 i = 0; i < phases.length; i++) {
-            phaseViews[i] = PhaseView({
-                phaseId: phases[i].phaseId,
-                pricePerShare: phases[i].pricePerShare,
-                maxSupply: phases[i].maxSupply,
-                reservedSupply: phases[i].reservedSupply,
-                currentSupply: phases[i].currentSupply,
-                startTime: phases[i].startTime,
-                endTime: phases[i].endTime
-            });
-        }
-
-        return phaseViews;
+    function getAllPhases() public view returns (Phase[] memory) {
+        return phases;
     }
 
     /**
@@ -453,29 +439,8 @@ contract FANtiumTokenV1 is
             revert PhaseWithIdDoesNotExist(phaseId);
         }
 
-        uint256 packageCount = 0;
-
-        // First: Count valid packages
-        for (uint256 i = 0; i < nextPackageId; i++) {
-            if (phase.packages[i].maxSupply > 0 && phase.packages[i].price > 0) {
-                packageCount++;
-            }
-        }
-
-        // Second: create array. We must specify the array size when creating a new fixed-size memory array
-        Package[] memory packages = new Package[](packageCount);
-        uint256 index = 0;
-
-        // Third: populate array
-        for (uint256 i = 0; i < nextPackageId; i++) {
-            if (phase.packages[i].maxSupply > 0) {
-                packages[index] = phase.packages[i];
-                index++;
-            }
-        }
-
         // return all packages
-        return packages;
+        return phase.packages;
     }
 
     /**
@@ -492,8 +457,7 @@ contract FANtiumTokenV1 is
             }
         }
 
-        // Instead of returning an invalid struct, we revert if not found. Reason: Struct containing a (nested) mapping
-        // cannot be constructed.
+        // Instead of returning an invalid struct, we revert if not found.
         revert PhaseNotFound(id);
     }
 
@@ -591,7 +555,12 @@ contract FANtiumTokenV1 is
     function _changePackageCurrentSupply(uint256 currentSupply, uint256 packageId) internal {
         // get current phase
         Phase storage phase = phases[currentPhaseIndex];
-        Package memory package = phase.packages[packageId];
+        (bool isFound, Package storage package,) = _findPackageById(packageId, phase.packages);
+
+        // check that package exists
+        if (!isFound) {
+            revert PackageDoesNotExist(packageId);
+        }
 
         // check that currentSupply does not exceed the max limit
         if (currentSupply > package.maxSupply) {
@@ -603,7 +572,7 @@ contract FANtiumTokenV1 is
         }
 
         // change the package currentSupply value
-        phases[currentPhaseIndex].packages[packageId].currentSupply = currentSupply;
+        package.currentSupply = currentSupply;
     }
 
     /**
@@ -691,16 +660,11 @@ contract FANtiumTokenV1 is
             sharesToMint = quantity;
             // price calculation
             expectedAmount = quantity * phase.pricePerShare * 10 ** tokenDecimals;
-
-            // Ensure single shares do not consume reserved package shares
-            if (phase.currentSupply + sharesToMint > phase.maxSupply - phase.reservedSupply) {
-                revert QuantityExceedsMaxSupplyLimit(quantity);
-            }
         } else {
             // Buying a package
-            Package storage package = phase.packages[packageId];
             // check that package exists
-            if (package.price == 0 || package.shareCount == 0) {
+            (bool isFound, Package storage package, uint256 index) = _findPackageById(packageId, phase.packages);
+            if (!isFound) {
                 revert PackageDoesNotExist(packageId);
             }
 
@@ -713,7 +677,7 @@ contract FANtiumTokenV1 is
             // price calculation
             expectedAmount = quantity * package.price * 10 ** tokenDecimals;
 
-            // Ensure enough reserved shares exist for packages
+            // Ensure enough shares exist for packages
             if (phase.currentSupply + sharesToMint > phase.maxSupply) {
                 revert QuantityExceedsMaxSupplyLimit(quantity);
             }
@@ -729,7 +693,7 @@ contract FANtiumTokenV1 is
         _changePhaseCurrentSupply(phase.currentSupply + sharesToMint);
         if (!isSingleSharesPurchase) {
             // change package supply
-            Package storage package = phase.packages[packageId];
+            (bool isFound, Package storage package,) = _findPackageById(packageId, phase.packages);
             uint256 updatedSupply = package.currentSupply + quantity;
             _changePackageCurrentSupply(updatedSupply, packageId);
         }

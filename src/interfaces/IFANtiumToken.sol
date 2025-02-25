@@ -3,19 +3,6 @@ pragma solidity 0.8.28;
 
 import { IERC721AQueryableUpgradeable } from "erc721a-upgradeable/interfaces/IERC721AQueryableUpgradeable.sol";
 
-// todo: add packages to the Smart Contract
-// 1. change schema - done
-// 2. change purchase function - done
-// 3. change addPhase function - done
-// 4. change removePhase function - done
-// 5. change getCurrentPhase function - done
-// 6. add addPackage function - done
-// 7. add removePackage function - done
-// 8. add view function getAllPackagesForPhase - done
-// 9. add setReservedSupplyForPhase function - done
-// 10. fix broken unit tests
-// 11. add new unit tests
-
 struct Package {
     uint256 packageId;
     string name; // "Classic", "Advanced", "Premium"
@@ -27,24 +14,13 @@ struct Package {
 
 struct Phase {
     uint256 phaseId;
+    uint256 nextPackageId;
     uint256 pricePerShare;
     uint256 maxSupply; // Total number of shares
-    uint256 reservedSupply; // Shares reserved for packages
     uint256 currentSupply; // Number of minted shares for the phase (<= maxSupply)
     uint256 startTime;
     uint256 endTime;
-    mapping(uint256 => Package) packages; // Mapping of packageId to Package
-}
-
-// Struct for external view functions (without mapping)
-struct PhaseView {
-    uint256 phaseId;
-    uint256 pricePerShare;
-    uint256 maxSupply;
-    uint256 reservedSupply;
-    uint256 currentSupply;
-    uint256 startTime;
-    uint256 endTime;
+    Package[] packages; // array of packages
 }
 
 // A phase has a certain number of NFTs available at a certain price
