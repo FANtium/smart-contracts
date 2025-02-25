@@ -188,7 +188,7 @@ contract FANtiumTokenV1 is
 
         // Check if there are any existing phases
         if (phases.length > 0) {
-            Phase storage latestPhase = phases[phases.length - 1];
+            Phase memory latestPhase = phases[phases.length - 1];
             // check that previous and next phase do not overlap
             if (latestPhase.endTime >= startTime) {
                 revert PreviousAndNextPhaseTimesOverlap();
@@ -323,30 +323,6 @@ contract FANtiumTokenV1 is
     }
 
     /**
-     * Internal function to only be used in the removePhase function
-     * this function manually copies package mapping
-     * otherwise we cannot remove the phase, because it contains nested mapping
-     * @param target The phase to be overwritten
-     * @param source The phase to be used as a source of data
-     */
-    function _copyPhase(Phase storage target, Phase storage source) internal {
-        target.phaseId = source.phaseId;
-        target.pricePerShare = source.pricePerShare;
-        target.maxSupply = source.maxSupply;
-        target.currentSupply = source.currentSupply;
-        target.startTime = source.startTime;
-        target.endTime = source.endTime;
-
-        // Manually copy package mapping
-        for (uint256 i = 0; i < source.maxSupply; i++) {
-            if (source.packages[i].packageId != 0) {
-                // Ensure valid package exists
-                target.packages[i] = source.packages[i];
-            }
-        }
-    }
-
-    /**
      * Remove the existing sale phase
      * @param phaseIndex The index of the sale phase
      */
@@ -366,7 +342,7 @@ contract FANtiumTokenV1 is
         // remove the phase from the array, preserve the order of the items
         // shift all elements after the index to the left
         for (uint256 i = phaseIndex; i < phases.length - 1; i++) {
-            _copyPhase(phases[i], phases[i + 1]);
+            phases[i] = phases[i + 1];
         }
 
         phases.pop(); // remove the last element
@@ -403,7 +379,7 @@ contract FANtiumTokenV1 is
     }
 
     /**
-     * View to see the current sale phase (without packages mapping)
+     * View to see the current sale phase
      */
     function getCurrentPhase() external view returns (Phase memory) {
         // check that there are phases
@@ -411,9 +387,7 @@ contract FANtiumTokenV1 is
             revert NoPhasesAdded();
         }
 
-        Phase storage phase = phases[currentPhaseIndex];
-
-        return phase;
+        return phases[currentPhaseIndex];
     }
 
     /**

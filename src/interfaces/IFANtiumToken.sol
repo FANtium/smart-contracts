@@ -20,7 +20,7 @@ struct Phase {
     uint256 currentSupply; // Number of minted shares for the phase (<= maxSupply)
     uint256 startTime;
     uint256 endTime;
-    Package[] packages; // array of packages
+    Package[] packages;
 }
 
 // A phase has a certain number of NFTs available at a certain price
