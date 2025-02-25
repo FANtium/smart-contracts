@@ -253,11 +253,7 @@ contract FANtiumTokenV1 is
         }
 
         // get phase
-        (bool isFound, Phase storage phase,) = _findPhaseById(phaseId);
-
-        if (!isFound) {
-            revert PhaseWithIdDoesNotExist(phaseId);
-        }
+        (Phase storage phase,) = _findPhaseById(phaseId);
 
         // phase was found, add new package
         phase.packages.push(
@@ -305,10 +301,7 @@ contract FANtiumTokenV1 is
      */
     function removePackage(uint256 phaseId, uint256 packageId) external onlyOwner {
         // check that phase exists
-        (bool isFound, Phase storage phase,) = _findPhaseById(phaseId);
-        if (!isFound) {
-            revert PhaseWithIdDoesNotExist(phaseId);
-        }
+        (Phase storage phase,) = _findPhaseById(phaseId);
         // check that package exists
         (bool isPackageFound,, uint256 index) = _findPackageById(packageId, phase.packages);
         if (!isPackageFound) {
@@ -405,10 +398,7 @@ contract FANtiumTokenV1 is
      */
     function getAllPackagesForPhase(uint256 phaseId) public view returns (Package[] memory) {
         // check that phase exists
-        (bool isFound, Phase storage phase,) = _findPhaseById(phaseId);
-        if (!isFound) {
-            revert PhaseWithIdDoesNotExist(phaseId);
-        }
+        (Phase storage phase,) = _findPhaseById(phaseId);
 
         // return all packages
         return phase.packages;
@@ -417,14 +407,13 @@ contract FANtiumTokenV1 is
     /**
      * Get phase from an array by phaseId
      * @param id - phase id
-     * @return bool true if sale phase is found, false - if not found.
      * @return Phase which was found, or default values - if not found.
      * @return uint256 index of the Phase in an array, 0 - if not found.
      */
-    function _findPhaseById(uint256 id) private view returns (bool, Phase storage, uint256) {
+    function _findPhaseById(uint256 id) private view returns (Phase storage, uint256) {
         for (uint256 i = 0; i < phases.length; i++) {
             if (phases[i].phaseId == id) {
-                return (true, phases[i], i); // Return (true, Phase, index) if phase is found
+                return (phases[i], i); // Return (Phase, index) if phase is found
             }
         }
 
@@ -438,11 +427,7 @@ contract FANtiumTokenV1 is
      * @param phaseId id of the sale phase
      */
     function changePhaseStartTime(uint256 newStartTime, uint256 phaseId) external onlyOwner {
-        (bool isFound, Phase storage phase, uint256 phaseIndex) = _findPhaseById(phaseId);
-
-        if (!isFound) {
-            revert PhaseWithIdDoesNotExist(phaseId);
-        }
+        (Phase storage phase, uint256 phaseIndex) = _findPhaseById(phaseId);
 
         // validate newStartTime
         if (newStartTime > phase.endTime || block.timestamp > newStartTime) {
@@ -470,12 +455,7 @@ contract FANtiumTokenV1 is
      * @param phaseId id of the sale phase
      */
     function changePhaseEndTime(uint256 newEndTime, uint256 phaseId) external onlyOwner {
-        (bool isFound, Phase storage phase, uint256 phaseIndex) = _findPhaseById(phaseId);
-
-        // ensure the phase exists
-        if (!isFound) {
-            revert PhaseWithIdDoesNotExist(phaseId);
-        }
+        (Phase storage phase, uint256 phaseIndex) = _findPhaseById(phaseId);
 
         // validate newEndTime
         if (newEndTime <= phase.startTime || block.timestamp > newEndTime) {
@@ -553,12 +533,7 @@ contract FANtiumTokenV1 is
      * @param phaseId - id of the phase to be edited
      */
     function changePhaseMaxSupply(uint256 maxSupply, uint256 phaseId) external onlyOwner {
-        (bool isFound, Phase storage phase, uint256 phaseIndex) = _findPhaseById(phaseId);
-
-        // ensure the phase exists
-        if (!isFound) {
-            revert PhaseWithIdDoesNotExist(phaseId);
-        }
+        (Phase storage phase, uint256 phaseIndex) = _findPhaseById(phaseId);
 
         // max supply cannot be 0
         // max supply should be bigger than currentSupply
@@ -647,11 +622,10 @@ contract FANtiumTokenV1 is
             sharesToMint = package.shareCount * quantity;
             // price calculation
             expectedAmount = quantity * package.price * 10 ** tokenDecimals;
-
-            // Ensure enough shares exist for packages
-            if (phase.currentSupply + sharesToMint > phase.maxSupply) {
-                revert QuantityExceedsMaxSupplyLimit(quantity);
-            }
+        }
+        // Ensure enough shares exist for packages
+        if (phase.currentSupply + sharesToMint > phase.maxSupply) {
+            revert QuantityExceedsMaxSupplyLimit(quantity);
         }
 
         // transfer stable coin from msg.sender to this treasury

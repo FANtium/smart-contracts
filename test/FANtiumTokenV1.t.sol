@@ -513,11 +513,11 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
     // changePhaseStartTime
     // ========================================================================
     // TODO: test_changePhaseStartTime_ok
-    function test_changePhaseStartTime_revert_PhaseWithIdDoesNotExist() public {
+    function test_changePhaseStartTime_revert_PhaseNotFound() public {
         uint256 endTime = uint256(block.timestamp + 30 days); // Use relative time from current block
 
         vm.prank(fantiumToken_admin);
-        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.PhaseWithIdDoesNotExist.selector, 1));
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.PhaseNotFound.selector, 1));
         fantiumToken.changePhaseEndTime(endTime, 1);
     }
 
@@ -605,11 +605,11 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
     // changePhaseEndTime
     // ========================================================================
     // TODO: test_changePhaseEndTime_ok
-    function test_changePhaseEndTime_revert_PhaseWithIdDoesNotExist() public {
+    function test_changePhaseEndTime_revert_PhaseNotFound() public {
         uint256 endTime = uint256(block.timestamp + 30 days); // Use relative time from current block
 
         vm.prank(fantiumToken_admin);
-        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.PhaseWithIdDoesNotExist.selector, 1));
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.PhaseNotFound.selector, 1));
         fantiumToken.changePhaseEndTime(endTime, 1);
     }
 
@@ -696,11 +696,11 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
     // changePhaseMaxSupply
     // ========================================================================
     // TODO: test_changePhaseMaxSupply_ok
-    function test_changePhaseMaxSupply_revert_PhaseWithIdDoesNotExist() public {
+    function test_changePhaseMaxSupply_revert_PhaseNotFound() public {
         uint256 maxSupply = 1000;
 
         vm.prank(fantiumToken_admin);
-        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.PhaseWithIdDoesNotExist.selector, 1));
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.PhaseNotFound.selector, 1));
         fantiumToken.changePhaseMaxSupply(maxSupply, 1);
     }
 
@@ -882,17 +882,27 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         // Check the initial state
         assertEq(fantiumToken.getAllPhases().length, 0);
         // Execute phase addition
-        vm.prank(fantiumToken_admin);
+        vm.startPrank(fantiumToken_admin);
         fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
         // Verify phase data was stored correctly
         assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // set the payment token
+        address usdcAddress = address(usdc);
+        fantiumToken.setPaymentToken(usdcAddress, true);
+        assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
+
+        // set treasury
+        address newTreasury = makeAddr("newTreasury");
+        fantiumToken.setTreasuryAddress(newTreasury);
+
+        vm.stopPrank();
 
         // Warp time
         vm.warp(startTime + 1 days); // phase is active
 
         // try to mint
         address recipient = makeAddr("recipient");
-        address usdcAddress = address(usdc);
         uint256 quantity = 1001; // more than maxSupply
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.QuantityExceedsMaxSupplyLimit.selector, quantity));
         fantiumToken.mintTo(recipient, quantity, usdcAddress, 0);
