@@ -275,8 +275,7 @@ contract FANtiumTokenV1 is
      * Private function that helps to find a package in an array of packages by id
      * @param packageId id of the package
      * @param packages array of all packages
-     * @return (isFound, package, index) - boolean indicating whether the package was found, package that was found, the
-     * index of the found package
+     * @return (package, index) - returns package that was found and the index of the found package
      */
     function _findPackageById(
         uint256 packageId,
@@ -284,11 +283,11 @@ contract FANtiumTokenV1 is
     )
         private
         view
-        returns (bool, Package storage, uint256)
+        returns (Package storage, uint256)
     {
         for (uint256 i = 0; i < packages.length; i++) {
             if (packages[i].packageId == packageId) {
-                return (true, packages[i], i);
+                return (packages[i], i);
             }
         }
         revert PackageDoesNotExist(packageId);
@@ -303,10 +302,7 @@ contract FANtiumTokenV1 is
         // check that phase exists
         (Phase storage phase,) = _findPhaseById(phaseId);
         // check that package exists
-        (bool isPackageFound,, uint256 index) = _findPackageById(packageId, phase.packages);
-        if (!isPackageFound) {
-            revert PackageDoesNotExist(packageId);
-        }
+        (, uint256 index) = _findPackageById(packageId, phase.packages);
 
         // remove the package from the phase
         // Swap with the last element
@@ -506,12 +502,7 @@ contract FANtiumTokenV1 is
     function _changePackageCurrentSupply(uint256 currentSupply, uint256 packageId) internal {
         // get current phase
         Phase storage phase = phases[currentPhaseIndex];
-        (bool isFound, Package storage package,) = _findPackageById(packageId, phase.packages);
-
-        // check that package exists
-        if (!isFound) {
-            revert PackageDoesNotExist(packageId);
-        }
+        (Package storage package,) = _findPackageById(packageId, phase.packages);
 
         // check that currentSupply does not exceed the max limit
         if (currentSupply > package.maxSupply) {
@@ -609,10 +600,7 @@ contract FANtiumTokenV1 is
         } else {
             // Buying a package
             // check that package exists
-            (bool isFound, Package storage package,) = _findPackageById(packageId, phase.packages);
-            if (!isFound) {
-                revert PackageDoesNotExist(packageId);
-            }
+            (Package storage package,) = _findPackageById(packageId, phase.packages);
 
             // check that package max supply is not exceeded
             if (package.currentSupply + quantity > package.maxSupply) {
@@ -638,7 +626,7 @@ contract FANtiumTokenV1 is
         _changePhaseCurrentSupply(phase.currentSupply + sharesToMint);
         if (!isSingleSharesPurchase) {
             // change package supply
-            (, Package storage package,) = _findPackageById(packageId, phase.packages);
+            (Package storage package,) = _findPackageById(packageId, phase.packages);
             uint256 updatedSupply = package.currentSupply + quantity;
             _changePackageCurrentSupply(updatedSupply, packageId);
         }
