@@ -169,7 +169,52 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         assertEq(addedPhase.phaseId, 0); // initially set to 0
     }
 
-    // TODO: test_addPhase_ok_multiplePhases
+    function test_addPhase_ok_multiplePhases() public {
+        // Setup test data for 1st phase
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days); // Use relative time from current block
+        uint256 endTime = uint256(block.timestamp + 30 days); // Use relative time from current block
+
+        // Setup test data for 2nd phase
+        uint256 pricePerShare2 = 200;
+        uint256 maxSupply2 = 2000;
+        uint256 startTime2 = uint256(block.timestamp + 31 days); // Use relative time from current block
+        uint256 endTime2 = uint256(block.timestamp + 60 days); // Use relative time from current block
+
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+
+        // Execute phase 1 addition
+        vm.startPrank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Execute phase 2 addition
+        fantiumToken.addPhase(pricePerShare2, maxSupply2, startTime2, endTime2);
+
+        vm.stopPrank();
+
+        // verify both phases was added
+        assertEq(fantiumToken.getAllPhases().length, 2);
+
+        // Verify phase 1 data was stored correctly
+        Phase memory addedPhase = fantiumToken.getAllPhases()[0];
+        assertEq(addedPhase.pricePerShare, pricePerShare);
+        assertEq(addedPhase.maxSupply, maxSupply);
+        assertEq(addedPhase.startTime, startTime);
+        assertEq(addedPhase.endTime, endTime);
+        assertEq(addedPhase.currentSupply, 0); // initially set to 0
+        assertEq(addedPhase.phaseId, 0);
+
+        // Verify phase 2 data was stored correctly
+        Phase memory addedPhase2 = fantiumToken.getAllPhases()[1];
+        assertEq(addedPhase2.pricePerShare, pricePerShare2);
+        assertEq(addedPhase2.maxSupply, maxSupply2);
+        assertEq(addedPhase2.startTime, startTime2);
+        assertEq(addedPhase2.endTime, endTime2);
+        assertEq(addedPhase2.currentSupply, 0); // initially set to 0
+        assertEq(addedPhase2.phaseId, 1);
+    }
+
     function test_addPhase_revert_IncorrectStartOrEndTime() public {
         // Setup test data
         uint256 pricePerShare = 100;
