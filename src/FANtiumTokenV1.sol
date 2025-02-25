@@ -279,11 +279,11 @@ contract FANtiumTokenV1 is
      */
     function _findPackageById(
         uint256 packageId,
-        Package[] storage packages
+        Package[] memory packages
     )
         private
-        view
-        returns (Package storage, uint256)
+        pure
+        returns (Package memory, uint256)
     {
         for (uint256 i = 0; i < packages.length; i++) {
             if (packages[i].packageId == packageId) {
@@ -321,7 +321,7 @@ contract FANtiumTokenV1 is
             revert IncorrectPhaseIndex(phaseIndex);
         }
 
-        Phase storage phaseToRemove = phases[phaseIndex];
+        Phase memory phaseToRemove = phases[phaseIndex];
 
         // check that phase has not started yet, we cannot remove phase which already started
         if (phaseToRemove.startTime < block.timestamp) {
@@ -348,7 +348,7 @@ contract FANtiumTokenV1 is
         }
 
         // we cannot set past phase as a current phase
-        Phase storage phaseToBeSet = phases[phaseIndex];
+        Phase memory phaseToBeSet = phases[phaseIndex];
         if (phaseToBeSet.endTime <= block.timestamp) {
             revert CannotSetEndedPhaseAsCurrentPhase();
         }
@@ -394,7 +394,7 @@ contract FANtiumTokenV1 is
      */
     function getAllPackagesForPhase(uint256 phaseId) public view returns (Package[] memory) {
         // check that phase exists
-        (Phase storage phase,) = _findPhaseById(phaseId);
+        (Phase memory phase,) = _findPhaseById(phaseId);
 
         // return all packages
         return phase.packages;
@@ -423,7 +423,7 @@ contract FANtiumTokenV1 is
      * @param phaseId id of the sale phase
      */
     function changePhaseStartTime(uint256 newStartTime, uint256 phaseId) external onlyOwner {
-        (Phase storage phase, uint256 phaseIndex) = _findPhaseById(phaseId);
+        (Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
 
         // validate newStartTime
         if (newStartTime > phase.endTime || block.timestamp > newStartTime) {
@@ -435,7 +435,7 @@ contract FANtiumTokenV1 is
         // Explicitly check for out-of-bounds access when dealing with previousPhase
         if (phases.length > 1 && phaseIndex != 0) {
             // check that phases do not overlap
-            Phase storage previousPhase = phases[phaseIndex - 1];
+            Phase memory previousPhase = phases[phaseIndex - 1];
             if (previousPhase.endTime > newStartTime) {
                 revert PreviousAndNextPhaseTimesOverlap();
             }
@@ -451,7 +451,7 @@ contract FANtiumTokenV1 is
      * @param phaseId id of the sale phase
      */
     function changePhaseEndTime(uint256 newEndTime, uint256 phaseId) external onlyOwner {
-        (Phase storage phase, uint256 phaseIndex) = _findPhaseById(phaseId);
+        (Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
 
         // validate newEndTime
         if (newEndTime <= phase.startTime || block.timestamp > newEndTime) {
@@ -463,7 +463,7 @@ contract FANtiumTokenV1 is
         // Explicitly check for out-of-bounds access when dealing with nextPhase
         if (phaseIndex + 1 < phases.length) {
             // check that phases do not overlap
-            Phase storage nextPhase = phases[phaseIndex + 1];
+            Phase memory nextPhase = phases[phaseIndex + 1];
             if (nextPhase.startTime < newEndTime) {
                 revert PreviousAndNextPhaseTimesOverlap();
             }
@@ -501,8 +501,8 @@ contract FANtiumTokenV1 is
      */
     function _changePackageCurrentSupply(uint256 currentSupply, uint256 packageId) internal {
         // get current phase
-        Phase storage phase = phases[currentPhaseIndex];
-        (Package storage package,) = _findPackageById(packageId, phase.packages);
+        Phase memory phase = phases[currentPhaseIndex];
+        (Package memory package, uint256 packageIndex) = _findPackageById(packageId, phase.packages);
 
         // check that currentSupply does not exceed the max limit
         if (currentSupply > package.maxSupply) {
@@ -514,7 +514,7 @@ contract FANtiumTokenV1 is
         }
 
         // change the package currentSupply value
-        package.currentSupply = currentSupply;
+        phases[currentPhaseIndex].packages[packageIndex].currentSupply = currentSupply;
     }
 
     /**
@@ -524,7 +524,7 @@ contract FANtiumTokenV1 is
      * @param phaseId - id of the phase to be edited
      */
     function changePhaseMaxSupply(uint256 maxSupply, uint256 phaseId) external onlyOwner {
-        (Phase storage phase, uint256 phaseIndex) = _findPhaseById(phaseId);
+        (Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
 
         // max supply cannot be 0
         // max supply should be bigger than currentSupply
@@ -560,7 +560,7 @@ contract FANtiumTokenV1 is
         whenNotPaused
     {
         // get current phase
-        Phase storage phase = phases[currentPhaseIndex];
+        Phase memory phase = phases[currentPhaseIndex];
         // check that phase was found
         if (phase.pricePerShare == 0 || phase.startTime == 0) {
             revert PhaseDoesNotExist(currentPhaseIndex);
@@ -600,7 +600,7 @@ contract FANtiumTokenV1 is
         } else {
             // Buying a package
             // check that package exists
-            (Package storage package,) = _findPackageById(packageId, phase.packages);
+            (Package memory package,) = _findPackageById(packageId, phase.packages);
 
             // check that package max supply is not exceeded
             if (package.currentSupply + quantity > package.maxSupply) {
@@ -626,7 +626,7 @@ contract FANtiumTokenV1 is
         _changePhaseCurrentSupply(phase.currentSupply + sharesToMint);
         if (!isSingleSharesPurchase) {
             // change package supply
-            (Package storage package,) = _findPackageById(packageId, phase.packages);
+            (Package memory package,) = _findPackageById(packageId, phase.packages);
             uint256 updatedSupply = package.currentSupply + quantity;
             _changePackageCurrentSupply(updatedSupply, packageId);
         }
