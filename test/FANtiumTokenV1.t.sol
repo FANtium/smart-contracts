@@ -441,7 +441,12 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.stopPrank();
     }
 
-    // TODO: test_setCurrentPhase_revert_IncorrectPhaseIndex
+    function test_setCurrentPhase_revert_IncorrectPhaseIndex() public {
+        vm.prank(fantiumToken_admin);
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.IncorrectPhaseIndex.selector, 2));
+        fantiumToken.setCurrentPhase(2);
+    }
+
     function test_setCurrentPhase_revert_CannotSetEndedPhaseAsCurrentPhase() public {
         // add phases
         uint256 pricePerShare = 100;

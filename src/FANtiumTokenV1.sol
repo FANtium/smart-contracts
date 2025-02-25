@@ -253,10 +253,10 @@ contract FANtiumTokenV1 is
         }
 
         // get phase
-        (Phase storage phase,) = _findPhaseById(phaseId);
+        (Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
 
         // phase was found, add new package
-        phase.packages.push(
+        phases[phaseIndex].packages.push(
             Package({
                 packageId: phase.nextPackageId,
                 name: name,
@@ -300,15 +300,15 @@ contract FANtiumTokenV1 is
      */
     function removePackage(uint256 phaseId, uint256 packageId) external onlyOwner {
         // check that phase exists
-        (Phase storage phase,) = _findPhaseById(phaseId);
+        (Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
         // check that package exists
         (, uint256 index) = _findPackageById(packageId, phase.packages);
 
         // remove the package from the phase
         // Swap with the last element
-        phase.packages[index] = phase.packages[phase.packages.length - 1];
+        phases[phaseIndex].packages[index] = phase.packages[phase.packages.length - 1];
         // Remove the last element
-        phase.packages.pop();
+        phases[phaseIndex].packages.pop();
     }
 
     /**
@@ -406,7 +406,7 @@ contract FANtiumTokenV1 is
      * @return Phase which was found, or default values - if not found.
      * @return uint256 index of the Phase in an array, 0 - if not found.
      */
-    function _findPhaseById(uint256 id) private view returns (Phase storage, uint256) {
+    function _findPhaseById(uint256 id) private view returns (Phase memory, uint256) {
         for (uint256 i = 0; i < phases.length; i++) {
             if (phases[i].phaseId == id) {
                 return (phases[i], i); // Return (Phase, index) if phase is found
