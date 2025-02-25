@@ -195,22 +195,19 @@ contract FANtiumTokenV1 is
             }
         }
 
-        // todo: revert back
         // add new Phase
-        // In Solidity, you cannot initialize a struct that contains a mapping using the struct constructor syntax
-        // Phase({ ... })
-        // First push an empty phase
-        phases.push();
-        uint256 lastIndex = phases.length - 1;
-
-        // Then set all the values individually
-        phases[lastIndex].phaseId = nextPhaseId;
-        phases[lastIndex].pricePerShare = pricePerShare;
-        phases[lastIndex].maxSupply = maxSupply;
-        phases[lastIndex].currentSupply = 0;
-        phases[lastIndex].startTime = startTime;
-        phases[lastIndex].endTime = endTime;
-        // The mapping 'packages' will be automatically initialized as empty
+        phases.push(
+            Phase({
+                phaseId: nextPhaseId,
+                nextPackageId: 0,
+                pricePerShare: pricePerShare,
+                maxSupply: maxSupply,
+                startTime: startTime,
+                endTime: endTime,
+                currentSupply: 0,
+                packages: new Package[](0)
+            })
+        );
 
         // increment counter
         nextPhaseId++;
@@ -663,7 +660,7 @@ contract FANtiumTokenV1 is
         } else {
             // Buying a package
             // check that package exists
-            (bool isFound, Package storage package, uint256 index) = _findPackageById(packageId, phase.packages);
+            (bool isFound, Package storage package,) = _findPackageById(packageId, phase.packages);
             if (!isFound) {
                 revert PackageDoesNotExist(packageId);
             }
@@ -693,7 +690,7 @@ contract FANtiumTokenV1 is
         _changePhaseCurrentSupply(phase.currentSupply + sharesToMint);
         if (!isSingleSharesPurchase) {
             // change package supply
-            (bool isFound, Package storage package,) = _findPackageById(packageId, phase.packages);
+            (, Package storage package,) = _findPackageById(packageId, phase.packages);
             uint256 updatedSupply = package.currentSupply + quantity;
             _changePackageCurrentSupply(updatedSupply, packageId);
         }
