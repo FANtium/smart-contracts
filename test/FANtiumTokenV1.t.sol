@@ -981,7 +981,66 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.stopPrank();
     }
 
-    // TODO: test_mintTo_ok_autoPhaseSwitch
+    function test_mintTo_ok_autoPhaseSwitch() public {
+        // add 2 phases
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days);
+        uint256 endTime = uint256(block.timestamp + 30 days);
+        uint256 pricePerShare2 = 200;
+        uint256 maxSupply2 = 2000;
+        uint256 startTime2 = uint256(block.timestamp + 31 days);
+        uint256 endTime2 = uint256(block.timestamp + 60 days);
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phases addition
+        vm.startPrank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        fantiumToken.addPhase(pricePerShare2, maxSupply2, startTime2, endTime2);
+        // Verify phases were added
+        assertEq(fantiumToken.getAllPhases().length, 2);
+
+        // Warp time
+        vm.warp(startTime + 1 days); // phase 1 is active
+
+        // set the payment token
+        address usdcAddress = address(usdc);
+        fantiumToken.setPaymentToken(usdcAddress, true);
+        assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
+
+        // set treasury
+        address newTreasury = makeAddr("newTreasury");
+        fantiumToken.setTreasuryAddress(newTreasury);
+
+        // check current phase
+        Phase memory currentPhase = fantiumToken.getCurrentPhase();
+        assertEq(currentPhase.phaseId, 0);
+
+        vm.stopPrank();
+
+        // prepare sale
+        address recipient = makeAddr("recipient");
+        uint256 quantity = maxSupply; // buy all shares in phase1
+        uint8 tokenDecimals = IERC20MetadataUpgradeable(usdcAddress).decimals();
+        uint256 expectedAmount = quantity * pricePerShare * 10 ** tokenDecimals;
+        // top up recipient
+        deal(usdcAddress, recipient, expectedAmount);
+        vm.startPrank(recipient);
+        // approve the spending
+        usdc.approve(address(fantiumToken), expectedAmount);
+
+        // mint
+        vm.expectEmit(true, true, true, true); // check that event was emitted
+        emit FANtiumTokenSale(quantity, recipient, expectedAmount);
+        fantiumToken.mintTo(recipient, quantity, usdcAddress);
+
+        // check that current phase switch worked
+        Phase memory updatedCurrentPhase = fantiumToken.getCurrentPhase();
+        assertEq(updatedCurrentPhase.phaseId, 1);
+
+        vm.stopPrank();
+    }
+
     function test_mintTo_revert_CurrentPhaseIsNotActive_phaseNotStarted() public {
         // add a phase
         uint256 pricePerShare = 100;
