@@ -268,7 +268,7 @@ contract FANtiumTokenV1 is
         );
 
         // increment counter
-        phase.nextPackageId++;
+        phases[phaseIndex].nextPackageId++;
     }
 
     /**
