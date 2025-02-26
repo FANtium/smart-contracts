@@ -1365,7 +1365,44 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.stopPrank();
     }
 
-    // TODO: test_addPackage_ok_multiple
+    function test_addPackage_ok_multiple() public {
+        // Setup test data for phase addition
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days); // Use relative time from current block
+        uint256 endTime = uint256(block.timestamp + 30 days); // Use relative time from current block
+
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.startPrank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase was added
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // setup test data for 2 packages
+        string memory name = "Premium";
+        uint256 price = 999;
+        uint256 shareCount = 3;
+        uint256 maxPackageSupply = 10;
+        uint256 phaseId = 0;
+
+        string memory name2 = "Basic";
+        uint256 price2 = 666;
+        uint256 shareCount2 = 2;
+        uint256 maxPackageSupply2 = 20;
+        uint256 phaseId2 = 1;
+
+        // Execute packages addition
+        fantiumToken.addPackage(name, price, shareCount, maxPackageSupply, phaseId);
+        fantiumToken.addPackage(name2, price2, shareCount2, maxPackageSupply2, phaseId);
+
+        // check that 2 packages were added
+        assertEq(fantiumToken.getAllPhases()[0].packages.length, 2);
+
+        vm.stopPrank();
+    }
+
     // TODO: test_addPackage_revert_IncorrectPackageName
     // TODO: test_addPackage_revert_IncorrectPackagePrice
     // TODO: test_addPackage_revert_IncorrectShareCount
