@@ -546,7 +546,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
 
     // getAllPhases
     // ========================================================================
-    function test_getAllPhases_ok_empty() public {
+    function test_getAllPhases_ok_empty() public view {
         // Check that getAllPhases returns an empty array when no phases are added
         Phase[] memory phases = fantiumToken.getAllPhases();
 
@@ -1391,7 +1391,6 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         uint256 price2 = 666;
         uint256 shareCount2 = 2;
         uint256 maxPackageSupply2 = 20;
-        uint256 phaseId2 = 1;
 
         // Execute packages addition
         fantiumToken.addPackage(name, price, shareCount, maxPackageSupply, phaseId);
@@ -1403,7 +1402,35 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.stopPrank();
     }
 
-    // TODO: test_addPackage_revert_IncorrectPackageName
+    function test_addPackage_revert_IncorrectPackageName() public {
+        // Setup test data for phase addition
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days); // Use relative time from current block
+        uint256 endTime = uint256(block.timestamp + 30 days); // Use relative time from current block
+
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.startPrank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase was added
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // setup test data for package
+        string memory name = ""; // empty!
+        uint256 price = 999;
+        uint256 shareCount = 3;
+        uint256 maxPackageSupply = 10;
+        uint256 phaseId = 0;
+
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.IncorrectPackageName.selector, name));
+        // try to execute package addition
+        fantiumToken.addPackage(name, price, shareCount, maxPackageSupply, phaseId);
+
+        vm.stopPrank();
+    }
+
     // TODO: test_addPackage_revert_IncorrectPackagePrice
     // TODO: test_addPackage_revert_IncorrectShareCount
     // TODO: test_addPackage_revert_IncorrectMaxSupply
