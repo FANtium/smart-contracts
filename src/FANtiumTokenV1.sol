@@ -343,7 +343,7 @@ contract FANtiumTokenV1 is
      */
     function setCurrentPhase(uint256 phaseIndex) public onlyOwner {
         // check that phaseIndex is valid
-        if (phaseIndex >= phases.length || phaseIndex < 0) {
+        if (phaseIndex >= phases.length) {
             revert IncorrectPhaseIndex(phaseIndex);
         }
 

@@ -505,7 +505,37 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
 
     // getCurrentPhase
     // ========================================================================
-    // TODO: test_getCurrentPhase_ok
+    function test_getCurrentPhase_ok() public {
+        // add a phase
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days); // Use relative time from current block
+        uint256 endTime = uint256(block.timestamp + 30 days); // Use relative time from current block
+
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+
+        // Execute phase addition
+        vm.prank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase data was stored correctly
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // set phase as current
+        vm.prank(fantiumToken_admin);
+        fantiumToken.setCurrentPhase(0);
+
+        // check that getCurrentPhase returns correct phase data
+        vm.assertEq(fantiumToken.getCurrentPhase().phaseId, 0);
+        vm.assertEq(fantiumToken.getCurrentPhase().pricePerShare, pricePerShare);
+        vm.assertEq(fantiumToken.getCurrentPhase().maxSupply, maxSupply);
+        vm.assertEq(fantiumToken.getCurrentPhase().startTime, startTime);
+        vm.assertEq(fantiumToken.getCurrentPhase().endTime, endTime);
+    }
+
+    // test_getCurrentPhase_PhaseDoesNotExist - there is no way to test this atm, because the setCurrentPhase will not
+    // allow us to set non existing phase
+
     function test_getCurrentPhase_revert_NoPhasesAdded() public {
         // Check the initial state - no phases added
         assertEq(fantiumToken.getAllPhases().length, 0);
