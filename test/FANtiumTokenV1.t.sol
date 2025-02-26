@@ -826,7 +826,30 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
 
     // changePhaseMaxSupply
     // ========================================================================
-    // TODO: test_changePhaseMaxSupply_ok
+    function test_changePhaseMaxSupply_ok() public {
+        // add a phase
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days); // Use relative time from current block
+        uint256 endTime = uint256(block.timestamp + 30 days); // Use relative time from current block
+
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+
+        // Execute phase addition
+        vm.prank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase data was stored correctly
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        uint256 newmaxSupply = 5000;
+
+        // change max supply
+        vm.prank(fantiumToken_admin);
+        fantiumToken.changePhaseMaxSupply(newmaxSupply, 0);
+        vm.assertEq(fantiumToken.getAllPhases()[0].maxSupply, newmaxSupply);
+    }
+
     function test_changePhaseMaxSupply_revert_PhaseNotFound() public {
         uint256 maxSupply = 1000;
 
