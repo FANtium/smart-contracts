@@ -47,7 +47,6 @@ interface IFANtiumToken is IERC721AQueryableUpgradeable {
     error QuantityExceedsMaxSupplyLimit(uint256 quantity);
     error MaxSupplyLimitExceeded(uint256 supply);
     error IncorrectSupplyValue(uint256 supply);
-    error PhaseWithIdDoesNotExist(uint256 id);
     error IncorrectEndTime(uint256 endTime);
     error IncorrectStartTime(uint256 startTime);
     error ERC20PaymentTokenIsNotSet();
@@ -63,4 +62,5 @@ interface IFANtiumToken is IERC721AQueryableUpgradeable {
     error IncorrectPackagePrice(uint256 price);
     error IncorrectPackageName(string name);
     error IncorrectShareCount(uint256 shareCount);
+    error IncorrectPackageQuantity(uint256 packageQuantity);
 }

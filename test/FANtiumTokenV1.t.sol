@@ -919,7 +919,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         address recipient = makeAddr("recipient");
         address usdcAddress = address(usdc);
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.IncorrectTokenQuantity.selector, 0));
-        fantiumToken.mintTo(recipient, 0, usdcAddress, 0); // passing quantity 0 !
+        fantiumToken.mintTo(recipient, 0, usdcAddress); // passing quantity 0 !
     }
 
     function test_mintTo_revert_QuantityExceedsMaxSupplyLimit() public {

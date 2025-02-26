@@ -369,13 +369,22 @@ contract FANtiumTokenV1 is
 
     /**
      * View to see the current sale phase
+     * @return phase - returns current sale phase or reverts
+     * @dev Reverts with NoPhasesAdded if no phases exist
+     * @dev Reverts with PhaseDoesNotExist if currentPhaseIndex is invalid
      */
-    function getCurrentPhase() external view returns (Phase memory) {
+    function getCurrentPhase() public view returns (Phase memory) {
         // check that there are phases
         if (phases.length == 0) {
             revert NoPhasesAdded();
         }
 
+        // verify if currentPhaseIndex is within the bounds of the phases array
+        if (currentPhaseIndex >= phases.length) {
+            revert PhaseDoesNotExist(currentPhaseIndex);
+        }
+
+        // return current phase
         return phases[currentPhaseIndex];
     }
 
@@ -552,17 +561,14 @@ contract FANtiumTokenV1 is
         // Buying single share(s)
         // get current phase
         Phase memory phase = phases[currentPhaseIndex];
-        // check that phase was found
-        if (phase.pricePerShare == 0 || phase.startTime == 0) {
-            revert PhaseDoesNotExist(currentPhaseIndex);
-        }
+
         // check that phase is active
         // should be phase.startTime < block.timestamp < phase.endTime
         if (phase.startTime > block.timestamp || phase.endTime < block.timestamp) {
             revert CurrentPhaseIsNotActive();
         }
 
-        // check quantity
+        // check token quantity
         // no need to check if quantity is negative, because uint256 cannot be negative
         if (quantity == 0) {
             revert IncorrectTokenQuantity(quantity);
@@ -626,13 +632,9 @@ contract FANtiumTokenV1 is
         whenNotPaused
     {
         // Buying a package
-        // todo: create _checkCurrentPhase fn
         // get current phase
-        Phase memory phase = phases[currentPhaseIndex];
-        // check that phase was found
-        if (phase.pricePerShare == 0 || phase.startTime == 0) {
-            revert PhaseDoesNotExist(currentPhaseIndex);
-        }
+        Phase memory phase = getCurrentPhase();
+
         // check that phase is active
         // should be phase.startTime < block.timestamp < phase.endTime
         if (phase.startTime > block.timestamp || phase.endTime < block.timestamp) {
@@ -642,8 +644,7 @@ contract FANtiumTokenV1 is
         // check packageQuantity
         // no need to check if quantity is negative, because uint256 cannot be negative
         if (packageQuantity == 0) {
-            // todo: create another error
-            revert IncorrectTokenQuantity(packageQuantity);
+            revert IncorrectPackageQuantity(packageQuantity);
         }
 
         // payment token validation
@@ -664,6 +665,7 @@ contract FANtiumTokenV1 is
             revert PackageQuantityExceedsMaxSupplyLimit(packageQuantity);
         }
 
+        // Calculate how many shares in packages
         uint256 sharesToMint = package.shareCount * packageQuantity;
 
         // Ensure enough shares exist for packages
@@ -687,7 +689,6 @@ contract FANtiumTokenV1 is
         uint256 updatedSupply = package.currentSupply + packageQuantity;
         _changePackageCurrentSupply(updatedSupply, packageId);
 
-        // todo: can we create a util fn to re-use this logic ?
         // if we sold out the tokens at a certain valuation, we need to open the next stage
         // once the phase n is exhausted, the phase n+1 is automatically opened
         if (phase.currentSupply + sharesToMint == phase.maxSupply) {
