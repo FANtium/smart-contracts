@@ -1177,7 +1177,63 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         fantiumToken.mintTo(recipient, quantity, usdcAddress, 0);
     }
 
-    // TODO: test_mintTo_revert_whenPaused
+    function test_mintTo_revert_whenPaused() public {
+        // add a phase
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days);
+        uint256 endTime = uint256(block.timestamp + 30 days);
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.startPrank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase data was stored correctly
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // Warp time
+        vm.warp(startTime + 1 days); // phase is active
+
+        // set the payment token
+        address usdcAddress = address(usdc);
+        fantiumToken.setPaymentToken(usdcAddress, true);
+        assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
+
+        // set treasury
+        address newTreasury = makeAddr("newTreasury");
+        fantiumToken.setTreasuryAddress(newTreasury);
+
+        // Pause the contract
+        fantiumToken.pause();
+
+        // Verify the contract is paused
+        assertTrue(fantiumToken.paused());
+
+        vm.stopPrank();
+
+        // prepare sale
+        address recipient = makeAddr("recipient");
+        uint256 quantity = 20;
+        uint8 tokenDecimals = IERC20MetadataUpgradeable(usdcAddress).decimals();
+        uint256 expectedAmount = quantity * pricePerShare * 10 ** tokenDecimals;
+        // top up recipient
+        deal(usdcAddress, recipient, expectedAmount);
+        vm.startPrank(recipient);
+        // approve the spending
+        usdc.approve(address(fantiumToken), expectedAmount);
+
+        // Try to mint when paused - should revert
+        vm.expectRevert("Pausable: paused");
+        // try to mint
+        fantiumToken.mintTo(recipient, quantity, usdcAddress);
+
+        vm.stopPrank();
+
+        // Unpause
+        vm.prank(fantiumToken_admin);
+        fantiumToken.unpause();
+    }
+
     // TODO: test_mintTo_revert_insufficientAllowance
     // TODO: test_mintTo_revert_insufficientBalance
 
