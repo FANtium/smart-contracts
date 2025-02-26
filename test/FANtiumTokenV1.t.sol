@@ -546,7 +546,13 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
 
     // getAllPhases
     // ========================================================================
-    // TODO: test_getAllPhases_ok_empty
+    function test_getAllPhases_ok_empty() public {
+        // Check that getAllPhases returns an empty array when no phases are added
+        Phase[] memory phases = fantiumToken.getAllPhases();
+
+        // Verify the array is empty
+        assertEq(phases.length, 0);
+    }
 
     function test_getAllPhases_ok() public {
         // add 2 phases
@@ -586,8 +592,6 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.assertEq(allPhases[1].maxSupply, maxSupply2);
         vm.assertEq(allPhases[1].startTime, startTime2);
     }
-
-    // TODO: test_getAllPhases_ok_withPhases
 
     // changePhaseStartTime
     // ========================================================================
