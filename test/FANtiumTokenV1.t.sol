@@ -868,7 +868,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         // mint
         vm.expectEmit(true, true, true, true); // check that event was emitted
         emit FANtiumTokenSale(quantity, recipient, expectedAmount);
-        fantiumToken.mintTo(recipient, quantity, usdcAddress, 0);
+        fantiumToken.mintTo(recipient, quantity, usdcAddress);
 
         // check that currentSupply has increased
         assertEq(fantiumToken.getCurrentPhase().currentSupply, quantity);
@@ -954,7 +954,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         address recipient = makeAddr("recipient");
         uint256 quantity = 1001; // more than maxSupply
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.QuantityExceedsMaxSupplyLimit.selector, quantity));
-        fantiumToken.mintTo(recipient, quantity, usdcAddress, 0);
+        fantiumToken.mintTo(recipient, quantity, usdcAddress);
     }
 
     function test_mintTo_revert_ERC20PaymentTokenIsNotSet() public {

@@ -542,23 +542,14 @@ contract FANtiumTokenV1 is
     }
 
     /**
-     * Mint FANtiums to the recipient address.
+     * Mint FAN tokens to the recipient address. Function for purchasing single shares (not packages);
      * @param recipient The recipient of the FAN tokens (can be different that the sender)
-     * @param quantity The quantity of FAN tokens to mint OR the quantity of packages
+     * @param quantity The quantity of FAN tokens to mint
      * @param paymentToken The address of the stable coin
-     * @param packageId The id of the package
      *
-     * mintTo(0x123, 100) => please mint 100 FAN to 0x123
      */
-    function mintTo(
-        address recipient,
-        uint256 quantity,
-        address paymentToken,
-        uint256 packageId
-    )
-        external
-        whenNotPaused
-    {
+    function mintTo(address recipient, uint256 quantity, address paymentToken) external whenNotPaused {
+        // Buying single share(s)
         // get current phase
         Phase memory phase = phases[currentPhaseIndex];
         // check that phase was found
@@ -587,34 +578,102 @@ contract FANtiumTokenV1 is
             revert TreasuryIsNotSet();
         }
 
-        bool isSingleSharesPurchase = packageId == 0; // uint256 has value of 0 when the variable is not set
-        uint256 sharesToMint;
         uint8 tokenDecimals = IERC20MetadataUpgradeable(paymentToken).decimals();
-        uint256 expectedAmount;
+        uint256 expectedAmount = quantity * phase.pricePerShare * 10 ** tokenDecimals;
 
-        if (isSingleSharesPurchase) {
-            // Buying single shares
-            sharesToMint = quantity;
-            // price calculation
-            expectedAmount = quantity * phase.pricePerShare * 10 ** tokenDecimals;
-        } else {
-            // Buying a package
-            // check that package exists
-            (Package memory package,) = _findPackageById(packageId, phase.packages);
-
-            // check that package max supply is not exceeded
-            if (package.currentSupply + quantity > package.maxSupply) {
-                revert PackageQuantityExceedsMaxSupplyLimit(quantity);
-            }
-
-            sharesToMint = package.shareCount * quantity;
-            // price calculation
-            expectedAmount = quantity * package.price * 10 ** tokenDecimals;
-        }
-        // Ensure enough shares exist for packages
-        if (phase.currentSupply + sharesToMint > phase.maxSupply) {
+        // Ensure enough shares exist
+        if (phase.currentSupply + quantity > phase.maxSupply) {
             revert QuantityExceedsMaxSupplyLimit(quantity);
         }
+
+        // transfer stable coin from msg.sender to this treasury
+        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(paymentToken), _msgSender(), treasury, expectedAmount);
+
+        // mint the FAN tokens to the recipient
+        _mint(recipient, quantity);
+
+        // change the currentSupply in the Phase
+        _changePhaseCurrentSupply(phase.currentSupply + quantity);
+
+        // if we sold out the tokens at a certain valuation, we need to open the next stage
+        // once the phase n is exhausted, the phase n+1 is automatically opened
+        if (phase.currentSupply + quantity == phase.maxSupply) {
+            // check if there is a phase with index = currentPhaseIndex + 1
+            Phase storage nextPhase = phases[currentPhaseIndex + 1];
+            if (nextPhase.pricePerShare != 0 && nextPhase.maxSupply != 0) {
+                _setCurrentPhase(currentPhaseIndex + 1);
+            }
+        }
+
+        // emit an event after minting tokens
+        emit FANtiumTokenSale(quantity, recipient, expectedAmount);
+    }
+
+    /**
+     * Mint FAN tokens to the recipient address. (for package purchase)
+     * @param recipient The recipient of the FAN tokens (can be different that the sender)
+     * @param packageQuantity The quantity of packages
+     * @param paymentToken The address of the stable coin
+     * @param packageId The id of the package
+     */
+    function mintTo(
+        address recipient,
+        uint256 packageQuantity,
+        address paymentToken,
+        uint256 packageId
+    )
+        external
+        whenNotPaused
+    {
+        // Buying a package
+        // todo: create _checkCurrentPhase fn
+        // get current phase
+        Phase memory phase = phases[currentPhaseIndex];
+        // check that phase was found
+        if (phase.pricePerShare == 0 || phase.startTime == 0) {
+            revert PhaseDoesNotExist(currentPhaseIndex);
+        }
+        // check that phase is active
+        // should be phase.startTime < block.timestamp < phase.endTime
+        if (phase.startTime > block.timestamp || phase.endTime < block.timestamp) {
+            revert CurrentPhaseIsNotActive();
+        }
+
+        // check packageQuantity
+        // no need to check if quantity is negative, because uint256 cannot be negative
+        if (packageQuantity == 0) {
+            // todo: create another error
+            revert IncorrectTokenQuantity(packageQuantity);
+        }
+
+        // payment token validation
+        if (!erc20PaymentTokens[paymentToken]) {
+            revert ERC20PaymentTokenIsNotSet();
+        }
+
+        // check if treasury is set
+        if (treasury == address(0)) {
+            revert TreasuryIsNotSet();
+        }
+
+        // check that the package exists
+        (Package memory package,) = _findPackageById(packageId, phase.packages);
+
+        // check that package max supply is not exceeded
+        if (package.currentSupply + packageQuantity > package.maxSupply) {
+            revert PackageQuantityExceedsMaxSupplyLimit(packageQuantity);
+        }
+
+        uint256 sharesToMint = package.shareCount * packageQuantity;
+
+        // Ensure enough shares exist for packages
+        if (phase.currentSupply + sharesToMint > phase.maxSupply) {
+            revert QuantityExceedsMaxSupplyLimit(packageQuantity);
+        }
+
+        // price calculation
+        uint8 tokenDecimals = IERC20MetadataUpgradeable(paymentToken).decimals();
+        uint256 expectedAmount = sharesToMint * package.price * 10 ** tokenDecimals;
 
         // transfer stable coin from msg.sender to this treasury
         SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(paymentToken), _msgSender(), treasury, expectedAmount);
@@ -624,13 +683,11 @@ contract FANtiumTokenV1 is
 
         // change the currentSupply in the Phase
         _changePhaseCurrentSupply(phase.currentSupply + sharesToMint);
-        if (!isSingleSharesPurchase) {
-            // change package supply
-            (Package memory package,) = _findPackageById(packageId, phase.packages);
-            uint256 updatedSupply = package.currentSupply + quantity;
-            _changePackageCurrentSupply(updatedSupply, packageId);
-        }
+        // change package supply
+        uint256 updatedSupply = package.currentSupply + packageQuantity;
+        _changePackageCurrentSupply(updatedSupply, packageId);
 
+        // todo: can we create a util fn to re-use this logic ?
         // if we sold out the tokens at a certain valuation, we need to open the next stage
         // once the phase n is exhausted, the phase n+1 is automatically opened
         if (phase.currentSupply + sharesToMint == phase.maxSupply) {
@@ -642,7 +699,7 @@ contract FANtiumTokenV1 is
         }
 
         // emit an event after minting tokens
-        emit FANtiumTokenSale(quantity, recipient, expectedAmount);
+        emit FANtiumTokenSale(sharesToMint, recipient, expectedAmount);
     }
 
     // ========================================================================
