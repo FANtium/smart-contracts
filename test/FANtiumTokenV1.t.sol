@@ -929,7 +929,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         fantiumToken.changePhaseMaxSupply(newmaxSupply, 0);
     }
 
-    // mintTo
+    // mintTo (single share(s))
     // ========================================================================
     function test_mintTo_ok() public {
         // add a phase
@@ -1144,7 +1144,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         uint256 quantity = 20;
         // we skip the step of setting the payment token
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.ERC20PaymentTokenIsNotSet.selector));
-        fantiumToken.mintTo(recipient, quantity, usdcAddress, 0);
+        fantiumToken.mintTo(recipient, quantity, usdcAddress);
     }
 
     function test_mintTo_revert_TreasuryIsNotSet() public {
@@ -1174,7 +1174,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         address recipient = makeAddr("recipient");
         uint256 quantity = 20;
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.TreasuryIsNotSet.selector));
-        fantiumToken.mintTo(recipient, quantity, usdcAddress, 0);
+        fantiumToken.mintTo(recipient, quantity, usdcAddress);
     }
 
     function test_mintTo_revert_whenPaused() public {
@@ -1325,6 +1325,41 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
 
         vm.stopPrank();
     }
+
+    // addPackage
+    // ========================================================================
+    // TODO: test_addPackage_ok
+    // TODO: test_addPackage_ok_multiple
+    // TODO: test_addPackage_revert_IncorrectPackageName
+    // TODO: test_addPackage_revert_IncorrectPackagePrice
+    // TODO: test_addPackage_revert_IncorrectShareCount
+    // TODO: test_addPackage_revert_IncorrectMaxSupply
+
+    // removePackage
+    // ========================================================================
+    // TODO: test_removePackage_ok
+    // TODO: test_removePackage_ok_multiple
+    // TODO: test_removePackage_revert_PhaseNotFound
+    // TODO: test_removePackage_revert_PackageDoesNotExist
+
+    // getAllPackagesForPhase
+    // ========================================================================
+    // TODO: test_getAllPackagesForPhase_ok
+    // TODO: test_getAllPackagesForPhase_ok_empty
+    // TODO: test_addPackage_revert_PhaseNotFound
+
+    // mintTo (packages)
+    // ========================================================================
+    // TODO: test_mintTo_ok
+    // TODO: test_mintTo_ok_autoPhaseSwitch
+    // TODO: test_mintTo_revert_CurrentPhaseIsNotActive_phaseNotStarted
+    // TODO: test_mintTo_revert_IncorrectPackageQuantity
+    // TODO: test_mintTo_revert_QuantityExceedsMaxSupplyLimit
+    // TODO: test_mintTo_revert_ERC20PaymentTokenIsNotSet
+    // TODO: test_mintTo_revert_TreasuryIsNotSet
+    // TODO: test_mintTo_revert_whenPaused
+    // TODO: test_mintTo_revert_insufficientAllowance
+    // TODO: test_mintTo_revert_insufficientBalance
 
     // batchTransferFrom
     // ========================================================================
