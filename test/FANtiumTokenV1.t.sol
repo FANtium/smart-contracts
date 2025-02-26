@@ -4,7 +4,7 @@ pragma solidity 0.8.28;
 import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { Ownable } from "solady/auth/Ownable.sol";
-import { IFANtiumToken, Phase } from "src/interfaces/IFANtiumToken.sol";
+import { IFANtiumToken, Package, Phase } from "src/interfaces/IFANtiumToken.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumTokenFactory } from "test/setup/FANtiumTokenFactory.sol";
 
@@ -1328,7 +1328,43 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
 
     // addPackage
     // ========================================================================
-    // TODO: test_addPackage_ok
+    function test_addPackage_ok() public {
+        // Setup test data for phase addition
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days); // Use relative time from current block
+        uint256 endTime = uint256(block.timestamp + 30 days); // Use relative time from current block
+
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.startPrank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase was added
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // setup test data for package
+        string memory name = "Premium";
+        uint256 price = 999;
+        uint256 shareCount = 3;
+        uint256 maxPackageSupply = 10;
+        uint256 phaseId = 0;
+
+        // Execute package addition
+        fantiumToken.addPackage(name, price, shareCount, maxPackageSupply, phaseId);
+
+        // check that package was added
+        assertEq(fantiumToken.getAllPhases()[0].packages.length, 1);
+
+        // verify package data
+        assertEq(fantiumToken.getAllPackagesForPhase(0)[0].name, name);
+        assertEq(fantiumToken.getAllPackagesForPhase(0)[0].price, price);
+        assertEq(fantiumToken.getAllPackagesForPhase(0)[0].shareCount, shareCount);
+        assertEq(fantiumToken.getAllPackagesForPhase(0)[0].maxSupply, maxPackageSupply);
+
+        vm.stopPrank();
+    }
+
     // TODO: test_addPackage_ok_multiple
     // TODO: test_addPackage_revert_IncorrectPackageName
     // TODO: test_addPackage_revert_IncorrectPackagePrice
