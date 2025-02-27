@@ -1527,10 +1527,143 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
 
     // removePackage
     // ========================================================================
-    // TODO: test_removePackage_ok
-    // TODO: test_removePackage_ok_multiple
-    // TODO: test_removePackage_revert_PhaseNotFound
-    // TODO: test_removePackage_revert_PackageDoesNotExist
+    function test_removePackage_ok() public {
+        // Setup test data for phase addition
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days); // Use relative time from current block
+        uint256 endTime = uint256(block.timestamp + 30 days); // Use relative time from current block
+
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.startPrank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase was added
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // setup test data for 2 packages
+        string memory name = "Premium";
+        uint256 price = 999;
+        uint256 shareCount = 3;
+        uint256 maxPackageSupply = 10;
+        uint256 phaseId = 0;
+
+        string memory name2 = "Basic";
+        uint256 price2 = 666;
+        uint256 shareCount2 = 2;
+        uint256 maxPackageSupply2 = 20;
+
+        // Execute packages addition
+        fantiumToken.addPackage(name, price, shareCount, maxPackageSupply, phaseId);
+        fantiumToken.addPackage(name2, price2, shareCount2, maxPackageSupply2, phaseId);
+
+        // check that 2 packages were added
+        assertEq(fantiumToken.getAllPhases()[0].packages.length, 2);
+
+        // remove second package
+        fantiumToken.removePackage(0, 1);
+
+        // check that only 1st package remains
+        assertEq(fantiumToken.getAllPhases()[0].packages.length, 1);
+        assertEq(fantiumToken.getAllPhases()[0].packages[0].name, "Premium");
+    }
+
+    function test_removePackage_ok_multiple() public {
+        // Setup test data for phase addition
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days); // Use relative time from current block
+        uint256 endTime = uint256(block.timestamp + 30 days); // Use relative time from current block
+
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.startPrank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase was added
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // setup test data for 2 packages
+        string memory name = "Premium";
+        uint256 price = 999;
+        uint256 shareCount = 3;
+        uint256 maxPackageSupply = 10;
+        uint256 phaseId = 0;
+
+        string memory name2 = "Basic";
+        uint256 price2 = 666;
+        uint256 shareCount2 = 2;
+        uint256 maxPackageSupply2 = 20;
+
+        // Execute packages addition
+        fantiumToken.addPackage(name, price, shareCount, maxPackageSupply, phaseId);
+        fantiumToken.addPackage(name2, price2, shareCount2, maxPackageSupply2, phaseId);
+
+        // check that 2 packages were added
+        assertEq(fantiumToken.getAllPhases()[0].packages.length, 2);
+
+        // remove all packages
+        fantiumToken.removePackage(0, 0);
+        fantiumToken.removePackage(0, 1);
+
+        // check that no packages left
+        assertEq(fantiumToken.getAllPhases()[0].packages.length, 0);
+
+        vm.stopPrank();
+    }
+
+    function test_removePackage_revert_PhaseNotFound() public {
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0); // no phases added
+
+        uint256 phaseId = 0; // there is no such phase
+
+        vm.startPrank(fantiumToken_admin);
+
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.PhaseNotFound.selector, phaseId));
+        // Try to remove package
+        fantiumToken.removePackage(phaseId, 0);
+
+        vm.stopPrank();
+    }
+
+    function test_removePackage_revert_PackageDoesNotExist() public {
+        // Setup test data for phase addition
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days); // Use relative time from current block
+        uint256 endTime = uint256(block.timestamp + 30 days); // Use relative time from current block
+
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.startPrank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase was added
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // setup package data
+        string memory name = "Premium";
+        uint256 price = 999;
+        uint256 shareCount = 3;
+        uint256 maxPackageSupply = 10;
+        uint256 phaseId = 0;
+
+        vm.startPrank(fantiumToken_admin);
+
+        // add package with id = 0
+        fantiumToken.addPackage(name, price, shareCount, maxPackageSupply, phaseId);
+
+        // check that package was added
+        assertEq(fantiumToken.getAllPhases()[0].packages.length, 1);
+
+        // try to remove non-existing package with id = 2
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.PackageDoesNotExist.selector, 2));
+        fantiumToken.removePackage(phaseId, 2); // package with id:2 doesn't exist
+
+        vm.stopPrank();
+    }
 
     // getAllPackagesForPhase
     // ========================================================================
