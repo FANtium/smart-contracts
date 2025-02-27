@@ -1059,7 +1059,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         address recipient = makeAddr("recipient");
         address usdcAddress = address(usdc);
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.CurrentPhaseIsNotActive.selector));
-        fantiumToken.mintTo(recipient, 10, usdcAddress, 0);
+        fantiumToken.mintTo(recipient, 10, usdcAddress);
     }
 
     function test_mintTo_revert_IncorrectTokenQuantity() public {
@@ -1477,8 +1477,53 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.stopPrank();
     }
 
-    // TODO: test_mintTo_packages_revert_CurrentPhaseIsNotActive_phaseNotStarted
-    // TODO: test_mintTo_packages_revert_IncorrectPackageQuantity
+    function test_mintTo_packages_revert_CurrentPhaseIsNotActive_phaseNotStarted() public {
+        // add a phase
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 2 days); // phase will start in 2 days!
+        uint256 endTime = uint256(block.timestamp + 30 days);
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.prank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase data was stored correctly
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // try to mint
+        address recipient = makeAddr("recipient");
+        address usdcAddress = address(usdc);
+        vm.prank(recipient);
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.CurrentPhaseIsNotActive.selector));
+        fantiumToken.mintTo(recipient, 10, usdcAddress, 0);
+    }
+
+    function test_mintTo_packages_revert_IncorrectPackageQuantity() public {
+        // add a phase
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days);
+        uint256 endTime = uint256(block.timestamp + 30 days);
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.prank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase data was stored correctly
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // Warp time
+        vm.warp(startTime + 1 days); // phase 1 is active
+
+        // try to mint
+        address recipient = makeAddr("recipient");
+        address usdcAddress = address(usdc);
+        vm.prank(recipient);
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.IncorrectPackageQuantity.selector, 0));
+        fantiumToken.mintTo(recipient, 0, usdcAddress, 0); // passing wrong package quantity
+    }
+
     // TODO: test_mintTo_packages_revert_QuantityExceedsMaxSupplyLimit
     // TODO: test_mintTo_packages_revert_ERC20PaymentTokenIsNotSet
     // TODO: test_mintTo_packages_revert_TreasuryIsNotSet
