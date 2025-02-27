@@ -612,7 +612,7 @@ contract FANtiumTokenV1 is
         }
 
         // emit an event after minting tokens
-        emit FANtiumTokenSale(quantity, recipient, expectedAmount);
+        emit FANtiumTokenSale(quantity, recipient, expectedAmount, paymentToken);
     }
 
     /**
@@ -675,7 +675,7 @@ contract FANtiumTokenV1 is
 
         // price calculation
         uint8 tokenDecimals = IERC20MetadataUpgradeable(paymentToken).decimals();
-        uint256 expectedAmount = sharesToMint * package.price * 10 ** tokenDecimals;
+        uint256 expectedAmount = packageQuantity * package.price * 10 ** tokenDecimals;
 
         // transfer stable coin from msg.sender to this treasury
         SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(paymentToken), _msgSender(), treasury, expectedAmount);
@@ -700,7 +700,7 @@ contract FANtiumTokenV1 is
         }
 
         // emit an event after minting tokens
-        emit FANtiumTokenSale(sharesToMint, recipient, expectedAmount);
+        emit FANtiumTokenPackageSale(recipient, packageId, packageQuantity, sharesToMint, paymentToken, expectedAmount);
     }
 
     // ========================================================================

@@ -29,7 +29,15 @@ struct Phase {
 // When the last phase is exhausted, it’s not possible to purchase any further share
 interface IFANtiumToken is IERC721AQueryableUpgradeable {
     // events
-    event FANtiumTokenSale(uint256 quantity, address indexed recipient, uint256 amount);
+    event FANtiumTokenSale(uint256 quantity, address indexed recipient, uint256 amount, address indexed paymentToken);
+    event FANtiumTokenPackageSale(
+        address indexed recipient,
+        uint256 packageId,
+        uint256 packageQuantity,
+        uint256 sharesMinted,
+        address indexed paymentToken,
+        uint256 amount
+    );
     event TreasuryAddressUpdate(address newWalletAddress);
 
     // errors
