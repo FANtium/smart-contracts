@@ -1567,6 +1567,8 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         // check that only 1st package remains
         assertEq(fantiumToken.getAllPhases()[0].packages.length, 1);
         assertEq(fantiumToken.getAllPhases()[0].packages[0].name, "Premium");
+
+        vm.stopPrank();
     }
 
     function test_removePackage_ok_multiple() public {
@@ -1667,9 +1669,84 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
 
     // getAllPackagesForPhase
     // ========================================================================
-    // TODO: test_getAllPackagesForPhase_ok
-    // TODO: test_getAllPackagesForPhase_ok_empty
-    // TODO: test_addPackage_revert_PhaseNotFound
+    function test_getAllPackagesForPhase_ok() public {
+        // Setup test data for phase addition
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days); // Use relative time from current block
+        uint256 endTime = uint256(block.timestamp + 30 days); // Use relative time from current block
+
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.startPrank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase was added
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // setup test data for 2 packages
+        string memory name = "Premium";
+        uint256 price = 999;
+        uint256 shareCount = 3;
+        uint256 maxPackageSupply = 10;
+        uint256 phaseId = 0;
+
+        string memory name2 = "Basic";
+        uint256 price2 = 666;
+        uint256 shareCount2 = 2;
+        uint256 maxPackageSupply2 = 20;
+
+        // Execute packages addition
+        fantiumToken.addPackage(name, price, shareCount, maxPackageSupply, phaseId);
+        fantiumToken.addPackage(name2, price2, shareCount2, maxPackageSupply2, phaseId);
+
+        // check that 2 packages were added
+        assertEq(fantiumToken.getAllPhases()[0].packages.length, 2);
+
+        // check that getAllPackagesForPhase returns all 2 packages
+        assertEq(fantiumToken.getAllPackagesForPhase(0).length, 2);
+        assertEq(fantiumToken.getAllPackagesForPhase(0)[0].name, name);
+        assertEq(fantiumToken.getAllPackagesForPhase(0)[1].name, name2);
+
+        vm.stopPrank();
+    }
+
+    function test_getAllPackagesForPhase_ok_empty() public {
+        // Setup test data for phase addition
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days); // Use relative time from current block
+        uint256 endTime = uint256(block.timestamp + 30 days); // Use relative time from current block
+
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.startPrank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase was added
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // check that NO packages were added
+        assertEq(fantiumToken.getAllPhases()[0].packages.length, 0);
+
+        // check that getAllPackagesForPhase returns 0 packages
+        assertEq(fantiumToken.getAllPackagesForPhase(0).length, 0);
+
+        vm.stopPrank();
+    }
+
+    function test_getAllPackagesForPhase_revert_PhaseNotFound() public {
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+
+        vm.startPrank(fantiumToken_admin);
+
+        // check that getAllPackagesForPhase reverts
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.PhaseNotFound.selector, 0));
+        fantiumToken.getAllPackagesForPhase(0); // no phase with id = 0
+
+        vm.stopPrank();
+    }
 
     // mintTo (packages)
     // ========================================================================

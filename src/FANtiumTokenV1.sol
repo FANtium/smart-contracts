@@ -401,7 +401,7 @@ contract FANtiumTokenV1 is
      * @param phaseId - sale phase id
      * @return Package[] - packages array
      */
-    function getAllPackagesForPhase(uint256 phaseId) public view returns (Package[] memory) {
+    function getAllPackagesForPhase(uint256 phaseId) external view returns (Package[] memory) {
         // check that phase exists
         (Phase memory phase,) = _findPhaseById(phaseId);
 
