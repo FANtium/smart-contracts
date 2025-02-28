@@ -670,7 +670,7 @@ contract FANtiumTokenV1 is
 
         // Ensure enough shares exist for packages
         if (phase.currentSupply + sharesToMint > phase.maxSupply) {
-            revert QuantityExceedsMaxSupplyLimit(packageQuantity);
+            revert QuantityExceedsMaxSupplyLimit(sharesToMint);
         }
 
         // price calculation

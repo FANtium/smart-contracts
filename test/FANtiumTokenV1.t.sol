@@ -1524,10 +1524,239 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         fantiumToken.mintTo(recipient, 0, usdcAddress, 0); // passing wrong package quantity
     }
 
-    // TODO: test_mintTo_packages_revert_QuantityExceedsMaxSupplyLimit
-    // TODO: test_mintTo_packages_revert_ERC20PaymentTokenIsNotSet
-    // TODO: test_mintTo_packages_revert_TreasuryIsNotSet
-    // TODO: test_mintTo_packages_revert_whenPaused
+    function test_mintTo_packages_revert_QuantityExceedsMaxSupplyLimit() public {
+        // add a phase
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 999;
+        uint256 startTime = uint256(block.timestamp + 1 days);
+        uint256 endTime = uint256(block.timestamp + 30 days);
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.startPrank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase data was stored correctly
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // Warp time
+        vm.warp(startTime + 1 days); // phase is active
+
+        // set the payment token
+        address usdcAddress = address(usdc);
+        fantiumToken.setPaymentToken(usdcAddress, true);
+        assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
+
+        // set treasury
+        address newTreasury = makeAddr("newTreasury");
+        fantiumToken.setTreasuryAddress(newTreasury);
+
+        // setup package data
+        string memory name = "Premium";
+        uint256 price = 999;
+        uint256 shareCount = 100;
+        uint256 maxPackageSupply = 10; // shareCount * maxPackageSupply > phase.maxSupply
+        uint256 phaseId = 0;
+
+        // Execute package addition
+        fantiumToken.addPackage(name, price, shareCount, maxPackageSupply, phaseId);
+
+        // check that package was added
+        assertEq(fantiumToken.getAllPhases()[0].packages.length, 1);
+
+        vm.stopPrank();
+
+        // try to mint
+        address recipient = makeAddr("recipient");
+        vm.prank(recipient);
+        vm.expectRevert(
+            abi.encodeWithSelector(IFANtiumToken.QuantityExceedsMaxSupplyLimit.selector, maxPackageSupply * shareCount)
+        );
+        fantiumToken.mintTo(recipient, maxPackageSupply, usdcAddress, 0); // passing maxPackageSupply as packageQuantity
+    }
+
+    function test_mintTo_packages_revert_PackageQuantityExceedsMaxSupplyLimit() public {
+        // add a phase
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days);
+        uint256 endTime = uint256(block.timestamp + 30 days);
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.startPrank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase data was stored correctly
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // Warp time
+        vm.warp(startTime + 1 days); // phase is active
+
+        // set the payment token
+        address usdcAddress = address(usdc);
+        fantiumToken.setPaymentToken(usdcAddress, true);
+        assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
+
+        // set treasury
+        address newTreasury = makeAddr("newTreasury");
+        fantiumToken.setTreasuryAddress(newTreasury);
+
+        // setup package data
+        string memory name = "Premium";
+        uint256 price = 999;
+        uint256 shareCount = 100;
+        uint256 maxPackageSupply = 10;
+        uint256 phaseId = 0;
+
+        // Execute package addition
+        fantiumToken.addPackage(name, price, shareCount, maxPackageSupply, phaseId);
+
+        // check that package was added
+        assertEq(fantiumToken.getAllPhases()[0].packages.length, 1);
+
+        vm.stopPrank();
+
+        // try to mint
+        address recipient = makeAddr("recipient");
+        vm.prank(recipient);
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.PackageQuantityExceedsMaxSupplyLimit.selector, 11));
+        fantiumToken.mintTo(recipient, 11, usdcAddress, 0); // passing 11 as packageQuantity > maxPackageSupply
+    }
+
+    function test_mintTo_packages_revert_ERC20PaymentTokenIsNotSet() public {
+        // add a phase
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days);
+        uint256 endTime = uint256(block.timestamp + 30 days);
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.startPrank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase data was stored correctly
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // Warp time
+        vm.warp(startTime + 1 days); // phase is active
+
+        // set treasury
+        address newTreasury = makeAddr("newTreasury");
+        fantiumToken.setTreasuryAddress(newTreasury);
+
+        // setup package data
+        string memory name = "Premium";
+        uint256 price = 999;
+        uint256 shareCount = 100;
+        uint256 maxPackageSupply = 10;
+        uint256 phaseId = 0;
+
+        // Execute package addition
+        fantiumToken.addPackage(name, price, shareCount, maxPackageSupply, phaseId);
+
+        // check that package was added
+        assertEq(fantiumToken.getAllPhases()[0].packages.length, 1);
+
+        vm.stopPrank();
+
+        // try to mint
+        address recipient = makeAddr("recipient");
+        address usdcAddress = address(usdc);
+        vm.prank(recipient);
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.ERC20PaymentTokenIsNotSet.selector));
+        fantiumToken.mintTo(recipient, 1, usdcAddress, 0);
+    }
+
+    function test_mintTo_packages_revert_TreasuryIsNotSet() public {
+        // add a phase
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days);
+        uint256 endTime = uint256(block.timestamp + 30 days);
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.startPrank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase data was stored correctly
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // Warp time
+        vm.warp(startTime + 1 days); // phase is active
+
+        // set the payment token
+        address usdcAddress = address(usdc);
+        fantiumToken.setPaymentToken(usdcAddress, true);
+        assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
+
+        // setup package data
+        string memory name = "Premium";
+        uint256 price = 999;
+        uint256 shareCount = 100;
+        uint256 maxPackageSupply = 10;
+        uint256 phaseId = 0;
+
+        // Execute package addition
+        fantiumToken.addPackage(name, price, shareCount, maxPackageSupply, phaseId);
+
+        // check that package was added
+        assertEq(fantiumToken.getAllPhases()[0].packages.length, 1);
+
+        vm.stopPrank();
+
+        // try to mint
+        address recipient = makeAddr("recipient");
+        vm.prank(recipient);
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.TreasuryIsNotSet.selector));
+        fantiumToken.mintTo(recipient, 1, usdcAddress, 0);
+    }
+
+    function test_mintTo_packages_revert_whenPaused() public {
+        // add a phase
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days);
+        uint256 endTime = uint256(block.timestamp + 30 days);
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.startPrank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase data was stored correctly
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // Warp time
+        vm.warp(startTime + 1 days); // phase is active
+
+        // set the payment token
+        address usdcAddress = address(usdc);
+        fantiumToken.setPaymentToken(usdcAddress, true);
+        assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
+
+        // setup package data
+        string memory name = "Premium";
+        uint256 price = 999;
+        uint256 shareCount = 100;
+        uint256 maxPackageSupply = 10;
+        uint256 phaseId = 0;
+
+        // Execute package addition
+        fantiumToken.addPackage(name, price, shareCount, maxPackageSupply, phaseId);
+
+        // check that package was added
+        assertEq(fantiumToken.getAllPhases()[0].packages.length, 1);
+
+        // Pause the contract
+        fantiumToken.pause();
+
+        vm.stopPrank();
+
+        address recipient = makeAddr("recipient");
+        vm.prank(recipient);
+        // Try to mint when paused - should revert
+        vm.expectRevert("Pausable: paused");
+        fantiumToken.mintTo(recipient, 1, usdcAddress, 0);
+    }
+
     // TODO: test_mintTo_packages_revert_insufficientAllowance
     // TODO: test_mintTo_packages_revert_insufficientBalance
 
