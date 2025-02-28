@@ -13,7 +13,15 @@ contract FANtiumTokenFactory is BaseTest {
     address public fantiumToken_proxy;
 
     // events
-    event FANtiumTokenSale(uint256 quantity, address indexed recipient, uint256 amount);
+    event FANtiumTokenSale(uint256 quantity, address indexed recipient, uint256 amount, address indexed paymentToken);
+    event FANtiumTokenPackageSale(
+        address indexed recipient,
+        uint256 packageId,
+        uint256 packageQuantity,
+        uint256 sharesMinted,
+        address indexed paymentToken,
+        uint256 amount
+    );
     event TreasuryAddressUpdate(address newWalletAddress);
 
     // contracts

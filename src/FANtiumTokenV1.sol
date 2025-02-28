@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import { IFANtiumToken, Phase } from "./interfaces/IFANtiumToken.sol";
+import "./interfaces/IFANtiumToken.sol"; // todo: remove this import
+import { ERC721AQueryableUpgradeable } from "erc721a-upgradeable/extensions/ERC721AQueryableUpgradeable.sol";
+
+import { IFANtiumToken, Package, Phase } from "./interfaces/IFANtiumToken.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import { ERC721AQueryableUpgradeable } from "erc721a-upgradeable/extensions/ERC721AQueryableUpgradeable.sol";
 import { OwnableRoles } from "solady/auth/OwnableRoles.sol";
 
 /**
@@ -37,7 +40,7 @@ contract FANtiumTokenV1 is
     // ========================================================================
     // State variables
     // ========================================================================
-    uint256 private nextId; // has default value 0
+    uint256 private nextPhaseId; // has default value 0
     Phase[] public phases;
     uint256 public currentPhaseIndex;
     address public treasury; // Safe that will receive all the funds
@@ -195,17 +198,117 @@ contract FANtiumTokenV1 is
         // add new Phase
         phases.push(
             Phase({
-                phaseId: nextId,
+                phaseId: nextPhaseId,
+                nextPackageId: 0,
                 pricePerShare: pricePerShare,
                 maxSupply: maxSupply,
                 startTime: startTime,
                 endTime: endTime,
-                currentSupply: 0
+                currentSupply: 0,
+                packages: new Package[](0)
             })
         );
 
         // increment counter
-        nextId++;
+        nextPhaseId++;
+    }
+
+    /**
+     * Add a new package to the sale phase
+     * @param name Name of the package, e.g. Premium
+     * @param price Price of the package
+     * @param shareCount Number of shares per package
+     * @param maxSupply Number of packages
+     * @param phaseId id of the sale phase, where we want to add the package
+     */
+    function addPackage(
+        string calldata name,
+        uint256 price,
+        uint256 shareCount,
+        uint256 maxSupply,
+        uint256 phaseId
+    )
+        external
+        onlyOwner
+    {
+        // validate input data
+        // calldata strings do not support .length
+        if (bytes(name).length == 0) {
+            revert IncorrectPackageName(name);
+        }
+
+        if (price == 0) {
+            // Price must be greater than zero
+            revert IncorrectPackagePrice(price);
+        }
+
+        if (shareCount <= 1) {
+            // There should be more than 1 share per package
+            revert IncorrectShareCount(shareCount);
+        }
+
+        if (maxSupply == 0) {
+            // Max supply must be greater than zero
+            revert IncorrectMaxSupply(maxSupply);
+        }
+
+        // get phase
+        (Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
+
+        // phase was found, add new package
+        phases[phaseIndex].packages.push(
+            Package({
+                packageId: phase.nextPackageId,
+                name: name,
+                price: price,
+                shareCount: shareCount,
+                currentSupply: 0,
+                maxSupply: maxSupply
+            })
+        );
+
+        // increment counter
+        phases[phaseIndex].nextPackageId++;
+    }
+
+    /**
+     * Private function that helps to find a package in an array of packages by id
+     * @param packageId id of the package
+     * @param packages array of all packages
+     * @return (package, index) - returns package that was found and the index of the found package
+     */
+    function _findPackageById(
+        uint256 packageId,
+        Package[] memory packages
+    )
+        private
+        pure
+        returns (Package memory, uint256)
+    {
+        for (uint256 i = 0; i < packages.length; i++) {
+            if (packages[i].packageId == packageId) {
+                return (packages[i], i);
+            }
+        }
+        revert PackageDoesNotExist(packageId);
+    }
+
+    /**
+     * Remove existing package from the sale phase
+     * @param phaseId id of the phase
+     * @param packageId id of the package to be removed
+     */
+    function removePackage(uint256 phaseId, uint256 packageId) external onlyOwner {
+        // check that phase exists
+        (Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
+        // check that package exists
+        (, uint256 index) = _findPackageById(packageId, phase.packages);
+
+        // remove the package from the phase
+        // Swap with the last element
+        phases[phaseIndex].packages[index] = phase.packages[phase.packages.length - 1];
+        // Remove the last element
+        phases[phaseIndex].packages.pop();
     }
 
     /**
@@ -230,6 +333,7 @@ contract FANtiumTokenV1 is
         for (uint256 i = phaseIndex; i < phases.length - 1; i++) {
             phases[i] = phases[i + 1];
         }
+
         phases.pop(); // remove the last element
     }
 
@@ -239,7 +343,7 @@ contract FANtiumTokenV1 is
      */
     function setCurrentPhase(uint256 phaseIndex) public onlyOwner {
         // check that phaseIndex is valid
-        if (phaseIndex >= phases.length || phaseIndex < 0) {
+        if (phaseIndex >= phases.length) {
             revert IncorrectPhaseIndex(phaseIndex);
         }
 
@@ -265,38 +369,61 @@ contract FANtiumTokenV1 is
 
     /**
      * View to see the current sale phase
+     * @return phase - returns current sale phase or reverts
+     * @dev Reverts with NoPhasesAdded if no phases exist
+     * @dev Reverts with PhaseDoesNotExist if currentPhaseIndex is invalid
      */
-    function getCurrentPhase() external view returns (Phase memory) {
+    function getCurrentPhase() public view returns (Phase memory) {
         // check that there are phases
         if (phases.length == 0) {
             revert NoPhasesAdded();
         }
 
+        // verify if currentPhaseIndex is within the bounds of the phases array
+        if (currentPhaseIndex >= phases.length) {
+            revert PhaseDoesNotExist(currentPhaseIndex);
+        }
+
+        // return current phase
         return phases[currentPhaseIndex];
     }
 
     /**
      * Helper to view all existing sale phases
+     * @return phases - array of all sale phases
      */
     function getAllPhases() public view returns (Phase[] memory) {
         return phases;
     }
 
     /**
+     * Helper to view all existing packages in the sale phase
+     * @param phaseId - sale phase id
+     * @return Package[] - packages array
+     */
+    function getAllPackagesForPhase(uint256 phaseId) external view returns (Package[] memory) {
+        // check that phase exists
+        (Phase memory phase,) = _findPhaseById(phaseId);
+
+        // return all packages
+        return phase.packages;
+    }
+
+    /**
      * Get phase from an array by phaseId
      * @param id - phase id
-     * @return bool true if sale phase is found, false - if not found.
      * @return Phase which was found, or default values - if not found.
      * @return uint256 index of the Phase in an array, 0 - if not found.
      */
-    function _findPhaseById(uint256 id) private view returns (bool, Phase memory, uint256) {
+    function _findPhaseById(uint256 id) private view returns (Phase memory, uint256) {
         for (uint256 i = 0; i < phases.length; i++) {
             if (phases[i].phaseId == id) {
-                return (true, phases[i], i); // Return Phase, index, true if phase is found
+                return (phases[i], i); // Return (Phase, index) if phase is found
             }
         }
 
-        return (false, Phase(0, 0, 0, 0, 0, 0), 0); // Return default values and `false` if not found
+        // Instead of returning an invalid struct, we revert if not found.
+        revert PhaseNotFound(id);
     }
 
     /**
@@ -305,11 +432,7 @@ contract FANtiumTokenV1 is
      * @param phaseId id of the sale phase
      */
     function changePhaseStartTime(uint256 newStartTime, uint256 phaseId) external onlyOwner {
-        (bool isFound, Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
-
-        if (!isFound) {
-            revert PhaseWithIdDoesNotExist(phaseId);
-        }
+        (Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
 
         // validate newStartTime
         if (newStartTime > phase.endTime || block.timestamp > newStartTime) {
@@ -337,12 +460,7 @@ contract FANtiumTokenV1 is
      * @param phaseId id of the sale phase
      */
     function changePhaseEndTime(uint256 newEndTime, uint256 phaseId) external onlyOwner {
-        (bool isFound, Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
-
-        // ensure the phase exists
-        if (!isFound) {
-            revert PhaseWithIdDoesNotExist(phaseId);
-        }
+        (Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
 
         // validate newEndTime
         if (newEndTime <= phase.startTime || block.timestamp > newEndTime) {
@@ -370,7 +488,7 @@ contract FANtiumTokenV1 is
      * @param currentSupply how many tokens has been minted already
      */
     function _changePhaseCurrentSupply(uint256 currentSupply) internal {
-        Phase memory currentPhase = phases[currentPhaseIndex];
+        Phase storage currentPhase = phases[currentPhaseIndex];
         // check that currentSupply does not exceed the max limit
         if (currentSupply > currentPhase.maxSupply) {
             revert MaxSupplyLimitExceeded(currentSupply);
@@ -385,18 +503,37 @@ contract FANtiumTokenV1 is
     }
 
     /**
+     * Change current supply of the package
+     * Internal function, which is only used by the mintTo function
+     * @param currentSupply how many packages has been minted already
+     * @param packageId id of the package to be updated
+     */
+    function _changePackageCurrentSupply(uint256 currentSupply, uint256 packageId) internal {
+        // get current phase
+        Phase memory phase = phases[currentPhaseIndex];
+        (Package memory package, uint256 packageIndex) = _findPackageById(packageId, phase.packages);
+
+        // check that currentSupply does not exceed the max limit
+        if (currentSupply > package.maxSupply) {
+            revert MaxSupplyLimitExceeded(currentSupply);
+        }
+        // check that currentSupply is bigger than the prev value
+        if (currentSupply < package.currentSupply) {
+            revert IncorrectSupplyValue(currentSupply);
+        }
+
+        // change the package currentSupply value
+        phases[currentPhaseIndex].packages[packageIndex].currentSupply = currentSupply;
+    }
+
+    /**
      * Change max supply of the sale phase
      * External function, which can be used if business requirements change
      * @param maxSupply - new max supply value
      * @param phaseId - id of the phase to be edited
      */
     function changePhaseMaxSupply(uint256 maxSupply, uint256 phaseId) external onlyOwner {
-        (bool isFound, Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
-
-        // ensure the phase exists
-        if (!isFound) {
-            revert PhaseWithIdDoesNotExist(phaseId);
-        }
+        (Phase memory phase, uint256 phaseIndex) = _findPhaseById(phaseId);
 
         // max supply cannot be 0
         // max supply should be bigger than currentSupply
@@ -414,32 +551,27 @@ contract FANtiumTokenV1 is
     }
 
     /**
-     * Mint FANtiums to the recipient address.
+     * Mint FAN tokens to the recipient address. Function for purchasing single shares (not packages);
      * @param recipient The recipient of the FAN tokens (can be different that the sender)
      * @param quantity The quantity of FAN tokens to mint
      * @param paymentToken The address of the stable coin
      *
-     * mintTo(0x123, 100) => please mint 100 FAN to 0x123
      */
     function mintTo(address recipient, uint256 quantity, address paymentToken) external whenNotPaused {
+        // Buying single share(s)
         // get current phase
         Phase memory phase = phases[currentPhaseIndex];
-        // check that phase was found
-        if (phase.pricePerShare == 0 || phase.startTime == 0) {
-            revert PhaseDoesNotExist(currentPhaseIndex);
-        }
+
         // check that phase is active
         // should be phase.startTime < block.timestamp < phase.endTime
         if (phase.startTime > block.timestamp || phase.endTime < block.timestamp) {
             revert CurrentPhaseIsNotActive();
         }
-        // check quantity
+
+        // check token quantity
         // no need to check if quantity is negative, because uint256 cannot be negative
         if (quantity == 0) {
             revert IncorrectTokenQuantity(quantity);
-        }
-        if (phase.currentSupply + quantity > phase.maxSupply) {
-            revert QuantityExceedsMaxSupplyLimit(quantity);
         }
 
         // payment token validation
@@ -452,9 +584,13 @@ contract FANtiumTokenV1 is
             revert TreasuryIsNotSet();
         }
 
-        // price calculation
         uint8 tokenDecimals = IERC20MetadataUpgradeable(paymentToken).decimals();
         uint256 expectedAmount = quantity * phase.pricePerShare * 10 ** tokenDecimals;
+
+        // Ensure enough shares exist
+        if (phase.currentSupply + quantity > phase.maxSupply) {
+            revert QuantityExceedsMaxSupplyLimit(quantity);
+        }
 
         // transfer stable coin from msg.sender to this treasury
         SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(paymentToken), _msgSender(), treasury, expectedAmount);
@@ -469,14 +605,102 @@ contract FANtiumTokenV1 is
         // once the phase n is exhausted, the phase n+1 is automatically opened
         if (phase.currentSupply + quantity == phase.maxSupply) {
             // check if there is a phase with index = currentPhaseIndex + 1
-            Phase memory nextPhase = phases[currentPhaseIndex + 1];
+            Phase storage nextPhase = phases[currentPhaseIndex + 1];
             if (nextPhase.pricePerShare != 0 && nextPhase.maxSupply != 0) {
                 _setCurrentPhase(currentPhaseIndex + 1);
             }
         }
 
         // emit an event after minting tokens
-        emit FANtiumTokenSale(quantity, recipient, expectedAmount);
+        emit FANtiumTokenSale(quantity, recipient, expectedAmount, paymentToken);
+    }
+
+    /**
+     * Mint FAN tokens to the recipient address. (for package purchase)
+     * @param recipient The recipient of the FAN tokens (can be different that the sender)
+     * @param packageQuantity The quantity of packages
+     * @param paymentToken The address of the stable coin
+     * @param packageId The id of the package
+     */
+    function mintTo(
+        address recipient,
+        uint256 packageQuantity,
+        address paymentToken,
+        uint256 packageId
+    )
+        external
+        whenNotPaused
+    {
+        // Buying a package
+        // get current phase
+        Phase memory phase = getCurrentPhase();
+
+        // check that phase is active
+        // should be phase.startTime < block.timestamp < phase.endTime
+        if (phase.startTime > block.timestamp || phase.endTime < block.timestamp) {
+            revert CurrentPhaseIsNotActive();
+        }
+
+        // check packageQuantity
+        // no need to check if quantity is negative, because uint256 cannot be negative
+        if (packageQuantity == 0) {
+            revert IncorrectPackageQuantity(packageQuantity);
+        }
+
+        // payment token validation
+        if (!erc20PaymentTokens[paymentToken]) {
+            revert ERC20PaymentTokenIsNotSet();
+        }
+
+        // check if treasury is set
+        if (treasury == address(0)) {
+            revert TreasuryIsNotSet();
+        }
+
+        // check that the package exists
+        (Package memory package,) = _findPackageById(packageId, phase.packages);
+
+        // check that package max supply is not exceeded
+        if (package.currentSupply + packageQuantity > package.maxSupply) {
+            revert PackageQuantityExceedsMaxSupplyLimit(packageQuantity);
+        }
+
+        // Calculate how many shares in packages
+        uint256 sharesToMint = package.shareCount * packageQuantity;
+
+        // Ensure enough shares exist for packages
+        if (phase.currentSupply + sharesToMint > phase.maxSupply) {
+            revert QuantityExceedsMaxSupplyLimit(sharesToMint);
+        }
+
+        // price calculation
+        uint8 tokenDecimals = IERC20MetadataUpgradeable(paymentToken).decimals();
+        uint256 expectedAmount = packageQuantity * package.price * 10 ** tokenDecimals;
+
+        // transfer stable coin from msg.sender to this treasury
+        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(paymentToken), _msgSender(), treasury, expectedAmount);
+
+        // mint the FAN tokens to the recipient
+        _mint(recipient, sharesToMint);
+
+        // change the currentSupply in the Phase
+        _changePhaseCurrentSupply(phase.currentSupply + sharesToMint);
+        // change package supply
+        uint256 updatedSupply = package.currentSupply + packageQuantity;
+        _changePackageCurrentSupply(updatedSupply, packageId);
+
+        // if we sold out the tokens at a certain valuation, we need to open the next stage
+        // once the phase n is exhausted, the phase n+1 is automatically opened
+        if (phase.currentSupply + sharesToMint == phase.maxSupply) {
+            // check if there is a phase with index = currentPhaseIndex + 1
+            Phase storage nextPhase = phases[currentPhaseIndex + 1];
+            if (nextPhase.pricePerShare != 0 && nextPhase.maxSupply != 0) {
+                _setCurrentPhase(currentPhaseIndex + 1);
+            }
+        }
+
+        // emit an event after minting tokens
+        emit FANtiumTokenPackageSale(recipient, packageId, packageQuantity, sharesToMint, paymentToken, expectedAmount);
     }
 
     // ========================================================================
