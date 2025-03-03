@@ -12,15 +12,16 @@ struct Package {
     uint256 maxSupply; // Max number of times this package can be purchased
 }
 
+// we can only add properties to the end
 struct Phase {
     uint256 phaseId;
-    uint256 nextPackageId;
     uint256 pricePerShare;
     uint256 maxSupply; // Total number of shares
     uint256 currentSupply; // Number of minted shares for the phase (<= maxSupply)
     uint256 startTime;
     uint256 endTime;
     Package[] packages;
+    uint256 nextPackageId;
 }
 
 // A phase has a certain number of NFTs available at a certain price
