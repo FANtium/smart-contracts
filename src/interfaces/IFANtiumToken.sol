@@ -72,4 +72,5 @@ interface IFANtiumToken is IERC721AQueryableUpgradeable {
     error IncorrectPackageName(string name);
     error IncorrectShareCount(uint256 shareCount);
     error IncorrectPackageQuantity(uint256 packageQuantity);
+    error PackageLengthExceedsMaxLimit(uint256 length);
 }

@@ -973,7 +973,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         // mint
         vm.expectEmit(true, true, true, true); // check that event was emitted
         emit FANtiumTokenSale(quantity, recipient, expectedAmount, usdcAddress);
-        fantiumToken.mintTo(recipient, quantity, usdcAddress);
+        fantiumToken.mintTo(recipient, usdcAddress, quantity);
 
         // check that currentSupply has increased
         assertEq(fantiumToken.getCurrentPhase().currentSupply, quantity);
@@ -1032,7 +1032,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         // mint
         vm.expectEmit(true, true, true, true); // check that event was emitted
         emit FANtiumTokenSale(quantity, recipient, expectedAmount, usdcAddress);
-        fantiumToken.mintTo(recipient, quantity, usdcAddress);
+        fantiumToken.mintTo(recipient, usdcAddress, quantity);
 
         // check that current phase switch worked
         Phase memory updatedCurrentPhase = fantiumToken.getCurrentPhase();
@@ -1059,7 +1059,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         address recipient = makeAddr("recipient");
         address usdcAddress = address(usdc);
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.CurrentPhaseIsNotActive.selector));
-        fantiumToken.mintTo(recipient, 10, usdcAddress);
+        fantiumToken.mintTo(recipient, usdcAddress, 10);
     }
 
     function test_mintTo_revert_IncorrectTokenQuantity() public {
@@ -1083,7 +1083,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         address recipient = makeAddr("recipient");
         address usdcAddress = address(usdc);
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.IncorrectTokenQuantity.selector, 0));
-        fantiumToken.mintTo(recipient, 0, usdcAddress); // passing quantity 0 !
+        fantiumToken.mintTo(recipient, usdcAddress, 0); // passing quantity 0 !
     }
 
     function test_mintTo_revert_QuantityExceedsMaxSupplyLimit() public {
@@ -1118,7 +1118,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         address recipient = makeAddr("recipient");
         uint256 quantity = 1001; // more than maxSupply
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.QuantityExceedsMaxSupplyLimit.selector, quantity));
-        fantiumToken.mintTo(recipient, quantity, usdcAddress);
+        fantiumToken.mintTo(recipient, usdcAddress, quantity);
     }
 
     function test_mintTo_revert_ERC20PaymentTokenIsNotSet() public {
@@ -1144,7 +1144,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         uint256 quantity = 20;
         // we skip the step of setting the payment token
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.ERC20PaymentTokenIsNotSet.selector));
-        fantiumToken.mintTo(recipient, quantity, usdcAddress);
+        fantiumToken.mintTo(recipient, usdcAddress, quantity);
     }
 
     function test_mintTo_revert_TreasuryIsNotSet() public {
@@ -1174,7 +1174,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         address recipient = makeAddr("recipient");
         uint256 quantity = 20;
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.TreasuryIsNotSet.selector));
-        fantiumToken.mintTo(recipient, quantity, usdcAddress);
+        fantiumToken.mintTo(recipient, usdcAddress, quantity);
     }
 
     function test_mintTo_revert_whenPaused() public {
@@ -1225,7 +1225,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         // Try to mint when paused - should revert
         vm.expectRevert("Pausable: paused");
         // try to mint
-        fantiumToken.mintTo(recipient, quantity, usdcAddress);
+        fantiumToken.mintTo(recipient, usdcAddress, quantity);
 
         vm.stopPrank();
 
@@ -1275,7 +1275,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
 
         // mint
         vm.expectRevert("ERC20: insufficient allowance");
-        fantiumToken.mintTo(recipient, quantity, usdcAddress);
+        fantiumToken.mintTo(recipient, usdcAddress, quantity);
 
         vm.stopPrank();
     }
@@ -1321,7 +1321,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
 
         // mint
         vm.expectRevert("ERC20: transfer amount exceeds balance");
-        fantiumToken.mintTo(recipient, quantity, usdcAddress);
+        fantiumToken.mintTo(recipient, usdcAddress, quantity);
 
         vm.stopPrank();
     }
@@ -1386,7 +1386,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         // mint
         vm.expectEmit(true, true, true, true); // check that event was emitted
         emit FANtiumTokenPackageSale(recipient, packageId, packagesQuantity, quantity, usdcAddress, expectedAmount);
-        fantiumToken.mintTo(recipient, packagesQuantity, usdcAddress, packageId);
+        fantiumToken.mintTo(recipient, usdcAddress, packageId, packagesQuantity);
 
         // check that token currentSupply has increased
         assertEq(fantiumToken.getCurrentPhase().currentSupply, quantity);
@@ -1461,7 +1461,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         // mint
         vm.expectEmit(true, true, true, true); // check that event was emitted
         emit FANtiumTokenPackageSale(recipient, packageId, packagesQuantity, quantity, usdcAddress, expectedAmount);
-        fantiumToken.mintTo(recipient, packagesQuantity, usdcAddress, packageId);
+        fantiumToken.mintTo(recipient, usdcAddress, packageId, packagesQuantity);
 
         // check that token currentSupply has increased for 1st phase
         assertEq(fantiumToken.getAllPhases()[0].currentSupply, quantity);
@@ -1496,7 +1496,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         address usdcAddress = address(usdc);
         vm.prank(recipient);
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.CurrentPhaseIsNotActive.selector));
-        fantiumToken.mintTo(recipient, 10, usdcAddress, 0);
+        fantiumToken.mintTo(recipient, usdcAddress, 0, 10);
     }
 
     function test_mintTo_packages_revert_IncorrectPackageQuantity() public {
@@ -1521,7 +1521,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         address usdcAddress = address(usdc);
         vm.prank(recipient);
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.IncorrectPackageQuantity.selector, 0));
-        fantiumToken.mintTo(recipient, 0, usdcAddress, 0); // passing wrong package quantity
+        fantiumToken.mintTo(recipient, usdcAddress, 0, 0); // passing wrong package quantity
     }
 
     function test_mintTo_packages_revert_QuantityExceedsMaxSupplyLimit() public {
@@ -1571,7 +1571,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.expectRevert(
             abi.encodeWithSelector(IFANtiumToken.QuantityExceedsMaxSupplyLimit.selector, maxPackageSupply * shareCount)
         );
-        fantiumToken.mintTo(recipient, maxPackageSupply, usdcAddress, 0); // passing maxPackageSupply as packageQuantity
+        fantiumToken.mintTo(recipient, usdcAddress, 0, maxPackageSupply); // passing maxPackageSupply as packageQuantity
     }
 
     function test_mintTo_packages_revert_PackageQuantityExceedsMaxSupplyLimit() public {
@@ -1619,7 +1619,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         address recipient = makeAddr("recipient");
         vm.prank(recipient);
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.PackageQuantityExceedsMaxSupplyLimit.selector, 11));
-        fantiumToken.mintTo(recipient, 11, usdcAddress, 0); // passing 11 as packageQuantity > maxPackageSupply
+        fantiumToken.mintTo(recipient, usdcAddress, 0, 11); // passing 11 as packageQuantity > maxPackageSupply
     }
 
     function test_mintTo_packages_revert_ERC20PaymentTokenIsNotSet() public {
@@ -1663,7 +1663,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         address usdcAddress = address(usdc);
         vm.prank(recipient);
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.ERC20PaymentTokenIsNotSet.selector));
-        fantiumToken.mintTo(recipient, 1, usdcAddress, 0);
+        fantiumToken.mintTo(recipient, usdcAddress, 0, 1);
     }
 
     function test_mintTo_packages_revert_TreasuryIsNotSet() public {
@@ -1707,7 +1707,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         address recipient = makeAddr("recipient");
         vm.prank(recipient);
         vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.TreasuryIsNotSet.selector));
-        fantiumToken.mintTo(recipient, 1, usdcAddress, 0);
+        fantiumToken.mintTo(recipient, usdcAddress, 0, 1);
     }
 
     function test_mintTo_packages_revert_whenPaused() public {
@@ -1758,7 +1758,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.prank(recipient);
         // Try to mint when paused - should revert
         vm.expectRevert("Pausable: paused");
-        fantiumToken.mintTo(recipient, 1, usdcAddress, 0);
+        fantiumToken.mintTo(recipient, usdcAddress, 0, 1);
     }
 
     function test_mintTo_packages_revert_insufficientAllowance() public {
@@ -1815,7 +1815,7 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
 
         // try to mint
         vm.expectRevert("ERC20: insufficient allowance");
-        fantiumToken.mintTo(recipient, packagesToPurchase, usdcAddress, 0);
+        fantiumToken.mintTo(recipient, usdcAddress, 0, packagesToPurchase);
 
         vm.stopPrank();
     }
@@ -1874,9 +1874,231 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
 
         // try to mint
         vm.expectRevert("ERC20: transfer amount exceeds balance");
-        fantiumToken.mintTo(recipient, packagesToPurchase, usdcAddress, 0);
+        fantiumToken.mintTo(recipient, usdcAddress, 0, packagesToPurchase);
 
         vm.stopPrank();
+    }
+
+    // batchMintTo (packages & single shares)
+    // ========================================================================
+    function test_batchMintTo_ok() public {
+        // add a phase
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days);
+        uint256 endTime = uint256(block.timestamp + 30 days);
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.startPrank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase data was stored correctly
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // Warp time
+        vm.warp(startTime + 1 days); // phase is active
+
+        // set the payment token
+        address usdcAddress = address(usdc);
+        fantiumToken.setPaymentToken(usdcAddress, true);
+        assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
+
+        // set treasury
+        address newTreasury = makeAddr("newTreasury");
+        fantiumToken.setTreasuryAddress(newTreasury);
+
+        // setup package data
+        string memory name = "Classic";
+        uint256 packagePrice = 999;
+        uint256 shareCount = 3;
+        uint256 maxPackageSupply = 10;
+        uint256 phaseId = 0;
+
+        // Execute package addition
+        fantiumToken.addPackage(name, packagePrice, shareCount, maxPackageSupply, phaseId);
+
+        // check that package was added
+        assertEq(fantiumToken.getAllPhases()[0].packages.length, 1);
+
+        uint256 packageId = fantiumToken.getAllPhases()[0].packages[0].packageId;
+
+        vm.stopPrank();
+
+        // what we wanna mint
+        uint256 singleSharesQuantity = 10; // amount of single shares to mint
+        uint256 packagesQuantity = 2; // amount of packages to mint
+
+        // prepare sale
+        address recipient = makeAddr("recipient");
+        uint8 tokenDecimals = IERC20MetadataUpgradeable(usdcAddress).decimals();
+        uint256 singleSharesExpectedAmount = singleSharesQuantity * pricePerShare * 10 ** tokenDecimals;
+        uint256 packagesExpectedAmount = packagesQuantity * packagePrice * 10 ** tokenDecimals;
+        uint256 totalExpectedAmount = singleSharesExpectedAmount + packagesExpectedAmount;
+        // top up recipient
+        deal(usdcAddress, recipient, totalExpectedAmount);
+        vm.startPrank(recipient);
+        // approve the spending
+        usdc.approve(address(fantiumToken), totalExpectedAmount);
+
+        // mint
+        vm.expectEmit(true, true, true, true); // check that event was emitted
+        emit FANtiumTokenSale(singleSharesQuantity, recipient, singleSharesExpectedAmount, usdcAddress);
+        emit FANtiumTokenPackageSale(
+            recipient, packageId, packagesQuantity, shareCount * packagesQuantity, usdcAddress, packagesExpectedAmount
+        );
+        uint256[2][] memory packagesArg = new uint256[2][](1);
+        packagesArg[0] = [packageId, packagesQuantity];
+        fantiumToken.batchMintTo(recipient, usdcAddress, singleSharesQuantity, packagesArg);
+
+        uint256 totalSharesMinted = singleSharesQuantity + packagesQuantity * shareCount;
+        // check that phase currentSupply has increased
+        assertEq(fantiumToken.getCurrentPhase().currentSupply, totalSharesMinted);
+
+        // check that package currentSupply has increased
+        assertEq(fantiumToken.getAllPhases()[0].packages[0].currentSupply, packagesQuantity); // should increase from 0
+        // to packagesQuantity
+
+        vm.stopPrank();
+    }
+
+    function test_batchMintTo_ok_multiplePackages() public {
+        // add a phase
+        uint256 pricePerShare = 100;
+        uint256 maxSupply = 1000;
+        uint256 startTime = uint256(block.timestamp + 1 days);
+        uint256 endTime = uint256(block.timestamp + 30 days);
+        // Check the initial state
+        assertEq(fantiumToken.getAllPhases().length, 0);
+        // Execute phase addition
+        vm.startPrank(fantiumToken_admin);
+        fantiumToken.addPhase(pricePerShare, maxSupply, startTime, endTime);
+        // Verify phase data was stored correctly
+        assertEq(fantiumToken.getAllPhases().length, 1);
+
+        // Warp time
+        vm.warp(startTime + 1 days); // phase is active
+
+        // set the payment token
+        address usdcAddress = address(usdc);
+        fantiumToken.setPaymentToken(usdcAddress, true);
+        assertTrue(fantiumToken.erc20PaymentTokens(usdcAddress));
+
+        // set treasury
+        address newTreasury = makeAddr("newTreasury");
+        fantiumToken.setTreasuryAddress(newTreasury);
+
+        // setup 1st package data
+        string memory name = "Classic";
+        uint256 packagePrice = 999;
+        uint256 shareCount = 3;
+        uint256 maxPackageSupply = 10;
+        uint256 phaseId = 0;
+
+        // setup 2nd package data
+        string memory name2 = "Advanced";
+        uint256 packagePrice2 = 2999;
+        uint256 shareCount2 = 10;
+
+        // setup 3rd package data
+        string memory name3 = "Premium";
+        uint256 packagePrice3 = 5999;
+        uint256 shareCount3 = 20;
+
+        // Execute package addition
+        fantiumToken.addPackage(name, packagePrice, shareCount, maxPackageSupply, phaseId);
+        fantiumToken.addPackage(name2, packagePrice2, shareCount2, maxPackageSupply, phaseId);
+        fantiumToken.addPackage(name3, packagePrice3, shareCount3, maxPackageSupply, phaseId);
+
+        // check that packages were added
+        assertEq(fantiumToken.getAllPhases()[0].packages.length, 3);
+
+        uint256 packageId1 = fantiumToken.getAllPhases()[0].packages[0].packageId;
+        uint256 packageId2 = fantiumToken.getAllPhases()[0].packages[1].packageId;
+        uint256 packageId3 = fantiumToken.getAllPhases()[0].packages[2].packageId;
+
+        vm.stopPrank();
+
+        // what we wanna mint
+        uint256 singleSharesQuantity = 10; // amount of single shares to mint
+        uint256 packagesQuantity = 2; // amount of packages to mint
+
+        // prepare sale
+        address recipient = makeAddr("recipient");
+        uint8 tokenDecimals = IERC20MetadataUpgradeable(usdcAddress).decimals();
+        uint256 singleSharesExpectedAmount = singleSharesQuantity * pricePerShare * 10 ** tokenDecimals;
+        uint256 packagesExpectedAmount1 = packagesQuantity * packagePrice * 10 ** tokenDecimals;
+        uint256 packagesExpectedAmount2 = packagesQuantity * packagePrice2 * 10 ** tokenDecimals;
+        uint256 packagesExpectedAmount3 = packagesQuantity * packagePrice3 * 10 ** tokenDecimals;
+        uint256 packagesExpectedAmount = packagesExpectedAmount1 + packagesExpectedAmount2 + packagesExpectedAmount3;
+        uint256 totalExpectedAmount = singleSharesExpectedAmount + packagesExpectedAmount;
+        // top up recipient
+        deal(usdcAddress, recipient, totalExpectedAmount);
+        vm.startPrank(recipient);
+        // approve the spending
+        usdc.approve(address(fantiumToken), totalExpectedAmount);
+
+        // mint
+        vm.expectEmit(true, true, true, true); // check that event was emitted
+        emit FANtiumTokenSale(singleSharesQuantity, recipient, singleSharesExpectedAmount, usdcAddress);
+        emit FANtiumTokenPackageSale(
+            recipient, packageId1, packagesQuantity, shareCount * packagesQuantity, usdcAddress, packagesExpectedAmount1
+        );
+        emit FANtiumTokenPackageSale(
+            recipient,
+            packageId2,
+            packagesQuantity,
+            shareCount2 * packagesQuantity,
+            usdcAddress,
+            packagesExpectedAmount2
+        );
+        emit FANtiumTokenPackageSale(
+            recipient,
+            packageId3,
+            packagesQuantity,
+            shareCount3 * packagesQuantity,
+            usdcAddress,
+            packagesExpectedAmount3
+        );
+        uint256[2][] memory packagesArg = new uint256[2][](3);
+        packagesArg[0] = [packageId1, packagesQuantity];
+        packagesArg[1] = [packageId2, packagesQuantity];
+        packagesArg[2] = [packageId3, packagesQuantity];
+        fantiumToken.batchMintTo(recipient, usdcAddress, singleSharesQuantity, packagesArg);
+
+        uint256 totalSharesMinted = singleSharesQuantity + packagesQuantity * shareCount
+            + packagesQuantity * shareCount2 + packagesQuantity * shareCount3;
+        // check that phase currentSupply has increased
+        assertEq(fantiumToken.getCurrentPhase().currentSupply, totalSharesMinted);
+
+        // check that package 1 currentSupply has increased
+        assertEq(fantiumToken.getAllPhases()[0].packages[0].currentSupply, packagesQuantity);
+        // check that package 2 currentSupply has increased
+        assertEq(fantiumToken.getAllPhases()[0].packages[1].currentSupply, packagesQuantity);
+        // check that package 3 currentSupply has increased
+        assertEq(fantiumToken.getAllPhases()[0].packages[2].currentSupply, packagesQuantity);
+
+        vm.stopPrank();
+    }
+
+    function test_batchMintTo_revert_PackageLengthExceedsMaxLimit() public {
+        // what we wanna mint
+        uint256 singleSharesQuantity = 10; // amount of single shares to mint
+        uint256 packagesQuantity = 5; // amount of packages to mint
+
+        address recipient = makeAddr("recipient");
+        address usdcAddress = address(usdc);
+
+        // create packagesArg with length of 4
+        uint256[2][] memory packagesArg = new uint256[2][](4);
+        packagesArg[0] = [1, packagesQuantity];
+        packagesArg[1] = [2, packagesQuantity];
+        packagesArg[2] = [3, packagesQuantity];
+        packagesArg[3] = [4, packagesQuantity];
+
+        vm.prank(recipient);
+        // try to mint
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumToken.PackageLengthExceedsMaxLimit.selector, packagesArg.length));
+        fantiumToken.batchMintTo(recipient, usdcAddress, singleSharesQuantity, packagesArg);
     }
 
     // addPackage

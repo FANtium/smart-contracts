@@ -553,11 +553,11 @@ contract FANtiumTokenV1 is
     /**
      * Mint FAN tokens to the recipient address. Function for purchasing single shares (not packages);
      * @param recipient The recipient of the FAN tokens (can be different that the sender)
-     * @param quantity The quantity of FAN tokens to mint
      * @param paymentToken The address of the stable coin
+     * @param quantity The quantity of FAN tokens to mint
      *
      */
-    function mintTo(address recipient, uint256 quantity, address paymentToken) external whenNotPaused {
+    function mintTo(address recipient, address paymentToken, uint256 quantity) public whenNotPaused {
         // Buying single share(s)
         // get current phase
         Phase memory phase = phases[currentPhaseIndex];
@@ -617,18 +617,18 @@ contract FANtiumTokenV1 is
 
     /**
      * Mint FAN tokens to the recipient address. (for package purchase)
-     * @param recipient The recipient of the FAN tokens (can be different that the sender)
-     * @param packageQuantity The quantity of packages
      * @param paymentToken The address of the stable coin
+     * @param recipient The recipient of the FAN tokens (can be different that the sender)
      * @param packageId The id of the package
+     * @param packageQuantity The quantity of packages
      */
     function mintTo(
         address recipient,
-        uint256 packageQuantity,
         address paymentToken,
-        uint256 packageId
+        uint256 packageId,
+        uint256 packageQuantity
     )
-        external
+        public
         whenNotPaused
     {
         // Buying a package
@@ -701,6 +701,45 @@ contract FANtiumTokenV1 is
 
         // emit an event after minting tokens
         emit FANtiumTokenPackageSale(recipient, packageId, packageQuantity, sharesToMint, paymentToken, expectedAmount);
+    }
+
+    /**
+     * This is MVP implementation, can be optimised later
+     * Mint FAN tokens to the recipient address. (for purchasing single shares and packages at the same time)
+     * @param recipient The recipient of the FAN tokens (can be different that the sender)
+     * @param paymentToken The address of the stable coin
+     * @param singleShares The quantity of single shares
+     * @param packages Array of tuples. Each tuple contains [packageId, packageQuantity]
+     */
+    function batchMintTo(
+        address recipient,
+        address paymentToken,
+        uint256 singleShares,
+        uint256[2][] calldata packages
+    )
+        external
+        whenNotPaused
+    {
+        // we do NOT expect to have more than 3 packages of FAN token
+        if (packages.length > 3) {
+            revert PackageLengthExceedsMaxLimit(packages.length);
+        }
+
+        if (singleShares > 0) {
+            // mint single shares
+            mintTo(recipient, paymentToken, singleShares);
+        }
+
+        if (packages.length > 0) {
+            for (uint256 i = 0; i < packages.length; i++) {
+                uint256 packageId = packages[i][0];
+                uint256 packageQuantity = packages[i][1];
+                if (packageQuantity > 0) {
+                    // mint packages
+                    mintTo(recipient, paymentToken, packageId, packageQuantity);
+                }
+            }
+        }
     }
 
     // ========================================================================
