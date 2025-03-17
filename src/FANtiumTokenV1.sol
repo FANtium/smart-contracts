@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import "./interfaces/IFANtiumToken.sol"; // todo: remove this import
-
-import "@openzeppelin/contracts/utils/Strings.sol";
 import { ERC721AQueryableUpgradeable } from "erc721a-upgradeable/extensions/ERC721AQueryableUpgradeable.sol";
 
 import { IFANtiumToken, Package, Phase } from "./interfaces/IFANtiumToken.sol";
