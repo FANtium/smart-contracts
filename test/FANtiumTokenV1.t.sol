@@ -2523,6 +2523,24 @@ contract FANtiumTokenV1Test is BaseTest, FANtiumTokenFactory {
         vm.stopPrank();
     }
 
+    // setBaseURI
+    // ========================================================================
+    function test_setBaseURI_ok() public {
+        // check intial state
+        assertEq(fantiumToken.baseURI(), "");
+
+        // mock owner
+        vm.prank(fantiumToken_admin);
+
+        string memory uri = "https://app.fantium.com/api/metadata/fan/";
+
+        // set the base URI
+        fantiumToken.setBaseURI(uri);
+
+        // verify
+        assertEq(fantiumToken.baseURI(), uri);
+    }
+
     // batchTransferFrom
     // ========================================================================
     // TODO: test_batchTransferFrom_ok
