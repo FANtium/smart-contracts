@@ -16,7 +16,7 @@ contract DeployTestnet is Script {
     address public constant BACKEND_SIGNER = 0xCAFE914D4886B50edD339eee2BdB5d2350fdC809;
     address public constant DEPLOYER = 0xC0DE5408A46402B7Bd13678A43318c64E2c31EAA;
 
-    bool public FANTIUM_NFT_UPGRADE = true;
+    bool public FANTIUM_NFT_UPGRADE = false;
     address public constant FANTIUM_NFT_PROXY = 0x4d09f47fd98196CDFC816be9e84Fb15bCDB92612;
 
     bool public FANTIUM_USER_MANAGER_UPGRADE = false;
@@ -25,7 +25,7 @@ contract DeployTestnet is Script {
     bool public FANTIUM_CLAIMING_UPGRADE = false;
     address public constant FANTIUM_CLAIMING_PROXY = 0xB578fb2A0BC49892806DC7309Dbe809f23F4682F;
 
-    bool public FANTIUM_TOKEN_UPGRADE = false;
+    bool public FANTIUM_TOKEN_UPGRADE = true;
     address public constant FANTIUM_TOKEN_PROXY = 0xd5E5cFf4858AD04D40Cbac54413fADaF8b717914;
 
     bool public FOOTBALL_TOKEN_UPGRADE = false;
