@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import "./interfaces/IFANtiumToken.sol"; // todo: remove this import
 import { ERC721AQueryableUpgradeable } from "erc721a-upgradeable/extensions/ERC721AQueryableUpgradeable.sol";
 
 import { IFANtiumToken, Package, Phase } from "./interfaces/IFANtiumToken.sol";
@@ -44,6 +43,7 @@ contract FANtiumTokenV1 is
     Phase[] public phases;
     uint256 public currentPhaseIndex;
     address public treasury; // Safe that will receive all the funds
+    string public baseURI; // The base URI for the token metadata.
 
     /**
      * @notice The ERC20 tokens used for payments, dollar stable coins (e.g. USDC, USDT, DAI).
@@ -767,5 +767,22 @@ contract FANtiumTokenV1 is
         for (uint256 i = 0; i < tokenIds.length; i++) {
             safeTransferFrom(from, to, tokenIds[i]);
         }
+    }
+
+    /**
+     * @dev Returns the base URI for computing {tokenURI}.
+     * Necessary to use the default ERC721 tokenURI function from ERC721Upgradeable.
+     */
+    function _baseURI() internal view virtual override returns (string memory) {
+        return baseURI;
+    }
+
+    /**
+     * @notice Sets the base URI for the token metadata.
+     * @dev Restricted to owner.
+     * @param baseURI_ The new base URI.
+     */
+    function setBaseURI(string memory baseURI_) external whenNotPaused onlyOwner {
+        baseURI = baseURI_;
     }
 }
