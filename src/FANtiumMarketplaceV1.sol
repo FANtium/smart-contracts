@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import { IMarketplace } from "./interfaces/IFANtiumMarketplace.sol";
+import { IFANtiumMarketplace } from "./interfaces/IFANtiumMarketplace.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -11,7 +11,13 @@ import { OwnableRoles } from "solady/auth/OwnableRoles.sol";
  * @title FANtium Marketplace smart contract
  * @author Alex Chernetsky, Mathieu Bour - FANtium AG
  */
-contract Marketplace is Initializable, UUPSUpgradeable, PausableUpgradeable, OwnableRoles, IMarketplace {
+contract FANtiumMarketplaceV1 is
+    Initializable,
+    UUPSUpgradeable,
+    PausableUpgradeable,
+    OwnableRoles,
+    IFANtiumMarketplace
+{
     // Roles
     // ========================================================================
     uint256 public constant SIGNER_ROLE = _ROLE_0;

@@ -15,7 +15,7 @@ struct Offer {
     uint256 expiresAt; // UNIX timestamp, time when offer expires
 }
 
-interface IMarketplace {
+interface IFANtiumMarketplace {
     // events
     event TreasuryAddressUpdate(address newWalletAddress);
     event OfferExecuted(Offer offer, address indexed buyer);
