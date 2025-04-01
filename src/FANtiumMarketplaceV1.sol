@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import { IFANtiumMarketplace } from "./interfaces/IFANtiumMarketplace.sol";
+import "./interfaces/IFANtiumMarketplace.sol"; // todo: remove extra import before merge
+import { IFANtiumMarketplace, Offer } from "./interfaces/IFANtiumMarketplace.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+
+import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import { IERC20MetadataUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { OwnableRoles } from "solady/auth/OwnableRoles.sol";
 
 /**
@@ -18,6 +25,10 @@ contract FANtiumMarketplaceV1 is
     OwnableRoles,
     IFANtiumMarketplace
 {
+    // Constants
+    // =======================================================================
+    address public constant USDC_CONTRACT_ADDRESS = 0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359;
+
     // Roles
     // ========================================================================
     uint256 public constant SIGNER_ROLE = _ROLE_0;
@@ -107,5 +118,37 @@ contract FANtiumMarketplaceV1 is
 
         // emit an event for transparency
         emit TreasuryAddressUpdate(wallet);
+    }
+
+    // ========================================================================
+    // Execute Offer
+    function executeOffer(Offer calldata offer, bytes calldata sellerSignature) external {
+        // NFT Offer should not be executed if it has expired
+        if (offer.expiresAt < block.timestamp) {
+            revert OfferExpired(offer.expiresAt);
+        }
+
+        // todo NFT Offer should not be executed if seller signature is not valid
+        //  _verify(offer, sellerSignature);
+
+        // Buyer sends USDC to seller
+        uint8 tokenDecimals = IERC20MetadataUpgradeable(USDC_CONTRACT_ADDRESS).decimals();
+        uint256 expectedAmount = (offer.amount - offer.fee) * 10 ** tokenDecimals;
+        SafeERC20Upgradeable.safeTransferFrom(
+            IERC20Upgradeable(USDC_CONTRACT_ADDRESS), _msgSender(), offer.seller, expectedAmount
+        );
+
+        // Buyer sends USDC to FANtium (our fee),
+        if (offer.fee > 0) {
+            uint256 expectedFeeAmount = offer.fee * 10 ** tokenDecimals;
+            SafeERC20Upgradeable.safeTransferFrom(
+                IERC20Upgradeable(USDC_CONTRACT_ADDRESS), _msgSender(), treasury, expectedFeeAmount
+            );
+        }
+
+        // todo Seller sends NFT to buyer
+        // nft.transferFrom(offer.seller, _msgSender(), offer.tokenId);
+
+        emit OfferExecuted(offer, _msgSender());
     }
 }

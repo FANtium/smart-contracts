@@ -20,10 +20,8 @@ interface IFANtiumMarketplace {
     event TreasuryAddressUpdate(address newWalletAddress);
     event OfferExecuted(Offer offer, address indexed buyer);
 
-    // functions
-    // function executeOffer(Offer memory offer, bytes memory sellerSignature) external;
-
     // errors
     error InvalidTreasuryAddress(address treasury);
     error TreasuryAddressAlreadySet(address wallet);
+    error OfferExpired(uint256 expiresAt);
 }
