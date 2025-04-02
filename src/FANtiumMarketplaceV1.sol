@@ -3,6 +3,7 @@ pragma solidity 0.8.28;
 
 import "./interfaces/IFANtiumMarketplace.sol"; // todo: remove extra import before merge
 import { IFANtiumMarketplace, Offer } from "./interfaces/IFANtiumMarketplace.sol";
+import { IFANtiumNFT } from "./interfaces/IFANtiumNFT.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -37,6 +38,7 @@ contract FANtiumMarketplaceV1 is
     // State variables
     // ========================================================================
     address public treasury; // Safe that will receive all the funds
+    IFANtiumNFT public nftContract; // FANtium NFT smart contract
 
     function initialize(address admin) public initializer {
         __UUPSUpgradeable_init();
@@ -120,9 +122,28 @@ contract FANtiumMarketplaceV1 is
         emit TreasuryAddressUpdate(wallet);
     }
 
+    /**
+     * Set FANtium NFT contract address
+     * @param _fantiumNFT - address of the NFT contract
+     * todo: test
+     */
+    function setFANtiumNFTContract(IFANtiumNFT _fantiumNFT) external onlyOwner {
+        nftContract = _fantiumNFT;
+    }
+
     // ========================================================================
-    // Execute Offer
+    // Execute Offer todo: tests
+    /**
+     * @notice Executes seller's offer (buyer sends USDC to seller, Buyer sends USDC to FANtium (our fee), seller sends
+     * NFT to buyer)
+     * @param offer The seller's offer
+     * @param sellerSignature The seller's signature
+     */
     function executeOffer(Offer calldata offer, bytes calldata sellerSignature) external {
+        // todo: what else can we validate before executing the offer ?
+        // require(ERC721Upgradeable.ownerOf(tokenId) == from, "ERC721: transfer from incorrect owner");
+        //        require(to != address(0), "ERC721: transfer to the zero address");
+
         // NFT Offer should not be executed if it has expired
         if (offer.expiresAt < block.timestamp) {
             revert OfferExpired(offer.expiresAt);
@@ -146,8 +167,8 @@ contract FANtiumMarketplaceV1 is
             );
         }
 
-        // todo Seller sends NFT to buyer
-        // nft.transferFrom(offer.seller, _msgSender(), offer.tokenId);
+        // Seller sends NFT to buyer
+        nftContract.transferFrom(offer.seller, _msgSender(), offer.tokenId);
 
         emit OfferExecuted(offer, _msgSender());
     }
