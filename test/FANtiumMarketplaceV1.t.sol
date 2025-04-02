@@ -2,6 +2,8 @@
 pragma solidity 0.8.28;
 
 import { IFANtiumMarketplace } from "../src/interfaces/IFANtiumMarketplace.sol";
+
+import { IFANtiumNFT } from "../src/interfaces/IFANtiumNFT.sol";
 import { FANtiumMarketplaceFactory } from "./setup/FANtiumMarketplace.t.sol";
 import { Ownable } from "solady/auth/Ownable.sol";
 import { BaseTest } from "test/BaseTest.sol";
@@ -84,4 +86,38 @@ contract FANtiumMarketplaceV1Test is BaseTest, FANtiumMarketplaceFactory {
         vm.expectRevert(abi.encodeWithSelector(Ownable.Unauthorized.selector));
         fantiumMarketplace.setTreasuryAddress(newTreasury);
     }
+
+    // setFANtiumNFTContract
+    // ========================================================================
+    function test_setFANtiumNFTContract_ok() public {
+        address newFANtiumNFTContract = makeAddr("newFANtiumNFTContract");
+
+        vm.startPrank(fantiumMarketplace_admin);
+
+        // Initially, the NFT contract should be address(0)
+        assertEq(address(fantiumMarketplace.nftContract()), address(0));
+
+        // set new address
+        fantiumMarketplace.setFANtiumNFTContract(IFANtiumNFT(newFANtiumNFTContract));
+
+        assertEq(address(fantiumMarketplace.nftContract()), newFANtiumNFTContract);
+
+        vm.stopPrank();
+    }
+
+    function test_setFANtiumNFTContract_revert_nonOwner() public {
+        address newFANtiumNFTContract = makeAddr("newFANtiumNFTContract");
+        address randomUser = makeAddr("random");
+
+        vm.startPrank(randomUser);
+
+        vm.expectRevert(abi.encodeWithSelector(Ownable.Unauthorized.selector));
+        // try to set new address
+        fantiumMarketplace.setFANtiumNFTContract(IFANtiumNFT(newFANtiumNFTContract));
+
+        vm.stopPrank();
+    }
+
+    // executeOffer
+    // ========================================================================
 }
