@@ -24,4 +24,7 @@ interface IFANtiumMarketplace {
     error InvalidTreasuryAddress(address treasury);
     error TreasuryAddressAlreadySet(address wallet);
     error OfferExpired(uint256 expiresAt);
+    error InvalidSeller(address seller);
+    error InvalidOfferAmount(uint256 amount);
+    error InvalidSellerSignature(address recoveredSigner, address seller);
 }

@@ -13,7 +13,9 @@ import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC
 import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import { OwnableRoles } from "solady/auth/OwnableRoles.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
 
 /**
  * @title FANtium Marketplace smart contract
@@ -132,25 +134,63 @@ contract FANtiumMarketplaceV1 is
     }
 
     // ========================================================================
-    // Execute Offer todo: tests
+    /**
+     * @notice Internal function to check if the seller signature valid utilising Solady's ECDSA library
+     * The seller would sign the offer off-chain (using their wallet) before submitting it to the marketplace.
+     * When a buyer wants to accept the offer, this function verifies that the signature is legitimate before allowing
+     * the transaction to proceed.
+     * @param offer The offer data structure containing details like seller, tokenId, amount, etc.
+     * @param sellerSignature The cryptographic signature provided by the seller to authorize this offer in EIP-712
+     * format
+     */
+    function _verifySignature(Offer calldata offer, bytes calldata sellerSignature) internal view {
+        // create offer hash, keccak256() creates a 32-byte hash of the encoded data. This hash uniquely represents the
+        // offer's contents
+        bytes32 offerHash = keccak256(
+            abi.encode(offer.seller, offer.tokenAddress, offer.tokenId, offer.amount, offer.fee, offer.expiresAt)
+        );
+
+        //  Converting to an Ethereum Signed Message Hash. This transforms the hash into an Ethereum-specific format,
+        // EIP-712 compliant.
+        bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(offerHash);
+
+        //  Recovering the signer
+        // The recover function uses the signature to determine which Ethereum address created it.
+        // It performs complex elliptic curve calculations to derive this address from the signature and the message
+        // hash.
+        address signer = ECDSA.recover(ethSignedMessageHash, sellerSignature);
+
+        // Verifying the signature
+        if (signer != offer.seller) {
+            revert InvalidSellerSignature(signer, offer.seller);
+        }
+    }
+
+    //  todo: tests
     /**
      * @notice Executes seller's offer (buyer sends USDC to seller, Buyer sends USDC to FANtium (our fee), seller sends
      * NFT to buyer)
      * @param offer The seller's offer
-     * @param sellerSignature The seller's signature
+     * @param sellerSignature The seller's signature in EIP-712 format
      */
     function executeOffer(Offer calldata offer, bytes calldata sellerSignature) external {
-        // todo: what else can we validate before executing the offer ?
-        // require(ERC721Upgradeable.ownerOf(tokenId) == from, "ERC721: transfer from incorrect owner");
-        //        require(to != address(0), "ERC721: transfer to the zero address");
+        // check if the offer price is valid
+        if (offer.amount == 0) {
+            revert InvalidOfferAmount(offer.amount);
+        }
 
         // NFT Offer should not be executed if it has expired
         if (offer.expiresAt < block.timestamp) {
             revert OfferExpired(offer.expiresAt);
         }
 
-        // todo NFT Offer should not be executed if seller signature is not valid
-        //  _verify(offer, sellerSignature);
+        // NFT Offer should not be executed if seller is not the owner of the NFT
+        if (nftContract.ownerOf(offer.tokenId) != offer.seller) {
+            revert InvalidSeller(offer.seller);
+        }
+
+        // NFT Offer should not be executed if seller signature is not valid
+        _verifySignature(offer, sellerSignature);
 
         // Buyer sends USDC to seller
         uint8 tokenDecimals = IERC20MetadataUpgradeable(USDC_CONTRACT_ADDRESS).decimals();
