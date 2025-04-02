@@ -28,10 +28,6 @@ contract FANtiumMarketplaceV1 is
     OwnableRoles,
     IFANtiumMarketplace
 {
-    // Constants
-    // =======================================================================
-    address public constant USDC_CONTRACT_ADDRESS = 0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359;
-
     // Roles
     // ========================================================================
     uint256 public constant SIGNER_ROLE = _ROLE_0;
@@ -41,10 +37,12 @@ contract FANtiumMarketplaceV1 is
     // ========================================================================
     address public treasury; // Safe that will receive all the funds
     IFANtiumNFT public nftContract; // FANtium NFT smart contract
+    address public usdcContractAddress;
 
-    function initialize(address admin) public initializer {
+    function initialize(address admin, address usdcAddress) public initializer {
         __UUPSUpgradeable_init();
         _initializeOwner(admin);
+        usdcContractAddress = usdcAddress;
     }
 
     /**
@@ -127,10 +125,18 @@ contract FANtiumMarketplaceV1 is
     /**
      * Set FANtium NFT contract address
      * @param _fantiumNFT - address of the NFT contract
-     * todo: test
      */
     function setFANtiumNFTContract(IFANtiumNFT _fantiumNFT) external onlyOwner {
         nftContract = _fantiumNFT;
+    }
+
+    /**
+     * Set USDC contract address
+     * @param usdcAddress - address of the USDC contract
+     * todo: test
+     */
+    function setUsdcContractAddress(address usdcAddress) external onlyOwner {
+        usdcContractAddress = usdcAddress;
     }
 
     // ========================================================================
@@ -174,6 +180,9 @@ contract FANtiumMarketplaceV1 is
      * @param sellerSignature The seller's signature in EIP-712 format
      */
     function executeOffer(Offer calldata offer, bytes calldata sellerSignature) external {
+        // NFT Offer should not be executed if seller signature is not valid
+        _verifySignature(offer, sellerSignature);
+
         // check if the offer price is valid
         if (offer.amount == 0) {
             revert InvalidOfferAmount(offer.amount);
@@ -189,21 +198,18 @@ contract FANtiumMarketplaceV1 is
             revert InvalidSeller(offer.seller);
         }
 
-        // NFT Offer should not be executed if seller signature is not valid
-        _verifySignature(offer, sellerSignature);
-
         // Buyer sends USDC to seller
-        uint8 tokenDecimals = IERC20MetadataUpgradeable(USDC_CONTRACT_ADDRESS).decimals();
+        uint8 tokenDecimals = IERC20MetadataUpgradeable(usdcContractAddress).decimals();
         uint256 expectedAmount = (offer.amount - offer.fee) * 10 ** tokenDecimals;
         SafeERC20Upgradeable.safeTransferFrom(
-            IERC20Upgradeable(USDC_CONTRACT_ADDRESS), _msgSender(), offer.seller, expectedAmount
+            IERC20Upgradeable(usdcContractAddress), _msgSender(), offer.seller, expectedAmount
         );
 
         // Buyer sends USDC to FANtium (our fee),
         if (offer.fee > 0) {
             uint256 expectedFeeAmount = offer.fee * 10 ** tokenDecimals;
             SafeERC20Upgradeable.safeTransferFrom(
-                IERC20Upgradeable(USDC_CONTRACT_ADDRESS), _msgSender(), treasury, expectedFeeAmount
+                IERC20Upgradeable(usdcContractAddress), _msgSender(), treasury, expectedFeeAmount
             );
         }
 
