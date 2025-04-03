@@ -14,9 +14,17 @@ import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+
 import { OwnableRoles } from "solady/auth/OwnableRoles.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
+import { EIP712 } from "solady/utils/EIP712.sol";
 
+/*
+* todo: CI validate upgradability check fails
+* The main issue is that the EIP712 contract from Solady has a constructor
+* and Several immutable variables (_cachedThis, _cachedChainId, etc.)
+* When using the OpenZeppelin upgrades pattern, you can't have constructors or immutable variables in upgradeable
+contracts (or their parent contracts).*/
 /**
  * @title FANtium Marketplace smart contract
  * @author Alex Chernetsky, Mathieu Bour - FANtium AG
@@ -26,7 +34,8 @@ contract FANtiumMarketplaceV1 is
     UUPSUpgradeable,
     PausableUpgradeable,
     OwnableRoles,
-    IFANtiumMarketplace
+    IFANtiumMarketplace,
+    EIP712
 {
     // Roles
     // ========================================================================
@@ -43,6 +52,18 @@ contract FANtiumMarketplaceV1 is
         __UUPSUpgradeable_init();
         _initializeOwner(admin);
         usdcContractAddress = usdcAddress;
+    }
+
+    /**
+     * @notice Implementation of the EIP712 domain name and version
+     * The EIP712 contract is intended to be abstract, and it requires you to implement the _domainNameAndVersion()
+     * function.
+     * This function provides the domain name and version that are used to generate the EIP-712 domain separator.
+     * @return name Domain name
+     * @return version Domain version
+     */
+    function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
+        return ("FANtiumMarketplace", "1");
     }
 
     /**
@@ -150,21 +171,29 @@ contract FANtiumMarketplaceV1 is
      * format
      */
     function _verifySignature(Offer calldata offer, bytes calldata sellerSignature) internal view {
-        // create offer hash, keccak256() creates a 32-byte hash of the encoded data. This hash uniquely represents the
-        // offer's contents
+        // Hash the offer struct using EIP712's typed data hashing
         bytes32 offerHash = keccak256(
-            abi.encode(offer.seller, offer.tokenAddress, offer.tokenId, offer.amount, offer.fee, offer.expiresAt)
+            abi.encode(
+                keccak256(
+                    "Offer(address seller,address tokenAddress,uint256 tokenId,uint256 amount,uint256 fee,uint256 expiresAt)"
+                ),
+                offer.seller,
+                offer.tokenAddress,
+                offer.tokenId,
+                offer.amount,
+                offer.fee,
+                offer.expiresAt
+            )
         );
 
-        //  Converting to an Ethereum Signed Message Hash. This transforms the hash into an Ethereum-specific format,
-        // EIP-712 compliant.
-        bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(offerHash);
+        // Compute the final EIP-712 hash
+        bytes32 digest = _hashTypedData(offerHash);
 
         //  Recovering the signer
         // The recover function uses the signature to determine which Ethereum address created it.
         // It performs complex elliptic curve calculations to derive this address from the signature and the message
         // hash.
-        address signer = ECDSA.recover(ethSignedMessageHash, sellerSignature);
+        address signer = ECDSA.recover(digest, sellerSignature);
 
         // Verifying the signature
         if (signer != offer.seller) {
