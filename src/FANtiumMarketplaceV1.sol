@@ -19,9 +19,6 @@ import { OwnableRoles } from "solady/auth/OwnableRoles.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 
-// todo: remove console.log before merge
-import { console } from "forge-std/console.sol";
-
 /**
  * @title FANtium Marketplace smart contract
  * @author Alex Chernetsky, Mathieu Bour - FANtium AG
@@ -208,8 +205,6 @@ contract FANtiumMarketplaceV1 is
     function executeOffer(Offer calldata offer, bytes calldata sellerSignature) external {
         // NFT Offer should not be executed if seller signature is not valid
         _verifySignature(offer, sellerSignature);
-
-        console.log("signature OK");
 
         // check if the offer price is valid
         if (offer.amount == 0) {
