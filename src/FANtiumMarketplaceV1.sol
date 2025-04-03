@@ -19,6 +19,7 @@ import { OwnableRoles } from "solady/auth/OwnableRoles.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 
+// todo: remove console.log before merge
 import { console } from "forge-std/console.sol";
 
 /**
