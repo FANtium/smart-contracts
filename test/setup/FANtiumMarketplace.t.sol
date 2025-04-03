@@ -27,7 +27,7 @@ contract FANtiumMarketplaceFactory is BaseTest {
 
         fantiumMarketplace_proxy = UnsafeUpgrades.deployUUPSProxy(
             fantiumMarketplace_implementation,
-            abi.encodeCall(FANtiumMarketplaceV1.initialize, (fantiumMarketplace_admin))
+            abi.encodeCall(FANtiumMarketplaceV1.initialize, (fantiumMarketplace_admin, address(usdc)))
         );
 
         fantiumMarketplace = FANtiumMarketplaceV1(fantiumMarketplace_proxy);
