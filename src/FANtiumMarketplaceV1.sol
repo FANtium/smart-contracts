@@ -14,9 +14,12 @@ import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+
 import { OwnableRoles } from "solady/auth/OwnableRoles.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
+
+import { console } from "forge-std/console.sol";
 
 /**
  * @title FANtium Marketplace smart contract
@@ -204,6 +207,8 @@ contract FANtiumMarketplaceV1 is
     function executeOffer(Offer calldata offer, bytes calldata sellerSignature) external {
         // NFT Offer should not be executed if seller signature is not valid
         _verifySignature(offer, sellerSignature);
+
+        console.log("signature OK");
 
         // check if the offer price is valid
         if (offer.amount == 0) {
