@@ -154,7 +154,6 @@ contract FANtiumMarketplaceV1 is
     /**
      * Set USDC contract address
      * @param usdcAddress - address of the USDC contract
-     * todo: test
      */
     function setUsdcContractAddress(address usdcAddress) external onlyOwner {
         usdcContractAddress = usdcAddress;

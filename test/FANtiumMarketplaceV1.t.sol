@@ -118,6 +118,37 @@ contract FANtiumMarketplaceV1Test is BaseTest, FANtiumMarketplaceFactory {
         vm.stopPrank();
     }
 
+    // setUsdcContractAddress
+    // ========================================================================`
+    function test_setUsdcContractAddress_ok() public {
+        address newUSDCAddress = makeAddr("newUSDCContract");
+
+        vm.startPrank(fantiumMarketplace_admin);
+
+        // Initially, the NFT contract should be address(0)
+        assertEq(address(fantiumMarketplace.usdcContractAddress()), address(0));
+
+        // set new address
+        fantiumMarketplace.setUsdcContractAddress(newUSDCAddress);
+
+        assertEq(fantiumMarketplace.usdcContractAddress(), newUSDCAddress);
+
+        vm.stopPrank();
+    }
+
+    function test_setUsdcContractAddress_revert_nonOwner() public {
+        address newUSDCAddress = makeAddr("newUSDCContract");
+        address randomUser = makeAddr("random");
+
+        vm.startPrank(randomUser);
+
+        vm.expectRevert(abi.encodeWithSelector(Ownable.Unauthorized.selector));
+        // try to set new address
+        fantiumMarketplace.setUsdcContractAddress(newUSDCAddress);
+
+        vm.stopPrank();
+    }
+
     // executeOffer // todo: continue with the rest of the test
     // ========================================================================
     //    function test_executeOffer_ok() public {
