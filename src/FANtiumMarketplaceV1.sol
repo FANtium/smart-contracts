@@ -19,6 +19,12 @@ import { OwnableRoles } from "solady/auth/OwnableRoles.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 
+/*
+* todo: CI validate upgradability check fails
+* The main issue is that the EIP712 contract from Solady has a constructor
+* and Several immutable variables (_cachedThis, _cachedChainId, etc.)
+* When using the OpenZeppelin upgrades pattern, you can't have constructors or immutable variables in upgradeable
+contracts (or their parent contracts).*/
 /**
  * @title FANtium Marketplace smart contract
  * @author Alex Chernetsky, Mathieu Bour - FANtium AG
