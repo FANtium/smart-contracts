@@ -4,7 +4,6 @@ pragma solidity 0.8.28;
 import { IFANtiumMarketplace, Offer } from "../src/interfaces/IFANtiumMarketplace.sol";
 import { FANtiumMarketplaceFactory } from "./setup/FANtiumMarketplace.t.sol";
 
-import { console } from "forge-std/console.sol";
 import { Ownable } from "solady/auth/Ownable.sol";
 import { BaseTest } from "test/BaseTest.sol";
 
