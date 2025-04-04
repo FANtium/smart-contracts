@@ -200,7 +200,6 @@ contract FANtiumMarketplaceV1 is
         }
     }
 
-    //  todo: tests
     /**
      * @notice Executes seller's offer (buyer sends USDC to seller, Buyer sends USDC to FANtium (our fee), seller sends
      * NFT to buyer)

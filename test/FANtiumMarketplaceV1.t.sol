@@ -12,9 +12,6 @@ import { IERC20MetadataUpgradeable } from
 import { Ownable } from "solady/auth/Ownable.sol";
 import { BaseTest } from "test/BaseTest.sol";
 
-// todo: remove console.log before merge
-import "forge-std/console.sol";
-
 /* every time your modify the contract -> contract bytecode changes -> contract address during test execution changes.
     To get contract address, use the following:
     console.log("address of Marketplace contract", address(fantiumMarketplace));
@@ -211,12 +208,6 @@ contract FANtiumMarketplaceV1Test is BaseTest, FANtiumMarketplaceFactory {
         // approve allowance
         vm.prank(buyer);
         IERC20Upgradeable(usdcAddress).approve(address(fantiumMarketplace), expectedAmount);
-
-        // 2. execute offer
-        // todo: remove logs
-        console.log("buyer balance", IERC20Upgradeable(usdcAddress).balanceOf(buyer));
-        // 5000000000000000000
-        console.log("usdc address", usdcAddress);
 
         vm.prank(buyer);
         vm.expectEmit(true, true, true, true); // check that event was emitted
