@@ -221,6 +221,7 @@ contract FANtiumMarketplaceV1 is
             revert OfferExpired(offer.expiresAt, block.timestamp);
         }
 
+        // shouldn't be executed if the NFT contract is not set
         if (address(nftContract) == address(0)) {
             revert NFTContractNotSet();
         }
@@ -228,6 +229,11 @@ contract FANtiumMarketplaceV1 is
         // NFT Offer should not be executed if seller is not the owner of the NFT
         if (nftContract.ownerOf(offer.tokenId) != offer.seller) {
             revert SellerNotOwnerOfToken(offer.tokenId, offer.seller);
+        }
+
+        // shouldn't be executed if treasury is not set
+        if (address(treasury) == address(0)) {
+            revert TreasuryNotSet();
         }
 
         // Buyer sends USDC to seller
