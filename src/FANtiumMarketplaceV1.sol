@@ -218,12 +218,16 @@ contract FANtiumMarketplaceV1 is
 
         // NFT Offer should not be executed if it has expired
         if (offer.expiresAt < block.timestamp) {
-            revert OfferExpired(offer.expiresAt);
+            revert OfferExpired(offer.expiresAt, block.timestamp);
+        }
+
+        if (address(nftContract) == address(0)) {
+            revert NFTContractNotSet();
         }
 
         // NFT Offer should not be executed if seller is not the owner of the NFT
         if (nftContract.ownerOf(offer.tokenId) != offer.seller) {
-            revert InvalidSeller(offer.seller);
+            revert SellerNotOwnerOfToken(offer.tokenId, offer.seller);
         }
 
         // Buyer sends USDC to seller
@@ -233,7 +237,7 @@ contract FANtiumMarketplaceV1 is
             IERC20Upgradeable(usdcContractAddress), _msgSender(), offer.seller, expectedAmount
         );
 
-        // Buyer sends USDC to FANtium (our fee),
+        // Buyer sends USDC to FANtium (our fee)
         if (offer.fee > 0) {
             uint256 expectedFeeAmount = offer.fee * 10 ** tokenDecimals;
             SafeERC20Upgradeable.safeTransferFrom(
