@@ -5,10 +5,12 @@ import { FANtiumMarketplaceV1 } from "../../src/FANtiumMarketplaceV1.sol";
 import { Offer } from "../../src/interfaces/IFANtiumMarketplace.sol";
 
 import { UnsafeUpgrades } from "../../src/upgrades/UnsafeUpgrades.sol";
+
+import { FANtiumNFTFactory } from "./FANtiumNFTFactory.t.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { BaseTest } from "test/BaseTest.sol";
 
-contract FANtiumMarketplaceFactory is BaseTest {
+contract FANtiumMarketplaceFactory is BaseTest, FANtiumNFTFactory {
     // addresses
     address public fantiumMarketplace_admin = makeAddr("admin");
     address public fantiumMarketplace_implementation;
@@ -20,9 +22,10 @@ contract FANtiumMarketplaceFactory is BaseTest {
 
     // contracts
     FANtiumMarketplaceV1 public fantiumMarketplace;
-    ERC20 public usdc;
 
-    function setUp() public virtual {
+    function setUp() public virtual override {
+        FANtiumNFTFactory.setUp();
+
         fantiumMarketplace_implementation = address(new FANtiumMarketplaceV1());
 
         fantiumMarketplace_proxy = UnsafeUpgrades.deployUUPSProxy(
@@ -32,6 +35,6 @@ contract FANtiumMarketplaceFactory is BaseTest {
 
         fantiumMarketplace = FANtiumMarketplaceV1(fantiumMarketplace_proxy);
 
-        usdc = new ERC20("USD Coin", "USDC");
+        // we set usdc in FANtiumNFTFactory
     }
 }
