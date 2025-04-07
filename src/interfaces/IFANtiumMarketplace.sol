@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-/*
-NFT owners may create an Offer where they express that they are ready to sell an ERC721 NFT for a certain price in USDC.
-    Offers represent only 1 single NFT and has a limited duration.
-*/
+/**
+ * @notice Struct representing an NFT sale offer
+ * @dev NFT owners can create offers to sell their ERC721 NFTs for a specific USDC price
+ *      Each offer represents exactly one NFT and has a limited duration
+ */
 struct Offer {
-    // Not NFTOffer as it's explicit
     address seller; // Wallet address of the seller
     address tokenAddress; // NFT contract address (Athletes token this ix 0x2b...)
     uint256 tokenId;
@@ -15,14 +15,18 @@ struct Offer {
     uint256 expiresAt; // UNIX timestamp, time when offer expires
 }
 
+/**
+ * @title IFANtiumMarketplace
+ * @notice Interface for the FANtium NFT marketplace contract
+ * @dev Handles the creation and execution of NFT sale offers with USDC as payment
+ */
 interface IFANtiumMarketplace {
     // events
-    event TreasuryAddressUpdate(address newWalletAddress);
+    event TreasuryUpdated(address newTreasury);
     event OfferExecuted(Offer offer, address indexed buyer);
 
     // errors
     error InvalidTreasuryAddress(address treasury);
-    error TreasuryAddressAlreadySet(address wallet);
     error OfferExpired(uint256 expiresAt, uint256 blockTimestamp);
     error SellerNotOwnerOfToken(uint256 tokenId, address seller);
     error InvalidOfferAmount(uint256 amount);
