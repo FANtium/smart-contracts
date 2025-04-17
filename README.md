@@ -29,6 +29,7 @@ All of our smart contracts are deployed on the testnet and mainnet. You can find
 | [`FANtiumToken`](src/FANtiumTokenV1.sol)             | [`0xd5E5cFf4858AD04D40Cbac54413fADaF8b717914`](https://amoy.polygonscan.com/address/0xd5E5cFf4858AD04D40Cbac54413fADaF8b717914) | [`0x46A4f4AE606987edC5d6A34ac491e4fb9F10F913`](https://amoy.polygonscan.com/address/0x46A4f4AE606987edC5d6A34ac491e4fb9F10F913#code) |
 | [`FANtiumUserManager`](src/FANtiumUserManagerV2.sol) | [`0x54dF3fb8B090A3FBf583e29e8fBd388A0179F4A2`](https://amoy.polygonscan.com/address/0x54dF3fb8B090A3FBf583e29e8fBd388A0179F4A2) | [`0x3A38d5B766e4dF2Fce0FEf3636279Bba6281B789`](https://amoy.polygonscan.com/address/0x3A38d5B766e4dF2Fce0FEf3636279Bba6281B789#code) |
 | [`FootballToken`](src/FootballTokenV1.sol)           | [`0x1BDc15D1c0eDfc14E2CD8CE0Ac8a6610bB28f456`](https://amoy.polygonscan.com/address/0x1BDc15D1c0eDfc14E2CD8CE0Ac8a6610bB28f456) | [`0xd0A7e25976011d947c131816E55bA518bb842704`](https://amoy.polygonscan.com/address/0xd0A7e25976011d947c131816E55bA518bb842704#code) |
+| [`FANtiumMarketplace`](src/FANtiumMarketplaceV1.sol) | [`0xcdac5b91de5c27334488ee11ebcc4d61d8cc3af4`](https://amoy.polygonscan.com/address/0xcdac5b91de5c27334488ee11ebcc4d61d8cc3af4) | [`0x8e9a473586d4b15ec108901025483fe6c2e0c6ec`](https://amoy.polygonscan.com/address/0x8e9a473586d4b15ec108901025483fe6c2e0c6ec#code) |
 
 ## Technical documentation
 
