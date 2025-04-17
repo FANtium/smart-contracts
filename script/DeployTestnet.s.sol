@@ -3,8 +3,11 @@ pragma solidity 0.8.28;
 
 import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Script } from "forge-std/Script.sol";
 import { FANtiumClaimingV2 } from "src/FANtiumClaimingV2.sol";
+import { FANtiumMarketplaceV1 } from "src/FANtiumMarketplaceV1.sol";
 import { FANtiumNFTV8 } from "src/FANtiumNFTV8.sol";
 import { FANtiumTokenV1 } from "src/FANtiumTokenV1.sol";
 import { FANtiumUserManagerV3 } from "src/FANtiumUserManagerV3.sol";
@@ -12,12 +15,13 @@ import { FootballTokenV1 } from "src/FootballTokenV1.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 
 /**
- * @notice Deploy a new instance of the FANtiumNFTV6 contract to the testnet.
+ * @notice Deploy a new instance of the contract to the testnet.
  */
 contract DeployTestnet is Script {
     address public constant ADMIN = 0xF00D14B2bf0b37177b6e13374aB4F34902Eb94fC;
     address public constant BACKEND_SIGNER = 0xCAFE914D4886B50edD339eee2BdB5d2350fdC809;
     address public constant DEPLOYER = 0xC0DE5408A46402B7Bd13678A43318c64E2c31EAA;
+    address public constant TREASURY = 0x780Ab57FE57AC5D74F27E225488dd7D5cc2B9acF;
 
     /**
      * @dev Gelato relayer for ERC2771
@@ -29,6 +33,7 @@ contract DeployTestnet is Script {
      * See Circle announcement: https://developers.circle.com/stablecoins/migrate-from-mumbai-to-amoy-testnet
      */
     address public constant USDC = 0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582;
+    IERC20 public constant PAYMENT_TOKEN = IERC20(USDC);
 
     function run() public {
         vm.startBroadcast(vm.envUint("DEPLOYER_PRIVATE_KEY"));
@@ -63,6 +68,15 @@ contract DeployTestnet is Script {
                 address(new FootballTokenV1()), abi.encodeCall(FootballTokenV1.initialize, (ADMIN))
             )
         );
+
+        // FANtiumMarketplaceV1
+        FANtiumMarketplaceV1(
+            UnsafeUpgrades.deployUUPSProxy(
+                address(new FANtiumMarketplaceV1()),
+                abi.encodeCall(FANtiumMarketplaceV1.initialize, (ADMIN, TREASURY, PAYMENT_TOKEN))
+            )
+        );
+
         vm.stopBroadcast();
 
         vm.startBroadcast(vm.envUint("ADMIN_PRIVATE_KEY"));
