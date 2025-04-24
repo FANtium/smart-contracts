@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import { IFANtiumClaiming } from "src/interfaces/IFANtiumClaiming.sol";
 
+import { Collection, CollectionData, IFANtiumAthletes } from "src/interfaces/IFANtiumAthletes.sol";
 import {
     ClaimErrorReason,
     Distribution,
@@ -11,7 +12,6 @@ import {
     DistributionErrorReason,
     DistributionFundingErrorReason
 } from "src/interfaces/IFANtiumClaiming.sol";
-import { Collection, CollectionData, IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumClaimingFactory } from "test/setup/FANtiumClaimingFactory.sol";
@@ -37,29 +37,29 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         address newFANtiumNFT = makeAddr("newFANtiumNFT");
 
         vm.prank(fantiumClaiming_admin);
-        fantiumClaiming.setFANtiumNFT(IFANtiumNFT(newFANtiumNFT));
+        fantiumClaiming.setFANtiumNFT(IFANtiumAthletes(newFANtiumNFT));
 
-        assertEq(address(fantiumClaiming.fantiumNFT()), newFANtiumNFT);
+        assertEq(address(fantiumClaiming.fantiumAthletes()), newFANtiumNFT);
     }
 
     function test_setFANtiumNFT_ok_asManager() public {
         address newFANtiumNFT = makeAddr("newFANtiumNFT");
 
         vm.prank(fantiumClaiming_manager);
-        fantiumClaiming.setFANtiumNFT(IFANtiumNFT(newFANtiumNFT));
+        fantiumClaiming.setFANtiumNFT(IFANtiumAthletes(newFANtiumNFT));
 
-        assertEq(address(fantiumClaiming.fantiumNFT()), newFANtiumNFT);
+        assertEq(address(fantiumClaiming.fantiumAthletes()), newFANtiumNFT);
     }
 
     function test_setFANtiumNFT_revert_unauthorized() public {
         address newFANtiumNFT = makeAddr("newFANtiumNFT");
-        address oldFANtiumNFT = address(fantiumClaiming.fantiumNFT());
+        address oldFANtiumNFT = address(fantiumClaiming.fantiumAthletes());
 
         expectMissingRole(nobody, fantiumClaiming.MANAGER_ROLE());
         vm.prank(nobody);
-        fantiumClaiming.setFANtiumNFT(IFANtiumNFT(newFANtiumNFT));
+        fantiumClaiming.setFANtiumNFT(IFANtiumAthletes(newFANtiumNFT));
 
-        assertEq(address(fantiumClaiming.fantiumNFT()), oldFANtiumNFT);
+        assertEq(address(fantiumClaiming.fantiumAthletes()), oldFANtiumNFT);
     }
 
     // setUserManager
@@ -191,8 +191,8 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
             tournamentEarningShare1e7: 2_500_000 // 25%
          });
 
-        vm.prank(fantiumNFT_admin);
-        uint256 collectionId = fantiumNFT.createCollection(collectionData);
+        vm.prank(fantiumAthletes_admin);
+        uint256 collectionId = fantiumAthletes.createCollection(collectionData);
 
         uint256[] memory collectionIdsArray = new uint256[](2);
         collectionIdsArray[0] = collectionId;
@@ -949,7 +949,7 @@ contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
         assertTrue(userManager.isKYCed(user1));
 
         // ensure that the launch timestamp has passed
-        Collection memory collection = fantiumNFT.collections(collectionId);
+        Collection memory collection = fantiumAthletes.collections(collectionId);
         if (block.timestamp < collection.launchTimestamp) {
             skip(collection.launchTimestamp + 1 days);
         }

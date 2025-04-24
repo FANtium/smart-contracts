@@ -9,79 +9,79 @@ import {
     Collection,
     CollectionData,
     CollectionErrorReason,
-    IFANtiumNFT,
+    IFANtiumAthletes,
     MintErrorReason,
     UpgradeErrorReason
-} from "src/interfaces/IFANtiumNFT.sol";
+} from "src/interfaces/IFANtiumAthletes.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { IRescue } from "src/interfaces/IRescue.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 import { BaseTest } from "test/BaseTest.sol";
-import { FANtiumNFTFactory } from "test/setup/FANtiumNFTFactory.sol";
+import { FANtiumAthletesFactory } from "test/setup/FANtiumAthletesFactory.sol";
 
-contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
+contract FANtiumAthletesV9Test is BaseTest, FANtiumAthletesFactory {
     using ECDSA for bytes32;
     using Strings for uint256;
 
     address public recipient = makeAddr("recipient");
 
     function setUp() public override {
-        FANtiumNFTFactory.setUp();
+        FANtiumAthletesFactory.setUp();
     }
 
     // name
     // ========================================================================
     function test_name() public view {
-        assertEq(fantiumNFT.name(), "FANtium");
+        assertEq(fantiumAthletes.name(), "FANtium");
     }
 
     // symbol
     // ========================================================================
     function test_symbol() public view {
-        assertEq(fantiumNFT.symbol(), "FAN");
+        assertEq(fantiumAthletes.symbol(), "FAN");
     }
 
     // pause
     // ========================================================================
     function test_pause_ok_admin() public {
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.pause();
-        assertTrue(fantiumNFT.paused());
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.pause();
+        assertTrue(fantiumAthletes.paused());
     }
 
     function test_pause_revert_unauthorized() public {
         address unauthorized = makeAddr("unauthorized");
 
-        expectMissingRole(unauthorized, fantiumNFT.DEFAULT_ADMIN_ROLE());
+        expectMissingRole(unauthorized, fantiumAthletes.DEFAULT_ADMIN_ROLE());
         vm.prank(unauthorized);
-        fantiumNFT.pause();
+        fantiumAthletes.pause();
     }
 
     // unpause
     // ========================================================================
     function test_unpause_ok_admin() public {
         // First pause the contract
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.pause();
-        assertTrue(fantiumNFT.paused());
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.pause();
+        assertTrue(fantiumAthletes.paused());
 
         // Then unpause it
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.unpause();
-        assertFalse(fantiumNFT.paused());
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.unpause();
+        assertFalse(fantiumAthletes.paused());
     }
 
     function test_unpause_revert_unauthorized() public {
         // First pause the contract
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.pause();
-        assertTrue(fantiumNFT.paused());
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.pause();
+        assertTrue(fantiumAthletes.paused());
 
         address unauthorized = makeAddr("unauthorized");
 
-        expectMissingRole(unauthorized, fantiumNFT.DEFAULT_ADMIN_ROLE());
+        expectMissingRole(unauthorized, fantiumAthletes.DEFAULT_ADMIN_ROLE());
         vm.prank(unauthorized);
-        fantiumNFT.unpause();
+        fantiumAthletes.unpause();
     }
 
     // supportsInterface
@@ -89,51 +89,86 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
     function test_supportsInterface_ok() public view {
         // ERC165 interface ID
         bytes4 erc165InterfaceId = 0x01ffc9a7;
-        assertTrue(fantiumNFT.supportsInterface(erc165InterfaceId), "Should support ERC165");
+        assertTrue(fantiumAthletes.supportsInterface(erc165InterfaceId), "Should support ERC165");
 
         // ERC721 interface ID
         bytes4 erc721InterfaceId = 0x80ac58cd;
-        assertTrue(fantiumNFT.supportsInterface(erc721InterfaceId), "Should support ERC721");
+        assertTrue(fantiumAthletes.supportsInterface(erc721InterfaceId), "Should support ERC721");
 
         // ERC721Metadata interface ID
         bytes4 erc721MetadataInterfaceId = 0x5b5e139f;
-        assertTrue(fantiumNFT.supportsInterface(erc721MetadataInterfaceId), "Should support ERC721Metadata");
+        assertTrue(fantiumAthletes.supportsInterface(erc721MetadataInterfaceId), "Should support ERC721Metadata");
 
         // AccessControl interface ID
         bytes4 accessControlInterfaceId = 0x7965db0b;
-        assertTrue(fantiumNFT.supportsInterface(accessControlInterfaceId), "Should support AccessControl");
+        assertTrue(fantiumAthletes.supportsInterface(accessControlInterfaceId), "Should support AccessControl");
 
         // Random interface ID (should return false)
         bytes4 randomInterfaceId = 0x12345678;
-        assertFalse(fantiumNFT.supportsInterface(randomInterfaceId), "Should not support random interface");
+        assertFalse(fantiumAthletes.supportsInterface(randomInterfaceId), "Should not support random interface");
     }
 
     // setBaseURI
     // ========================================================================
     function test_setBaseURI_ok_manager() public {
         string memory newBaseURI = "https://new.com/";
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.setBaseURI(newBaseURI);
-        assertEq(fantiumNFT.baseURI(), newBaseURI, "Base URI should be set");
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.setBaseURI(newBaseURI);
+        assertEq(fantiumAthletes.baseURI(), newBaseURI, "Base URI should be set");
     }
 
     function test_setBaseURI_ok_admin() public {
         string memory newBaseURI = "https://new.com/";
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.setBaseURI(newBaseURI);
-        assertEq(fantiumNFT.baseURI(), newBaseURI, "Base URI should be set");
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.setBaseURI(newBaseURI);
+        assertEq(fantiumAthletes.baseURI(), newBaseURI, "Base URI should be set");
     }
 
     function test_setBaseURI_unauthorized() public {
         string memory newBaseURI = "https://new.com/";
         address unauthorized = makeAddr("unauthorized");
 
-        string memory baseURIBefore = fantiumNFT.baseURI();
+        string memory baseURIBefore = fantiumAthletes.baseURI();
 
-        expectMissingRole(unauthorized, fantiumNFT.DEFAULT_ADMIN_ROLE());
+        expectMissingRole(unauthorized, fantiumAthletes.DEFAULT_ADMIN_ROLE());
         vm.prank(unauthorized);
-        fantiumNFT.setBaseURI(newBaseURI);
-        assertEq(fantiumNFT.baseURI(), baseURIBefore, "Base URI should not change");
+        fantiumAthletes.setBaseURI(newBaseURI);
+        assertEq(fantiumAthletes.baseURI(), baseURIBefore, "Base URI should not change");
+    }
+
+    // isApprovedForAll
+    // ========================================================================
+    function test_isApprovedForAll_ok_operator() public {
+        address owner = makeAddr("owner");
+        address operator = makeAddr("operator");
+
+        // Grant operator role to the operator
+        vm.startPrank(fantiumAthletes_admin);
+        fantiumAthletes.grantRole(fantiumAthletes.OPERATOR_ROLE(), operator);
+        vm.stopPrank();
+
+        // Operator should be approved for all tokens
+        assertTrue(fantiumAthletes.isApprovedForAll(owner, operator));
+    }
+
+    function test_isApprovedForAll_ok_standardApproval() public {
+        address owner = makeAddr("owner");
+        address operator = makeAddr("operator");
+
+        // Set approval for all
+        vm.prank(owner);
+        fantiumAthletes.setApprovalForAll(operator, true);
+
+        // Operator should be approved for all tokens
+        assertTrue(fantiumAthletes.isApprovedForAll(owner, operator));
+    }
+
+    function test_isApprovedForAll_ok_noApproval() public {
+        address owner = makeAddr("owner");
+        address operator = makeAddr("operator");
+
+        // No approval set
+        assertFalse(fantiumAthletes.isApprovedForAll(owner, operator));
     }
 
     // setUserManager
@@ -141,17 +176,17 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
     function test_setUserManager_ok_manager() public {
         address newUserManager = makeAddr("newUserManager");
 
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.setUserManager(IFANtiumUserManager(newUserManager));
-        assertEq(address(fantiumNFT.userManager()), newUserManager);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.setUserManager(IFANtiumUserManager(newUserManager));
+        assertEq(address(fantiumAthletes.userManager()), newUserManager);
     }
 
     function test_setUserManager_ok_admin() public {
         address newUserManager = makeAddr("newUserManager");
 
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.setUserManager(IFANtiumUserManager(newUserManager));
-        assertEq(address(fantiumNFT.userManager()), newUserManager);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.setUserManager(IFANtiumUserManager(newUserManager));
+        assertEq(address(fantiumAthletes.userManager()), newUserManager);
     }
 
     // createCollection
@@ -169,10 +204,10 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
             tournamentEarningShare1e7: 2_500_000 // 25%
          });
 
-        vm.prank(fantiumNFT_admin);
-        uint256 collectionId = fantiumNFT.createCollection(data);
+        vm.prank(fantiumAthletes_admin);
+        uint256 collectionId = fantiumAthletes.createCollection(data);
 
-        Collection memory collection = fantiumNFT.collections(collectionId);
+        Collection memory collection = fantiumAthletes.collections(collectionId);
         assertEq(collection.athleteAddress, data.athleteAddress);
         assertEq(collection.athletePrimarySalesBPS, data.athletePrimarySalesBPS);
         assertEq(collection.athleteSecondarySalesBPS, data.athleteSecondarySalesBPS);
@@ -203,11 +238,11 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_ATHLETE_ADDRESS
+                IFANtiumAthletes.InvalidCollection.selector, CollectionErrorReason.INVALID_ATHLETE_ADDRESS
             )
         );
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.createCollection(data);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.createCollection(data);
     }
 
     function test_createCollection_revert_invalidPrimarySalesBPS() public {
@@ -225,11 +260,11 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_PRIMARY_SALES_BPS
+                IFANtiumAthletes.InvalidCollection.selector, CollectionErrorReason.INVALID_PRIMARY_SALES_BPS
             )
         );
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.createCollection(data);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.createCollection(data);
     }
 
     function test_createCollection_revert_invalidSecondarySalesBPSSum() public {
@@ -246,10 +281,10 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         });
 
         vm.expectRevert(
-            abi.encodeWithSelector(IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_BPS_SUM)
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidCollection.selector, CollectionErrorReason.INVALID_BPS_SUM)
         );
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.createCollection(data);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.createCollection(data);
     }
 
     function test_createCollection_revert_invalidMaxInvocations() public {
@@ -267,11 +302,11 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_MAX_INVOCATIONS
+                IFANtiumAthletes.InvalidCollection.selector, CollectionErrorReason.INVALID_MAX_INVOCATIONS
             )
         );
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.createCollection(data);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.createCollection(data);
     }
 
     function test_createCollection_revert_invalidOtherEarningShare() public {
@@ -289,11 +324,11 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_OTHER_EARNING_SHARE
+                IFANtiumAthletes.InvalidCollection.selector, CollectionErrorReason.INVALID_OTHER_EARNING_SHARE
             )
         );
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.createCollection(data);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.createCollection(data);
     }
 
     function test_createCollection_revert_invalidTournamentEarningShare() public {
@@ -311,11 +346,11 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_TOURNAMENT_EARNING_SHARE
+                IFANtiumAthletes.InvalidCollection.selector, CollectionErrorReason.INVALID_TOURNAMENT_EARNING_SHARE
             )
         );
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.createCollection(data);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.createCollection(data);
     }
 
     function test_createCollection_revert_unauthorized() public {
@@ -332,9 +367,9 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         });
 
         address unauthorized = makeAddr("unauthorized");
-        expectMissingRole(unauthorized, fantiumNFT.DEFAULT_ADMIN_ROLE());
+        expectMissingRole(unauthorized, fantiumAthletes.DEFAULT_ADMIN_ROLE());
         vm.prank(unauthorized);
-        fantiumNFT.createCollection(data);
+        fantiumAthletes.createCollection(data);
     }
 
     // updateCollection
@@ -353,12 +388,12 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
             tournamentEarningShare1e7: 3_000_000 // 30%
          });
 
-        Collection memory beforeCollection = fantiumNFT.collections(collectionId);
+        Collection memory beforeCollection = fantiumAthletes.collections(collectionId);
 
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.updateCollection(collectionId, data);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.updateCollection(collectionId, data);
 
-        Collection memory afterCollection = fantiumNFT.collections(collectionId);
+        Collection memory afterCollection = fantiumAthletes.collections(collectionId);
 
         // Verify all updateable fields changed
         assertEq(afterCollection.athleteAddress, data.athleteAddress);
@@ -392,16 +427,16 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
             tournamentEarningShare1e7: 2_500_000
         });
 
-        vm.expectRevert(abi.encodeWithSelector(IFANtiumNFT.InvalidCollectionId.selector, invalidCollectionId));
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.updateCollection(invalidCollectionId, data);
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumAthletes.InvalidCollectionId.selector, invalidCollectionId));
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.updateCollection(invalidCollectionId, data);
     }
 
     function test_updateCollection_revert_decreasedMaxInvocations() public {
         uint256 collectionId = 1;
         mintTo(collectionId, 10, recipient); // mint 10 tokens to increase invocations
 
-        Collection memory currentCollection = fantiumNFT.collections(collectionId);
+        Collection memory currentCollection = fantiumAthletes.collections(collectionId);
 
         CollectionData memory data = CollectionData({
             athleteAddress: payable(makeAddr("athlete")),
@@ -417,11 +452,11 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_MAX_INVOCATIONS
+                IFANtiumAthletes.InvalidCollection.selector, CollectionErrorReason.INVALID_MAX_INVOCATIONS
             )
         );
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.updateCollection(collectionId, data);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.updateCollection(collectionId, data);
     }
 
     function test_updateCollection_revert_invalidAthleteAddress() public {
@@ -440,11 +475,11 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_ATHLETE_ADDRESS
+                IFANtiumAthletes.InvalidCollection.selector, CollectionErrorReason.INVALID_ATHLETE_ADDRESS
             )
         );
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.updateCollection(collectionId, data);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.updateCollection(collectionId, data);
     }
 
     function test_updateCollection_revert_invalidPrimarySalesBPS() public {
@@ -463,11 +498,11 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_PRIMARY_SALES_BPS
+                IFANtiumAthletes.InvalidCollection.selector, CollectionErrorReason.INVALID_PRIMARY_SALES_BPS
             )
         );
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.updateCollection(collectionId, data);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.updateCollection(collectionId, data);
     }
 
     function test_updateCollection_revert_invalidSecondarySalesBPSSum() public {
@@ -485,10 +520,10 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         });
 
         vm.expectRevert(
-            abi.encodeWithSelector(IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_BPS_SUM)
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidCollection.selector, CollectionErrorReason.INVALID_BPS_SUM)
         );
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.updateCollection(collectionId, data);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.updateCollection(collectionId, data);
     }
 
     function test_updateCollection_revert_invalidOtherEarningShare() public {
@@ -507,11 +542,11 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_OTHER_EARNING_SHARE
+                IFANtiumAthletes.InvalidCollection.selector, CollectionErrorReason.INVALID_OTHER_EARNING_SHARE
             )
         );
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.updateCollection(collectionId, data);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.updateCollection(collectionId, data);
     }
 
     function test_updateCollection_revert_invalidTournamentEarningShare() public {
@@ -530,11 +565,11 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IFANtiumNFT.InvalidCollection.selector, CollectionErrorReason.INVALID_TOURNAMENT_EARNING_SHARE
+                IFANtiumAthletes.InvalidCollection.selector, CollectionErrorReason.INVALID_TOURNAMENT_EARNING_SHARE
             )
         );
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.updateCollection(collectionId, data);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.updateCollection(collectionId, data);
     }
 
     function test_updateCollection_revert_unauthorized() public {
@@ -552,9 +587,9 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         });
 
         address unauthorized = makeAddr("unauthorized");
-        expectMissingRole(unauthorized, fantiumNFT.DEFAULT_ADMIN_ROLE());
+        expectMissingRole(unauthorized, fantiumAthletes.DEFAULT_ADMIN_ROLE());
         vm.prank(unauthorized);
-        fantiumNFT.updateCollection(collectionId, data);
+        fantiumAthletes.updateCollection(collectionId, data);
     }
 
     // setCollectionStatus
@@ -564,10 +599,10 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         bool isMintable = true;
         bool isPaused = false;
 
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.setCollectionStatus(collectionId, isMintable, isPaused);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.setCollectionStatus(collectionId, isMintable, isPaused);
 
-        Collection memory collection = fantiumNFT.collections(collectionId);
+        Collection memory collection = fantiumAthletes.collections(collectionId);
         assertEq(collection.isMintable, isMintable);
         assertEq(collection.isPaused, isPaused);
     }
@@ -577,10 +612,10 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         bool isMintable = true;
         bool isPaused = false;
 
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.setCollectionStatus(collectionId, isMintable, isPaused);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.setCollectionStatus(collectionId, isMintable, isPaused);
 
-        Collection memory collection = fantiumNFT.collections(collectionId);
+        Collection memory collection = fantiumAthletes.collections(collectionId);
         assertEq(collection.isMintable, isMintable);
         assertEq(collection.isPaused, isPaused);
     }
@@ -590,13 +625,13 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         bool isMintable = true;
         bool isPaused = false;
 
-        Collection memory collection = fantiumNFT.collections(collectionId);
+        Collection memory collection = fantiumAthletes.collections(collectionId);
         address athlete = collection.athleteAddress;
 
         vm.prank(athlete);
-        fantiumNFT.setCollectionStatus(collectionId, isMintable, isPaused);
+        fantiumAthletes.setCollectionStatus(collectionId, isMintable, isPaused);
 
-        collection = fantiumNFT.collections(collectionId);
+        collection = fantiumAthletes.collections(collectionId);
         assertEq(collection.isMintable, isMintable);
         assertEq(collection.isPaused, isPaused);
     }
@@ -606,9 +641,9 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         bool isMintable = true;
         bool isPaused = false;
 
-        vm.expectRevert(abi.encodeWithSelector(IFANtiumNFT.InvalidCollectionId.selector, invalidCollectionId));
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.setCollectionStatus(invalidCollectionId, isMintable, isPaused);
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumAthletes.InvalidCollectionId.selector, invalidCollectionId));
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.setCollectionStatus(invalidCollectionId, isMintable, isPaused);
     }
 
     function test_setCollectionStatus_revert_unauthorized() public {
@@ -618,14 +653,14 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IFANtiumNFT.AthleteOnly.selector,
+                IFANtiumAthletes.AthleteOnly.selector,
                 collectionId,
                 nobody,
-                fantiumNFT.collections(collectionId).athleteAddress
+                fantiumAthletes.collections(collectionId).athleteAddress
             )
         );
         vm.prank(nobody);
-        fantiumNFT.setCollectionStatus(collectionId, isMintable, isPaused);
+        fantiumAthletes.setCollectionStatus(collectionId, isMintable, isPaused);
     }
 
     function test_setCollectionStatus_revert_wrongAthlete() public {
@@ -657,16 +692,18 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
             tournamentEarningShare1e7: 2_500_000
         });
 
-        vm.prank(fantiumNFT_admin);
-        uint256 collectionId1 = fantiumNFT.createCollection(data1);
+        vm.prank(fantiumAthletes_admin);
+        uint256 collectionId1 = fantiumAthletes.createCollection(data1);
 
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.createCollection(data2);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.createCollection(data2);
 
         // Try to set status of collection1 as athlete2
-        vm.expectRevert(abi.encodeWithSelector(IFANtiumNFT.AthleteOnly.selector, collectionId1, athlete2, athlete1));
+        vm.expectRevert(
+            abi.encodeWithSelector(IFANtiumAthletes.AthleteOnly.selector, collectionId1, athlete2, athlete1)
+        );
         vm.prank(athlete2);
-        fantiumNFT.setCollectionStatus(collectionId1, true, false);
+        fantiumAthletes.setCollectionStatus(collectionId1, true, false);
     }
 
     // mintable
@@ -676,7 +713,7 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         uint24 quantity = 1;
 
         // ensure that the launch timestamp has passed
-        Collection memory collection = fantiumNFT.collections(collectionId);
+        Collection memory collection = fantiumAthletes.collections(collectionId);
         if (block.timestamp < collection.launchTimestamp) {
             skip(collection.launchTimestamp + 1 days);
         }
@@ -686,44 +723,44 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         userManager.setKYC(recipient, true);
 
         vm.prank(recipient);
-        fantiumNFT.mintable(collectionId, quantity, recipient);
+        fantiumAthletes.mintable(collectionId, quantity, recipient);
     }
 
     function test_mintable_revert_invalidCollectionId() public {
         uint256 collectionId = 999_999; // collection 999_999 does not exist
         uint24 quantity = 1;
 
-        vm.expectRevert(abi.encodeWithSelector(IFANtiumNFT.InvalidCollectionId.selector, collectionId));
-        fantiumNFT.mintable(collectionId, quantity, recipient);
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumAthletes.InvalidCollectionId.selector, collectionId));
+        fantiumAthletes.mintable(collectionId, quantity, recipient);
     }
 
     function test_mintable_revert_notMintable() public {
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
 
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.setCollectionStatus(collectionId, false, true);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.setCollectionStatus(collectionId, false, true);
 
         vm.expectRevert(
-            abi.encodeWithSelector(IFANtiumNFT.InvalidMint.selector, MintErrorReason.COLLECTION_NOT_MINTABLE)
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.COLLECTION_NOT_MINTABLE)
         );
         vm.prank(recipient);
-        fantiumNFT.mintable(collectionId, quantity, recipient);
+        fantiumAthletes.mintable(collectionId, quantity, recipient);
     }
 
     function test_mintable_revert_notLaunched() public {
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
 
-        Collection memory collection = fantiumNFT.collections(collectionId);
+        Collection memory collection = fantiumAthletes.collections(collectionId);
         if (block.timestamp > collection.launchTimestamp) {
             rewind(collection.launchTimestamp - 1 days);
         }
 
         vm.expectRevert(
-            abi.encodeWithSelector(IFANtiumNFT.InvalidMint.selector, MintErrorReason.COLLECTION_NOT_LAUNCHED)
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.COLLECTION_NOT_LAUNCHED)
         );
-        fantiumNFT.mintable(collectionId, quantity, recipient);
+        fantiumAthletes.mintable(collectionId, quantity, recipient);
     }
 
     function test_mintable_revert_notKyc() public {
@@ -731,23 +768,25 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         uint24 quantity = 1;
 
         // ensure that the launch timestamp has passed
-        Collection memory collection = fantiumNFT.collections(collectionId);
+        Collection memory collection = fantiumAthletes.collections(collectionId);
         if (block.timestamp < collection.launchTimestamp) {
             skip(collection.launchTimestamp + 1 days);
         }
 
-        vm.expectRevert(abi.encodeWithSelector(IFANtiumNFT.InvalidMint.selector, MintErrorReason.ACCOUNT_NOT_KYCED));
+        vm.expectRevert(
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.ACCOUNT_NOT_KYCED)
+        );
         vm.prank(recipient);
-        fantiumNFT.mintable(collectionId, quantity, recipient);
+        fantiumAthletes.mintable(collectionId, quantity, recipient);
     }
 
     function test_mintable_revert_paused() public {
         uint256 collectionId = 5; // collection 5 is paused
         uint24 quantity = 1;
-        assertTrue(fantiumNFT.collections(collectionId).isPaused);
+        assertTrue(fantiumAthletes.collections(collectionId).isPaused);
 
         // ensure that the launch timestamp has passed
-        Collection memory collection = fantiumNFT.collections(collectionId);
+        Collection memory collection = fantiumAthletes.collections(collectionId);
         if (block.timestamp < collection.launchTimestamp) {
             skip(collection.launchTimestamp + 1 days);
         }
@@ -756,9 +795,11 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         vm.prank(userManager_kycManager);
         userManager.setKYC(recipient, true);
 
-        vm.expectRevert(abi.encodeWithSelector(IFANtiumNFT.InvalidMint.selector, MintErrorReason.COLLECTION_PAUSED));
+        vm.expectRevert(
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.COLLECTION_PAUSED)
+        );
         vm.prank(recipient);
-        fantiumNFT.mintable(collectionId, quantity, recipient);
+        fantiumAthletes.mintable(collectionId, quantity, recipient);
     }
 
     // getPrimaryRevenueSplits
@@ -768,17 +809,17 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         uint256 collectionId = 1; // Using collection 1 from fixtures
 
         (uint256 fantiumRevenue, address payable fantiumAddress, uint256 athleteRevenue, address payable athleteAddress)
-        = fantiumNFT.getPrimaryRevenueSplits(collectionId, price);
+        = fantiumAthletes.getPrimaryRevenueSplits(collectionId, price);
 
         // Get collection to verify calculations
-        Collection memory collection = fantiumNFT.collections(collectionId);
+        Collection memory collection = fantiumAthletes.collections(collectionId);
 
         // Verify revenue splits
         assertEq(athleteRevenue, (price * collection.athletePrimarySalesBPS) / 10_000, "Incorrect athlete revenue");
         assertEq(fantiumRevenue, price - athleteRevenue, "Incorrect fantium revenue");
 
         // Verify addresses
-        assertEq(fantiumAddress, fantiumNFT.treasury(), "Incorrect treasury address");
+        assertEq(fantiumAddress, fantiumAthletes.treasury(), "Incorrect treasury address");
         assertEq(athleteAddress, collection.athleteAddress, "Incorrect athlete address");
     }
 
@@ -789,12 +830,12 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         uint24 quantity = 1;
         (uint256 amountUSDC,,,,) = prepareSale(collectionId, quantity, recipient);
 
-        vm.expectEmit(true, true, false, true, address(fantiumNFT));
-        emit IFANtiumNFT.Sale(collectionId, quantity, recipient, amountUSDC, 0);
+        vm.expectEmit(true, true, false, true, address(fantiumAthletes));
+        emit IFANtiumAthletes.Sale(collectionId, quantity, recipient, amountUSDC, 0);
         vm.prank(recipient);
-        uint256 lastTokenId = fantiumNFT.mintTo(collectionId, quantity, recipient);
+        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient);
 
-        assertEq(fantiumNFT.ownerOf(lastTokenId), recipient);
+        assertEq(fantiumAthletes.ownerOf(lastTokenId), recipient);
     }
 
     function test_mintTo_standardPrice_ok_batch() public {
@@ -816,16 +857,16 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         vm.expectEmit(true, true, false, true, address(usdc));
         emit IERC20Upgradeable.Transfer(recipient, athleteAddress, athleteRevenue);
 
-        vm.expectEmit(true, true, false, true, address(fantiumNFT));
-        emit IFANtiumNFT.Sale(collectionId, quantity, recipient, amountUSDC, 0);
+        vm.expectEmit(true, true, false, true, address(fantiumAthletes));
+        emit IFANtiumAthletes.Sale(collectionId, quantity, recipient, amountUSDC, 0);
         vm.prank(recipient);
-        uint256 lastTokenId = fantiumNFT.mintTo(collectionId, quantity, recipient);
+        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient);
         vm.stopPrank();
 
         uint256 firstTokenId = lastTokenId - quantity + 1;
 
         for (uint256 tokenId = firstTokenId; tokenId <= lastTokenId; tokenId++) {
-            assertEq(fantiumNFT.ownerOf(tokenId), recipient);
+            assertEq(fantiumAthletes.ownerOf(tokenId), recipient);
         }
 
         assertEq(usdc.balanceOf(recipient), recipientBalanceBefore - amountUSDC);
@@ -839,12 +880,12 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         uint256 amountUSDC = 74 * 10 ** usdc.decimals(); // normal price is 99 USDC
         (bytes memory signature,,,,,) = prepareSale(collectionId, quantity, recipient, amountUSDC);
 
-        vm.expectEmit(true, true, false, true, address(fantiumNFT));
-        emit IFANtiumNFT.Sale(collectionId, quantity, recipient, amountUSDC, 25 * 10 ** usdc.decimals());
+        vm.expectEmit(true, true, false, true, address(fantiumAthletes));
+        emit IFANtiumAthletes.Sale(collectionId, quantity, recipient, amountUSDC, 25 * 10 ** usdc.decimals());
         vm.prank(recipient);
-        uint256 lastTokenId = fantiumNFT.mintTo(collectionId, quantity, recipient, amountUSDC, signature);
+        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, signature);
 
-        assertEq(fantiumNFT.ownerOf(lastTokenId), recipient);
+        assertEq(fantiumAthletes.ownerOf(lastTokenId), recipient);
     }
 
     function test_mintTo_customPrice_revert_malformedSignature() public {
@@ -855,7 +896,7 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         vm.expectRevert("ECDSA: invalid signature length");
         vm.prank(recipient);
-        fantiumNFT.mintTo(collectionId, quantity, recipient, amountUSDC, malformedSignature);
+        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, malformedSignature);
     }
 
     function test_mintTo_customPrice_revert_invalidSigner() public {
@@ -868,9 +909,11 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(42_424_242_242_424_242, hash);
         bytes memory forgedSignature = abi.encodePacked(r, s, v);
 
-        vm.expectRevert(abi.encodeWithSelector(IFANtiumNFT.InvalidMint.selector, MintErrorReason.INVALID_SIGNATURE));
+        vm.expectRevert(
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.INVALID_SIGNATURE)
+        );
         vm.prank(recipient);
-        fantiumNFT.mintTo(collectionId, quantity, recipient, amountUSDC, forgedSignature);
+        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, forgedSignature);
     }
 
     function test_mintTo_revert_invalidNonce() public {
@@ -881,13 +924,15 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         // First mint pass, and nonce is incremented
         vm.prank(recipient);
-        uint256 lastTokenId = fantiumNFT.mintTo(collectionId, quantity, recipient, amountUSDC, signature);
-        assertEq(fantiumNFT.ownerOf(lastTokenId), recipient);
+        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, signature);
+        assertEq(fantiumAthletes.ownerOf(lastTokenId), recipient);
 
         // Second mint fails, because nonce is incremented
-        vm.expectRevert(abi.encodeWithSelector(IFANtiumNFT.InvalidMint.selector, MintErrorReason.INVALID_SIGNATURE));
+        vm.expectRevert(
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.INVALID_SIGNATURE)
+        );
         vm.prank(recipient);
-        fantiumNFT.mintTo(collectionId, quantity, recipient, amountUSDC, signature);
+        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, signature);
     }
 
     // batchTransferFrom
@@ -907,13 +952,13 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         // Approve operator
         vm.prank(recipient);
-        fantiumNFT.setApprovalForAll(address(this), true);
+        fantiumAthletes.setApprovalForAll(address(this), true);
 
-        fantiumNFT.batchTransferFrom(recipient, newOwner, tokenIds);
+        fantiumAthletes.batchTransferFrom(recipient, newOwner, tokenIds);
 
         // Verify ownership transfer
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            assertEq(fantiumNFT.ownerOf(tokenIds[i]), newOwner);
+            assertEq(fantiumAthletes.ownerOf(tokenIds[i]), newOwner);
         }
     }
 
@@ -932,7 +977,7 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         // Don't approve operator
         vm.expectRevert("ERC721: caller is not token owner or approved");
-        fantiumNFT.batchTransferFrom(recipient, newOwner, tokenIds);
+        fantiumAthletes.batchTransferFrom(recipient, newOwner, tokenIds);
     }
 
     function test_batchTransferFrom_revert_whenPaused() public {
@@ -950,14 +995,14 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         // Approve operator
         vm.prank(recipient);
-        fantiumNFT.setApprovalForAll(address(this), true);
+        fantiumAthletes.setApprovalForAll(address(this), true);
 
         // Pause the contract
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.pause();
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.pause();
 
         vm.expectRevert("Pausable: paused");
-        fantiumNFT.batchTransferFrom(recipient, newOwner, tokenIds);
+        fantiumAthletes.batchTransferFrom(recipient, newOwner, tokenIds);
     }
 
     // batchSafeTransferFrom
@@ -977,13 +1022,13 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         // Approve operator
         vm.prank(recipient);
-        fantiumNFT.setApprovalForAll(address(this), true);
+        fantiumAthletes.setApprovalForAll(address(this), true);
 
-        fantiumNFT.batchSafeTransferFrom(recipient, newOwner, tokenIds);
+        fantiumAthletes.batchSafeTransferFrom(recipient, newOwner, tokenIds);
 
         // Verify ownership transfer
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            assertEq(fantiumNFT.ownerOf(tokenIds[i]), newOwner);
+            assertEq(fantiumAthletes.ownerOf(tokenIds[i]), newOwner);
         }
     }
 
@@ -1002,7 +1047,7 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         // Don't approve operator
         vm.expectRevert("ERC721: caller is not token owner or approved");
-        fantiumNFT.batchSafeTransferFrom(recipient, newOwner, tokenIds);
+        fantiumAthletes.batchSafeTransferFrom(recipient, newOwner, tokenIds);
     }
 
     function test_batchSafeTransferFrom_revert_whenPaused() public {
@@ -1020,14 +1065,14 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         // Approve operator
         vm.prank(recipient);
-        fantiumNFT.setApprovalForAll(address(this), true);
+        fantiumAthletes.setApprovalForAll(address(this), true);
 
         // Pause the contract
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.pause();
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.pause();
 
         vm.expectRevert("Pausable: paused");
-        fantiumNFT.batchSafeTransferFrom(recipient, newOwner, tokenIds);
+        fantiumAthletes.batchSafeTransferFrom(recipient, newOwner, tokenIds);
     }
 
     // tokenURI
@@ -1036,7 +1081,8 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         uint256 collectionId = 1;
         uint256 tokenId = mintTo(collectionId, 1, recipient);
         assertEq(
-            fantiumNFT.tokenURI(tokenId), string.concat("https://app.fantium.com/api/metadata/", tokenId.toString())
+            fantiumAthletes.tokenURI(tokenId),
+            string.concat("https://app.fantium.com/api/metadata/", tokenId.toString())
         );
     }
 
@@ -1047,21 +1093,21 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         uint256 tokenId = mintTo(collectionId, 1, recipient);
 
         // Verify initial ownership
-        assertEq(fantiumNFT.ownerOf(tokenId), recipient);
+        assertEq(fantiumAthletes.ownerOf(tokenId), recipient);
 
         (, uint256 version, uint256 number,) = TokenVersionUtil.getTokenInfo(tokenId);
         // Calculate expected new token ID (version incremented by 1)
         uint256 expectedNewTokenId = TokenVersionUtil.createTokenId(collectionId, version + 1, number);
 
-        vm.prank(fantiumNFT_tokenUpgrader);
-        fantiumNFT.upgradeTokenVersion(tokenId);
+        vm.prank(fantiumAthletes_tokenUpgrader);
+        fantiumAthletes.upgradeTokenVersion(tokenId);
 
         // Verify old token was burned
         vm.expectRevert("ERC721: invalid token ID");
-        fantiumNFT.ownerOf(tokenId);
+        fantiumAthletes.ownerOf(tokenId);
 
         // Verify new token ownership
-        assertEq(fantiumNFT.ownerOf(expectedNewTokenId), recipient);
+        assertEq(fantiumAthletes.ownerOf(expectedNewTokenId), recipient);
     }
 
     function test_upgradeTokenVersion_revert_unauthorized() public {
@@ -1069,18 +1115,18 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         uint256 tokenId = mintTo(collectionId, 1, recipient);
 
         address unauthorized = makeAddr("unauthorized");
-        expectMissingRole(unauthorized, fantiumNFT.TOKEN_UPGRADER_ROLE());
+        expectMissingRole(unauthorized, fantiumAthletes.TOKEN_UPGRADER_ROLE());
 
         vm.prank(unauthorized);
-        fantiumNFT.upgradeTokenVersion(tokenId);
+        fantiumAthletes.upgradeTokenVersion(tokenId);
     }
 
     function test_upgradeTokenVersion_revert_invalidTokenId() public {
         uint256 invalidTokenId = mintTo(1, 1, recipient) + 1;
 
         vm.expectRevert("ERC721: invalid token ID");
-        vm.prank(fantiumNFT_tokenUpgrader);
-        fantiumNFT.upgradeTokenVersion(invalidTokenId);
+        vm.prank(fantiumAthletes_tokenUpgrader);
+        fantiumAthletes.upgradeTokenVersion(invalidTokenId);
     }
 
     function test_upgradeTokenVersion_revert_invalidCollectionId() public {
@@ -1089,27 +1135,27 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         uint256 tokenId = TokenVersionUtil.createTokenId(invalidCollectionId, 0, 1);
 
         vm.expectRevert(
-            abi.encodeWithSelector(IFANtiumNFT.InvalidUpgrade.selector, UpgradeErrorReason.INVALID_COLLECTION_ID)
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidUpgrade.selector, UpgradeErrorReason.INVALID_COLLECTION_ID)
         );
-        vm.prank(fantiumNFT_tokenUpgrader);
-        fantiumNFT.upgradeTokenVersion(tokenId);
+        vm.prank(fantiumAthletes_tokenUpgrader);
+        fantiumAthletes.upgradeTokenVersion(tokenId);
     }
 
     function test_upgradeTokenVersion_revert_versionTooHigh() public {
         uint256 collectionId = 1;
         uint256 tokenId = mintTo(collectionId, 1, recipient);
 
-        vm.startPrank(fantiumNFT_tokenUpgrader);
+        vm.startPrank(fantiumAthletes_tokenUpgrader);
         // Upgrade token {TokenVersionUtil.MAX_VERSION} times
         for (uint256 i = 0; i < TokenVersionUtil.MAX_VERSION; i++) {
-            tokenId = fantiumNFT.upgradeTokenVersion(tokenId);
+            tokenId = fantiumAthletes.upgradeTokenVersion(tokenId);
         }
 
         // ... it's not possible to upgrade the token anymore
         vm.expectRevert(
-            abi.encodeWithSelector(IFANtiumNFT.InvalidUpgrade.selector, UpgradeErrorReason.VERSION_ID_TOO_HIGH)
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidUpgrade.selector, UpgradeErrorReason.VERSION_ID_TOO_HIGH)
         );
-        fantiumNFT.upgradeTokenVersion(tokenId);
+        fantiumAthletes.upgradeTokenVersion(tokenId);
         vm.stopPrank();
     }
 
@@ -1117,12 +1163,12 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         uint256 collectionId = 1;
         uint256 tokenId = mintTo(collectionId, 1, recipient);
 
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.pause();
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.pause();
 
         vm.expectRevert("Pausable: paused");
-        vm.prank(fantiumNFT_tokenUpgrader);
-        fantiumNFT.upgradeTokenVersion(tokenId);
+        vm.prank(fantiumAthletes_tokenUpgrader);
+        fantiumAthletes.upgradeTokenVersion(tokenId);
     }
 
     // rescue
@@ -1133,15 +1179,15 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         string memory reason = "Emergency rescue needed";
 
         // Verify initial ownership
-        assertEq(fantiumNFT.ownerOf(tokenId), recipient);
+        assertEq(fantiumAthletes.ownerOf(tokenId), recipient);
 
-        vm.prank(fantiumNFT_admin);
-        vm.expectEmit(true, true, false, true, address(fantiumNFT));
-        emit IRescue.Rescued(tokenId, fantiumNFT_admin, reason);
-        fantiumNFT.rescue(tokenId, reason);
+        vm.prank(fantiumAthletes_admin);
+        vm.expectEmit(true, true, false, true, address(fantiumAthletes));
+        emit IRescue.Rescued(tokenId, fantiumAthletes_admin, reason);
+        fantiumAthletes.rescue(tokenId, reason);
 
         // Verify ownership transfer
-        assertEq(fantiumNFT.ownerOf(tokenId), fantiumNFT_admin);
+        assertEq(fantiumAthletes.ownerOf(tokenId), fantiumAthletes_admin);
     }
 
     function test_rescue_revert_unauthorized() public {
@@ -1151,9 +1197,9 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         address unauthorized = makeAddr("unauthorized");
 
-        expectMissingRole(unauthorized, fantiumNFT.DEFAULT_ADMIN_ROLE());
+        expectMissingRole(unauthorized, fantiumAthletes.DEFAULT_ADMIN_ROLE());
         vm.prank(unauthorized);
-        fantiumNFT.rescue(tokenId, reason);
+        fantiumAthletes.rescue(tokenId, reason);
     }
 
     function test_rescue_revert_invalidTokenId() public {
@@ -1161,8 +1207,8 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         string memory reason = "Emergency rescue needed";
 
         vm.expectRevert("ERC721: invalid token ID");
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.rescue(invalidTokenId, reason);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.rescue(invalidTokenId, reason);
     }
 
     // rescueBatch
@@ -1178,19 +1224,19 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         for (uint256 i = 0; i < quantity; i++) {
             tokenIds[i] = firstTokenId + i;
             // Verify initial ownership
-            assertEq(fantiumNFT.ownerOf(tokenIds[i]), recipient);
+            assertEq(fantiumAthletes.ownerOf(tokenIds[i]), recipient);
         }
 
-        vm.prank(fantiumNFT_admin);
-        vm.expectEmit(true, true, false, true, address(fantiumNFT));
+        vm.prank(fantiumAthletes_admin);
+        vm.expectEmit(true, true, false, true, address(fantiumAthletes));
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            emit IRescue.Rescued(tokenIds[i], fantiumNFT_admin, reason);
+            emit IRescue.Rescued(tokenIds[i], fantiumAthletes_admin, reason);
         }
-        fantiumNFT.rescueBatch(tokenIds, reason);
+        fantiumAthletes.rescueBatch(tokenIds, reason);
 
         // Verify ownership transfers
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            assertEq(fantiumNFT.ownerOf(tokenIds[i]), fantiumNFT_admin);
+            assertEq(fantiumAthletes.ownerOf(tokenIds[i]), fantiumAthletes_admin);
         }
     }
 
@@ -1208,9 +1254,9 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
 
         address unauthorized = makeAddr("unauthorized");
 
-        expectMissingRole(unauthorized, fantiumNFT.DEFAULT_ADMIN_ROLE());
+        expectMissingRole(unauthorized, fantiumAthletes.DEFAULT_ADMIN_ROLE());
         vm.prank(unauthorized);
-        fantiumNFT.rescueBatch(tokenIds, reason);
+        fantiumAthletes.rescueBatch(tokenIds, reason);
     }
 
     function test_rescueBatch_revert_invalidTokenId() public {
@@ -1219,7 +1265,7 @@ contract FANtiumNFTV8Test is BaseTest, FANtiumNFTFactory {
         string memory reason = "Emergency batch rescue needed";
 
         vm.expectRevert("ERC721: invalid token ID");
-        vm.prank(fantiumNFT_admin);
-        fantiumNFT.rescueBatch(invalidTokenIds, reason);
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.rescueBatch(invalidTokenIds, reason);
     }
 }

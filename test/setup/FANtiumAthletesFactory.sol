@@ -5,8 +5,8 @@ import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import { FANtiumNFTV8 } from "src/FANtiumNFTV8.sol";
-import { Collection, CollectionData } from "src/interfaces/IFANtiumNFT.sol";
+import { FANtiumAthletesV9 } from "src/FANtiumAthletesV9.sol";
+import { Collection, CollectionData } from "src/interfaces/IFANtiumAthletes.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumUserManagerFactory } from "test/setup/FANtiumUserManagerFactory.sol";
@@ -32,49 +32,49 @@ struct CollectionJson {
     uint256 tournamentEarningShare1e7;
 }
 
-contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
+contract FANtiumAthletesFactory is BaseTest, FANtiumUserManagerFactory {
     using ECDSA for bytes32;
 
-    address public fantiumNFT_admin = makeAddr("admin");
-    address public fantiumNFT_trustedForwarder = makeAddr("trustedForwarder");
-    address payable public fantiumNFT_athlete = payable(makeAddr("athlete"));
-    address payable public fantiumNFT_treasuryPrimary = payable(makeAddr("treasuryPrimary"));
-    address payable public fantiumNFT_treasurySecondary = payable(makeAddr("treasurySecondary"));
-    address public fantiumNFT_tokenUpgrader = makeAddr("tokenUpgrader");
-    address public fantiumNFT_signer;
-    uint256 public fantiumNFT_signerKey;
+    address public fantiumAthletes_admin = makeAddr("admin");
+    address public fantiumAthletes_trustedForwarder = makeAddr("trustedForwarder");
+    address payable public fantiumAthletes_athlete = payable(makeAddr("athlete"));
+    address payable public fantiumAthletes_treasuryPrimary = payable(makeAddr("treasuryPrimary"));
+    address payable public fantiumAthletes_treasurySecondary = payable(makeAddr("treasurySecondary"));
+    address public fantiumAthletes_tokenUpgrader = makeAddr("tokenUpgrader");
+    address public fantiumAthletes_signer;
+    uint256 public fantiumAthletes_signerKey;
 
     ERC20 public usdc;
-    address public fantiumNFT_implementation;
-    address public fantiumNFT_proxy;
-    FANtiumNFTV8 public fantiumNFT;
+    address public fantiumAthletes_implementation;
+    address public fantiumAthletes_proxy;
+    FANtiumAthletesV9 public fantiumAthletes;
 
     function setUp() public virtual override {
-        (fantiumNFT_signer, fantiumNFT_signerKey) = makeAddrAndKey("rewarder");
+        (fantiumAthletes_signer, fantiumAthletes_signerKey) = makeAddrAndKey("rewarder");
         FANtiumUserManagerFactory.setUp();
 
         usdc = new ERC20("USD Coin", "USDC");
-        fantiumNFT_implementation = address(new FANtiumNFTV8());
-        fantiumNFT_proxy = UnsafeUpgrades.deployUUPSProxy(
-            fantiumNFT_implementation, abi.encodeCall(FANtiumNFTV8.initialize, (fantiumNFT_admin))
+        fantiumAthletes_implementation = address(new FANtiumAthletesV9());
+        fantiumAthletes_proxy = UnsafeUpgrades.deployUUPSProxy(
+            fantiumAthletes_implementation, abi.encodeCall(FANtiumAthletesV9.initialize, (fantiumAthletes_admin))
         );
-        fantiumNFT = FANtiumNFTV8(fantiumNFT_proxy);
+        fantiumAthletes = FANtiumAthletesV9(fantiumAthletes_proxy);
 
         // Configure roles
-        vm.startPrank(fantiumNFT_admin);
-        fantiumNFT.grantRole(fantiumNFT.FORWARDER_ROLE(), fantiumNFT_trustedForwarder);
-        fantiumNFT.grantRole(fantiumNFT.SIGNER_ROLE(), fantiumNFT_signer);
-        fantiumNFT.grantRole(fantiumNFT.TOKEN_UPGRADER_ROLE(), fantiumNFT_tokenUpgrader);
-        fantiumNFT.setERC20PaymentToken(IERC20MetadataUpgradeable(address(usdc)));
-        fantiumNFT.setUserManager(userManager);
-        fantiumNFT.setBaseURI("https://app.fantium.com/api/metadata/");
-        fantiumNFT.setTreasury(fantiumNFT_treasuryPrimary);
+        vm.startPrank(fantiumAthletes_admin);
+        fantiumAthletes.grantRole(fantiumAthletes.FORWARDER_ROLE(), fantiumAthletes_trustedForwarder);
+        fantiumAthletes.grantRole(fantiumAthletes.SIGNER_ROLE(), fantiumAthletes_signer);
+        fantiumAthletes.grantRole(fantiumAthletes.TOKEN_UPGRADER_ROLE(), fantiumAthletes_tokenUpgrader);
+        fantiumAthletes.setERC20PaymentToken(IERC20MetadataUpgradeable(address(usdc)));
+        fantiumAthletes.setUserManager(userManager);
+        fantiumAthletes.setBaseURI("https://app.fantium.com/api/metadata/");
+        fantiumAthletes.setTreasury(fantiumAthletes_treasuryPrimary);
 
         // Configure collections
         CollectionJson[] memory collections = abi.decode(loadFixture("collections.json"), (CollectionJson[]));
         for (uint256 i = 0; i < collections.length; i++) {
             CollectionJson memory collection = collections[i];
-            uint256 collectionId = fantiumNFT.createCollection(
+            uint256 collectionId = fantiumAthletes.createCollection(
                 CollectionData({
                     athleteAddress: collection.athleteAddress,
                     athletePrimarySalesBPS: collection.athletePrimarySalesBPS,
@@ -89,7 +89,7 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
             );
 
             // By default, collections are not mintable, set them as mintable/paused if needed
-            fantiumNFT.setCollectionStatus(collectionId, collection.isMintable, collection.isPaused);
+            fantiumAthletes.setCollectionStatus(collectionId, collection.isMintable, collection.isPaused);
         }
         vm.stopPrank();
     }
@@ -108,11 +108,11 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
             address payable athleteAddress
         )
     {
-        Collection memory collection = fantiumNFT.collections(collectionId);
+        Collection memory collection = fantiumAthletes.collections(collectionId);
         amountUSDC = collection.price * quantity * 10 ** usdc.decimals();
 
         (fantiumRevenue, fantiumAddress, athleteRevenue, athleteAddress) =
-            fantiumNFT.getPrimaryRevenueSplits(collectionId, amountUSDC);
+            fantiumAthletes.getPrimaryRevenueSplits(collectionId, amountUSDC);
         if (block.timestamp < collection.launchTimestamp) {
             vm.warp(collection.launchTimestamp + 1);
         }
@@ -123,7 +123,7 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
         userManager.setKYC(recipient, true);
 
         vm.prank(recipient);
-        usdc.approve(address(fantiumNFT), amountUSDC);
+        usdc.approve(address(fantiumAthletes), amountUSDC);
     }
 
     function prepareSale(
@@ -142,10 +142,10 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
             address athleteAddress
         )
     {
-        Collection memory collection = fantiumNFT.collections(collectionId);
+        Collection memory collection = fantiumAthletes.collections(collectionId);
         (fantiumRevenue, fantiumAddress, athleteRevenue, athleteAddress) =
-            fantiumNFT.getPrimaryRevenueSplits(collectionId, amountUSDC);
-        nonce = fantiumNFT.nonces(recipient);
+            fantiumAthletes.getPrimaryRevenueSplits(collectionId, amountUSDC);
+        nonce = fantiumAthletes.nonces(recipient);
 
         if (block.timestamp < collection.launchTimestamp) {
             vm.warp(collection.launchTimestamp + 1);
@@ -157,7 +157,7 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
         userManager.setKYC(recipient, true);
 
         vm.prank(recipient);
-        usdc.approve(address(fantiumNFT), amountUSDC);
+        usdc.approve(address(fantiumAthletes), amountUSDC);
 
         return (
             signMint(recipient, nonce, collectionId, quantity, amountUSDC),
@@ -172,7 +172,7 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
     function mintTo(uint256 collectionId, uint24 quantity, address recipient) public returns (uint256 lastTokenId) {
         prepareSale(collectionId, quantity, recipient);
         vm.prank(recipient);
-        return fantiumNFT.mintTo(collectionId, quantity, recipient);
+        return fantiumAthletes.mintTo(collectionId, quantity, recipient);
     }
 
     function signMint(
@@ -187,7 +187,7 @@ contract FANtiumNFTFactory is BaseTest, FANtiumUserManagerFactory {
         returns (bytes memory)
     {
         bytes32 hash = keccak256(abi.encode(collectionId, quantity, recipient, amount, nonce)).toEthSignedMessageHash();
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(fantiumNFT_signerKey, hash);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(fantiumAthletes_signerKey, hash);
         return abi.encodePacked(r, s, v);
     }
 }

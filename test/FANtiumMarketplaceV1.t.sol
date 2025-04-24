@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
+import { IFANtiumAthletes } from "../src/interfaces/IFANtiumAthletes.sol";
 import { IFANtiumMarketplace, Offer } from "../src/interfaces/IFANtiumMarketplace.sol";
-import { IFANtiumNFT } from "../src/interfaces/IFANtiumNFT.sol";
 import { FANtiumMarketplaceFactory } from "./setup/FANtiumMarketplaceFactory.t.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Ownable } from "solady/auth/Ownable.sol";
@@ -116,16 +116,16 @@ contract FANtiumMarketplaceV1Test is BaseTest, EIP712Signer, FANtiumMarketplaceF
         uint24 quantity = 1;
         prepareSale(collectionId, quantity, seller);
         vm.prank(seller);
-        uint256 lastTokenId = fantiumNFT.mintTo(collectionId, quantity, seller); // 1000000
+        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, seller); // 1000000
 
         // seller should approve the token transfer
         vm.prank(seller);
-        fantiumNFT.approve(address(fantiumMarketplace), lastTokenId);
+        fantiumAthletes.approve(address(fantiumMarketplace), lastTokenId);
 
         // mock offer
         Offer memory offer = Offer({
             seller: seller,
-            tokenAddress: address(fantiumNFT),
+            tokenAddress: address(fantiumAthletes),
             tokenId: lastTokenId,
             amount: 5,
             fee: 1,
@@ -150,12 +150,18 @@ contract FANtiumMarketplaceV1Test is BaseTest, EIP712Signer, FANtiumMarketplaceF
         assertEq(paymentToken.balanceOf(buyer), 0);
         assertEq(paymentToken.balanceOf(seller), (offer.amount - offer.fee));
         assertEq(paymentToken.balanceOf(fantiumMarketplace.treasury()), offer.fee);
-        assertEq(fantiumNFT.ownerOf(lastTokenId), buyer);
+        assertEq(fantiumAthletes.ownerOf(lastTokenId), buyer);
     }
 
     function test_executeOffer_revert_invalidSellerSignature() public {
-        Offer memory offer =
-            Offer({ seller: seller, tokenAddress: address(fantiumNFT), tokenId: 1, amount: 1, fee: 1, expiresAt: 1 });
+        Offer memory offer = Offer({
+            seller: seller,
+            tokenAddress: address(fantiumAthletes),
+            tokenId: 1,
+            amount: 1,
+            fee: 1,
+            expiresAt: 1
+        });
 
         uint256 otherPrivateKey = 0x1;
         address recoveredSigner = vm.addr(otherPrivateKey);
@@ -171,7 +177,7 @@ contract FANtiumMarketplaceV1Test is BaseTest, EIP712Signer, FANtiumMarketplaceF
     function test_executeOffer_revert_invalidOfferAmount() public {
         Offer memory offer = Offer({
             seller: seller,
-            tokenAddress: address(fantiumNFT),
+            tokenAddress: address(fantiumAthletes),
             tokenId: 1,
             amount: 0, // zero-amount offer are prohibited
             fee: 1,
@@ -185,8 +191,14 @@ contract FANtiumMarketplaceV1Test is BaseTest, EIP712Signer, FANtiumMarketplaceF
     }
 
     function test_executeOffer_revert_offerExpired() public {
-        Offer memory offer =
-            Offer({ seller: seller, tokenAddress: address(fantiumNFT), tokenId: 1, amount: 1, fee: 1, expiresAt: 1 });
+        Offer memory offer = Offer({
+            seller: seller,
+            tokenAddress: address(fantiumAthletes),
+            tokenId: 1,
+            amount: 1,
+            fee: 1,
+            expiresAt: 1
+        });
 
         uint256 timeInFuture = block.timestamp + 10 days; // by this time offer has expired
         vm.warp(timeInFuture);
@@ -206,12 +218,12 @@ contract FANtiumMarketplaceV1Test is BaseTest, EIP712Signer, FANtiumMarketplaceF
         uint24 quantity = 1;
         prepareSale(collectionId, quantity, randomUser);
         vm.prank(randomUser);
-        uint256 lastTokenId = fantiumNFT.mintTo(collectionId, quantity, randomUser); // 1000000
+        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, randomUser); // 1000000
 
         // try to executeOffer using generated token id
         Offer memory offer = Offer({
             seller: seller,
-            tokenAddress: address(fantiumNFT),
+            tokenAddress: address(fantiumAthletes),
             tokenId: lastTokenId,
             amount: 1,
             fee: 1,
