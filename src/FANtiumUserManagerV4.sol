@@ -17,7 +17,7 @@ import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
  *
  * @custom:oz-upgrades-from src/archive/FANtiumUserManagerV2.sol:FANtiumUserManagerV2
  */
-contract FANtiumUserManagerV3 is
+contract FANtiumUserManagerV4 is
     Initializable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
