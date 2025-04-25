@@ -66,7 +66,7 @@ contract FANtiumClaimingV2 is
     address private UNUSED_trustedForwarder;
     /**
      * @notice FANtium NFT contract address.
-     * @custom:oz-renamed-from fantiumAthletesContract
+     * @custom:oz-renamed-from fantiumNFTContract
      */
     IFANtiumAthletes public fantiumAthletes;
 

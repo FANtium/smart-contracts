@@ -49,6 +49,9 @@ contract FANtiumUserManagerV3 is
      */
     address private UNUSED_trustedForwarder;
 
+    /**
+     * @custom:oz-renamed-from fantiumNFT
+     */
     IFANtiumAthletes public fantiumAthletes;
 
     // ========================================================================
