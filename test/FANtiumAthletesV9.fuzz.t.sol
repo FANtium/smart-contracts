@@ -2,13 +2,13 @@
 pragma solidity 0.8.28;
 
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import { Collection, CollectionData, IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
+import { Collection, CollectionData, IFANtiumAthletes } from "src/interfaces/IFANtiumAthletes.sol";
 import { BaseTest } from "test/BaseTest.sol";
-import { FANtiumNFTFactory } from "test/setup/FANtiumNFTFactory.sol";
+import { FANtiumAthletesFactory } from "test/setup/FANtiumAthletesFactory.sol";
 
-contract FANtiumNFTV8FuzzTest is BaseTest, FANtiumNFTFactory {
+contract FANtiumAthletesV9FuzzTest is BaseTest, FANtiumAthletesFactory {
     function setUp() public override {
-        FANtiumNFTFactory.setUp();
+        FANtiumAthletesFactory.setUp();
     }
 
     // mintTo (standard price)
@@ -33,13 +33,13 @@ contract FANtiumNFTV8FuzzTest is BaseTest, FANtiumNFTFactory {
         uint256 athleteBalanceBefore = usdc.balanceOf(athleteAddress);
 
         // Expect Sale event
-        vm.expectEmit(true, true, false, true, address(fantiumNFT));
-        emit IFANtiumNFT.Sale(collectionId, quantity, recipient, amountUSDC, 0);
+        vm.expectEmit(true, true, false, true, address(fantiumAthletes));
+        emit IFANtiumAthletes.Sale(collectionId, quantity, recipient, amountUSDC, 0);
 
         vm.prank(recipient);
-        uint256 lastTokenId = fantiumNFT.mintTo(collectionId, quantity, recipient);
+        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient);
 
-        assertEq(fantiumNFT.ownerOf(lastTokenId), recipient);
+        assertEq(fantiumAthletes.ownerOf(lastTokenId), recipient);
         assertEq(usdc.balanceOf(recipient), recipientBalanceBefore - amountUSDC);
         assertEq(usdc.balanceOf(fantiumAddress), fantiumBalanceBefore + fantiumRevenue);
         assertEq(usdc.balanceOf(athleteAddress), athleteBalanceBefore + athleteRevenue);
@@ -53,7 +53,8 @@ contract FANtiumNFTV8FuzzTest is BaseTest, FANtiumNFTFactory {
             bound(
                 uint256(quantity),
                 1,
-                fantiumNFT.collections(collectionId).maxInvocations - fantiumNFT.collections(collectionId).invocations
+                fantiumAthletes.collections(collectionId).maxInvocations
+                    - fantiumAthletes.collections(collectionId).invocations
             )
         );
 
@@ -77,15 +78,15 @@ contract FANtiumNFTV8FuzzTest is BaseTest, FANtiumNFTFactory {
         emit IERC20Upgradeable.Transfer(recipient, athleteAddress, athleteRevenue);
 
         // Expect Sale event
-        vm.expectEmit(true, true, false, true, address(fantiumNFT));
-        emit IFANtiumNFT.Sale(collectionId, quantity, recipient, amountUSDC, 0);
+        vm.expectEmit(true, true, false, true, address(fantiumAthletes));
+        emit IFANtiumAthletes.Sale(collectionId, quantity, recipient, amountUSDC, 0);
 
         vm.prank(recipient);
-        uint256 lastTokenId = fantiumNFT.mintTo(collectionId, quantity, recipient);
+        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient);
 
         // Verify ownership
         for (uint256 i = 0; i < quantity; i++) {
-            assertEq(fantiumNFT.ownerOf(lastTokenId - i), recipient);
+            assertEq(fantiumAthletes.ownerOf(lastTokenId - i), recipient);
         }
 
         // Verify ERC20 transfers
@@ -101,17 +102,17 @@ contract FANtiumNFTV8FuzzTest is BaseTest, FANtiumNFTFactory {
         uint256 collectionId = 1; // Using collection 1 from fixtures
 
         (uint256 fantiumRevenue, address payable fantiumAddress, uint256 athleteRevenue, address payable athleteAddress)
-        = fantiumNFT.getPrimaryRevenueSplits(collectionId, price);
+        = fantiumAthletes.getPrimaryRevenueSplits(collectionId, price);
 
         // Get collection to verify calculations
-        Collection memory collection = fantiumNFT.collections(collectionId);
+        Collection memory collection = fantiumAthletes.collections(collectionId);
 
         // Verify revenue splits
         assertEq(athleteRevenue, (price * collection.athletePrimarySalesBPS) / 10_000, "Incorrect athlete revenue");
         assertEq(fantiumRevenue, price - athleteRevenue, "Incorrect fantium revenue");
 
         // Verify addresses
-        assertEq(fantiumAddress, fantiumNFT.treasury(), "Incorrect treasury address");
+        assertEq(fantiumAddress, fantiumAthletes.treasury(), "Incorrect treasury address");
         assertEq(athleteAddress, collection.athleteAddress, "Incorrect athlete address");
     }
 
@@ -119,10 +120,10 @@ contract FANtiumNFTV8FuzzTest is BaseTest, FANtiumNFTFactory {
         vm.assume(0 < athletePrimarySalesBPS && athletePrimarySalesBPS < 10_000);
         vm.assume(0 < price && price < 1_000_000 * 10 ** usdc.decimals());
 
-        vm.startPrank(fantiumNFT_admin);
-        uint256 collectionId = fantiumNFT.createCollection(
+        vm.startPrank(fantiumAthletes_admin);
+        uint256 collectionId = fantiumAthletes.createCollection(
             CollectionData({
-                athleteAddress: fantiumNFT_athlete,
+                athleteAddress: fantiumAthletes_athlete,
                 athletePrimarySalesBPS: athletePrimarySalesBPS,
                 athleteSecondarySalesBPS: 0,
                 fantiumSecondarySalesBPS: 0,
@@ -136,14 +137,14 @@ contract FANtiumNFTV8FuzzTest is BaseTest, FANtiumNFTFactory {
         vm.stopPrank();
 
         (uint256 fantiumRevenue, address payable fantiumAddress, uint256 athleteRevenue, address payable athleteAddress)
-        = fantiumNFT.getPrimaryRevenueSplits(collectionId, price);
+        = fantiumAthletes.getPrimaryRevenueSplits(collectionId, price);
 
         // Verify revenue splits
         assertEq(athleteRevenue, (price * athletePrimarySalesBPS) / 10_000, "Incorrect athlete revenue");
         assertEq(fantiumRevenue, price - athleteRevenue, "Incorrect fantium revenue");
 
         // Verify addresses
-        assertEq(fantiumAddress, fantiumNFT_treasuryPrimary, "Incorrect fantium address");
-        assertEq(athleteAddress, fantiumNFT_athlete, "Incorrect athlete address");
+        assertEq(fantiumAddress, fantiumAthletes_treasuryPrimary, "Incorrect fantium address");
+        assertEq(athleteAddress, fantiumAthletes_athlete, "Incorrect athlete address");
     }
 }

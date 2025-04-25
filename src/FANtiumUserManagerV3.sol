@@ -6,7 +6,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
-import { IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
+import { IFANtiumAthletes } from "src/interfaces/IFANtiumAthletes.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 
 /**
@@ -49,7 +49,10 @@ contract FANtiumUserManagerV3 is
      */
     address private UNUSED_trustedForwarder;
 
-    IFANtiumNFT public fantiumNFT;
+    /**
+     * @custom:oz-renamed-from fantiumNFT
+     */
+    IFANtiumAthletes public fantiumAthletes;
 
     // ========================================================================
     // Events
@@ -159,8 +162,8 @@ contract FANtiumUserManagerV3 is
     // ========================================================================
     // Setters
     // ========================================================================
-    function setFANtiumNFT(IFANtiumNFT _fantiumNFT) external onlyAdmin {
-        fantiumNFT = _fantiumNFT;
+    function setFANtiumNFT(IFANtiumAthletes _fantiumAthletes) external onlyAdmin {
+        fantiumAthletes = _fantiumAthletes;
     }
 
     // ========================================================================
@@ -233,11 +236,11 @@ contract FANtiumUserManagerV3 is
     // AllowList functions
     // ========================================================================
     function allowlist(address account, uint256 collectionId) public view returns (uint256) {
-        return users[account].contractToAllowlistToSpots[address(fantiumNFT)][collectionId];
+        return users[account].contractToAllowlistToSpots[address(fantiumAthletes)][collectionId];
     }
 
     function _setAllowList(address account, uint256 collectionId, uint256 allocation) internal {
-        users[account].contractToAllowlistToSpots[address(fantiumNFT)][collectionId] = allocation;
+        users[account].contractToAllowlistToSpots[address(fantiumAthletes)][collectionId] = allocation;
         emit AllowListUpdate(account, collectionId, allocation);
     }
 

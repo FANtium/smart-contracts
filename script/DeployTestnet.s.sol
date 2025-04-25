@@ -3,12 +3,11 @@ pragma solidity 0.8.28;
 
 import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
-
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Script } from "forge-std/Script.sol";
+import { FANtiumAthletesV9 } from "src/FANtiumAthletesV9.sol";
 import { FANtiumClaimingV2 } from "src/FANtiumClaimingV2.sol";
 import { FANtiumMarketplaceV1 } from "src/FANtiumMarketplaceV1.sol";
-import { FANtiumNFTV8 } from "src/FANtiumNFTV8.sol";
 import { FANtiumTokenV1 } from "src/FANtiumTokenV1.sol";
 import { FANtiumUserManagerV3 } from "src/FANtiumUserManagerV3.sol";
 import { FootballTokenV1 } from "src/FootballTokenV1.sol";
@@ -37,9 +36,9 @@ contract DeployTestnet is Script {
 
     function run() public {
         vm.startBroadcast(vm.envUint("DEPLOYER_PRIVATE_KEY"));
-        FANtiumNFTV8 fantiumNFT = FANtiumNFTV8(
+        FANtiumAthletesV9 fantiumAthletes = FANtiumAthletesV9(
             UnsafeUpgrades.deployUUPSProxy(
-                address(new FANtiumNFTV8()), abi.encodeCall(FANtiumNFTV8.initialize, (ADMIN))
+                address(new FANtiumAthletesV9()), abi.encodeCall(FANtiumAthletesV9.initialize, (ADMIN))
             )
         );
 
@@ -81,21 +80,21 @@ contract DeployTestnet is Script {
 
         vm.startBroadcast(vm.envUint("ADMIN_PRIVATE_KEY"));
         // FANtiumNFTV6 setup
-        fantiumNFT.setUserManager(userManager);
-        fantiumNFT.setERC20PaymentToken(IERC20MetadataUpgradeable(USDC));
+        fantiumAthletes.setUserManager(userManager);
+        fantiumAthletes.setERC20PaymentToken(IERC20MetadataUpgradeable(USDC));
 
-        fantiumNFT.grantRole(fantiumNFT.FORWARDER_ROLE(), GELATO_RELAYER_ERC2771);
-        fantiumNFT.grantRole(fantiumNFT.SIGNER_ROLE(), BACKEND_SIGNER);
-        fantiumNFT.grantRole(fantiumNFT.TOKEN_UPGRADER_ROLE(), address(fantiumClaim));
+        fantiumAthletes.grantRole(fantiumAthletes.FORWARDER_ROLE(), GELATO_RELAYER_ERC2771);
+        fantiumAthletes.grantRole(fantiumAthletes.SIGNER_ROLE(), BACKEND_SIGNER);
+        fantiumAthletes.grantRole(fantiumAthletes.TOKEN_UPGRADER_ROLE(), address(fantiumClaim));
 
         // FANtiumUserManagerV3 setup
-        userManager.setFANtiumNFT(fantiumNFT);
+        userManager.setFANtiumNFT(fantiumAthletes);
         userManager.grantRole(userManager.FORWARDER_ROLE(), GELATO_RELAYER_ERC2771);
         userManager.grantRole(userManager.KYC_MANAGER_ROLE(), BACKEND_SIGNER);
         userManager.grantRole(userManager.ALLOWLIST_MANAGER_ROLE(), BACKEND_SIGNER);
 
         // FANtiumClaimingV2 setup
-        fantiumClaim.setFANtiumNFT(fantiumNFT);
+        fantiumClaim.setFANtiumNFT(fantiumAthletes);
         fantiumClaim.setUserManager(userManager);
         fantiumClaim.setGlobalPayoutToken(USDC);
 

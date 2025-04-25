@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import { FANtiumClaimingV2 } from "src/FANtiumClaimingV2.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { BaseTest } from "test/BaseTest.sol";
-import { FANtiumNFTFactory } from "test/setup/FANtiumNFTFactory.sol";
+import { FANtiumAthletesFactory } from "test/setup/FANtiumAthletesFactory.sol";
 
-contract FANtiumClaimingFactory is BaseTest, FANtiumNFTFactory {
+contract FANtiumClaimingFactory is BaseTest, FANtiumAthletesFactory {
     address public fantiumClaiming_admin = makeAddr("fantiumClaiming_admin");
     address public fantiumClaiming_manager = makeAddr("fantiumClaiming_manager");
     address public fantiumClaiming_trustedForwarder = makeAddr("fantiumClaiming_trustedForwarder");
@@ -16,7 +16,7 @@ contract FANtiumClaimingFactory is BaseTest, FANtiumNFTFactory {
     FANtiumClaimingV2 public fantiumClaiming;
 
     function setUp() public virtual override {
-        FANtiumNFTFactory.setUp();
+        FANtiumAthletesFactory.setUp();
 
         fantiumClaiming_implementation = address(new FANtiumClaimingV2());
         fantiumClaiming_proxy = UnsafeUpgrades.deployUUPSProxy(
@@ -29,8 +29,8 @@ contract FANtiumClaimingFactory is BaseTest, FANtiumNFTFactory {
         fantiumClaiming.grantRole(fantiumClaiming.MANAGER_ROLE(), fantiumClaiming_manager);
         fantiumClaiming.grantRole(fantiumClaiming.FORWARDER_ROLE(), fantiumClaiming_trustedForwarder);
 
-        // Set FANtiumNFT created in the FANtiumNFTFactory
-        fantiumClaiming.setFANtiumNFT(fantiumNFT);
+        // Set FANtiumNFT created in the FANtiumAthletesFactory
+        fantiumClaiming.setFANtiumNFT(fantiumAthletes);
         fantiumClaiming.setUserManager(userManager);
         fantiumClaiming.setGlobalPayoutToken(address(usdc));
         vm.stopPrank();

@@ -9,6 +9,8 @@ import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/St
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
+import { Collection, IFANtiumAthletes } from "src/interfaces/IFANtiumAthletes.sol";
 import {
     ClaimErrorReason,
     CollectionInfo,
@@ -19,9 +21,7 @@ import {
     DistributionFundingErrorReason,
     IFANtiumClaiming
 } from "src/interfaces/IFANtiumClaiming.sol";
-import { Collection, IFANtiumNFT } from "src/interfaces/IFANtiumNFT.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
-import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 
 /**
@@ -68,7 +68,7 @@ contract FANtiumClaimingV2 is
      * @notice FANtium NFT contract address.
      * @custom:oz-renamed-from fantiumNFTContract
      */
-    IFANtiumNFT public fantiumNFT;
+    IFANtiumAthletes public fantiumAthletes;
 
     /**
      * @notice User manager contract address
@@ -248,8 +248,8 @@ contract FANtiumClaimingV2 is
     // ========================================================================
     // Setters
     // ========================================================================
-    function setFANtiumNFT(IFANtiumNFT _fantiumNFT) external onlyManagerOrAdmin {
-        fantiumNFT = _fantiumNFT;
+    function setFANtiumNFT(IFANtiumAthletes _fantiumAthletes) external onlyManagerOrAdmin {
+        fantiumAthletes = _fantiumAthletes;
     }
 
     function setUserManager(IFANtiumUserManager _userManager) external onlyManagerOrAdmin {
@@ -307,7 +307,7 @@ contract FANtiumClaimingV2 is
 
         // Ensure all collections exist
         for (uint256 i = 0; i < data.collectionIds.length; i++) {
-            if (!IFANtiumNFT(fantiumNFT).collections(data.collectionIds[i]).exists) {
+            if (!IFANtiumAthletes(fantiumAthletes).collections(data.collectionIds[i]).exists) {
                 revert InvalidDistribution(DistributionErrorReason.INVALID_COLLECTION_IDS);
             }
         }
@@ -567,7 +567,7 @@ contract FANtiumClaimingV2 is
             revert InvalidClaim(ClaimErrorReason.NOT_FULLY_PAID_IN);
         }
 
-        if (_msgSender() != fantiumNFT.ownerOf(tokenId)) {
+        if (_msgSender() != fantiumAthletes.ownerOf(tokenId)) {
             revert InvalidClaim(ClaimErrorReason.ONLY_TOKEN_OWNER);
         }
 
@@ -597,7 +597,7 @@ contract FANtiumClaimingV2 is
         _distributions[distributionId].claimedAmount += claimAmount;
 
         // Upgrade the token version
-        fantiumNFT.upgradeTokenVersion(tokenId);
+        fantiumAthletes.upgradeTokenVersion(tokenId);
 
         // Split the claim amount between FANtium and the user
         uint256 fantiumRevenue_ = ((claimAmount * existingDE.fantiumFeeBPS) / BPS_BASE);
@@ -670,7 +670,7 @@ contract FANtiumClaimingV2 is
 
         for (uint256 i = 0; i < distribution.collectionIds.length; i++) {
             uint256 collectionId = distribution.collectionIds[i];
-            Collection memory collection = fantiumNFT.collections(collectionId);
+            Collection memory collection = fantiumAthletes.collections(collectionId);
 
             // Compute the token's share of tournament and other earnings
             uint256 tournamentClaim =

@@ -6,11 +6,11 @@ import { Offer } from "../../src/interfaces/IFANtiumMarketplace.sol";
 import { UnsafeUpgrades } from "../../src/upgrades/UnsafeUpgrades.sol";
 import { BaseTest } from "../BaseTest.sol";
 import { EIP712Domain } from "../utils/EIP712Signer.sol";
-import { FANtiumNFTFactory } from "./FANtiumNFTFactory.t.sol";
+import { FANtiumAthletesFactory } from "./FANtiumAthletesFactory.t.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract FANtiumMarketplaceFactory is BaseTest, FANtiumNFTFactory {
+contract FANtiumMarketplaceFactory is BaseTest, FANtiumAthletesFactory {
     // addresses
     address public fantiumMarketplace_admin = makeAddr("admin");
     address public fantiumMarketplace_implementation;
@@ -28,7 +28,7 @@ contract FANtiumMarketplaceFactory is BaseTest, FANtiumNFTFactory {
     FANtiumMarketplaceV1 public fantiumMarketplace;
 
     function setUp() public virtual override {
-        FANtiumNFTFactory.setUp();
+        FANtiumAthletesFactory.setUp();
 
         fantiumMarketplace_implementation = address(new FANtiumMarketplaceV1());
         fantiumMarketplace_proxy = UnsafeUpgrades.deployUUPSProxy(

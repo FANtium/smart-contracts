@@ -19,27 +19,27 @@ import {
     Collection,
     CollectionData,
     CollectionErrorReason,
-    IFANtiumNFT,
+    IFANtiumAthletes,
     MintErrorReason,
     UpgradeErrorReason
-} from "src/interfaces/IFANtiumNFT.sol";
+} from "src/interfaces/IFANtiumAthletes.sol";
 import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { Rescue } from "src/utils/Rescue.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 
 /**
- * @title FANtium ERC721 contract V8.
- * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
- * @custom:oz-upgrades-from src/archive/FANtiumNFTV7.sol:FANtiumNFTV7
+ * @title FANtium Athletes ERC721 contract V9.
+ * @author Mathieu Bour, Alex Chernetsky - FANtium AG, based on previous work by MTX studio AG.
+ * @custom:oz-upgrades-from src/archive/FANtiumNFTV8.sol:FANtiumNFTV8
  */
-contract FANtiumNFTV8 is
+contract FANtiumAthletesV9 is
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
     PausableUpgradeable,
     Rescue,
-    IFANtiumNFT
+    IFANtiumAthletes
 {
     using StringsUpgradeable for uint256;
     using ECDSAUpgradeable for bytes32;
@@ -65,6 +65,12 @@ contract FANtiumNFTV8 is
      * @dev Used to upgrade the token to a new version.
      */
     bytes32 public constant TOKEN_UPGRADER_ROLE = keccak256("TOKEN_UPGRADER_ROLE");
+
+    /**
+     * @notice Trusted operator role that can approve all transfers - only first party operators are allowed.
+     * @dev Used by the marketplace to approve transfers.
+     */
+    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
     // ========================================================================
     // State variables
@@ -290,6 +296,26 @@ contract FANtiumNFTV8 is
      */
     function _baseURI() internal view virtual override returns (string memory) {
         return baseURI;
+    }
+
+    /**
+     * @notice Returns true if `operator` is allowed to manage all of `owner`'s assets.
+     * @dev First party operators are allowed to manage all assets without restrictions.
+     */
+    function isApprovedForAll(
+        address owner,
+        address operator
+    )
+        public
+        view
+        override (ERC721Upgradeable, IERC721Upgradeable)
+        returns (bool)
+    {
+        if (hasRole(OPERATOR_ROLE, operator)) {
+            return true;
+        }
+
+        return super.isApprovedForAll(owner, operator);
     }
 
     // ========================================================================

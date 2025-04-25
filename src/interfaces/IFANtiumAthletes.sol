@@ -117,7 +117,7 @@ enum UpgradeErrorReason {
     VERSION_ID_TOO_HIGH
 }
 
-interface IFANtiumNFT is IERC721Upgradeable {
+interface IFANtiumAthletes is IERC721Upgradeable {
     // ========================================================================
     // Events
     // ========================================================================
