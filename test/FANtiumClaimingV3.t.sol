@@ -16,7 +16,7 @@ import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumClaimingFactory } from "test/setup/FANtiumClaimingFactory.sol";
 
-contract FANtiumClaimingV2Test is BaseTest, FANtiumClaimingFactory {
+contract FANtiumClaimingV3Test is BaseTest, FANtiumClaimingFactory {
     function setUp() public virtual override {
         FANtiumClaimingFactory.setUp();
     }

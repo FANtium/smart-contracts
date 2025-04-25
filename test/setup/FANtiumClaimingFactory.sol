@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { FANtiumClaimingV2 } from "src/FANtiumClaimingV2.sol";
+import { FANtiumClaimingV3 } from "src/FANtiumClaimingV3.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumAthletesFactory } from "test/setup/FANtiumAthletesFactory.sol";
@@ -13,16 +13,16 @@ contract FANtiumClaimingFactory is BaseTest, FANtiumAthletesFactory {
 
     address public fantiumClaiming_implementation;
     address public fantiumClaiming_proxy;
-    FANtiumClaimingV2 public fantiumClaiming;
+    FANtiumClaimingV3 public fantiumClaiming;
 
     function setUp() public virtual override {
         FANtiumAthletesFactory.setUp();
 
-        fantiumClaiming_implementation = address(new FANtiumClaimingV2());
+        fantiumClaiming_implementation = address(new FANtiumClaimingV3());
         fantiumClaiming_proxy = UnsafeUpgrades.deployUUPSProxy(
-            fantiumClaiming_implementation, abi.encodeCall(FANtiumClaimingV2.initialize, (fantiumClaiming_admin))
+            fantiumClaiming_implementation, abi.encodeCall(FANtiumClaimingV3.initialize, (fantiumClaiming_admin))
         );
-        fantiumClaiming = FANtiumClaimingV2(fantiumClaiming_proxy);
+        fantiumClaiming = FANtiumClaimingV3(fantiumClaiming_proxy);
 
         // Configure roles
         vm.startPrank(fantiumClaiming_admin);

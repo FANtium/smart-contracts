@@ -25,13 +25,13 @@ import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 
 /**
- * @title FANtium Claining contract V2.
+ * @title FANtium Claining contract V3.
  * @notice This contract is used to manage distributions and claim payouts for FAN token holders.
  * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
  *
  * @custom:oz-upgrades-from src/archive/FANtiumClaimingV1.sol:FantiumClaimingV1
  */
-contract FANtiumClaimingV2 is
+contract FANtiumClaimingV3 is
     Initializable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
