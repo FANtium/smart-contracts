@@ -6,10 +6,10 @@ import { IERC20MetadataUpgradeable } from
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Script } from "forge-std/Script.sol";
 import { FANtiumAthletesV9 } from "src/FANtiumAthletesV9.sol";
-import { FANtiumClaimingV2 } from "src/FANtiumClaimingV2.sol";
+import { FANtiumClaimingV3 } from "src/FANtiumClaimingV3.sol";
 import { FANtiumMarketplaceV1 } from "src/FANtiumMarketplaceV1.sol";
 import { FANtiumTokenV1 } from "src/FANtiumTokenV1.sol";
-import { FANtiumUserManagerV3 } from "src/FANtiumUserManagerV3.sol";
+import { FANtiumUserManagerV4 } from "src/FANtiumUserManagerV4.sol";
 import { FootballTokenV1 } from "src/FootballTokenV1.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 
@@ -42,15 +42,15 @@ contract DeployTestnet is Script {
             )
         );
 
-        FANtiumUserManagerV3 userManager = FANtiumUserManagerV3(
+        FANtiumUserManagerV4 userManager = FANtiumUserManagerV4(
             UnsafeUpgrades.deployUUPSProxy(
-                address(new FANtiumUserManagerV3()), abi.encodeCall(FANtiumUserManagerV3.initialize, (ADMIN))
+                address(new FANtiumUserManagerV4()), abi.encodeCall(FANtiumUserManagerV4.initialize, (ADMIN))
             )
         );
 
-        FANtiumClaimingV2 fantiumClaim = FANtiumClaimingV2(
+        FANtiumClaimingV3 fantiumClaim = FANtiumClaimingV3(
             UnsafeUpgrades.deployUUPSProxy(
-                address(new FANtiumClaimingV2()), abi.encodeCall(FANtiumClaimingV2.initialize, (ADMIN))
+                address(new FANtiumClaimingV3()), abi.encodeCall(FANtiumClaimingV3.initialize, (ADMIN))
             )
         );
 
@@ -87,7 +87,7 @@ contract DeployTestnet is Script {
         fantiumAthletes.grantRole(fantiumAthletes.SIGNER_ROLE(), BACKEND_SIGNER);
         fantiumAthletes.grantRole(fantiumAthletes.TOKEN_UPGRADER_ROLE(), address(fantiumClaim));
 
-        // FANtiumUserManagerV3 setup
+        // FANtiumUserManagerV4 setup
         userManager.setFANtiumNFT(fantiumAthletes);
         userManager.grantRole(userManager.FORWARDER_ROLE(), GELATO_RELAYER_ERC2771);
         userManager.grantRole(userManager.KYC_MANAGER_ROLE(), BACKEND_SIGNER);

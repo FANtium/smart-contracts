@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import { FANtiumUserManagerV3 } from "src/FANtiumUserManagerV3.sol";
+import { FANtiumUserManagerV4 } from "src/FANtiumUserManagerV4.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { BaseTest } from "test/BaseTest.sol";
 
@@ -14,14 +14,14 @@ contract FANtiumUserManagerFactory is BaseTest {
 
     address public userManager_implementation;
     address public userManager_proxy;
-    FANtiumUserManagerV3 public userManager;
+    FANtiumUserManagerV4 public userManager;
 
     function setUp() public virtual {
-        userManager_implementation = address(new FANtiumUserManagerV3());
+        userManager_implementation = address(new FANtiumUserManagerV4());
         userManager_proxy = UnsafeUpgrades.deployUUPSProxy(
-            userManager_implementation, abi.encodeCall(FANtiumUserManagerV3.initialize, (userManager_admin))
+            userManager_implementation, abi.encodeCall(FANtiumUserManagerV4.initialize, (userManager_admin))
         );
-        userManager = FANtiumUserManagerV3(userManager_proxy);
+        userManager = FANtiumUserManagerV4(userManager_proxy);
 
         vm.startPrank(userManager_admin);
         userManager.grantRole(userManager.FORWARDER_ROLE(), userManager_forwarder);
