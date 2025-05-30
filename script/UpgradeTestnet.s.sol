@@ -16,10 +16,10 @@ contract UpgradeTestnet is Script {
     address public constant BACKEND_SIGNER = 0xCAFE914D4886B50edD339eee2BdB5d2350fdC809;
     address public constant DEPLOYER = 0xC0DE5408A46402B7Bd13678A43318c64E2c31EAA;
 
-    bool public FANTIUM_ATHLETES_UPGRADE = true;
+    bool public FANTIUM_ATHLETES_UPGRADE = false;
     address public constant FANTIUM_ATHLETES_PROXY = 0x4d09f47fd98196CDFC816be9e84Fb15bCDB92612;
 
-    bool public FANTIUM_USER_MANAGER_UPGRADE = true;
+    bool public FANTIUM_USER_MANAGER_UPGRADE = false;
     address public constant FANTIUM_USER_MANAGER_PROXY = 0x54dF3fb8B090A3FBf583e29e8fBd388A0179F4A2;
 
     bool public FANTIUM_CLAIMING_UPGRADE = true;
@@ -47,7 +47,7 @@ contract UpgradeTestnet is Script {
         }
 
         if (FANTIUM_CLAIMING_UPGRADE) {
-            Upgrades.upgradeProxy(FANTIUM_CLAIMING_PROXY, "FANtiumClaimingV3.sol:FANtiumClaimingV3", "");
+            Upgrades.upgradeProxy(FANTIUM_CLAIMING_PROXY, "FANtiumClaimingV4.sol:FANtiumClaimingV4", "");
         }
 
         if (FANTIUM_TOKEN_UPGRADE) {

@@ -16,7 +16,7 @@ import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumClaimingFactory } from "test/setup/FANtiumClaimingFactory.sol";
 
-contract FANtiumClaimingV3Test is BaseTest, FANtiumClaimingFactory {
+contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
     function setUp() public virtual override {
         FANtiumClaimingFactory.setUp();
     }
@@ -364,6 +364,61 @@ contract FANtiumClaimingV3Test is BaseTest, FANtiumClaimingFactory {
         fantiumClaiming.updateDistribution(distEventId, data);
     }
 
+    function test_updateDistribution_ok_increaseAmount() public {
+        uint256[] memory collectionIdsArray = new uint256[](2);
+        collectionIdsArray[0] = 1;
+        collectionIdsArray[1] = 2;
+
+        // Prepare distribution data
+        DistributionData memory data = DistributionData({
+            collectionIds: collectionIdsArray,
+            athleteAddress: payable(makeAddr("athleteAddress")),
+            totalTournamentEarnings: 10_000 * 10 ** 18,
+            totalOtherEarnings: 5000 * 10 ** 18,
+            fantiumFeeBPS: 500, // 5% fee
+            fantiumAddress: payable(makeAddr("fantiumAddress")),
+            startTime: block.timestamp + 1 days,
+            closeTime: block.timestamp + 2 days
+        });
+
+        vm.prank(fantiumClaiming_manager);
+        uint256 distEventId = fantiumClaiming.createDistribution(data);
+
+        // Prepare update
+        DistributionData memory data2 = data;
+        data2.totalTournamentEarnings = 15_000 * 10 ** 18;
+        data2.totalOtherEarnings = 6000 * 10 ** 18;
+
+        vm.prank(fantiumClaiming_manager);
+        fantiumClaiming.updateDistribution(distEventId, data2);
+
+        assertEq(
+            fantiumClaiming.distributions(distEventId).athleteAddress,
+            data2.athleteAddress,
+            "athlete address is updated"
+        );
+        assertEq(
+            fantiumClaiming.distributions(distEventId).totalTournamentEarnings,
+            data2.totalTournamentEarnings,
+            "totalTournamentEarnings is updated"
+        );
+        assertEq(
+            fantiumClaiming.distributions(distEventId).totalOtherEarnings,
+            data2.totalOtherEarnings,
+            "totalOtherEarnings is updated"
+        );
+        assertEq(
+            fantiumClaiming.distributions(distEventId).fantiumFeeBPS, data2.fantiumFeeBPS, "fantiumFeeBPS is updated"
+        );
+        assertEq(
+            fantiumClaiming.distributions(distEventId).fantiumFeeAddress,
+            data2.fantiumAddress,
+            "fantiumAddress is updated"
+        );
+        assertEq(fantiumClaiming.distributions(distEventId).startTime, data2.startTime, "startTime is updated");
+        assertEq(fantiumClaiming.distributions(distEventId).closeTime, data2.closeTime, "closeTime is updated");
+    }
+
     function test_updateDistribution_ok_success() public {
         uint256[] memory collectionIdsArray = new uint256[](2);
         collectionIdsArray[0] = 1;
@@ -401,27 +456,29 @@ contract FANtiumClaimingV3Test is BaseTest, FANtiumClaimingFactory {
 
         assertEq(
             fantiumClaiming.distributions(distEventId).athleteAddress,
-            payable(makeAddr("athleteAddress2")),
+            data2.athleteAddress,
             "athlete address is updated"
         );
         assertEq(
             fantiumClaiming.distributions(distEventId).totalTournamentEarnings,
-            15_000 * 10 ** 18,
+            data2.totalTournamentEarnings,
             "totalTournamentEarnings is updated"
         );
         assertEq(
             fantiumClaiming.distributions(distEventId).totalOtherEarnings,
-            6000 * 10 ** 18,
+            data2.totalOtherEarnings,
             "totalOtherEarnings is updated"
         );
-        assertEq(fantiumClaiming.distributions(distEventId).fantiumFeeBPS, 600, "fantiumFeeBPS is updated");
+        assertEq(
+            fantiumClaiming.distributions(distEventId).fantiumFeeBPS, data2.fantiumFeeBPS, "fantiumFeeBPS is updated"
+        );
         assertEq(
             fantiumClaiming.distributions(distEventId).fantiumFeeAddress,
-            payable(makeAddr("fantiumAddress2")),
+            data2.fantiumAddress,
             "fantiumAddress is updated"
         );
-        assertEq(fantiumClaiming.distributions(distEventId).startTime, block.timestamp + 2 days, "startTime is updated");
-        assertEq(fantiumClaiming.distributions(distEventId).closeTime, block.timestamp + 3 days, "closeTime is updated");
+        assertEq(fantiumClaiming.distributions(distEventId).startTime, data2.startTime, "startTime is updated");
+        assertEq(fantiumClaiming.distributions(distEventId).closeTime, data2.closeTime, "closeTime is updated");
     }
 
     // fundDistribution

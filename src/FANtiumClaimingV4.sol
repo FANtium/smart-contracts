@@ -25,13 +25,13 @@ import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 
 /**
- * @title FANtium Claining contract V3.
+ * @title FANtium Claining contract V4.
  * @notice This contract is used to manage distributions and claim payouts for FAN token holders.
  * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
  *
- * @custom:oz-upgrades-from src/archive/FANtiumClaimingV1.sol:FantiumClaimingV1
+ * @custom:oz-upgrades-from src/archive/FANtiumClaimingV3.sol:FANtiumClaimingV3
  */
-contract FANtiumClaimingV3 is
+contract FANtiumClaimingV4 is
     Initializable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
@@ -431,7 +431,8 @@ contract FANtiumClaimingV3 is
         _computeShares(distributionId);
 
         Distribution memory updatedDE = _distributions[distributionId];
-        if (updatedDE.tournamentDistributionAmount + updatedDE.otherDistributionAmount > updatedDE.amountPaidIn) {
+        if (updatedDE.tournamentDistributionAmount + updatedDE.otherDistributionAmount < updatedDE.amountPaidIn) {
+            // Cannot lower the amount paid in
             revert InvalidDistribution(DistributionErrorReason.INVALID_AMOUNT);
         }
     }

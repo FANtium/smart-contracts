@@ -6,7 +6,7 @@ import { IERC20MetadataUpgradeable } from
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Script } from "forge-std/Script.sol";
 import { FANtiumAthletesV9 } from "src/FANtiumAthletesV9.sol";
-import { FANtiumClaimingV3 } from "src/FANtiumClaimingV3.sol";
+import { FANtiumClaimingV4 } from "src/FANtiumClaimingV4.sol";
 import { FANtiumMarketplaceV1 } from "src/FANtiumMarketplaceV1.sol";
 import { FANtiumTokenV1 } from "src/FANtiumTokenV1.sol";
 import { FANtiumUserManagerV4 } from "src/FANtiumUserManagerV4.sol";
@@ -48,9 +48,9 @@ contract DeployTestnet is Script {
             )
         );
 
-        FANtiumClaimingV3 fantiumClaim = FANtiumClaimingV3(
+        FANtiumClaimingV4 fantiumClaim = FANtiumClaimingV4(
             UnsafeUpgrades.deployUUPSProxy(
-                address(new FANtiumClaimingV3()), abi.encodeCall(FANtiumClaimingV3.initialize, (ADMIN))
+                address(new FANtiumClaimingV4()), abi.encodeCall(FANtiumClaimingV4.initialize, (ADMIN))
             )
         );
 
