@@ -438,6 +438,29 @@ contract FANtiumClaimingV4 is
     }
 
     /**
+     * Forcefully set the athlete address of a distribution.
+     * Used only in extreme situations when the athletes don't have access to his wallet.
+     * @param distributionId The ID of the distribution
+     * @param newAthlete The new athlete address
+     */
+    function setDistributionAthlete(
+        uint256 distributionId,
+        address payable newAthlete
+    )
+        external
+        onlyAdmin
+        onlyValidDistribution(distributionId)
+    {
+        Distribution storage existingDE = _distributions[distributionId];
+
+        if (newAthlete == address(0)) {
+            revert InvalidDistribution(DistributionErrorReason.INVALID_ADDRESS);
+        }
+
+        existingDE.athleteAddress = newAthlete;
+    }
+
+    /**
      * @notice Pay the distribution amount for a distribution.
      * @param distributionId The ID of the distribution
      */

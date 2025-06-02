@@ -481,6 +481,36 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
         assertEq(fantiumClaiming.distributions(distEventId).closeTime, data2.closeTime, "closeTime is updated");
     }
 
+    // setDistributionAthlete
+    // ========================================================================
+    function test_setDistributionAthlete_ok_success() public {
+        uint256[] memory collectionIdsArray = new uint256[](2);
+        collectionIdsArray[0] = 1;
+        collectionIdsArray[1] = 2;
+
+        // Prepare distribution data
+        DistributionData memory data = DistributionData({
+            collectionIds: collectionIdsArray,
+            athleteAddress: payable(makeAddr("athleteAddress")),
+            totalTournamentEarnings: 10_000 * 10 ** 18,
+            totalOtherEarnings: 5000 * 10 ** 18,
+            fantiumFeeBPS: 500, // 5% fee
+            fantiumAddress: payable(makeAddr("fantiumAddress")),
+            startTime: block.timestamp + 1 days,
+            closeTime: block.timestamp + 2 days
+        });
+
+        vm.prank(fantiumClaiming_admin);
+        uint256 distEventId = fantiumClaiming.createDistribution(data);
+
+        address payable newAthlete = payable(makeAddr("athleteAddress2"));
+
+        vm.prank(fantiumClaiming_admin);
+        fantiumClaiming.setDistributionAthlete(distEventId, newAthlete);
+
+        assertEq(fantiumClaiming.distributions(distEventId).athleteAddress, newAthlete, "athlete address is updated");
+    }
+
     // fundDistribution
     // ========================================================================
     function test_fundDistribution_ok_success() public {
