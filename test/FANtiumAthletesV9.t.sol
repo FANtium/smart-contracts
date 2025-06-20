@@ -13,7 +13,6 @@ import {
     MintErrorReason,
     UpgradeErrorReason
 } from "src/interfaces/IFANtiumAthletes.sol";
-import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { IRescue } from "src/interfaces/IRescue.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 import { BaseTest } from "test/BaseTest.sol";
@@ -169,24 +168,6 @@ contract FANtiumAthletesV9Test is BaseTest, FANtiumAthletesFactory {
 
         // No approval set
         assertFalse(fantiumAthletes.isApprovedForAll(owner, operator));
-    }
-
-    // setUserManager
-    // ========================================================================
-    function test_setUserManager_ok_manager() public {
-        address newUserManager = makeAddr("newUserManager");
-
-        vm.prank(fantiumAthletes_admin);
-        fantiumAthletes.setUserManager(IFANtiumUserManager(newUserManager));
-        assertEq(address(fantiumAthletes.userManager()), newUserManager);
-    }
-
-    function test_setUserManager_ok_admin() public {
-        address newUserManager = makeAddr("newUserManager");
-
-        vm.prank(fantiumAthletes_admin);
-        fantiumAthletes.setUserManager(IFANtiumUserManager(newUserManager));
-        assertEq(address(fantiumAthletes.userManager()), newUserManager);
     }
 
     // createCollection
@@ -718,10 +699,6 @@ contract FANtiumAthletesV9Test is BaseTest, FANtiumAthletesFactory {
             skip(collection.launchTimestamp + 1 days);
         }
 
-        // set user as KYCed
-        vm.prank(userManager_kycManager);
-        userManager.setKYC(recipient, true);
-
         vm.prank(recipient);
         fantiumAthletes.mintable(collectionId, quantity, recipient);
     }
@@ -763,23 +740,6 @@ contract FANtiumAthletesV9Test is BaseTest, FANtiumAthletesFactory {
         fantiumAthletes.mintable(collectionId, quantity, recipient);
     }
 
-    function test_mintable_revert_notKyc() public {
-        uint256 collectionId = 1; // collection 1 is mintable
-        uint24 quantity = 1;
-
-        // ensure that the launch timestamp has passed
-        Collection memory collection = fantiumAthletes.collections(collectionId);
-        if (block.timestamp < collection.launchTimestamp) {
-            skip(collection.launchTimestamp + 1 days);
-        }
-
-        vm.expectRevert(
-            abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.ACCOUNT_NOT_KYCED)
-        );
-        vm.prank(recipient);
-        fantiumAthletes.mintable(collectionId, quantity, recipient);
-    }
-
     function test_mintable_revert_paused() public {
         uint256 collectionId = 5; // collection 5 is paused
         uint24 quantity = 1;
@@ -790,10 +750,6 @@ contract FANtiumAthletesV9Test is BaseTest, FANtiumAthletesFactory {
         if (block.timestamp < collection.launchTimestamp) {
             skip(collection.launchTimestamp + 1 days);
         }
-
-        // set user as KYCed
-        vm.prank(userManager_kycManager);
-        userManager.setKYC(recipient, true);
 
         vm.expectRevert(
             abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.COLLECTION_PAUSED)

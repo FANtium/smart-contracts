@@ -21,7 +21,6 @@ import {
     DistributionFundingErrorReason,
     IFANtiumClaiming
 } from "src/interfaces/IFANtiumClaiming.sol";
-import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 
 /**
@@ -69,12 +68,6 @@ contract FANtiumClaimingV4 is
      * @custom:oz-renamed-from fantiumNFTContract
      */
     IFANtiumAthletes public fantiumAthletes;
-
-    /**
-     * @notice User manager contract address
-     * @custom:oz-renamed-from fantiumUserManager
-     */
-    IFANtiumUserManager public userManager;
 
     /**
      * @dev mapping of distribution to Distribution
@@ -250,10 +243,6 @@ contract FANtiumClaimingV4 is
     // ========================================================================
     function setFANtiumNFT(IFANtiumAthletes _fantiumAthletes) external onlyManagerOrAdmin {
         fantiumAthletes = _fantiumAthletes;
-    }
-
-    function setUserManager(IFANtiumUserManager _userManager) external onlyManagerOrAdmin {
-        userManager = _userManager;
     }
 
     function setGlobalPayoutToken(address _globalPayoutToken) external onlyManagerOrAdmin {
@@ -593,10 +582,6 @@ contract FANtiumClaimingV4 is
 
         if (_msgSender() != fantiumAthletes.ownerOf(tokenId)) {
             revert InvalidClaim(ClaimErrorReason.ONLY_TOKEN_OWNER);
-        }
-
-        if (!userManager.isIDENT(_msgSender())) {
-            revert InvalidClaim(ClaimErrorReason.NOT_IDENTED);
         }
 
         if (existingDE.startTime >= block.timestamp || existingDE.closeTime <= block.timestamp) {

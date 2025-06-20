@@ -23,7 +23,6 @@ import {
     MintErrorReason,
     UpgradeErrorReason
 } from "src/interfaces/IFANtiumAthletes.sol";
-import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { Rescue } from "src/utils/Rescue.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 
@@ -112,11 +111,6 @@ contract FANtiumAthletesV9 is
      * @dev Deprecated: replaced by the TOKEN_UPGRADER_ROLE.
      */
     address private UNUSED_claimContract;
-
-    /**
-     * @dev Use to retrieve user information such as KYC status, IDENT status, and allowlist allocations.
-     */
-    IFANtiumUserManager public userManager;
 
     /**
      * @dev Deprecated: replaced by the FORWARDER_ROLE.
@@ -258,15 +252,6 @@ contract FANtiumAthletesV9 is
      */
     function setBaseURI(string memory baseURI_) external whenNotPaused onlyAdmin {
         baseURI = baseURI_;
-    }
-
-    /**
-     * @notice Sets the user manager.
-     * @dev Restricted to admin.
-     * @param _userManager The new user manager.
-     */
-    function setUserManager(IFANtiumUserManager _userManager) external whenNotPaused onlyAdmin {
-        userManager = _userManager;
     }
 
     /**
@@ -537,17 +522,9 @@ contract FANtiumAthletesV9 is
             revert InvalidMint(MintErrorReason.COLLECTION_NOT_LAUNCHED);
         }
 
-        if (!userManager.isKYCed(recipient)) {
-            revert InvalidMint(MintErrorReason.ACCOUNT_NOT_KYCED);
-        }
-
         // If the collection is paused, we need to check if the recipient is on the allowlist and has enough allocation
         if (collection.isPaused) {
-            useAllowList = true;
-            bool isAllowListed = userManager.allowlist(recipient, collectionId) >= quantity;
-            if (!isAllowListed) {
-                revert InvalidMint(MintErrorReason.COLLECTION_PAUSED);
-            }
+            revert InvalidMint(MintErrorReason.COLLECTION_PAUSED);
         }
 
         return useAllowList;
@@ -589,9 +566,6 @@ contract FANtiumAthletesV9 is
         bool useAllowList = mintable(collectionId, quantity, recipient);
 
         _collections[collectionId].invocations += quantity;
-        if (useAllowList) {
-            userManager.decreaseAllowList(recipient, collectionId, quantity);
-        }
 
         // Send funds to the treasury and athlete account.
         _splitFunds(amount, collectionId, _msgSender());

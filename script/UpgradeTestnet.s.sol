@@ -19,9 +19,6 @@ contract UpgradeTestnet is Script {
     bool public FANTIUM_ATHLETES_UPGRADE = false;
     address public constant FANTIUM_ATHLETES_PROXY = 0x4d09f47fd98196CDFC816be9e84Fb15bCDB92612;
 
-    bool public FANTIUM_USER_MANAGER_UPGRADE = false;
-    address public constant FANTIUM_USER_MANAGER_PROXY = 0x54dF3fb8B090A3FBf583e29e8fBd388A0179F4A2;
-
     bool public FANTIUM_CLAIMING_UPGRADE = true;
     address public constant FANTIUM_CLAIMING_PROXY = 0xB578fb2A0BC49892806DC7309Dbe809f23F4682F;
 
@@ -40,10 +37,6 @@ contract UpgradeTestnet is Script {
         vm.startBroadcast(vm.envUint("ADMIN_PRIVATE_KEY"));
         if (FANTIUM_ATHLETES_UPGRADE) {
             Upgrades.upgradeProxy(FANTIUM_ATHLETES_PROXY, "FANtiumAthletesV9.sol:FANtiumAthletesV9", "");
-        }
-
-        if (FANTIUM_USER_MANAGER_UPGRADE) {
-            Upgrades.upgradeProxy(FANTIUM_USER_MANAGER_PROXY, "FANtiumUserManagerV4.sol:FANtiumUserManagerV4", "");
         }
 
         if (FANTIUM_CLAIMING_UPGRADE) {

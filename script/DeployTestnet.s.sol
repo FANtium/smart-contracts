@@ -9,7 +9,6 @@ import { FANtiumAthletesV9 } from "src/FANtiumAthletesV9.sol";
 import { FANtiumClaimingV4 } from "src/FANtiumClaimingV4.sol";
 import { FANtiumMarketplaceV1 } from "src/FANtiumMarketplaceV1.sol";
 import { FANtiumTokenV1 } from "src/FANtiumTokenV1.sol";
-import { FANtiumUserManagerV4 } from "src/FANtiumUserManagerV4.sol";
 import { FootballTokenV1 } from "src/FootballTokenV1.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 
@@ -39,12 +38,6 @@ contract DeployTestnet is Script {
         FANtiumAthletesV9 fantiumAthletes = FANtiumAthletesV9(
             UnsafeUpgrades.deployUUPSProxy(
                 address(new FANtiumAthletesV9()), abi.encodeCall(FANtiumAthletesV9.initialize, (ADMIN))
-            )
-        );
-
-        FANtiumUserManagerV4 userManager = FANtiumUserManagerV4(
-            UnsafeUpgrades.deployUUPSProxy(
-                address(new FANtiumUserManagerV4()), abi.encodeCall(FANtiumUserManagerV4.initialize, (ADMIN))
             )
         );
 
@@ -80,22 +73,14 @@ contract DeployTestnet is Script {
 
         vm.startBroadcast(vm.envUint("ADMIN_PRIVATE_KEY"));
         // FANtiumNFTV6 setup
-        fantiumAthletes.setUserManager(userManager);
         fantiumAthletes.setERC20PaymentToken(IERC20MetadataUpgradeable(USDC));
 
         fantiumAthletes.grantRole(fantiumAthletes.FORWARDER_ROLE(), GELATO_RELAYER_ERC2771);
         fantiumAthletes.grantRole(fantiumAthletes.SIGNER_ROLE(), BACKEND_SIGNER);
         fantiumAthletes.grantRole(fantiumAthletes.TOKEN_UPGRADER_ROLE(), address(fantiumClaim));
 
-        // FANtiumUserManagerV4 setup
-        userManager.setFANtiumNFT(fantiumAthletes);
-        userManager.grantRole(userManager.FORWARDER_ROLE(), GELATO_RELAYER_ERC2771);
-        userManager.grantRole(userManager.KYC_MANAGER_ROLE(), BACKEND_SIGNER);
-        userManager.grantRole(userManager.ALLOWLIST_MANAGER_ROLE(), BACKEND_SIGNER);
-
         // FANtiumClaimingV2 setup
         fantiumClaim.setFANtiumNFT(fantiumAthletes);
-        fantiumClaim.setUserManager(userManager);
         fantiumClaim.setGlobalPayoutToken(USDC);
 
         vm.stopBroadcast();

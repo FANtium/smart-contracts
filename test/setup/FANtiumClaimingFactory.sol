@@ -31,7 +31,6 @@ contract FANtiumClaimingFactory is BaseTest, FANtiumAthletesFactory {
 
         // Set FANtiumNFT created in the FANtiumAthletesFactory
         fantiumClaiming.setFANtiumNFT(fantiumAthletes);
-        fantiumClaiming.setUserManager(userManager);
         fantiumClaiming.setGlobalPayoutToken(address(usdc));
         vm.stopPrank();
     }

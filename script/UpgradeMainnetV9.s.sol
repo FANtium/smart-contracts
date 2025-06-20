@@ -18,7 +18,6 @@ contract UpgradeMainnetV9 is Script {
 
         Options memory opts;
         Core.prepareUpgrade("FANtiumAthletesV9.sol:FANtiumAthletesV9", opts);
-        Core.prepareUpgrade("FANtiumUserManagerV4.sol:FANtiumUserManagerV4", opts);
         Core.prepareUpgrade("FANtiumClaimingV3.sol:FANtiumClaimingV3", opts);
         vm.stopBroadcast();
     }
