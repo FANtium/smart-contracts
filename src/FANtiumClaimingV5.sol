@@ -21,7 +21,6 @@ import {
     DistributionFundingErrorReason,
     IFANtiumClaiming
 } from "src/interfaces/IFANtiumClaiming.sol";
-import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 
 /**
@@ -29,9 +28,9 @@ import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
  * @notice This contract is used to manage distributions and claim payouts for FAN token holders.
  * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
  *
- * @custom:oz-upgrades-from src/archive/FANtiumClaimingV3.sol:FANtiumClaimingV3
+ * @custom:oz-upgrades-from src/archive/FANtiumClaimingV4.sol:FANtiumClaimingV4
  */
-contract FANtiumClaimingV4 is
+contract FANtiumClaimingV5 is
     Initializable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
@@ -64,6 +63,7 @@ contract FANtiumClaimingV4 is
      * @custom:oz-renamed-from trustedForwarder
      */
     address private UNUSED_trustedForwarder;
+
     /**
      * @notice FANtium NFT contract address.
      * @custom:oz-renamed-from fantiumNFTContract
@@ -71,10 +71,10 @@ contract FANtiumClaimingV4 is
     IFANtiumAthletes public fantiumAthletes;
 
     /**
-     * @notice User manager contract address
-     * @custom:oz-renamed-from fantiumUserManager
+     * @dev Deprecated: kept for upgrade compatibility
+     * @custom:oz-renamed-from userManager
      */
-    IFANtiumUserManager public userManager;
+    address private UNUSED_userManager;
 
     /**
      * @dev mapping of distribution to Distribution
@@ -250,10 +250,6 @@ contract FANtiumClaimingV4 is
     // ========================================================================
     function setFANtiumNFT(IFANtiumAthletes _fantiumAthletes) external onlyManagerOrAdmin {
         fantiumAthletes = _fantiumAthletes;
-    }
-
-    function setUserManager(IFANtiumUserManager _userManager) external onlyManagerOrAdmin {
-        userManager = _userManager;
     }
 
     function setGlobalPayoutToken(address _globalPayoutToken) external onlyManagerOrAdmin {
@@ -593,10 +589,6 @@ contract FANtiumClaimingV4 is
 
         if (_msgSender() != fantiumAthletes.ownerOf(tokenId)) {
             revert InvalidClaim(ClaimErrorReason.ONLY_TOKEN_OWNER);
-        }
-
-        if (!userManager.isIDENT(_msgSender())) {
-            revert InvalidClaim(ClaimErrorReason.NOT_IDENTED);
         }
 
         if (existingDE.startTime >= block.timestamp || existingDE.closeTime <= block.timestamp) {

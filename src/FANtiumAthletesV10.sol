@@ -23,16 +23,15 @@ import {
     MintErrorReason,
     UpgradeErrorReason
 } from "src/interfaces/IFANtiumAthletes.sol";
-import { IFANtiumUserManager } from "src/interfaces/IFANtiumUserManager.sol";
 import { Rescue } from "src/utils/Rescue.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 
 /**
- * @title FANtium Athletes ERC721 contract V9.
+ * @title FANtium Athletes ERC721 contract V10.
  * @author Mathieu Bour, Alex Chernetsky - FANtium AG, based on previous work by MTX studio AG.
- * @custom:oz-upgrades-from src/archive/FANtiumNFTV8.sol:FANtiumNFTV8
+ * @custom:oz-upgrades-from src/archive/FANtiumAthletesV9.sol:FANtiumAthletesV9
  */
-contract FANtiumAthletesV9 is
+contract FANtiumAthletesV10 is
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
@@ -114,9 +113,10 @@ contract FANtiumAthletesV9 is
     address private UNUSED_claimContract;
 
     /**
-     * @dev Use to retrieve user information such as KYC status, IDENT status, and allowlist allocations.
+     * @dev Deprecated: kept for upgrade compatibility
+     * @custom:oz-renamed-from userManager
      */
-    IFANtiumUserManager public userManager;
+    address private UNUSED_userManager;
 
     /**
      * @dev Deprecated: replaced by the FORWARDER_ROLE.
@@ -258,15 +258,6 @@ contract FANtiumAthletesV9 is
      */
     function setBaseURI(string memory baseURI_) external whenNotPaused onlyAdmin {
         baseURI = baseURI_;
-    }
-
-    /**
-     * @notice Sets the user manager.
-     * @dev Restricted to admin.
-     * @param _userManager The new user manager.
-     */
-    function setUserManager(IFANtiumUserManager _userManager) external whenNotPaused onlyAdmin {
-        userManager = _userManager;
     }
 
     /**
@@ -515,19 +506,8 @@ contract FANtiumAthletesV9 is
     /**
      * @notice Checks if a mint is possible for a collection
      * @param collectionId Collection ID.
-     * @param quantity Amount of tokens to mint.
-     * @param recipient Recipient of the mint.
      */
-    function mintable(
-        uint256 collectionId,
-        uint24 quantity,
-        address recipient
-    )
-        public
-        view
-        onlyValidCollectionId(collectionId)
-        returns (bool useAllowList)
-    {
+    function mintable(uint256 collectionId) public view onlyValidCollectionId(collectionId) {
         Collection memory collection = _collections[collectionId];
         if (!collection.isMintable) {
             revert InvalidMint(MintErrorReason.COLLECTION_NOT_MINTABLE);
@@ -537,20 +517,10 @@ contract FANtiumAthletesV9 is
             revert InvalidMint(MintErrorReason.COLLECTION_NOT_LAUNCHED);
         }
 
-        if (!userManager.isKYCed(recipient)) {
-            revert InvalidMint(MintErrorReason.ACCOUNT_NOT_KYCED);
-        }
-
         // If the collection is paused, we need to check if the recipient is on the allowlist and has enough allocation
         if (collection.isPaused) {
-            useAllowList = true;
-            bool isAllowListed = userManager.allowlist(recipient, collectionId) >= quantity;
-            if (!isAllowListed) {
-                revert InvalidMint(MintErrorReason.COLLECTION_PAUSED);
-            }
+            revert InvalidMint(MintErrorReason.COLLECTION_PAUSED);
         }
-
-        return useAllowList;
     }
 
     /**
@@ -586,12 +556,9 @@ contract FANtiumAthletesV9 is
         Collection memory collection = _collections[collectionId];
         uint256 tokenId = (collectionId * MAX_COLLECTIONS) + collection.invocations;
 
-        bool useAllowList = mintable(collectionId, quantity, recipient);
+        mintable(collectionId);
 
         _collections[collectionId].invocations += quantity;
-        if (useAllowList) {
-            userManager.decreaseAllowList(recipient, collectionId, quantity);
-        }
 
         // Send funds to the treasury and athlete account.
         _splitFunds(amount, collectionId, _msgSender());

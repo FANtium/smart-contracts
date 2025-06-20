@@ -5,11 +5,10 @@ import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import { FANtiumAthletesV9 } from "src/FANtiumAthletesV9.sol";
+import { FANtiumAthletesV10 } from "src/FANtiumAthletesV10.sol";
 import { Collection, CollectionData } from "src/interfaces/IFANtiumAthletes.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { BaseTest } from "test/BaseTest.sol";
-import { FANtiumUserManagerFactory } from "test/setup/FANtiumUserManagerFactory.sol";
 
 /**
  * @notice Collection data structure for deserialization.
@@ -32,7 +31,7 @@ struct CollectionJson {
     uint256 tournamentEarningShare1e7;
 }
 
-contract FANtiumAthletesFactory is BaseTest, FANtiumUserManagerFactory {
+contract FANtiumAthletesFactory is BaseTest {
     using ECDSA for bytes32;
 
     address public fantiumAthletes_admin = makeAddr("admin");
@@ -47,18 +46,17 @@ contract FANtiumAthletesFactory is BaseTest, FANtiumUserManagerFactory {
     ERC20 public usdc;
     address public fantiumAthletes_implementation;
     address public fantiumAthletes_proxy;
-    FANtiumAthletesV9 public fantiumAthletes;
+    FANtiumAthletesV10 public fantiumAthletes;
 
-    function setUp() public virtual override {
+    function setUp() public virtual {
         (fantiumAthletes_signer, fantiumAthletes_signerKey) = makeAddrAndKey("rewarder");
-        FANtiumUserManagerFactory.setUp();
 
         usdc = new ERC20("USD Coin", "USDC");
-        fantiumAthletes_implementation = address(new FANtiumAthletesV9());
+        fantiumAthletes_implementation = address(new FANtiumAthletesV10());
         fantiumAthletes_proxy = UnsafeUpgrades.deployUUPSProxy(
-            fantiumAthletes_implementation, abi.encodeCall(FANtiumAthletesV9.initialize, (fantiumAthletes_admin))
+            fantiumAthletes_implementation, abi.encodeCall(FANtiumAthletesV10.initialize, (fantiumAthletes_admin))
         );
-        fantiumAthletes = FANtiumAthletesV9(fantiumAthletes_proxy);
+        fantiumAthletes = FANtiumAthletesV10(fantiumAthletes_proxy);
 
         // Configure roles
         vm.startPrank(fantiumAthletes_admin);
@@ -66,7 +64,6 @@ contract FANtiumAthletesFactory is BaseTest, FANtiumUserManagerFactory {
         fantiumAthletes.grantRole(fantiumAthletes.SIGNER_ROLE(), fantiumAthletes_signer);
         fantiumAthletes.grantRole(fantiumAthletes.TOKEN_UPGRADER_ROLE(), fantiumAthletes_tokenUpgrader);
         fantiumAthletes.setERC20PaymentToken(IERC20MetadataUpgradeable(address(usdc)));
-        fantiumAthletes.setUserManager(userManager);
         fantiumAthletes.setBaseURI("https://app.fantium.com/api/metadata/");
         fantiumAthletes.setTreasury(fantiumAthletes_treasuryPrimary);
 
@@ -119,9 +116,6 @@ contract FANtiumAthletesFactory is BaseTest, FANtiumUserManagerFactory {
 
         deal(address(usdc), recipient, amountUSDC);
 
-        vm.prank(userManager_kycManager);
-        userManager.setKYC(recipient, true);
-
         vm.prank(recipient);
         usdc.approve(address(fantiumAthletes), amountUSDC);
     }
@@ -152,9 +146,6 @@ contract FANtiumAthletesFactory is BaseTest, FANtiumUserManagerFactory {
         }
 
         deal(address(usdc), recipient, amountUSDC);
-
-        vm.prank(userManager_kycManager);
-        userManager.setKYC(recipient, true);
 
         vm.prank(recipient);
         usdc.approve(address(fantiumAthletes), amountUSDC);
