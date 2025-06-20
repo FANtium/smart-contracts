@@ -16,10 +16,10 @@ contract UpgradeTestnet is Script {
     address public constant BACKEND_SIGNER = 0xCAFE914D4886B50edD339eee2BdB5d2350fdC809;
     address public constant DEPLOYER = 0xC0DE5408A46402B7Bd13678A43318c64E2c31EAA;
 
-    bool public FANTIUM_ATHLETES_UPGRADE = false;
+    bool public FANTIUM_ATHLETES_UPGRADE = true;
     address public constant FANTIUM_ATHLETES_PROXY = 0x4d09f47fd98196CDFC816be9e84Fb15bCDB92612;
 
-    bool public FANTIUM_CLAIMING_UPGRADE = true;
+    bool public FANTIUM_CLAIMING_UPGRADE = false;
     address public constant FANTIUM_CLAIMING_PROXY = 0xB578fb2A0BC49892806DC7309Dbe809f23F4682F;
 
     bool public FANTIUM_TOKEN_UPGRADE = false;
