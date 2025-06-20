@@ -5,8 +5,8 @@ import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Script } from "forge-std/Script.sol";
-import { FANtiumAthletesV9 } from "src/FANtiumAthletesV9.sol";
-import { FANtiumClaimingV4 } from "src/FANtiumClaimingV4.sol";
+import { FANtiumAthletesV10 } from "src/FANtiumAthletesV10.sol";
+import { FANtiumClaimingV5 } from "src/FANtiumClaimingV5.sol";
 import { FANtiumMarketplaceV1 } from "src/FANtiumMarketplaceV1.sol";
 import { FANtiumTokenV1 } from "src/FANtiumTokenV1.sol";
 import { FootballTokenV1 } from "src/FootballTokenV1.sol";
@@ -35,15 +35,15 @@ contract DeployTestnet is Script {
 
     function run() public {
         vm.startBroadcast(vm.envUint("DEPLOYER_PRIVATE_KEY"));
-        FANtiumAthletesV9 fantiumAthletes = FANtiumAthletesV9(
+        FANtiumAthletesV10 fantiumAthletes = FANtiumAthletesV10(
             UnsafeUpgrades.deployUUPSProxy(
-                address(new FANtiumAthletesV9()), abi.encodeCall(FANtiumAthletesV9.initialize, (ADMIN))
+                address(new FANtiumAthletesV10()), abi.encodeCall(FANtiumAthletesV10.initialize, (ADMIN))
             )
         );
 
-        FANtiumClaimingV4 fantiumClaim = FANtiumClaimingV4(
+        FANtiumClaimingV5 fantiumClaim = FANtiumClaimingV5(
             UnsafeUpgrades.deployUUPSProxy(
-                address(new FANtiumClaimingV4()), abi.encodeCall(FANtiumClaimingV4.initialize, (ADMIN))
+                address(new FANtiumClaimingV5()), abi.encodeCall(FANtiumClaimingV5.initialize, (ADMIN))
             )
         );
 

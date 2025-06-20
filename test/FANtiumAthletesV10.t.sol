@@ -18,7 +18,7 @@ import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumAthletesFactory } from "test/setup/FANtiumAthletesFactory.sol";
 
-contract FANtiumAthletesV9Test is BaseTest, FANtiumAthletesFactory {
+contract FANtiumAthletesV10Test is BaseTest, FANtiumAthletesFactory {
     using ECDSA for bytes32;
     using Strings for uint256;
 
@@ -691,7 +691,6 @@ contract FANtiumAthletesV9Test is BaseTest, FANtiumAthletesFactory {
     // ========================================================================
     function test_mintable_ok() public {
         uint256 collectionId = 1; // collection 1 is mintable
-        uint24 quantity = 1;
 
         // ensure that the launch timestamp has passed
         Collection memory collection = fantiumAthletes.collections(collectionId);
@@ -700,20 +699,18 @@ contract FANtiumAthletesV9Test is BaseTest, FANtiumAthletesFactory {
         }
 
         vm.prank(recipient);
-        fantiumAthletes.mintable(collectionId, quantity, recipient);
+        fantiumAthletes.mintable(collectionId);
     }
 
     function test_mintable_revert_invalidCollectionId() public {
         uint256 collectionId = 999_999; // collection 999_999 does not exist
-        uint24 quantity = 1;
 
         vm.expectRevert(abi.encodeWithSelector(IFANtiumAthletes.InvalidCollectionId.selector, collectionId));
-        fantiumAthletes.mintable(collectionId, quantity, recipient);
+        fantiumAthletes.mintable(collectionId);
     }
 
     function test_mintable_revert_notMintable() public {
         uint256 collectionId = 1; // collection 1 is mintable
-        uint24 quantity = 1;
 
         vm.prank(fantiumAthletes_admin);
         fantiumAthletes.setCollectionStatus(collectionId, false, true);
@@ -722,12 +719,11 @@ contract FANtiumAthletesV9Test is BaseTest, FANtiumAthletesFactory {
             abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.COLLECTION_NOT_MINTABLE)
         );
         vm.prank(recipient);
-        fantiumAthletes.mintable(collectionId, quantity, recipient);
+        fantiumAthletes.mintable(collectionId);
     }
 
     function test_mintable_revert_notLaunched() public {
         uint256 collectionId = 1; // collection 1 is mintable
-        uint24 quantity = 1;
 
         Collection memory collection = fantiumAthletes.collections(collectionId);
         if (block.timestamp > collection.launchTimestamp) {
@@ -737,12 +733,11 @@ contract FANtiumAthletesV9Test is BaseTest, FANtiumAthletesFactory {
         vm.expectRevert(
             abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.COLLECTION_NOT_LAUNCHED)
         );
-        fantiumAthletes.mintable(collectionId, quantity, recipient);
+        fantiumAthletes.mintable(collectionId);
     }
 
     function test_mintable_revert_paused() public {
         uint256 collectionId = 5; // collection 5 is paused
-        uint24 quantity = 1;
         assertTrue(fantiumAthletes.collections(collectionId).isPaused);
 
         // ensure that the launch timestamp has passed
@@ -755,7 +750,7 @@ contract FANtiumAthletesV9Test is BaseTest, FANtiumAthletesFactory {
             abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.COLLECTION_PAUSED)
         );
         vm.prank(recipient);
-        fantiumAthletes.mintable(collectionId, quantity, recipient);
+        fantiumAthletes.mintable(collectionId);
     }
 
     // getPrimaryRevenueSplits

@@ -28,9 +28,9 @@ import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
  * @notice This contract is used to manage distributions and claim payouts for FAN token holders.
  * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
  *
- * @custom:oz-upgrades-from src/archive/FANtiumClaimingV3.sol:FANtiumClaimingV3
+ * @custom:oz-upgrades-from src/archive/FANtiumClaimingV4.sol:FANtiumClaimingV4
  */
-contract FANtiumClaimingV4 is
+contract FANtiumClaimingV5 is
     Initializable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
@@ -71,9 +71,10 @@ contract FANtiumClaimingV4 is
     IFANtiumAthletes public fantiumAthletes;
 
     /**
-     * @dev Deprecated - kept for upgrade compatibility
+     * @dev Deprecated: kept for upgrade compatibility
+     * @custom:oz-renamed-from userManager
      */
-    address private userManager;
+    address private UNUSED_userManager;
 
     /**
      * @dev mapping of distribution to Distribution

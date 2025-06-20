@@ -5,7 +5,7 @@ import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import { FANtiumAthletesV9 } from "src/FANtiumAthletesV9.sol";
+import { FANtiumAthletesV10 } from "src/FANtiumAthletesV10.sol";
 import { Collection, CollectionData } from "src/interfaces/IFANtiumAthletes.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { BaseTest } from "test/BaseTest.sol";
@@ -46,17 +46,17 @@ contract FANtiumAthletesFactory is BaseTest {
     ERC20 public usdc;
     address public fantiumAthletes_implementation;
     address public fantiumAthletes_proxy;
-    FANtiumAthletesV9 public fantiumAthletes;
+    FANtiumAthletesV10 public fantiumAthletes;
 
     function setUp() public virtual {
         (fantiumAthletes_signer, fantiumAthletes_signerKey) = makeAddrAndKey("rewarder");
 
         usdc = new ERC20("USD Coin", "USDC");
-        fantiumAthletes_implementation = address(new FANtiumAthletesV9());
+        fantiumAthletes_implementation = address(new FANtiumAthletesV10());
         fantiumAthletes_proxy = UnsafeUpgrades.deployUUPSProxy(
-            fantiumAthletes_implementation, abi.encodeCall(FANtiumAthletesV9.initialize, (fantiumAthletes_admin))
+            fantiumAthletes_implementation, abi.encodeCall(FANtiumAthletesV10.initialize, (fantiumAthletes_admin))
         );
-        fantiumAthletes = FANtiumAthletesV9(fantiumAthletes_proxy);
+        fantiumAthletes = FANtiumAthletesV10(fantiumAthletes_proxy);
 
         // Configure roles
         vm.startPrank(fantiumAthletes_admin);

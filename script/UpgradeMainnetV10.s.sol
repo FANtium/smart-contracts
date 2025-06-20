@@ -5,7 +5,7 @@ import { Options } from "@openzeppelin/foundry-upgrades/Options.sol";
 import { Core } from "@openzeppelin/foundry-upgrades/internal/Core.sol";
 import { Script } from "forge-std/Script.sol";
 
-contract UpgradeMainnetV9 is Script {
+contract UpgradeMainnetV10 is Script {
     error OnlyPolygonMainnet();
 
     function run() public {
@@ -17,8 +17,8 @@ contract UpgradeMainnetV9 is Script {
         vm.startBroadcast(vm.envUint("DEPLOYER_PRIVATE_KEY"));
 
         Options memory opts;
-        Core.prepareUpgrade("FANtiumAthletesV9.sol:FANtiumAthletesV9", opts);
-        Core.prepareUpgrade("FANtiumClaimingV3.sol:FANtiumClaimingV3", opts);
+        Core.prepareUpgrade("FANtiumAthletesV10.sol:FANtiumAthletesV10", opts);
+        Core.prepareUpgrade("FANtiumClaimingV5.sol:FANtiumClaimingV5", opts);
         vm.stopBroadcast();
     }
 }

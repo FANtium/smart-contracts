@@ -36,11 +36,11 @@ contract UpgradeTestnet is Script {
         vm.createSelectFork(vm.rpcUrl("amoy"));
         vm.startBroadcast(vm.envUint("ADMIN_PRIVATE_KEY"));
         if (FANTIUM_ATHLETES_UPGRADE) {
-            Upgrades.upgradeProxy(FANTIUM_ATHLETES_PROXY, "FANtiumAthletesV9.sol:FANtiumAthletesV9", "");
+            Upgrades.upgradeProxy(FANTIUM_ATHLETES_PROXY, "FANtiumAthletesV10.sol:FANtiumAthletesV10", "");
         }
 
         if (FANTIUM_CLAIMING_UPGRADE) {
-            Upgrades.upgradeProxy(FANTIUM_CLAIMING_PROXY, "FANtiumClaimingV4.sol:FANtiumClaimingV4", "");
+            Upgrades.upgradeProxy(FANTIUM_CLAIMING_PROXY, "FANtiumClaimingV5.sol:FANtiumClaimingV5", "");
         }
 
         if (FANTIUM_TOKEN_UPGRADE) {
