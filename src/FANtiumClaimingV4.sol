@@ -63,6 +63,12 @@ contract FANtiumClaimingV4 is
      * @custom:oz-renamed-from trustedForwarder
      */
     address private UNUSED_trustedForwarder;
+
+    /**
+     * @dev Deprecated - kept for upgrade compatibility
+     */
+    address private userManager;
+
     /**
      * @notice FANtium NFT contract address.
      * @custom:oz-renamed-from fantiumNFTContract

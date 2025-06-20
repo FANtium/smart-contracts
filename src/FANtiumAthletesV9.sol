@@ -113,6 +113,11 @@ contract FANtiumAthletesV9 is
     address private UNUSED_claimContract;
 
     /**
+     * @dev Deprecated - kept for upgrade compatibility
+     */
+    address private userManager;
+
+    /**
      * @dev Deprecated: replaced by the FORWARDER_ROLE.
      */
     address private UNUSED_trustedForwarder;
