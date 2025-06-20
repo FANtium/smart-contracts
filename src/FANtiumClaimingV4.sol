@@ -65,15 +65,15 @@ contract FANtiumClaimingV4 is
     address private UNUSED_trustedForwarder;
 
     /**
-     * @dev Deprecated - kept for upgrade compatibility
-     */
-    address private userManager;
-
-    /**
      * @notice FANtium NFT contract address.
      * @custom:oz-renamed-from fantiumNFTContract
      */
     IFANtiumAthletes public fantiumAthletes;
+
+    /**
+     * @dev Deprecated - kept for upgrade compatibility
+     */
+    address private userManager;
 
     /**
      * @dev mapping of distribution to Distribution
