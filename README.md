@@ -16,8 +16,8 @@ All of our smart contracts are deployed on the testnet and mainnet. You can find
 
 | Contract name                                   | Proxy Address                                                                                                              | Implementation Address                                                                                                          |
 | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| [`FANtiumClaim`](src/FANtiumClaimV5.sol)        | [`0x534db6CE612486F179ef821a57ee93F44718a002`](https://polygonscan.com/address/0x534db6CE612486F179ef821a57ee93F44718a002) | [`0xEbE9785212666d4D9aEE17f83cB3d1eC3D6F0b39`](https://polygonscan.com/address/0xEbE9785212666d4D9aEE17f83cB3d1eC3D6F0b39#code) |
-| [`FANtiumAthletes`](src/FANtiumAthletesV10.sol) | [`0x2b98132E7cfd88C5D854d64f436372838A9BA49d`](https://polygonscan.com/address/0x2b98132E7cfd88C5D854d64f436372838A9BA49d) | [`0x986D3264B35b52a1cbbDa36f3be7a23a9601aB27`](https://polygonscan.com/address/0x986D3264B35b52a1cbbDa36f3be7a23a9601aB27#code) |
+| [`FANtiumClaim`](src/FANtiumClaimV5.sol)        | [`0x534db6CE612486F179ef821a57ee93F44718a002`](https://polygonscan.com/address/0x534db6CE612486F179ef821a57ee93F44718a002) | [`0x6F321Cd2eDdB5a5F7AFA2B26362dedB1913D827A`](https://polygonscan.com/address/0x6F321Cd2eDdB5a5F7AFA2B26362dedB1913D827A#code) |
+| [`FANtiumAthletes`](src/FANtiumAthletesV10.sol) | [`0x2b98132E7cfd88C5D854d64f436372838A9BA49d`](https://polygonscan.com/address/0x2b98132E7cfd88C5D854d64f436372838A9BA49d) | [`0x00bf44FcCB08E8Fc2f57eDBC97F6ab5662F49489`](https://polygonscan.com/address/0x00bf44FcCB08E8Fc2f57eDBC97F6ab5662F49489#code) |
 
 ### Polygon Amoy Testnet
 
