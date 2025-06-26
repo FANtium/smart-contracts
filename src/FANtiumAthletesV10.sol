@@ -657,6 +657,11 @@ contract FANtiumAthletesV10 is
     // todo: 3. change contract version to v11
     // todo: 4. deploy updated contract to dev
     // todo: 5. remove old mintTo functions
+    /**
+     * @notice Purchase NFTs from the sale.
+     * @param mintRequest All the data required for purchase: collectionId, quantity, recipient etc.
+     * @param signature The backend-generated signature for user purchasing the athlete NFT
+     */
     function mintTo(
         MintRequest calldata mintRequest,
         bytes calldata signature
@@ -671,6 +676,8 @@ contract FANtiumAthletesV10 is
         if (mintRequest.verificationStatus.level < 1) {
             revert InvalidMint(MintErrorReason.ACCOUNT_NOT_KYCED);
         }
+
+        // todo: check if expiresAt < now
 
         uint256 amount = _expectedPrice(mintRequest.collectionId, mintRequest.quantity);
         return _mintTo(mintRequest.collectionId, mintRequest.quantity, amount, mintRequest.recipient);
