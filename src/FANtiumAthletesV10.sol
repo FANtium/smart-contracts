@@ -63,10 +63,6 @@ contract FANtiumAthletesV10 is
     uint256 private constant MAX_COLLECTIONS = 1_000_000;
     uint256 private constant MAX_INVOCATIONS = 10_000;
 
-    /// @notice EIP-712 typehash for KYC status struct
-    bytes32 public constant VERIFICATION_STATUS_TYPEHASH =
-        keccak256("VerificationStatus(address account,uint8 level,uint256 expiresAt)");
-
     // Roles
     // ========================================================================
     bytes32 public constant FORWARDER_ROLE = keccak256("FORWARDER_ROLE");
@@ -83,6 +79,10 @@ contract FANtiumAthletesV10 is
      * @dev Used by the marketplace to approve transfers.
      */
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
+
+    /// @notice EIP-712 typehash for KYC status struct
+    bytes32 public constant VERIFICATION_STATUS_TYPEHASH =
+        keccak256("VerificationStatus(address account,uint8 level,uint256 expiresAt)");
 
     // ========================================================================
     // State variables
@@ -652,7 +652,7 @@ contract FANtiumAthletesV10 is
         }
     }
 
-    // todo: 1. implement mintTo fn
+    // todo: 1. implement new mintTo fn
     // todo: 2. add new tests
     // todo: 3. change contract version to v11
     // todo: 4. deploy updated contract to dev
