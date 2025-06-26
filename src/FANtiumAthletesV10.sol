@@ -657,7 +657,14 @@ contract FANtiumAthletesV10 is
     // todo: 3. change contract version to v11
     // todo: 4. deploy updated contract to dev
     // todo: 5. remove old mintTo functions
-    function mintTo(MintRequest calldata mintRequest, bytes calldata signature) external {
+    function mintTo(
+        MintRequest calldata mintRequest,
+        bytes calldata signature
+    )
+        public
+        whenNotPaused
+        returns (uint256)
+    {
         _verifySignature(mintRequest.verificationStatus, signature);
 
         // purchase requires AML check (level 1)
