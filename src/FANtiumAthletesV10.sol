@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
+import "./interfaces/IFANtiumAthletes.sol";
+
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {
     ERC721Upgradeable,
@@ -15,6 +20,9 @@ import {
 } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
+
+import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
 import {
     Collection,
     CollectionData,
@@ -38,7 +46,8 @@ contract FANtiumAthletesV10 is
     AccessControlUpgradeable,
     PausableUpgradeable,
     Rescue,
-    IFANtiumAthletes
+    IFANtiumAthletes,
+    EIP712Upgradeable
 {
     using StringsUpgradeable for uint256;
     using ECDSAUpgradeable for bytes32;
@@ -53,6 +62,10 @@ contract FANtiumAthletesV10 is
     uint256 private constant BPS_BASE = 10_000;
     uint256 private constant MAX_COLLECTIONS = 1_000_000;
     uint256 private constant MAX_INVOCATIONS = 10_000;
+
+    /// @notice EIP-712 typehash for KYC status struct
+    bytes32 public constant VERIFICATION_STATUS_TYPEHASH =
+        keccak256("VerificationStatus(address account,uint8 level,uint256 expiresAt)");
 
     // Roles
     // ========================================================================
@@ -153,7 +166,7 @@ contract FANtiumAthletesV10 is
         __UUPSUpgradeable_init();
         __AccessControl_init();
         __Pausable_init();
-
+        __EIP712_init("FANtium", "10");
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         nextCollectionId = 1;
     }
@@ -613,6 +626,47 @@ contract FANtiumAthletesV10 is
 
         nonces[recipient]++;
         return _mintTo(collectionId, quantity, amount, recipient);
+    }
+
+    // ========================================================================
+    /**
+     * @dev Verifies the KYC status signature
+     * @param verificationStatus The KYC status to verify
+     * @param signature The backend-generated signature for user purchasing the athlete NFT
+     */
+    function _verifySignature(VerificationStatus calldata verificationStatus, bytes calldata signature) internal view {
+        bytes32 kycStatusHash = keccak256(
+            abi.encode(
+                VERIFICATION_STATUS_TYPEHASH,
+                verificationStatus.account,
+                verificationStatus.level,
+                verificationStatus.expiresAt
+            )
+        );
+
+        bytes32 digest = _hashTypedDataV4(kycStatusHash);
+        address signer = ECDSA.recover(digest, signature);
+
+        if (!hasRole(SIGNER_ROLE, signer)) {
+            revert InvalidMint(MintErrorReason.INVALID_SIGNATURE);
+        }
+    }
+
+    // todo: 1. implement mintTo fn
+    // todo: 2. add new tests
+    // todo: 3. change contract version to v11
+    // todo: 4. deploy updated contract to dev
+    // todo: 5. remove old mintTo functions
+    function mintTo(MintRequest calldata mintRequest, bytes calldata signature) external {
+        _verifySignature(mintRequest.verificationStatus, signature);
+
+        // purchase requires AML check (level 1)
+        if (mintRequest.verificationStatus.level < 1) {
+            revert InvalidMint(MintErrorReason.ACCOUNT_NOT_KYCED);
+        }
+
+        uint256 amount = _expectedPrice(mintRequest.collectionId, mintRequest.quantity);
+        return _mintTo(mintRequest.collectionId, mintRequest.quantity, amount, mintRequest.recipient);
     }
 
     // ========================================================================
