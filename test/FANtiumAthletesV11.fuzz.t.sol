@@ -6,7 +6,7 @@ import { Collection, CollectionData, IFANtiumAthletes } from "src/interfaces/IFA
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumAthletesFactory } from "test/setup/FANtiumAthletesFactory.sol";
 
-contract FANtiumAthletesV10FuzzTest is BaseTest, FANtiumAthletesFactory {
+contract FANtiumAthletesV11FuzzTest is BaseTest, FANtiumAthletesFactory {
     function setUp() public override {
         FANtiumAthletesFactory.setUp();
     }

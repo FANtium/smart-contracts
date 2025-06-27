@@ -5,7 +5,7 @@ import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Script } from "forge-std/Script.sol";
-import { FANtiumAthletesV10 } from "src/FANtiumAthletesV10.sol";
+import { FANtiumAthletesV11 } from "src/FANtiumAthletesV11.sol";
 import { FANtiumClaimingV5 } from "src/FANtiumClaimingV5.sol";
 import { FANtiumMarketplaceV1 } from "src/FANtiumMarketplaceV1.sol";
 import { FANtiumTokenV1 } from "src/FANtiumTokenV1.sol";
@@ -35,9 +35,9 @@ contract DeployTestnet is Script {
 
     function run() public {
         vm.startBroadcast(vm.envUint("DEPLOYER_PRIVATE_KEY"));
-        FANtiumAthletesV10 fantiumAthletes = FANtiumAthletesV10(
+        FANtiumAthletesV11 fantiumAthletes = FANtiumAthletesV11(
             UnsafeUpgrades.deployUUPSProxy(
-                address(new FANtiumAthletesV10()), abi.encodeCall(FANtiumAthletesV10.initialize, (ADMIN))
+                address(new FANtiumAthletesV11()), abi.encodeCall(FANtiumAthletesV11.initialize, (ADMIN))
             )
         );
 

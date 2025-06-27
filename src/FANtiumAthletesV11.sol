@@ -39,7 +39,7 @@ import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
  * @author Mathieu Bour, Alex Chernetsky - FANtium AG, based on previous work by MTX studio AG.
  * @custom:oz-upgrades-from src/archive/FANtiumAthletesV9.sol:FANtiumAthletesV9
  */
-contract FANtiumAthletesV10 is
+contract FANtiumAthletesV11 is
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,

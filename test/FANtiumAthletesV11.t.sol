@@ -21,7 +21,7 @@ import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumAthletesFactory } from "test/setup/FANtiumAthletesFactory.sol";
 import { EIP712Signer } from "test/utils/EIP712Signer.sol";
 
-contract FANtiumAthletesV10Test is BaseTest, EIP712Signer, FANtiumAthletesFactory {
+contract FANtiumAthletesV11Test is BaseTest, EIP712Signer, FANtiumAthletesFactory {
     using ECDSA for bytes32;
     using Strings for uint256;
 
