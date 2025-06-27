@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import { EIP712Domain } from "../utils/EIP712Signer.sol";
 import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import { FANtiumAthletesV10 } from "src/FANtiumAthletesV10.sol";
-import { Collection, CollectionData } from "src/interfaces/IFANtiumAthletes.sol";
+import { FANtiumAthletesV11 } from "src/FANtiumAthletesV11.sol";
+import { Collection, CollectionData, VerificationStatus } from "src/interfaces/IFANtiumAthletes.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { BaseTest } from "test/BaseTest.sol";
 
@@ -46,17 +47,19 @@ contract FANtiumAthletesFactory is BaseTest {
     ERC20 public usdc;
     address public fantiumAthletes_implementation;
     address public fantiumAthletes_proxy;
-    FANtiumAthletesV10 public fantiumAthletes;
+    FANtiumAthletesV11 public fantiumAthletes;
+
+    EIP712Domain athletesDomain;
 
     function setUp() public virtual {
         (fantiumAthletes_signer, fantiumAthletes_signerKey) = makeAddrAndKey("rewarder");
 
         usdc = new ERC20("USD Coin", "USDC");
-        fantiumAthletes_implementation = address(new FANtiumAthletesV10());
+        fantiumAthletes_implementation = address(new FANtiumAthletesV11());
         fantiumAthletes_proxy = UnsafeUpgrades.deployUUPSProxy(
-            fantiumAthletes_implementation, abi.encodeCall(FANtiumAthletesV10.initialize, (fantiumAthletes_admin))
+            fantiumAthletes_implementation, abi.encodeCall(FANtiumAthletesV11.initialize, (fantiumAthletes_admin))
         );
-        fantiumAthletes = FANtiumAthletesV10(fantiumAthletes_proxy);
+        fantiumAthletes = FANtiumAthletesV11(fantiumAthletes_proxy);
 
         // Configure roles
         vm.startPrank(fantiumAthletes_admin);
@@ -66,6 +69,10 @@ contract FANtiumAthletesFactory is BaseTest {
         fantiumAthletes.setERC20PaymentToken(IERC20MetadataUpgradeable(address(usdc)));
         fantiumAthletes.setBaseURI("https://app.fantium.com/api/metadata/");
         fantiumAthletes.setTreasury(fantiumAthletes_treasuryPrimary);
+
+        (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) =
+            fantiumAthletes.eip712Domain();
+        athletesDomain = EIP712Domain(name, version, chainId, verifyingContract);
 
         // Configure collections
         CollectionJson[] memory collections = abi.decode(loadFixture("collections.json"), (CollectionJson[]));
@@ -180,5 +187,11 @@ contract FANtiumAthletesFactory is BaseTest {
         bytes32 hash = keccak256(abi.encode(collectionId, quantity, recipient, amount, nonce)).toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(fantiumAthletes_signerKey, hash);
         return abi.encodePacked(r, s, v);
+    }
+
+    function _hashVerificationStatus(VerificationStatus memory status) internal view returns (bytes32) {
+        return keccak256(
+            abi.encode(fantiumAthletes.VERIFICATION_STATUS_TYPEHASH(), status.account, status.level, status.expiresAt)
+        );
     }
 }
