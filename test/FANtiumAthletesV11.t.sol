@@ -829,15 +829,13 @@ contract FANtiumAthletesV11Test is BaseTest, EIP712Signer, FANtiumAthletesFactor
     // mintTo with KYC signature
     // ========================================================================
     function test_mintTo_kycSignature_ok_single() public {
-        // todo: fails revert: ERC20: insufficient allowance
-        return; // Skip this test
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
         (uint256 amountUSDC,,,,) = prepareSale(collectionId, quantity, recipient);
 
         vm.expectEmit(true, true, false, true, address(fantiumAthletes));
         emit IFANtiumAthletes.Sale(collectionId, quantity, recipient, amountUSDC, 0);
-        vm.prank(recipient);
+        vm.startPrank(recipient);
 
         VerificationStatus memory status = VerificationStatus({
             account: recipient,
@@ -853,12 +851,179 @@ contract FANtiumAthletesV11Test is BaseTest, EIP712Signer, FANtiumAthletesFactor
             verificationStatus: status
         });
 
+        // create signature
         bytes memory signature =
             typedSignPacked(fantiumAthletes_signerKey, athletesDomain, _hashVerificationStatus(status));
 
+        // mint
         uint256 lastTokenId = fantiumAthletes.mintTo(mintRequest, signature);
 
+        vm.stopPrank();
+
+        // verify
         assertEq(fantiumAthletes.ownerOf(lastTokenId), recipient);
+    }
+
+    function test_mintTo_kycSignature_ok_batch() public {
+        uint24 quantity = 10;
+        uint256 collectionId = 1; // collection 1 is mintable
+
+        (
+            uint256 amountUSDC,
+            uint256 fantiumRevenue,
+            address payable fantiumAddress,
+            uint256 athleteRevenue,
+            address payable athleteAddress
+        ) = prepareSale(collectionId, quantity, recipient);
+        uint256 recipientBalanceBefore = usdc.balanceOf(recipient);
+
+        // Transfers expected
+        vm.expectEmit(true, true, false, true, address(usdc));
+        emit IERC20Upgradeable.Transfer(recipient, fantiumAddress, fantiumRevenue);
+        vm.expectEmit(true, true, false, true, address(usdc));
+        emit IERC20Upgradeable.Transfer(recipient, athleteAddress, athleteRevenue);
+
+        vm.expectEmit(true, true, false, true, address(fantiumAthletes));
+        emit IFANtiumAthletes.Sale(collectionId, quantity, recipient, amountUSDC, 0);
+
+        VerificationStatus memory status = VerificationStatus({
+            account: recipient,
+            level: 1, // AML
+            expiresAt: 1_704_067_300
+        });
+
+        MintRequest memory mintRequest = MintRequest({
+            collectionId: collectionId,
+            quantity: quantity,
+            recipient: recipient,
+            amount: amountUSDC,
+            verificationStatus: status
+        });
+
+        // create signature
+        bytes memory signature =
+            typedSignPacked(fantiumAthletes_signerKey, athletesDomain, _hashVerificationStatus(status));
+
+        // mint
+        vm.prank(recipient);
+        uint256 lastTokenId = fantiumAthletes.mintTo(mintRequest, signature);
+        vm.stopPrank();
+
+        uint256 firstTokenId = lastTokenId - quantity + 1;
+
+        // verify
+        for (uint256 tokenId = firstTokenId; tokenId <= lastTokenId; tokenId++) {
+            assertEq(fantiumAthletes.ownerOf(tokenId), recipient);
+        }
+
+        assertEq(usdc.balanceOf(recipient), recipientBalanceBefore - amountUSDC);
+    }
+
+    function test_mintTo_kycSignature_revert_invalidSignature() public {
+        uint256 collectionId = 1; // collection 1 is mintable
+        uint24 quantity = 1;
+        (uint256 amountUSDC,,,,) = prepareSale(collectionId, quantity, recipient);
+
+        vm.startPrank(recipient);
+
+        VerificationStatus memory status = VerificationStatus({
+            account: recipient,
+            level: 1, // AML
+            expiresAt: 1_704_067_300
+        });
+
+        MintRequest memory mintRequest = MintRequest({
+            collectionId: collectionId,
+            quantity: quantity,
+            recipient: recipient,
+            amount: amountUSDC,
+            verificationStatus: status
+        });
+
+        bytes32 hash =
+            keccak256(abi.encode(recipient, collectionId, quantity, amountUSDC, recipient)).toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(42_424_242_242_424_242, hash);
+        bytes memory forgedSignature = abi.encodePacked(r, s, v);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.INVALID_SIGNATURE)
+        );
+        // mint
+        fantiumAthletes.mintTo(mintRequest, forgedSignature);
+
+        vm.stopPrank();
+    }
+
+    function test_mintTo_kycSignature_revert_accountNotKyced() public {
+        uint256 collectionId = 1; // collection 1 is mintable
+        uint24 quantity = 1;
+        (uint256 amountUSDC,,,,) = prepareSale(collectionId, quantity, recipient);
+
+        vm.startPrank(recipient);
+
+        VerificationStatus memory status = VerificationStatus({
+            account: recipient,
+            level: 0, // no AML, no KYC
+            expiresAt: 1_704_067_300
+        });
+
+        MintRequest memory mintRequest = MintRequest({
+            collectionId: collectionId,
+            quantity: quantity,
+            recipient: recipient,
+            amount: amountUSDC,
+            verificationStatus: status
+        });
+
+        // create signature
+        bytes memory signature =
+            typedSignPacked(fantiumAthletes_signerKey, athletesDomain, _hashVerificationStatus(status));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.ACCOUNT_NOT_KYCED)
+        );
+        // mint
+        fantiumAthletes.mintTo(mintRequest, signature);
+
+        vm.stopPrank();
+    }
+
+    function test_mintTo_kycSignature_revert_signatureExpired() public {
+        uint256 collectionId = 1; // collection 1 is mintable
+        uint24 quantity = 1;
+        (uint256 amountUSDC,,,,) = prepareSale(collectionId, quantity, recipient);
+
+        vm.startPrank(recipient);
+
+        VerificationStatus memory status = VerificationStatus({
+            account: recipient,
+            level: 1, // no AML, no KYC
+            expiresAt: 1_704_067_300
+        });
+
+        MintRequest memory mintRequest = MintRequest({
+            collectionId: collectionId,
+            quantity: quantity,
+            recipient: recipient,
+            amount: amountUSDC,
+            verificationStatus: status
+        });
+
+        // jump into the future
+        uint256 timeInFuture = status.expiresAt + 1 days; // by this time signature has expired
+        vm.warp(timeInFuture);
+
+        // create signature
+        bytes memory signature =
+            typedSignPacked(fantiumAthletes_signerKey, athletesDomain, _hashVerificationStatus(status));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.SIGNATURE_EXPIRED)
+        );
+        // mint
+        fantiumAthletes.mintTo(mintRequest, signature);
+
+        vm.stopPrank();
     }
 
     // mintTo (custom price)

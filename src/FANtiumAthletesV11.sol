@@ -166,7 +166,7 @@ contract FANtiumAthletesV11 is
         __UUPSUpgradeable_init();
         __AccessControl_init();
         __Pausable_init();
-        __EIP712_init("FANtium", "10");
+        __EIP712_init("FANtium", "11");
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         nextCollectionId = 1;
     }
@@ -588,6 +588,7 @@ contract FANtiumAthletesV11 is
         emit Sale(collectionId, quantity, recipient, amount, discount);
     }
 
+    // todo: this fn should be removed in favour of new one
     /**
      * @notice Purchase NFTs from the sale.
      * @param collectionId The collection ID to purchase from.
@@ -599,6 +600,7 @@ contract FANtiumAthletesV11 is
         return _mintTo(collectionId, quantity, amount, recipient);
     }
 
+    // todo: this fn should be removed in favour of new one
     /**
      * @notice Purchase NFTs from the sale with a custom price, checked
      * @param collectionId The collection ID to purchase from.
@@ -652,11 +654,11 @@ contract FANtiumAthletesV11 is
         }
     }
 
-    // todo: 1. implement new mintTo fn
-    // todo: 2. add new tests
-    // todo: 3. change contract version to v11
-    // todo: 4. deploy updated contract to dev
-    // todo: 5. remove old mintTo functions
+    // todo: 1. implement new mintTo fn - done
+    // todo: 2. add new tests - done
+    // todo: 3. change contract version to v11 - done
+    // todo: 4. remove old mintTo functions
+    // todo: 5. deploy updated contract to dev
     /**
      * @notice Purchase NFTs from the sale.
      * @param mintRequest All the data required for purchase: collectionId, quantity, recipient etc.
@@ -677,8 +679,11 @@ contract FANtiumAthletesV11 is
             revert InvalidMint(MintErrorReason.ACCOUNT_NOT_KYCED);
         }
 
-        // todo: check if expiresAt < now
+        if (mintRequest.verificationStatus.expiresAt < block.timestamp) {
+            revert InvalidMint(MintErrorReason.SIGNATURE_EXPIRED);
+        }
 
+        // todo: calculate amount VS use mintRequest.amount ?
         uint256 amount = _expectedPrice(mintRequest.collectionId, mintRequest.quantity);
         return _mintTo(mintRequest.collectionId, mintRequest.quantity, amount, mintRequest.recipient);
     }
