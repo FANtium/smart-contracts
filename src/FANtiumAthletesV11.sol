@@ -1,17 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import "./interfaces/IFANtiumAthletes.sol";
-
+import { IFANtiumAthletes, MintRequest, VerificationStatus } from "./interfaces/IFANtiumAthletes.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import { IERC20MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
-
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {
     ERC721Upgradeable,
@@ -20,9 +16,9 @@ import {
 } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
-
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
+import { EIP712 } from "solady/utils/EIP712.sol";
 import {
     Collection,
     CollectionData,
@@ -35,7 +31,7 @@ import { Rescue } from "src/utils/Rescue.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 
 /**
- * @title FANtium Athletes ERC721 contract V10.
+ * @title FANtium Athletes ERC721 contract V11.
  * @author Mathieu Bour, Alex Chernetsky - FANtium AG, based on previous work by MTX studio AG.
  * @custom:oz-upgrades-from src/archive/FANtiumAthletesV10.sol:FANtiumAthletesV10
  */
@@ -47,7 +43,7 @@ contract FANtiumAthletesV11 is
     PausableUpgradeable,
     Rescue,
     IFANtiumAthletes,
-    EIP712Upgradeable
+    EIP712
 {
     using StringsUpgradeable for uint256;
     using ECDSAUpgradeable for bytes32;
@@ -166,9 +162,12 @@ contract FANtiumAthletesV11 is
         __UUPSUpgradeable_init();
         __AccessControl_init();
         __Pausable_init();
-        __EIP712_init("FANtium", "11");
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         nextCollectionId = 1;
+    }
+
+    function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
+        return (NAME, "11");
     }
 
     /**
@@ -604,7 +603,7 @@ contract FANtiumAthletesV11 is
             )
         );
 
-        bytes32 digest = _hashTypedDataV4(kycStatusHash);
+        bytes32 digest = _hashTypedData(kycStatusHash);
         address signer = ECDSA.recover(digest, signature);
 
         if (!hasRole(SIGNER_ROLE, signer)) {
