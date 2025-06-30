@@ -588,48 +588,6 @@ contract FANtiumAthletesV11 is
         emit Sale(collectionId, quantity, recipient, amount, discount);
     }
 
-    // todo: this fn should be removed in favour of new one
-    /**
-     * @notice Purchase NFTs from the sale.
-     * @param collectionId The collection ID to purchase from.
-     * @param quantity The quantity of NFTs to purchase.
-     * @param recipient The recipient of the NFTs.
-     */
-    function mintTo(uint256 collectionId, uint24 quantity, address recipient) public whenNotPaused returns (uint256) {
-        uint256 amount = _expectedPrice(collectionId, quantity);
-        return _mintTo(collectionId, quantity, amount, recipient);
-    }
-
-    // todo: this fn should be removed in favour of new one
-    /**
-     * @notice Purchase NFTs from the sale with a custom price, checked
-     * @param collectionId The collection ID to purchase from.
-     * @param quantity The quantity of NFTs to purchase.
-     * @param recipient The recipient of the NFTs.
-     * @param amount The amount of tokens to purchase the NFTs with.
-     * @param signature The signature of the purchase request.
-     */
-    function mintTo(
-        uint256 collectionId,
-        uint24 quantity,
-        address recipient,
-        uint256 amount,
-        bytes memory signature
-    )
-        public
-        whenNotPaused
-        returns (uint256)
-    {
-        bytes32 hash =
-            keccak256(abi.encode(collectionId, quantity, recipient, amount, nonces[recipient])).toEthSignedMessageHash();
-        if (!hasRole(SIGNER_ROLE, hash.recover(signature))) {
-            revert InvalidMint(MintErrorReason.INVALID_SIGNATURE);
-        }
-
-        nonces[recipient]++;
-        return _mintTo(collectionId, quantity, amount, recipient);
-    }
-
     // ========================================================================
     /**
      * @dev Verifies the KYC status signature
@@ -657,7 +615,8 @@ contract FANtiumAthletesV11 is
     // todo: 1. implement new mintTo fn - done
     // todo: 2. add new tests - done
     // todo: 3. change contract version to v11 - done
-    // todo: 4. remove old mintTo functions
+    // todo: 4. remove old mintTo functions - done
+    // todo: fix CI: upgradability issue & size of the contract issue
     // todo: 5. deploy updated contract to dev
     /**
      * @notice Purchase NFTs from the sale.
@@ -668,7 +627,7 @@ contract FANtiumAthletesV11 is
         MintRequest calldata mintRequest,
         bytes calldata signature
     )
-        public
+        external
         whenNotPaused
         returns (uint256)
     {
@@ -682,10 +641,8 @@ contract FANtiumAthletesV11 is
         if (mintRequest.verificationStatus.expiresAt < block.timestamp) {
             revert InvalidMint(MintErrorReason.SIGNATURE_EXPIRED);
         }
-
-        // todo: calculate amount VS use mintRequest.amount ?
-        uint256 amount = _expectedPrice(mintRequest.collectionId, mintRequest.quantity);
-        return _mintTo(mintRequest.collectionId, mintRequest.quantity, amount, mintRequest.recipient);
+        // todo: do we include amount + quantity into signature ? Security vulnerability ?
+        return _mintTo(mintRequest.collectionId, mintRequest.quantity, mintRequest.amount, mintRequest.recipient);
     }
 
     // ========================================================================

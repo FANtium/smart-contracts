@@ -2,7 +2,13 @@
 pragma solidity 0.8.28;
 
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import { Collection, CollectionData, IFANtiumAthletes } from "src/interfaces/IFANtiumAthletes.sol";
+import {
+    Collection,
+    CollectionData,
+    IFANtiumAthletes,
+    MintRequest,
+    VerificationStatus
+} from "src/interfaces/IFANtiumAthletes.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumAthletesFactory } from "test/setup/FANtiumAthletesFactory.sol";
 
@@ -36,8 +42,27 @@ contract FANtiumAthletesV11FuzzTest is BaseTest, FANtiumAthletesFactory {
         vm.expectEmit(true, true, false, true, address(fantiumAthletes));
         emit IFANtiumAthletes.Sale(collectionId, quantity, recipient, amountUSDC, 0);
 
+        VerificationStatus memory status = VerificationStatus({
+            account: recipient,
+            level: 1, // AML
+            expiresAt: 1_704_067_300
+        });
+
+        MintRequest memory mintRequest = MintRequest({
+            collectionId: collectionId,
+            quantity: quantity,
+            recipient: recipient,
+            amount: amountUSDC,
+            verificationStatus: status
+        });
+
+        // create signature
+        bytes memory signature = typedSignPacked(
+            fantiumAthletes_signerKey, athletesDomain, _hashVerificationStatus(mintRequest.verificationStatus)
+        );
+
         vm.prank(recipient);
-        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient);
+        uint256 lastTokenId = fantiumAthletes.mintTo(mintRequest, signature);
 
         assertEq(fantiumAthletes.ownerOf(lastTokenId), recipient);
         assertEq(usdc.balanceOf(recipient), recipientBalanceBefore - amountUSDC);
@@ -81,8 +106,27 @@ contract FANtiumAthletesV11FuzzTest is BaseTest, FANtiumAthletesFactory {
         vm.expectEmit(true, true, false, true, address(fantiumAthletes));
         emit IFANtiumAthletes.Sale(collectionId, quantity, recipient, amountUSDC, 0);
 
+        VerificationStatus memory status = VerificationStatus({
+            account: recipient,
+            level: 1, // AML
+            expiresAt: 1_704_067_300
+        });
+
+        MintRequest memory mintRequest = MintRequest({
+            collectionId: collectionId,
+            quantity: quantity,
+            recipient: recipient,
+            amount: amountUSDC,
+            verificationStatus: status
+        });
+
+        // create signature
+        bytes memory signature = typedSignPacked(
+            fantiumAthletes_signerKey, athletesDomain, _hashVerificationStatus(mintRequest.verificationStatus)
+        );
+
         vm.prank(recipient);
-        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient);
+        uint256 lastTokenId = fantiumAthletes.mintTo(mintRequest, signature);
 
         // Verify ownership
         for (uint256 i = 0; i < quantity; i++) {

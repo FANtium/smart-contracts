@@ -418,7 +418,8 @@ contract FANtiumAthletesV11Test is BaseTest, EIP712Signer, FANtiumAthletesFactor
 
     function test_updateCollection_revert_decreasedMaxInvocations() public {
         uint256 collectionId = 1;
-        mintTo(collectionId, 10, recipient); // mint 10 tokens to increase invocations
+        uint24 quantity = 10;
+        mintTo(collectionId, quantity, recipient); // mint 10 tokens to increase invocations
 
         Collection memory currentCollection = fantiumAthletes.collections(collectionId);
 
@@ -777,58 +778,9 @@ contract FANtiumAthletesV11Test is BaseTest, EIP712Signer, FANtiumAthletesFactor
         assertEq(athleteAddress, collection.athleteAddress, "Incorrect athlete address");
     }
 
-    // mintTo (standard price)
-    // ========================================================================
-    function test_mintTo_standardPrice_ok_single() public {
-        uint256 collectionId = 1; // collection 1 is mintable
-        uint24 quantity = 1;
-        (uint256 amountUSDC,,,,) = prepareSale(collectionId, quantity, recipient);
-
-        vm.expectEmit(true, true, false, true, address(fantiumAthletes));
-        emit IFANtiumAthletes.Sale(collectionId, quantity, recipient, amountUSDC, 0);
-        vm.prank(recipient);
-        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient);
-
-        assertEq(fantiumAthletes.ownerOf(lastTokenId), recipient);
-    }
-
-    function test_mintTo_standardPrice_ok_batch() public {
-        uint24 quantity = 10;
-        uint256 collectionId = 1; // collection 1 is mintable
-
-        (
-            uint256 amountUSDC,
-            uint256 fantiumRevenue,
-            address payable fantiumAddress,
-            uint256 athleteRevenue,
-            address payable athleteAddress
-        ) = prepareSale(collectionId, quantity, recipient);
-        uint256 recipientBalanceBefore = usdc.balanceOf(recipient);
-
-        // Transfers expected
-        vm.expectEmit(true, true, false, true, address(usdc));
-        emit IERC20Upgradeable.Transfer(recipient, fantiumAddress, fantiumRevenue);
-        vm.expectEmit(true, true, false, true, address(usdc));
-        emit IERC20Upgradeable.Transfer(recipient, athleteAddress, athleteRevenue);
-
-        vm.expectEmit(true, true, false, true, address(fantiumAthletes));
-        emit IFANtiumAthletes.Sale(collectionId, quantity, recipient, amountUSDC, 0);
-        vm.prank(recipient);
-        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient);
-        vm.stopPrank();
-
-        uint256 firstTokenId = lastTokenId - quantity + 1;
-
-        for (uint256 tokenId = firstTokenId; tokenId <= lastTokenId; tokenId++) {
-            assertEq(fantiumAthletes.ownerOf(tokenId), recipient);
-        }
-
-        assertEq(usdc.balanceOf(recipient), recipientBalanceBefore - amountUSDC);
-    }
-
     // mintTo with KYC signature
-    // ========================================================================
-    function test_mintTo_kycSignature_ok_single() public {
+    //  ========================================================================
+    function test_mintTo_ok_single() public {
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
         (uint256 amountUSDC,,,,) = prepareSale(collectionId, quantity, recipient);
@@ -864,7 +816,7 @@ contract FANtiumAthletesV11Test is BaseTest, EIP712Signer, FANtiumAthletesFactor
         assertEq(fantiumAthletes.ownerOf(lastTokenId), recipient);
     }
 
-    function test_mintTo_kycSignature_ok_batch() public {
+    function test_mintTo_ok_batch() public {
         uint24 quantity = 10;
         uint256 collectionId = 1; // collection 1 is mintable
 
@@ -919,7 +871,7 @@ contract FANtiumAthletesV11Test is BaseTest, EIP712Signer, FANtiumAthletesFactor
         assertEq(usdc.balanceOf(recipient), recipientBalanceBefore - amountUSDC);
     }
 
-    function test_mintTo_kycSignature_revert_invalidSignature() public {
+    function test_mintTo_revert_invalidSignature() public {
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
         (uint256 amountUSDC,,,,) = prepareSale(collectionId, quantity, recipient);
@@ -954,7 +906,7 @@ contract FANtiumAthletesV11Test is BaseTest, EIP712Signer, FANtiumAthletesFactor
         vm.stopPrank();
     }
 
-    function test_mintTo_kycSignature_revert_accountNotKyced() public {
+    function test_mintTo_revert_accountNotKyced() public {
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
         (uint256 amountUSDC,,,,) = prepareSale(collectionId, quantity, recipient);
@@ -988,7 +940,7 @@ contract FANtiumAthletesV11Test is BaseTest, EIP712Signer, FANtiumAthletesFactor
         vm.stopPrank();
     }
 
-    function test_mintTo_kycSignature_revert_signatureExpired() public {
+    function test_mintTo_revert_signatureExpired() public {
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
         (uint256 amountUSDC,,,,) = prepareSale(collectionId, quantity, recipient);
@@ -1024,69 +976,6 @@ contract FANtiumAthletesV11Test is BaseTest, EIP712Signer, FANtiumAthletesFactor
         fantiumAthletes.mintTo(mintRequest, signature);
 
         vm.stopPrank();
-    }
-
-    // mintTo (custom price)
-    // ========================================================================
-    function test_mintTo_customPrice_ok_single() public {
-        uint256 collectionId = 1; // collection 1 is mintable
-        uint24 quantity = 1;
-        uint256 amountUSDC = 74 * 10 ** usdc.decimals(); // normal price is 99 USDC
-        (bytes memory signature,,,,,) = prepareSale(collectionId, quantity, recipient, amountUSDC);
-
-        vm.expectEmit(true, true, false, true, address(fantiumAthletes));
-        emit IFANtiumAthletes.Sale(collectionId, quantity, recipient, amountUSDC, 25 * 10 ** usdc.decimals());
-        vm.prank(recipient);
-        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, signature);
-
-        assertEq(fantiumAthletes.ownerOf(lastTokenId), recipient);
-    }
-
-    function test_mintTo_customPrice_revert_malformedSignature() public {
-        uint256 collectionId = 1; // collection 1 is mintable
-        uint24 quantity = 1;
-        uint256 amountUSDC = 200;
-        bytes memory malformedSignature = abi.encodePacked("malformed signature");
-
-        vm.expectRevert("ECDSA: invalid signature length");
-        vm.prank(recipient);
-        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, malformedSignature);
-    }
-
-    function test_mintTo_customPrice_revert_invalidSigner() public {
-        uint256 collectionId = 1; // collection 1 is mintable
-        uint24 quantity = 1;
-        uint256 amountUSDC = 200;
-
-        bytes32 hash =
-            keccak256(abi.encode(recipient, collectionId, quantity, amountUSDC, recipient)).toEthSignedMessageHash();
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(42_424_242_242_424_242, hash);
-        bytes memory forgedSignature = abi.encodePacked(r, s, v);
-
-        vm.expectRevert(
-            abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.INVALID_SIGNATURE)
-        );
-        vm.prank(recipient);
-        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, forgedSignature);
-    }
-
-    function test_mintTo_revert_invalidNonce() public {
-        uint256 collectionId = 1; // collection 1 is mintable
-        uint24 quantity = 1;
-        uint256 amountUSDC = 200;
-        (bytes memory signature,,,,,) = prepareSale(collectionId, quantity, recipient, amountUSDC);
-
-        // First mint pass, and nonce is incremented
-        vm.prank(recipient);
-        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, signature);
-        assertEq(fantiumAthletes.ownerOf(lastTokenId), recipient);
-
-        // Second mint fails, because nonce is incremented
-        vm.expectRevert(
-            abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.INVALID_SIGNATURE)
-        );
-        vm.prank(recipient);
-        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, signature);
     }
 
     // batchTransferFrom

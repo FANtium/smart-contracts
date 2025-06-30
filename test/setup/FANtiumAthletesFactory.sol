@@ -7,9 +7,10 @@ import { IERC20MetadataUpgradeable } from
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { FANtiumAthletesV11 } from "src/FANtiumAthletesV11.sol";
-import { Collection, CollectionData, VerificationStatus } from "src/interfaces/IFANtiumAthletes.sol";
+import { Collection, CollectionData, MintRequest, VerificationStatus } from "src/interfaces/IFANtiumAthletes.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { BaseTest } from "test/BaseTest.sol";
+import { EIP712Signer } from "test/utils/EIP712Signer.sol";
 
 /**
  * @notice Collection data structure for deserialization.
@@ -32,7 +33,7 @@ struct CollectionJson {
     uint256 tournamentEarningShare1e7;
 }
 
-contract FANtiumAthletesFactory is BaseTest {
+contract FANtiumAthletesFactory is BaseTest, EIP712Signer {
     using ECDSA for bytes32;
 
     address public fantiumAthletes_admin = makeAddr("admin");
@@ -167,10 +168,35 @@ contract FANtiumAthletesFactory is BaseTest {
         );
     }
 
+    // can be used for testing when we don't test the mintTo implementation specifically, e.g. in Claiming contract
     function mintTo(uint256 collectionId, uint24 quantity, address recipient) public returns (uint256 lastTokenId) {
-        prepareSale(collectionId, quantity, recipient);
-        vm.prank(recipient);
-        return fantiumAthletes.mintTo(collectionId, quantity, recipient);
+        Collection memory collection = fantiumAthletes.collections(collectionId);
+        uint256 amount = collection.price * quantity * 10 ** usdc.decimals();
+
+        VerificationStatus memory status = VerificationStatus({
+            account: recipient,
+            level: 1, // AML
+            expiresAt: 1_704_067_300
+        });
+
+        MintRequest memory mintRequest = MintRequest({
+            collectionId: collectionId,
+            quantity: quantity,
+            recipient: recipient,
+            amount: amount,
+            verificationStatus: status
+        });
+
+        // create signature
+        bytes memory signature = typedSignPacked(
+            fantiumAthletes_signerKey, athletesDomain, _hashVerificationStatus(mintRequest.verificationStatus)
+        );
+
+        // prepare sale and mint
+        prepareSale(mintRequest.collectionId, mintRequest.quantity, mintRequest.recipient);
+        vm.prank(mintRequest.recipient);
+
+        return fantiumAthletes.mintTo(mintRequest, signature);
     }
 
     function signMint(

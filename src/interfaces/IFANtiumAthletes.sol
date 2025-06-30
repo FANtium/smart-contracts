@@ -178,17 +178,7 @@ interface IFANtiumAthletes is IERC721Upgradeable {
     // ========================================================================
     // Minting
     // ========================================================================
-    function mintTo(uint256 collectionId, uint24 quantity, address recipient) external returns (uint256);
-
-    function mintTo(
-        uint256 collectionId,
-        uint24 quantity,
-        address recipient,
-        uint256 amount,
-        bytes memory signature
-    )
-        external
-        returns (uint256);
+    function mintTo(MintRequest calldata mintRequest, bytes calldata signature) external returns (uint256);
 
     // ========================================================================
     // Claiming
