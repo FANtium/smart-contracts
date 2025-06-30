@@ -109,12 +109,27 @@ enum MintErrorReason {
     COLLECTION_NOT_LAUNCHED,
     COLLECTION_PAUSED,
     ACCOUNT_NOT_KYCED,
-    INVALID_SIGNATURE
+    INVALID_SIGNATURE,
+    SIGNATURE_EXPIRED
 }
 
 enum UpgradeErrorReason {
     INVALID_COLLECTION_ID,
     VERSION_ID_TOO_HIGH
+}
+
+struct VerificationStatus {
+    address account;
+    uint8 level;
+    uint256 expiresAt;
+}
+
+struct MintRequest {
+    uint256 collectionId;
+    uint24 quantity;
+    address recipient;
+    uint256 amount;
+    VerificationStatus verificationStatus;
 }
 
 interface IFANtiumAthletes is IERC721Upgradeable {
@@ -163,17 +178,7 @@ interface IFANtiumAthletes is IERC721Upgradeable {
     // ========================================================================
     // Minting
     // ========================================================================
-    function mintTo(uint256 collectionId, uint24 quantity, address recipient) external returns (uint256);
-
-    function mintTo(
-        uint256 collectionId,
-        uint24 quantity,
-        address recipient,
-        uint256 amount,
-        bytes memory signature
-    )
-        external
-        returns (uint256);
+    function mintTo(MintRequest calldata mintRequest, bytes calldata signature) external returns (uint256);
 
     // ========================================================================
     // Claiming

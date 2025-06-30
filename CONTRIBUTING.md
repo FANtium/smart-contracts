@@ -73,3 +73,9 @@ function test_claim_revert_invalidDistribution() public {
     // ...
 }
 ```
+
+## Archiving Previous Contract Versions
+
+To maintain a clear version history and ensure traceability of contract changes, we need to archive previous versions of smart contracts rather than deleting or overwriting them.
+We use to archive a contract: [`forge flatten src/your-contract-name > archive/your-contract-name`](https://book.getfoundry.sh/forge/fmt/). “Flattening” a smart contracts basically copies the contract and all its dependencies into a single file.
+Example: `forge flatten src/FANtiumAthletesV10.sol > src/archive/FANtiumAthletesV10.sol` Note: this should be done before you make any changes to the contract.

@@ -116,7 +116,7 @@ contract FANtiumMarketplaceV1Test is BaseTest, EIP712Signer, FANtiumMarketplaceF
         uint24 quantity = 1;
         prepareSale(collectionId, quantity, seller);
         vm.prank(seller);
-        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, seller); // 1000000
+        uint256 lastTokenId = mintTo(collectionId, quantity, seller); // 1000000
 
         // seller should approve the token transfer
         vm.prank(seller);
@@ -218,7 +218,7 @@ contract FANtiumMarketplaceV1Test is BaseTest, EIP712Signer, FANtiumMarketplaceF
         uint24 quantity = 1;
         prepareSale(collectionId, quantity, randomUser);
         vm.prank(randomUser);
-        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, randomUser); // 1000000
+        uint256 lastTokenId = mintTo(collectionId, quantity, randomUser); // 1000000
 
         // try to executeOffer using generated token id
         Offer memory offer = Offer({

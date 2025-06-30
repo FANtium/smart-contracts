@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
+import { IFANtiumAthletes, MintRequest, VerificationStatus } from "./interfaces/IFANtiumAthletes.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -15,6 +16,9 @@ import {
 } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import { ECDSAUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
+import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
+import { EIP712 } from "solady/utils/EIP712.sol";
 import {
     Collection,
     CollectionData,
@@ -27,18 +31,19 @@ import { Rescue } from "src/utils/Rescue.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 
 /**
- * @title FANtium Athletes ERC721 contract V10.
+ * @title FANtium Athletes ERC721 contract V11.
  * @author Mathieu Bour, Alex Chernetsky - FANtium AG, based on previous work by MTX studio AG.
- * @custom:oz-upgrades-from src/archive/FANtiumAthletesV9.sol:FANtiumAthletesV9
+ * @custom:oz-upgrades-from src/archive/FANtiumAthletesV10.sol:FANtiumAthletesV10
  */
-contract FANtiumAthletesV10 is
+contract FANtiumAthletesV11 is
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
     PausableUpgradeable,
     Rescue,
-    IFANtiumAthletes
+    IFANtiumAthletes,
+    EIP712
 {
     using StringsUpgradeable for uint256;
     using ECDSAUpgradeable for bytes32;
@@ -70,6 +75,10 @@ contract FANtiumAthletesV10 is
      * @dev Used by the marketplace to approve transfers.
      */
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
+
+    /// @notice EIP-712 typehash for KYC status struct
+    bytes32 public constant VERIFICATION_STATUS_TYPEHASH =
+        keccak256("VerificationStatus(address account,uint8 level,uint256 expiresAt)");
 
     // ========================================================================
     // State variables
@@ -153,9 +162,12 @@ contract FANtiumAthletesV10 is
         __UUPSUpgradeable_init();
         __AccessControl_init();
         __Pausable_init();
-
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         nextCollectionId = 1;
+    }
+
+    function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
+        return (NAME, "11");
     }
 
     /**
@@ -575,44 +587,55 @@ contract FANtiumAthletesV10 is
         emit Sale(collectionId, quantity, recipient, amount, discount);
     }
 
+    // ========================================================================
     /**
-     * @notice Purchase NFTs from the sale.
-     * @param collectionId The collection ID to purchase from.
-     * @param quantity The quantity of NFTs to purchase.
-     * @param recipient The recipient of the NFTs.
+     * @dev Verifies the KYC status signature
+     * @param verificationStatus The KYC status to verify
+     * @param signature The backend-generated signature for user purchasing the athlete NFT
      */
-    function mintTo(uint256 collectionId, uint24 quantity, address recipient) public whenNotPaused returns (uint256) {
-        uint256 amount = _expectedPrice(collectionId, quantity);
-        return _mintTo(collectionId, quantity, amount, recipient);
+    function _verifySignature(VerificationStatus calldata verificationStatus, bytes calldata signature) internal view {
+        bytes32 kycStatusHash = keccak256(
+            abi.encode(
+                VERIFICATION_STATUS_TYPEHASH,
+                verificationStatus.account,
+                verificationStatus.level,
+                verificationStatus.expiresAt
+            )
+        );
+
+        bytes32 digest = _hashTypedData(kycStatusHash);
+        address signer = ECDSA.recover(digest, signature);
+
+        if (!hasRole(SIGNER_ROLE, signer)) {
+            revert InvalidMint(MintErrorReason.INVALID_SIGNATURE);
+        }
     }
 
     /**
-     * @notice Purchase NFTs from the sale with a custom price, checked
-     * @param collectionId The collection ID to purchase from.
-     * @param quantity The quantity of NFTs to purchase.
-     * @param recipient The recipient of the NFTs.
-     * @param amount The amount of tokens to purchase the NFTs with.
-     * @param signature The signature of the purchase request.
+     * @notice Purchase NFTs from the sale.
+     * @param mintRequest All the data required for purchase: collectionId, quantity, recipient etc.
+     * @param signature The backend-generated signature for user purchasing the athlete NFT
      */
     function mintTo(
-        uint256 collectionId,
-        uint24 quantity,
-        address recipient,
-        uint256 amount,
-        bytes memory signature
+        MintRequest calldata mintRequest,
+        bytes calldata signature
     )
-        public
+        external
         whenNotPaused
         returns (uint256)
     {
-        bytes32 hash =
-            keccak256(abi.encode(collectionId, quantity, recipient, amount, nonces[recipient])).toEthSignedMessageHash();
-        if (!hasRole(SIGNER_ROLE, hash.recover(signature))) {
-            revert InvalidMint(MintErrorReason.INVALID_SIGNATURE);
+        _verifySignature(mintRequest.verificationStatus, signature);
+
+        // purchase requires AML check (level 1)
+        if (mintRequest.verificationStatus.level < 1) {
+            revert InvalidMint(MintErrorReason.ACCOUNT_NOT_KYCED);
         }
 
-        nonces[recipient]++;
-        return _mintTo(collectionId, quantity, amount, recipient);
+        if (mintRequest.verificationStatus.expiresAt < block.timestamp) {
+            revert InvalidMint(MintErrorReason.SIGNATURE_EXPIRED);
+        }
+        // todo: we do NOT include amount + quantity into signature. Security vulnerability ?
+        return _mintTo(mintRequest.collectionId, mintRequest.quantity, mintRequest.amount, mintRequest.recipient);
     }
 
     // ========================================================================
