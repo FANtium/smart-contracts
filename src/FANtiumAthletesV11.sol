@@ -612,12 +612,6 @@ contract FANtiumAthletesV11 is
         }
     }
 
-    // todo: 1. implement new mintTo fn - done
-    // todo: 2. add new tests - done
-    // todo: 3. change contract version to v11 - done
-    // todo: 4. remove old mintTo functions - done
-    // todo: fix CI: upgradability issue & size of the contract issue
-    // todo: 5. deploy updated contract to dev
     /**
      * @notice Purchase NFTs from the sale.
      * @param mintRequest All the data required for purchase: collectionId, quantity, recipient etc.
