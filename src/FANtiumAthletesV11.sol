@@ -641,7 +641,7 @@ contract FANtiumAthletesV11 is
         if (mintRequest.verificationStatus.expiresAt < block.timestamp) {
             revert InvalidMint(MintErrorReason.SIGNATURE_EXPIRED);
         }
-        // todo: do we include amount + quantity into signature ? Security vulnerability ?
+        // todo: we do NOT include amount + quantity into signature. Security vulnerability ?
         return _mintTo(mintRequest.collectionId, mintRequest.quantity, mintRequest.amount, mintRequest.recipient);
     }
 
