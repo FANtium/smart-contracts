@@ -27,11 +27,11 @@ import { Rescue } from "src/utils/Rescue.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 
 /**
- * @title FANtium Athletes ERC721 contract V10.
+ * @title FANtium Athletes ERC721 contract V11.
  * @author Mathieu Bour, Alex Chernetsky - FANtium AG, based on previous work by MTX studio AG.
  * @custom:oz-upgrades-from src/archive/FANtiumAthletesV9.sol:FANtiumAthletesV9
  */
-contract FANtiumAthletesV10 is
+contract FANtiumAthletesV11 is
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
@@ -554,7 +554,11 @@ contract FANtiumAthletesV10 is
         returns (uint256 lastTokenId)
     {
         Collection memory collection = _collections[collectionId];
-        uint256 tokenId = (collectionId * MAX_COLLECTIONS) + collection.invocations;
+
+        // Check if the collection has enough invocations left
+        if (collection.invocations + quantity > collection.maxInvocations) {
+            revert InvalidMint(MintErrorReason.MAX_INVOCATIONS_REACHED);
+        }
 
         mintable(collectionId);
 
@@ -563,6 +567,7 @@ contract FANtiumAthletesV10 is
         // Send funds to the treasury and athlete account.
         _splitFunds(amount, collectionId, _msgSender());
 
+        uint256 tokenId = (collectionId * MAX_COLLECTIONS) + collection.invocations;
         for (uint256 i = 0; i < quantity; i++) {
             _mint(recipient, tokenId + i);
         }

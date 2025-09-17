@@ -18,7 +18,7 @@ import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumAthletesFactory } from "test/setup/FANtiumAthletesFactory.sol";
 
-contract FANtiumAthletesV10Test is BaseTest, FANtiumAthletesFactory {
+contract FANtiumAthletesV11Test is BaseTest, FANtiumAthletesFactory {
     using ECDSA for bytes32;
     using Strings for uint256;
 
@@ -821,6 +821,22 @@ contract FANtiumAthletesV10Test is BaseTest, FANtiumAthletesFactory {
         }
 
         assertEq(usdc.balanceOf(recipient), recipientBalanceBefore - amountUSDC);
+    }
+
+    function test_mintTo_standardPrice_revert_maxInvocationsReached() public {
+        uint256 collectionId = 6; // collection 6 is mintable
+        uint24 quantity = 6; // collection 6 has 5 max invocations
+
+        prepareSale(collectionId, quantity, recipient);
+        uint256 recipientBalanceBefore = usdc.balanceOf(recipient);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.MAX_INVOCATIONS_REACHED)
+        );
+        vm.prank(recipient);
+        fantiumAthletes.mintTo(collectionId, quantity, recipient);
+
+        assertEq(usdc.balanceOf(recipient), recipientBalanceBefore);
     }
 
     // mintTo (custom price)

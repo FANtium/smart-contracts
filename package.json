@@ -20,17 +20,16 @@
     "dependencies": {
         "@openzeppelin/contracts": "4.9.6",
         "@openzeppelin/contracts-upgradeable": "4.9.6",
-        "@openzeppelin/foundry-upgrades": "github:OpenZeppelin/openzeppelin-foundry-upgrades#v0.3.6",
+        "@openzeppelin/foundry-upgrades": "github:OpenZeppelin/openzeppelin-foundry-upgrades#v0.4.0",
         "erc721a-upgradeable": "4.3.0",
-        "solady": "0.0.298",
-        "solidity-stringutils": "github:Arachnid/solidity-stringutils#4b2fcc43fa0426e19ce88b1f1ec16f5903a2e461"
+        "solady": "0.1.26"
     },
     "devDependencies": {
         "@openzeppelin/upgrades-core": "^1.41.0",
-        "forge-std": "github:foundry-rs/forge-std#v1.9.5",
-        "lefthook": "1.10.1",
+        "forge-std": "github:foundry-rs/forge-std#v1.10.0",
+        "lefthook": "1.13.0",
         "operator-filter-registry": "1.4.2",
-        "prettier": "^3.4.2",
-        "solhint": "^5.0.3"
+        "prettier": "3.6.2",
+        "solhint": "6.0.1"
     }
 }
