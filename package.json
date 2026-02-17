@@ -21,11 +21,12 @@
         "@openzeppelin/contracts": "4.9.6",
         "@openzeppelin/contracts-upgradeable": "4.9.6",
         "@openzeppelin/foundry-upgrades": "github:OpenZeppelin/openzeppelin-foundry-upgrades#v0.4.0",
+        "@uniswap/v3-periphery": "^1.4.4",
         "erc721a-upgradeable": "4.3.0",
         "solady": "0.1.26"
     },
     "devDependencies": {
-        "@openzeppelin/upgrades-core": "^1.41.0",
+        "@openzeppelin/upgrades-core": "^1.44.2",
         "forge-std": "github:foundry-rs/forge-std#v1.10.0",
         "lefthook": "1.13.0",
         "operator-filter-registry": "1.4.2",
