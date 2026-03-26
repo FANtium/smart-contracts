@@ -22,7 +22,7 @@ All of our smart contracts are deployed on the testnet and mainnet. You can find
 | Contract name                                                                                                                        | Address                                                                                                                    |
 | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | [`MinimalForwarder`](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v4.9/contracts/metatx/MinimalForwarder.sol) | [`0x90850f77DBB8F9f894aCB774b6aF31986C5Efb1D`](https://polygonscan.com/address/0x90850f77dbb8f9f894acb774b6af31986c5efb1d) |
-| [`USDCeUniswapV3MigrationRelay`](src/USDCeUniswapV3MigrationRelay.sol)                                                               | [`0x744f81A4BB77bd3eC7A3A3154843B8ADcB94fA90`](https://polygonscan.com/address/0x744f81A4BB77bd3eC7A3A3154843B8ADcB94fA90) |
+| [`USDCeUniswapV3MigrationRelay`](src/USDCeUniswapV3MigrationRelay.sol)                                                               | [`0x7698111c8484a9467d6e88725f2385668647aebb`](https://polygonscan.com/address/0x7698111c8484a9467d6e88725f2385668647aebb) |
 
 ### Polygon Amoy Testnet
 

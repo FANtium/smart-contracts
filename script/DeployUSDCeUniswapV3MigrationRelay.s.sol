@@ -19,9 +19,9 @@ contract DeployUSDCeUniswapV3MigrationRelay is Script {
     /// @dev https://polygonscan.com/address/0x417834e4371610BB81DC150fF47C0859b72318B0
     address public constant OWNER = 0x417834e4371610BB81DC150fF47C0859b72318B0;
 
-    /// @notice Uniswap V3 SwapRouter02 on Polygon.
-    /// @dev https://polygonscan.com/address/0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45
-    address public constant ROUTER = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
+    /// @notice Uniswap V3 SwapRouter on Polygon.
+    /// @dev https://polygonscan.com/address/0xE592427A0AEce92De3Edee1F18E0157C05861564
+    address public constant ROUTER = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
 
     /// @notice Bridged USDC.e on Polygon.
     /// @dev https://polygonscan.com/address/0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174
