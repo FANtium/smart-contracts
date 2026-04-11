@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import { UnsafeUpgrades, Upgrades } from "@openzeppelin/foundry-upgrades/LegacyUpgrades.sol";
+import { Upgrades } from "@openzeppelin/foundry-upgrades/LegacyUpgrades.sol";
 import { Script } from "forge-std/Script.sol"; // v4 contracts
-import { FANtiumTokenV1 } from "src/FANtiumTokenV1.sol";
-import { FootballTokenV1 } from "src/FootballTokenV1.sol";
 
 /**
  * @notice Deploy a new version of our contracts to the testnet.
@@ -22,12 +20,6 @@ contract UpgradeTestnet is Script {
     bool public FANTIUM_CLAIMING_UPGRADE = false;
     address public constant FANTIUM_CLAIMING_PROXY = 0xB578fb2A0BC49892806DC7309Dbe809f23F4682F;
 
-    bool public FANTIUM_TOKEN_UPGRADE = false;
-    address public constant FANTIUM_TOKEN_PROXY = 0xd5E5cFf4858AD04D40Cbac54413fADaF8b717914;
-
-    bool public FOOTBALL_TOKEN_UPGRADE = false;
-    address public constant FOOTBALL_TOKEN_PROXY = 0x1BDc15D1c0eDfc14E2CD8CE0Ac8a6610bB28f456;
-
     function run() public {
         if (block.chainid != 80_002) {
             revert OnlyPolygonAmoyTestnet();
@@ -41,14 +33,6 @@ contract UpgradeTestnet is Script {
 
         if (FANTIUM_CLAIMING_UPGRADE) {
             Upgrades.upgradeProxy(FANTIUM_CLAIMING_PROXY, "FANtiumClaimingV5.sol:FANtiumClaimingV5", "");
-        }
-
-        if (FANTIUM_TOKEN_UPGRADE) {
-            UnsafeUpgrades.upgradeProxy(FANTIUM_TOKEN_PROXY, address(new FANtiumTokenV1()), "");
-        }
-
-        if (FOOTBALL_TOKEN_UPGRADE) {
-            UnsafeUpgrades.upgradeProxy(FOOTBALL_TOKEN_PROXY, address(new FootballTokenV1()), "");
         }
         vm.stopBroadcast();
     }
