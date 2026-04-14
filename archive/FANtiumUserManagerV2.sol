@@ -594,7 +594,6 @@ library MathUpgradeable {
         Down, // Toward negative infinity
         Up, // Toward infinity
         Zero // Toward zero
-
     }
 
     /**
@@ -1101,7 +1100,8 @@ abstract contract Initializable {
     modifier initializer() {
         bool isTopLevelCall = !_initializing;
         require(
-            (isTopLevelCall && _initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),
+            (isTopLevelCall && _initialized < 1)
+                || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),
             "Initializable: contract is already initialized"
         );
         _initialized = 1;
@@ -2299,17 +2299,17 @@ abstract contract AccessControlUpgradeable is
     uint256[49] private __gap;
 }
 
-// src/FANtiumUserManagerV3.sol
+// src/FANtiumUserManagerV2.sol
 
 /**
- * @title FANtium User Manager contract V3.
+ * @title FANtium User Manager contract V2.
  * @notice Used to manage user information such as KYC status, IDENT status, and allowlist allocations.
  * @dev KYC is "soft verification" and IDENT is "hard verification".
  * @author Mathieu Bour - FANtium, based on previous work by MTX Studio AG
  *
- * @custom:oz-upgrades-from src/archive/FANtiumUserManagerV2.sol:FANtiumUserManagerV2
+ * @custom:oz-upgrades-from src/archive/FANtiumUserManagerV1.sol:FantiumUserManager
  */
-contract FANtiumUserManagerV3 is
+contract FANtiumUserManagerV2 is
     Initializable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
@@ -2322,6 +2322,7 @@ contract FANtiumUserManagerV3 is
     // Roles
     // ========================================================================
     bytes32 public constant FORWARDER_ROLE = keccak256("FORWARDER_ROLE");
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
     bytes32 public constant ALLOWLIST_MANAGER_ROLE = keccak256("ALLOWLIST_MANAGER_ROLE");
 
@@ -2389,6 +2390,11 @@ contract FANtiumUserManagerV3 is
         _;
     }
 
+    modifier onlyManagerOrAdmin() {
+        _checkRoleOrAdmin(MANAGER_ROLE);
+        _;
+    }
+
     function _checkRoleOrAdmin(bytes32 role) internal view virtual {
         if (!hasRole(role, _msgSender()) && !hasRole(DEFAULT_ADMIN_ROLE, _msgSender())) {
             revert(
@@ -2410,14 +2416,14 @@ contract FANtiumUserManagerV3 is
     /**
      * @notice Update contract pause status to `_paused`.
      */
-    function pause() external onlyAdmin {
+    function pause() external onlyManagerOrAdmin {
         _pause();
     }
 
     /**
      * @notice Unpauses contract
      */
-    function unpause() external onlyAdmin {
+    function unpause() external onlyManagerOrAdmin {
         _unpause();
     }
 

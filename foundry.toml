@@ -32,6 +32,17 @@ verbosity = 3
 fuzz = { runs = 1_000 }
 verbosity = 3
 
+# Profile used to rebuild storage-layout reference artifacts for OZ upgrade validation.
+# Archives live outside `src/` so default builds skip them entirely; invoke with
+# `FOUNDRY_PROFILE=archive forge build` (or `bun run build:archive`) to regenerate
+# `out-archive/build-info/`. Redirect test/script too so Foundry doesn't re-scan
+# the live test suite (which would pull current src/ back in and defeat the point).
+[profile.archive]
+src = "archive"
+out = "out-archive"
+test = "archive"
+script = "archive"
+
 [fmt]
 bracket_spacing = true
 hex_underscores = "remove"

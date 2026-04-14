@@ -13,6 +13,7 @@ cache/
 artifacts/
 cache/
 out/
+out-archive/
 
 # Ignore Environment Variables!
 .env

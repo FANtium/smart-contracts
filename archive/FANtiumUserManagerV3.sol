@@ -1,111 +1,5 @@
-// SPDX-License-Identifier: Apache 2.0
-pragma solidity ^0.8.0 ^0.8.1 ^0.8.13 ^0.8.2;
-
-// node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol
-
-// OpenZeppelin Contracts (last updated v4.9.0) (token/ERC20/IERC20.sol)
-
-/**
- * @dev Interface of the ERC20 standard as defined in the EIP.
- */
-interface IERC20 {
-    /**
-     * @dev Emitted when `value` tokens are moved from one account (`from`) to
-     * another (`to`).
-     *
-     * Note that `value` may be zero.
-     */
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    /**
-     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
-     * a call to {approve}. `value` is the new allowance.
-     */
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-
-    /**
-     * @dev Returns the amount of tokens in existence.
-     */
-    function totalSupply() external view returns (uint256);
-
-    /**
-     * @dev Returns the amount of tokens owned by `account`.
-     */
-    function balanceOf(address account) external view returns (uint256);
-
-    /**
-     * @dev Moves `amount` tokens from the caller's account to `to`.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transfer(address to, uint256 amount) external returns (bool);
-
-    /**
-     * @dev Returns the remaining number of tokens that `spender` will be
-     * allowed to spend on behalf of `owner` through {transferFrom}. This is
-     * zero by default.
-     *
-     * This value changes when {approve} or {transferFrom} are called.
-     */
-    function allowance(address owner, address spender) external view returns (uint256);
-
-    /**
-     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * IMPORTANT: Beware that changing an allowance with this method brings the risk
-     * that someone may use both the old and the new allowance by unfortunate
-     * transaction ordering. One possible solution to mitigate this race
-     * condition is to first reduce the spender's allowance to 0 and set the
-     * desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     *
-     * Emits an {Approval} event.
-     */
-    function approve(address spender, uint256 amount) external returns (bool);
-
-    /**
-     * @dev Moves `amount` tokens from `from` to `to` using the
-     * allowance mechanism. `amount` is then deducted from the caller's
-     * allowance.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transferFrom(address from, address to, uint256 amount) external returns (bool);
-}
-
-// node_modules/@openzeppelin/contracts/utils/Context.sol
-
-// OpenZeppelin Contracts (last updated v4.9.4) (utils/Context.sol)
-
-/**
- * @dev Provides information about the current execution context, including the
- * sender of the transaction and its data. While these are generally available
- * via msg.sender and msg.data, they should not be accessed in such a direct
- * manner, since when dealing with meta-transactions the account sending and
- * paying for execution may not be the actual sender (as far as an application
- * is concerned).
- *
- * This contract is only required for intermediate, library-like contracts.
- */
-abstract contract Context {
-    function _msgSender() internal view virtual returns (address) {
-        return msg.sender;
-    }
-
-    function _msgData() internal view virtual returns (bytes calldata) {
-        return msg.data;
-    }
-
-    function _contextSuffixLength() internal view virtual returns (uint256) {
-        return 0;
-    }
-}
+// SPDX-License-Identifier: MIT
+pragma solidity =0.8.28 ^0.8.0 ^0.8.1 ^0.8.2;
 
 // node_modules/@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol
 
@@ -255,36 +149,6 @@ interface IBeaconUpgradeable {
      * {BeaconProxy} will check that this address is a contract.
      */
     function implementation() external view returns (address);
-}
-
-// node_modules/@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol
-
-// OpenZeppelin Contracts (last updated v4.6.0) (token/ERC721/IERC721Receiver.sol)
-
-/**
- * @title ERC721 token receiver interface
- * @dev Interface for any contract that wants to support safeTransfers
- * from ERC721 asset contracts.
- */
-interface IERC721ReceiverUpgradeable {
-    /**
-     * @dev Whenever an {IERC721} `tokenId` token is transferred to this contract via {IERC721-safeTransferFrom}
-     * by `operator` from `from`, this function is called.
-     *
-     * It must return its Solidity selector to confirm the token transfer.
-     * If any other value is returned or the interface is not implemented by the recipient, the transfer will be
-     * reverted.
-     *
-     * The selector can be obtained in Solidity with `IERC721Receiver.onERC721Received.selector`.
-     */
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    )
-        external
-        returns (bytes4);
 }
 
 // node_modules/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol
@@ -730,7 +594,6 @@ library MathUpgradeable {
         Down, // Toward negative infinity
         Up, // Toward infinity
         Zero // Toward zero
-
     }
 
     /**
@@ -1104,181 +967,54 @@ library SignedMathUpgradeable {
     }
 }
 
-// node_modules/operator-filter-registry/src/IOperatorFilterRegistry.sol
-
-interface IOperatorFilterRegistry {
-    /**
-     * @notice Returns true if operator is not filtered for a given token, either by address or codeHash. Also returns
-     *         true if supplied registrant address is not registered.
-     */
-    function isOperatorAllowed(address registrant, address operator) external view returns (bool);
-
-    /**
-     * @notice Registers an address with the registry. May be called by address itself or by EIP-173 owner.
-     */
-    function register(address registrant) external;
-
-    /**
-     * @notice Registers an address with the registry and "subscribes" to another address's filtered operators and
-     * codeHashes.
-     */
-    function registerAndSubscribe(address registrant, address subscription) external;
-
-    /**
-     * @notice Registers an address with the registry and copies the filtered operators and codeHashes from another
-     *         address without subscribing.
-     */
-    function registerAndCopyEntries(address registrant, address registrantToCopy) external;
-
-    /**
-     * @notice Unregisters an address with the registry and removes its subscription. May be called by address itself or
-     * by EIP-173 owner.
-     *         Note that this does not remove any filtered addresses or codeHashes.
-     *         Also note that any subscriptions to this registrant will still be active and follow the existing filtered
-     * addresses and codehashes.
-     */
-    function unregister(address addr) external;
-
-    /**
-     * @notice Update an operator address for a registered address - when filtered is true, the operator is filtered.
-     */
-    function updateOperator(address registrant, address operator, bool filtered) external;
-
-    /**
-     * @notice Update multiple operators for a registered address - when filtered is true, the operators will be
-     * filtered. Reverts on duplicates.
-     */
-    function updateOperators(address registrant, address[] calldata operators, bool filtered) external;
-
-    /**
-     * @notice Update a codeHash for a registered address - when filtered is true, the codeHash is filtered.
-     */
-    function updateCodeHash(address registrant, bytes32 codehash, bool filtered) external;
-
-    /**
-     * @notice Update multiple codeHashes for a registered address - when filtered is true, the codeHashes will be
-     * filtered. Reverts on duplicates.
-     */
-    function updateCodeHashes(address registrant, bytes32[] calldata codeHashes, bool filtered) external;
-
-    /**
-     * @notice Subscribe an address to another registrant's filtered operators and codeHashes. Will remove previous
-     *         subscription if present.
-     *         Note that accounts with subscriptions may go on to subscribe to other accounts - in this case,
-     *         subscriptions will not be forwarded. Instead the former subscription's existing entries will still be
-     *         used.
-     */
-    function subscribe(address registrant, address registrantToSubscribe) external;
-
-    /**
-     * @notice Unsubscribe an address from its current subscribed registrant, and optionally copy its filtered operators
-     * and codeHashes.
-     */
-    function unsubscribe(address registrant, bool copyExistingEntries) external;
-
-    /**
-     * @notice Get the subscription address of a given registrant, if any.
-     */
-    function subscriptionOf(address addr) external returns (address registrant);
-
-    /**
-     * @notice Get the set of addresses subscribed to a given registrant.
-     *         Note that order is not guaranteed as updates are made.
-     */
-    function subscribers(address registrant) external returns (address[] memory);
-
-    /**
-     * @notice Get the subscriber at a given index in the set of addresses subscribed to a given registrant.
-     *         Note that order is not guaranteed as updates are made.
-     */
-    function subscriberAt(address registrant, uint256 index) external returns (address);
-
-    /**
-     * @notice Copy filtered operators and codeHashes from a different registrantToCopy to addr.
-     */
-    function copyEntriesOf(address registrant, address registrantToCopy) external;
-
-    /**
-     * @notice Returns true if operator is filtered by a given address or its subscription.
-     */
-    function isOperatorFiltered(address registrant, address operator) external returns (bool);
-
-    /**
-     * @notice Returns true if the hash of an address's code is filtered by a given address or its subscription.
-     */
-    function isCodeHashOfFiltered(address registrant, address operatorWithCode) external returns (bool);
-
-    /**
-     * @notice Returns true if a codeHash is filtered by a given address or its subscription.
-     */
-    function isCodeHashFiltered(address registrant, bytes32 codeHash) external returns (bool);
-
-    /**
-     * @notice Returns a list of filtered operators for a given address or its subscription.
-     */
-    function filteredOperators(address addr) external returns (address[] memory);
-
-    /**
-     * @notice Returns the set of filtered codeHashes for a given address or its subscription.
-     *         Note that order is not guaranteed as updates are made.
-     */
-    function filteredCodeHashes(address addr) external returns (bytes32[] memory);
-
-    /**
-     * @notice Returns the filtered operator at the given index of the set of filtered operators for a given address or
-     *         its subscription.
-     *         Note that order is not guaranteed as updates are made.
-     */
-    function filteredOperatorAt(address registrant, uint256 index) external returns (address);
-
-    /**
-     * @notice Returns the filtered codeHash at the given index of the list of filtered codeHashes for a given address
-     * or
-     *         its subscription.
-     *         Note that order is not guaranteed as updates are made.
-     */
-    function filteredCodeHashAt(address registrant, uint256 index) external returns (bytes32);
-
-    /**
-     * @notice Returns true if an address has registered
-     */
-    function isRegistered(address addr) external returns (bool);
-
-    /**
-     * @dev Convenience method to compute the code hash of an arbitrary contract
-     */
-    function codeHashOf(address addr) external returns (bytes32);
-}
-
-// node_modules/operator-filter-registry/src/lib/Constants.sol
-
-address constant CANONICAL_OPERATOR_FILTER_REGISTRY_ADDRESS = 0x000000000000AAeB6D7670E522A718067333cd4E;
-address constant CANONICAL_CORI_SUBSCRIPTION = 0x3cc6CddA760b79bAfa08dF41ECFA224f810dCeB6;
-
-// node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol
-
-// OpenZeppelin Contracts v4.4.1 (token/ERC20/extensions/IERC20Metadata.sol)
+// src/interfaces/IFANtiumUserManager.sol
 
 /**
- * @dev Interface for the optional metadata functions from the ERC20 standard.
- *
- * _Available since v4.1._
+ * @title FANtium User Manager Interface
+ * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
  */
-interface IERC20Metadata is IERC20 {
-    /**
-     * @dev Returns the name of the token.
-     */
-    function name() external view returns (string memory);
+interface IFANtiumUserManager {
+    // ========================================================================
+    // Structs
+    // ========================================================================
+    struct User {
+        bool isKYCed;
+        bool isIDENT;
+        mapping(address => mapping(uint256 => uint256)) contractToAllowlistToSpots;
+    }
 
-    /**
-     * @dev Returns the symbol of the token.
-     */
-    function symbol() external view returns (string memory);
+    // ========================================================================
+    // Errors
+    // ========================================================================
+    error ArrayLengthMismatch(uint256 lhs, uint256 rhs);
 
-    /**
-     * @dev Returns the decimals places of the token.
-     */
-    function decimals() external view returns (uint8);
+    // ========================================================================
+    // Know-your-customer functions
+    // ========================================================================
+    function setKYC(address account, bool isKYCed) external;
+    function setBatchKYC(address[] memory accounts, bool[] memory isKYCed) external;
+    function isKYCed(address account) external view returns (bool);
+
+    // ========================================================================
+    // INDENT functions
+    // ========================================================================
+    function setIDENT(address account, bool isIDENT) external;
+    function setBatchIDENT(address[] memory accounts, bool[] memory isIDENT) external;
+    function isIDENT(address account) external view returns (bool);
+
+    // ========================================================================
+    // AllowList functions
+    // ========================================================================
+    function allowlist(address account, uint256 collectionId) external view returns (uint256);
+    function setAllowList(address account, uint256 collectionId, uint256 allocation) external;
+    function batchSetAllowList(
+        address[] memory accounts,
+        uint256[] memory collectionIds,
+        uint256[] memory allocations
+    )
+        external;
+    function increaseAllowList(address account, uint256 collectionId, uint256 delta) external;
+    function decreaseAllowList(address account, uint256 collectionId, uint256 delta) external;
 }
 
 // node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol
@@ -1364,7 +1100,8 @@ abstract contract Initializable {
     modifier initializer() {
         bool isTopLevelCall = !_initializing;
         require(
-            (isTopLevelCall && _initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),
+            (isTopLevelCall && _initialized < 1)
+                || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),
             "Initializable: contract is already initialized"
         );
         _initialized = 1;
@@ -1578,31 +1315,6 @@ interface IERC721Upgradeable is IERC165Upgradeable {
     function isApprovedForAll(address owner, address operator) external view returns (bool);
 }
 
-// node_modules/@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol
-
-// OpenZeppelin Contracts v4.4.1 (token/ERC721/extensions/IERC721Metadata.sol)
-
-/**
- * @title ERC-721 Non-Fungible Token Standard, optional metadata extension
- * @dev See https://eips.ethereum.org/EIPS/eip-721
- */
-interface IERC721MetadataUpgradeable is IERC721Upgradeable {
-    /**
-     * @dev Returns the token collection name.
-     */
-    function name() external view returns (string memory);
-
-    /**
-     * @dev Returns the token collection symbol.
-     */
-    function symbol() external view returns (string memory);
-
-    /**
-     * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
-     */
-    function tokenURI(uint256 tokenId) external view returns (string memory);
-}
-
 // node_modules/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol
 
 // OpenZeppelin Contracts (last updated v4.9.4) (utils/Context.sol)
@@ -1727,366 +1439,184 @@ library StringsUpgradeable {
     }
 }
 
-// node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol
-
-// OpenZeppelin Contracts (last updated v4.9.0) (token/ERC20/ERC20.sol)
+// src/interfaces/IFANtiumNFT.sol
 
 /**
- * @dev Implementation of the {IERC20} interface.
+ * @notice Collection struct
+ * @dev CAUTION: Do not change the order of the struct fields!!
  *
- * This implementation is agnostic to the way tokens are created. This means
- * that a supply mechanism has to be added in a derived contract using {_mint}.
- * For a generic mechanism see {ERC20PresetMinterPauser}.
+ * Difference between isMintable and isPaused:
+ * - isMintable false means that nobody can mint new tokens
+ * - isPaused true means that the collection is mintable only by member of the collection allowlist
  *
- * TIP: For a detailed writeup see our guide
- * https://forum.openzeppelin.com/t/how-to-implement-erc20-supply-mechanisms/226[How
- * to implement supply mechanisms].
- *
- * The default value of {decimals} is 18. To change this, you should override
- * this function so it returns a different value.
- *
- * We have followed general OpenZeppelin Contracts guidelines: functions revert
- * instead returning `false` on failure. This behavior is nonetheless
- * conventional and does not conflict with the expectations of ERC20
- * applications.
- *
- * Additionally, an {Approval} event is emitted on calls to {transferFrom}.
- * This allows applications to reconstruct the allowance for all accounts just
- * by listening to said events. Other implementations of the EIP may not emit
- * these events, as it isn't required by the specification.
- *
- * Finally, the non-standard {decreaseAllowance} and {increaseAllowance}
- * functions have been added to mitigate the well-known issues around setting
- * allowances. See {IERC20-approve}.
+ * price does not take the token decimals into account, which means that if the price is 1,000UDSC,
+ * mintTo function will need to multiply the price by 10^decimals of the token.
  */
-contract ERC20 is Context, IERC20, IERC20Metadata {
-    mapping(address => uint256) private _balances;
-
-    mapping(address => mapping(address => uint256)) private _allowances;
-
-    uint256 private _totalSupply;
-
-    string private _name;
-    string private _symbol;
-
+struct Collection {
     /**
-     * @dev Sets the values for {name} and {symbol}.
-     *
-     * All two of these values are immutable: they can only be set once during
-     * construction.
+     * @notice Always true if the collection exists.
      */
-    constructor(string memory name_, string memory symbol_) {
-        _name = name_;
-        _symbol = symbol_;
-    }
-
+    bool exists;
     /**
-     * @dev Returns the name of the token.
+     * @notice UNIX timestamp of the collection launch.
      */
-    function name() public view virtual override returns (string memory) {
-        return _name;
-    }
-
+    uint256 launchTimestamp;
     /**
-     * @dev Returns the symbol of the token, usually a shorter version of the
-     * name.
+     * @notice True if the collection is mintable.
      */
-    function symbol() public view virtual override returns (string memory) {
-        return _symbol;
-    }
-
+    bool isMintable;
     /**
-     * @dev Returns the number of decimals used to get its user representation.
-     * For example, if `decimals` equals `2`, a balance of `505` tokens should
-     * be displayed to a user as `5.05` (`505 / 10 ** 2`).
-     *
-     * Tokens usually opt for a value of 18, imitating the relationship between
-     * Ether and Wei. This is the default value returned by this function, unless
-     * it's overridden.
-     *
-     * NOTE: This information is only used for _display_ purposes: it in
-     * no way affects any of the arithmetic of the contract, including
-     * {IERC20-balanceOf} and {IERC20-transfer}.
+     * @notice True if the collection is paused.
      */
-    function decimals() public view virtual override returns (uint8) {
-        return 18;
-    }
-
+    bool isPaused;
     /**
-     * @dev See {IERC20-totalSupply}.
+     * @notice Number of minted tokens.
      */
-    function totalSupply() public view virtual override returns (uint256) {
-        return _totalSupply;
-    }
-
+    uint24 invocations;
     /**
-     * @dev See {IERC20-balanceOf}.
+     * @notice Price of a token in the collection without decimals, which means that this price must be multiplied by
+     * 10^decimals of the token.
      */
-    function balanceOf(address account) public view virtual override returns (uint256) {
-        return _balances[account];
-    }
-
+    uint256 price;
     /**
-     * @dev See {IERC20-transfer}.
-     *
-     * Requirements:
-     *
-     * - `to` cannot be the zero address.
-     * - the caller must have a balance of at least `amount`.
+     * @notice Maximum number of tokens that can be minted.
      */
-    function transfer(address to, uint256 amount) public virtual override returns (bool) {
-        address owner = _msgSender();
-        _transfer(owner, to, amount);
-        return true;
-    }
-
+    uint256 maxInvocations;
     /**
-     * @dev See {IERC20-allowance}.
+     * @notice Tournament earnings share in 1e7 basis points.
      */
-    function allowance(address owner, address spender) public view virtual override returns (uint256) {
-        return _allowances[owner][spender];
-    }
-
+    uint256 tournamentEarningShare1e7;
     /**
-     * @dev See {IERC20-approve}.
-     *
-     * NOTE: If `amount` is the maximum `uint256`, the allowance is not updated on
-     * `transferFrom`. This is semantically equivalent to an infinite approval.
-     *
-     * Requirements:
-     *
-     * - `spender` cannot be the zero address.
+     * @notice Address of the athlete.
      */
-    function approve(address spender, uint256 amount) public virtual override returns (bool) {
-        address owner = _msgSender();
-        _approve(owner, spender, amount);
-        return true;
-    }
-
+    address payable athleteAddress;
     /**
-     * @dev See {IERC20-transferFrom}.
-     *
-     * Emits an {Approval} event indicating the updated allowance. This is not
-     * required by the EIP. See the note at the beginning of {ERC20}.
-     *
-     * NOTE: Does not update the allowance if the current allowance
-     * is the maximum `uint256`.
-     *
-     * Requirements:
-     *
-     * - `from` and `to` cannot be the zero address.
-     * - `from` must have a balance of at least `amount`.
-     * - the caller must have allowance for ``from``'s tokens of at least
-     * `amount`.
+     * @notice Athlete primary sales share in 10,000 basis points.
      */
-    function transferFrom(address from, address to, uint256 amount) public virtual override returns (bool) {
-        address spender = _msgSender();
-        _spendAllowance(from, spender, amount);
-        _transfer(from, to, amount);
-        return true;
-    }
-
+    uint256 athletePrimarySalesBPS;
     /**
-     * @dev Atomically increases the allowance granted to `spender` by the caller.
-     *
-     * This is an alternative to {approve} that can be used as a mitigation for
-     * problems described in {IERC20-approve}.
-     *
-     * Emits an {Approval} event indicating the updated allowance.
-     *
-     * Requirements:
-     *
-     * - `spender` cannot be the zero address.
+     * @notice Athlete secondary sales share in 10,000 basis points.
      */
-    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
-        address owner = _msgSender();
-        _approve(owner, spender, allowance(owner, spender) + addedValue);
-        return true;
-    }
-
+    uint256 athleteSecondarySalesBPS;
     /**
-     * @dev Atomically decreases the allowance granted to `spender` by the caller.
-     *
-     * This is an alternative to {approve} that can be used as a mitigation for
-     * problems described in {IERC20-approve}.
-     *
-     * Emits an {Approval} event indicating the updated allowance.
-     *
-     * Requirements:
-     *
-     * - `spender` cannot be the zero address.
-     * - `spender` must have allowance for the caller of at least
-     * `subtractedValue`.
+     * @notice Address of the FANtium sales.
      */
-    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
-        address owner = _msgSender();
-        uint256 currentAllowance = allowance(owner, spender);
-        require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
-        unchecked {
-            _approve(owner, spender, currentAllowance - subtractedValue);
-        }
-
-        return true;
-    }
-
+    address payable UNUSED_fantiumSalesAddress;
     /**
-     * @dev Moves `amount` of tokens from `from` to `to`.
-     *
-     * This internal function is equivalent to {transfer}, and can be used to
-     * e.g. implement automatic token fees, slashing mechanisms, etc.
-     *
-     * Emits a {Transfer} event.
-     *
-     * Requirements:
-     *
-     * - `from` cannot be the zero address.
-     * - `to` cannot be the zero address.
-     * - `from` must have a balance of at least `amount`.
+     * @notice FANtium secondary sales share in 10,000 basis points.
      */
-    function _transfer(address from, address to, uint256 amount) internal virtual {
-        require(from != address(0), "ERC20: transfer from the zero address");
-        require(to != address(0), "ERC20: transfer to the zero address");
-
-        _beforeTokenTransfer(from, to, amount);
-
-        uint256 fromBalance = _balances[from];
-        require(fromBalance >= amount, "ERC20: transfer amount exceeds balance");
-        unchecked {
-            _balances[from] = fromBalance - amount;
-            // Overflow not possible: the sum of all balances is capped by totalSupply, and the sum is preserved by
-            // decrementing then incrementing.
-            _balances[to] += amount;
-        }
-
-        emit Transfer(from, to, amount);
-
-        _afterTokenTransfer(from, to, amount);
-    }
-
+    uint256 fantiumSecondarySalesBPS;
     /**
-     * @dev Creates `amount` tokens and assigns them to `account`, increasing
-     * the total supply.
-     *
-     * Emits a {Transfer} event with `from` set to the zero address.
-     *
-     * Requirements:
-     *
-     * - `account` cannot be the zero address.
+     * @notice Other earnings (e.g. sponsorships, royalties, etc.) share in 1e7 basis points.
      */
-    function _mint(address account, uint256 amount) internal virtual {
-        require(account != address(0), "ERC20: mint to the zero address");
+    uint256 otherEarningShare1e7;
+}
 
-        _beforeTokenTransfer(address(0), account, amount);
+/**
+ * @notice Create collection struct
+ * @dev Fields may be added.
+ */
+struct CollectionData {
+    address payable athleteAddress;
+    uint256 athletePrimarySalesBPS;
+    uint256 athleteSecondarySalesBPS;
+    uint256 fantiumSecondarySalesBPS;
+    uint256 launchTimestamp;
+    uint256 maxInvocations;
+    uint256 otherEarningShare1e7;
+    uint256 price;
+    uint256 tournamentEarningShare1e7;
+}
 
-        _totalSupply += amount;
-        unchecked {
-            // Overflow not possible: balance + amount is at most totalSupply + amount, which is checked above.
-            _balances[account] += amount;
-        }
-        emit Transfer(address(0), account, amount);
+enum CollectionErrorReason {
+    INVALID_BPS_SUM,
+    INVALID_MAX_INVOCATIONS,
+    INVALID_PRIMARY_SALES_BPS,
+    INVALID_SECONDARY_SALES_BPS,
+    MAX_COLLECTIONS_REACHED,
+    INVALID_TOURNAMENT_EARNING_SHARE,
+    INVALID_OTHER_EARNING_SHARE,
+    INVALID_ATHLETE_ADDRESS,
+    INVALID_FANTIUM_SALES_ADDRESS,
+    INVALID_PRICE
+}
 
-        _afterTokenTransfer(address(0), account, amount);
-    }
+enum MintErrorReason {
+    INVALID_COLLECTION_ID,
+    COLLECTION_NOT_MINTABLE,
+    COLLECTION_NOT_LAUNCHED,
+    COLLECTION_PAUSED,
+    ACCOUNT_NOT_KYCED,
+    INVALID_SIGNATURE
+}
 
-    /**
-     * @dev Destroys `amount` tokens from `account`, reducing the
-     * total supply.
-     *
-     * Emits a {Transfer} event with `to` set to the zero address.
-     *
-     * Requirements:
-     *
-     * - `account` cannot be the zero address.
-     * - `account` must have at least `amount` tokens.
-     */
-    function _burn(address account, uint256 amount) internal virtual {
-        require(account != address(0), "ERC20: burn from the zero address");
+enum UpgradeErrorReason {
+    INVALID_COLLECTION_ID,
+    VERSION_ID_TOO_HIGH
+}
 
-        _beforeTokenTransfer(account, address(0), amount);
+interface IFANtiumNFT is IERC721Upgradeable {
+    // ========================================================================
+    // Events
+    // ========================================================================
+    event CollectionCreated(uint256 indexed collectionId, Collection collection);
+    event CollectionUpdated(uint256 indexed collectionId, Collection collection);
+    event Sale(
+        uint256 indexed collectionId, uint24 quantity, address indexed recipient, uint256 amount, uint256 discount
+    );
 
-        uint256 accountBalance = _balances[account];
-        require(accountBalance >= amount, "ERC20: burn amount exceeds balance");
-        unchecked {
-            _balances[account] = accountBalance - amount;
-            // Overflow not possible: amount <= accountBalance <= totalSupply.
-            _totalSupply -= amount;
-        }
+    // ========================================================================
+    // Errors
+    // ========================================================================
+    error InvalidCollectionId(uint256 collectionId);
+    error AthleteOnly(uint256 collectionId, address account, address expected);
+    error InvalidCollection(CollectionErrorReason reason);
+    error InvalidMint(MintErrorReason reason);
+    error InvalidUpgrade(UpgradeErrorReason reason);
 
-        emit Transfer(account, address(0), amount);
+    // ========================================================================
+    // Collection
+    // ========================================================================
+    function collections(uint256 collectionId) external view returns (Collection memory);
+    function createCollection(CollectionData memory data) external returns (uint256);
+    function updateCollection(uint256 collectionId, CollectionData memory data) external;
+    function setCollectionStatus(uint256 collectionId, bool isMintable, bool isPaused) external;
 
-        _afterTokenTransfer(account, address(0), amount);
-    }
+    // ========================================================================
+    // Revenue splits
+    // ========================================================================
+    function getPrimaryRevenueSplits(
+        uint256 _collectionId,
+        uint256 _price
+    )
+        external
+        view
+        returns (
+            uint256 fantiumRevenue_,
+            address payable fantiumAddress_,
+            uint256 athleteRevenue_,
+            address payable athleteAddress_
+        );
 
-    /**
-     * @dev Sets `amount` as the allowance of `spender` over the `owner` s tokens.
-     *
-     * This internal function is equivalent to `approve`, and can be used to
-     * e.g. set automatic allowances for certain subsystems, etc.
-     *
-     * Emits an {Approval} event.
-     *
-     * Requirements:
-     *
-     * - `owner` cannot be the zero address.
-     * - `spender` cannot be the zero address.
-     */
-    function _approve(address owner, address spender, uint256 amount) internal virtual {
-        require(owner != address(0), "ERC20: approve from the zero address");
-        require(spender != address(0), "ERC20: approve to the zero address");
+    // ========================================================================
+    // Minting
+    // ========================================================================
+    function mintTo(uint256 collectionId, uint24 quantity, address recipient) external returns (uint256);
 
-        _allowances[owner][spender] = amount;
-        emit Approval(owner, spender, amount);
-    }
+    function mintTo(
+        uint256 collectionId,
+        uint24 quantity,
+        address recipient,
+        uint256 amount,
+        bytes memory signature
+    )
+        external
+        returns (uint256);
 
-    /**
-     * @dev Updates `owner` s allowance for `spender` based on spent `amount`.
-     *
-     * Does not update the allowance amount in case of infinite allowance.
-     * Revert if not enough allowance is available.
-     *
-     * Might emit an {Approval} event.
-     */
-    function _spendAllowance(address owner, address spender, uint256 amount) internal virtual {
-        uint256 currentAllowance = allowance(owner, spender);
-        if (currentAllowance != type(uint256).max) {
-            require(currentAllowance >= amount, "ERC20: insufficient allowance");
-            unchecked {
-                _approve(owner, spender, currentAllowance - amount);
-            }
-        }
-    }
-
-    /**
-     * @dev Hook that is called before any transfer of tokens. This includes
-     * minting and burning.
-     *
-     * Calling conditions:
-     *
-     * - when `from` and `to` are both non-zero, `amount` of ``from``'s tokens
-     * will be transferred to `to`.
-     * - when `from` is zero, `amount` tokens will be minted for `to`.
-     * - when `to` is zero, `amount` of ``from``'s tokens will be burned.
-     * - `from` and `to` are never both zero.
-     *
-     * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
-     */
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual { }
-
-    /**
-     * @dev Hook that is called after any transfer of tokens. This includes
-     * minting and burning.
-     *
-     * Calling conditions:
-     *
-     * - when `from` and `to` are both non-zero, `amount` of ``from``'s tokens
-     * has been transferred to `to`.
-     * - when `from` is zero, `amount` tokens have been minted for `to`.
-     * - when `to` is zero, `amount` of ``from``'s tokens have been burned.
-     * - `from` and `to` are never both zero.
-     *
-     * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
-     */
-    function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual { }
+    // ========================================================================
+    // Claiming
+    // ========================================================================
+    function upgradeTokenVersion(uint256 tokenId) external returns (uint256);
 }
 
 // node_modules/@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol
@@ -2239,100 +1769,6 @@ abstract contract ERC165Upgradeable is Initializable, IERC165Upgradeable {
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
     uint256[50] private __gap;
-}
-
-// node_modules/operator-filter-registry/src/upgradeable/OperatorFiltererUpgradeable.sol
-
-/**
- * @title  OperatorFiltererUpgradeable
- * @notice Abstract contract whose constructor automatically registers and optionally subscribes to or copies another
- *         registrant's entries in the OperatorFilterRegistry when the init function is called.
- * @dev    This smart contract is meant to be inherited by token contracts so they can use the following:
- *         - `onlyAllowedOperator` modifier for `transferFrom` and `safeTransferFrom` methods.
- *         - `onlyAllowedOperatorApproval` modifier for `approve` and `setApprovalForAll` methods.
- */
-abstract contract OperatorFiltererUpgradeable is Initializable {
-    /// @notice Emitted when an operator is not allowed.
-    error OperatorNotAllowed(address operator);
-
-    IOperatorFilterRegistry constant OPERATOR_FILTER_REGISTRY =
-        IOperatorFilterRegistry(0x000000000000AAeB6D7670E522A718067333cd4E);
-
-    /// @dev The upgradeable initialize function that should be called when the contract is being upgraded.
-    function __OperatorFilterer_init(
-        address subscriptionOrRegistrantToCopy,
-        bool subscribe
-    )
-        internal
-        onlyInitializing
-    {
-        // If an inheriting token contract is deployed to a network without the registry deployed, the modifier
-        // will not revert, but the contract will need to be registered with the registry once it is deployed in
-        // order for the modifier to filter addresses.
-        if (address(OPERATOR_FILTER_REGISTRY).code.length > 0) {
-            if (!OPERATOR_FILTER_REGISTRY.isRegistered(address(this))) {
-                if (subscribe) {
-                    OPERATOR_FILTER_REGISTRY.registerAndSubscribe(address(this), subscriptionOrRegistrantToCopy);
-                } else {
-                    if (subscriptionOrRegistrantToCopy != address(0)) {
-                        OPERATOR_FILTER_REGISTRY.registerAndCopyEntries(address(this), subscriptionOrRegistrantToCopy);
-                    } else {
-                        OPERATOR_FILTER_REGISTRY.register(address(this));
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * @dev A helper modifier to check if the operator is allowed.
-     */
-    modifier onlyAllowedOperator(address from) virtual {
-        // Allow spending tokens from addresses with balance
-        // Note that this still allows listings and marketplaces with escrow to transfer tokens if transferred
-        // from an EOA.
-        if (from != msg.sender) {
-            _checkFilterOperator(msg.sender);
-        }
-        _;
-    }
-
-    /**
-     * @dev A helper modifier to check if the operator approval is allowed.
-     */
-    modifier onlyAllowedOperatorApproval(address operator) virtual {
-        _checkFilterOperator(operator);
-        _;
-    }
-
-    /**
-     * @dev A helper function to check if the operator is allowed.
-     */
-    function _checkFilterOperator(address operator) internal view virtual {
-        // Check registry code length to facilitate testing in environments without a deployed registry.
-        if (address(OPERATOR_FILTER_REGISTRY).code.length > 0) {
-            // under normal circumstances, this function will revert rather than return false, but inheriting or
-            // upgraded contracts may specify their own OperatorFilterRegistry implementations, which may behave
-            // differently
-            if (!OPERATOR_FILTER_REGISTRY.isOperatorAllowed(address(this), operator)) {
-                revert OperatorNotAllowed(operator);
-            }
-        }
-    }
-}
-
-// node_modules/operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol
-
-/**
- * @title  DefaultOperatorFiltererUpgradeable
- * @notice Inherits from OperatorFiltererUpgradeable and automatically subscribes to the default OpenSea subscription
- *         when the init function is called.
- */
-abstract contract DefaultOperatorFiltererUpgradeable is OperatorFiltererUpgradeable {
-    /// @dev The upgradeable initialize function that should be called when the contract is being deployed.
-    function __DefaultOperatorFilterer_init() internal onlyInitializing {
-        OperatorFiltererUpgradeable.__OperatorFilterer_init(CANONICAL_CORI_SUBSCRIPTION, true);
-    }
 }
 
 // node_modules/@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol
@@ -2863,1222 +2299,310 @@ abstract contract AccessControlUpgradeable is
     uint256[49] private __gap;
 }
 
-// node_modules/@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol
-
-// OpenZeppelin Contracts (last updated v4.9.0) (token/ERC721/ERC721.sol)
+// src/FANtiumUserManagerV3.sol
 
 /**
- * @dev Implementation of https://eips.ethereum.org/EIPS/eip-721[ERC721] Non-Fungible Token Standard, including
- * the Metadata extension, but not including the Enumerable extension, which is available separately as
- * {ERC721Enumerable}.
+ * @title FANtium User Manager contract V3.
+ * @notice Used to manage user information such as KYC status, IDENT status, and allowlist allocations.
+ * @dev KYC is "soft verification" and IDENT is "hard verification".
+ * @author Mathieu Bour - FANtium, based on previous work by MTX Studio AG
+ *
+ * @custom:oz-upgrades-from src/archive/FANtiumUserManagerV2.sol:FANtiumUserManagerV2
  */
-contract ERC721Upgradeable is
+contract FANtiumUserManagerV3 is
     Initializable,
-    ContextUpgradeable,
-    ERC165Upgradeable,
-    IERC721Upgradeable,
-    IERC721MetadataUpgradeable
-{
-    using AddressUpgradeable for address;
-    using StringsUpgradeable for uint256;
-
-    // Token name
-    string private _name;
-
-    // Token symbol
-    string private _symbol;
-
-    // Mapping from token ID to owner address
-    mapping(uint256 => address) private _owners;
-
-    // Mapping owner address to token count
-    mapping(address => uint256) private _balances;
-
-    // Mapping from token ID to approved address
-    mapping(uint256 => address) private _tokenApprovals;
-
-    // Mapping from owner to operator approvals
-    mapping(address => mapping(address => bool)) private _operatorApprovals;
-
-    /**
-     * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
-     */
-    function __ERC721_init(string memory name_, string memory symbol_) internal onlyInitializing {
-        __ERC721_init_unchained(name_, symbol_);
-    }
-
-    function __ERC721_init_unchained(string memory name_, string memory symbol_) internal onlyInitializing {
-        _name = name_;
-        _symbol = symbol_;
-    }
-
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override (ERC165Upgradeable, IERC165Upgradeable)
-        returns (bool)
-    {
-        return interfaceId == type(IERC721Upgradeable).interfaceId
-            || interfaceId == type(IERC721MetadataUpgradeable).interfaceId || super.supportsInterface(interfaceId);
-    }
-
-    /**
-     * @dev See {IERC721-balanceOf}.
-     */
-    function balanceOf(address owner) public view virtual override returns (uint256) {
-        require(owner != address(0), "ERC721: address zero is not a valid owner");
-        return _balances[owner];
-    }
-
-    /**
-     * @dev See {IERC721-ownerOf}.
-     */
-    function ownerOf(uint256 tokenId) public view virtual override returns (address) {
-        address owner = _ownerOf(tokenId);
-        require(owner != address(0), "ERC721: invalid token ID");
-        return owner;
-    }
-
-    /**
-     * @dev See {IERC721Metadata-name}.
-     */
-    function name() public view virtual override returns (string memory) {
-        return _name;
-    }
-
-    /**
-     * @dev See {IERC721Metadata-symbol}.
-     */
-    function symbol() public view virtual override returns (string memory) {
-        return _symbol;
-    }
-
-    /**
-     * @dev See {IERC721Metadata-tokenURI}.
-     */
-    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        _requireMinted(tokenId);
-
-        string memory baseURI = _baseURI();
-        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, tokenId.toString())) : "";
-    }
-
-    /**
-     * @dev Base URI for computing {tokenURI}. If set, the resulting URI for each
-     * token will be the concatenation of the `baseURI` and the `tokenId`. Empty
-     * by default, can be overridden in child contracts.
-     */
-    function _baseURI() internal view virtual returns (string memory) {
-        return "";
-    }
-
-    /**
-     * @dev See {IERC721-approve}.
-     */
-    function approve(address to, uint256 tokenId) public virtual override {
-        address owner = ERC721Upgradeable.ownerOf(tokenId);
-        require(to != owner, "ERC721: approval to current owner");
-
-        require(
-            _msgSender() == owner || isApprovedForAll(owner, _msgSender()),
-            "ERC721: approve caller is not token owner or approved for all"
-        );
-
-        _approve(to, tokenId);
-    }
-
-    /**
-     * @dev See {IERC721-getApproved}.
-     */
-    function getApproved(uint256 tokenId) public view virtual override returns (address) {
-        _requireMinted(tokenId);
-
-        return _tokenApprovals[tokenId];
-    }
-
-    /**
-     * @dev See {IERC721-setApprovalForAll}.
-     */
-    function setApprovalForAll(address operator, bool approved) public virtual override {
-        _setApprovalForAll(_msgSender(), operator, approved);
-    }
-
-    /**
-     * @dev See {IERC721-isApprovedForAll}.
-     */
-    function isApprovedForAll(address owner, address operator) public view virtual override returns (bool) {
-        return _operatorApprovals[owner][operator];
-    }
-
-    /**
-     * @dev See {IERC721-transferFrom}.
-     */
-    function transferFrom(address from, address to, uint256 tokenId) public virtual override {
-        //solhint-disable-next-line max-line-length
-        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: caller is not token owner or approved");
-
-        _transfer(from, to, tokenId);
-    }
-
-    /**
-     * @dev See {IERC721-safeTransferFrom}.
-     */
-    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override {
-        safeTransferFrom(from, to, tokenId, "");
-    }
-
-    /**
-     * @dev See {IERC721-safeTransferFrom}.
-     */
-    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public virtual override {
-        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: caller is not token owner or approved");
-        _safeTransfer(from, to, tokenId, data);
-    }
-
-    /**
-     * @dev Safely transfers `tokenId` token from `from` to `to`, checking first that contract recipients
-     * are aware of the ERC721 protocol to prevent tokens from being forever locked.
-     *
-     * `data` is additional data, it has no specified format and it is sent in call to `to`.
-     *
-     * This internal function is equivalent to {safeTransferFrom}, and can be used to e.g.
-     * implement alternative mechanisms to perform token transfer, such as signature-based.
-     *
-     * Requirements:
-     *
-     * - `from` cannot be the zero address.
-     * - `to` cannot be the zero address.
-     * - `tokenId` token must exist and be owned by `from`.
-     * - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon
-     * a safe transfer.
-     *
-     * Emits a {Transfer} event.
-     */
-    function _safeTransfer(address from, address to, uint256 tokenId, bytes memory data) internal virtual {
-        _transfer(from, to, tokenId);
-        require(_checkOnERC721Received(from, to, tokenId, data), "ERC721: transfer to non ERC721Receiver implementer");
-    }
-
-    /**
-     * @dev Returns the owner of the `tokenId`. Does NOT revert if token doesn't exist
-     */
-    function _ownerOf(uint256 tokenId) internal view virtual returns (address) {
-        return _owners[tokenId];
-    }
-
-    /**
-     * @dev Returns whether `tokenId` exists.
-     *
-     * Tokens can be managed by their owner or approved accounts via {approve} or {setApprovalForAll}.
-     *
-     * Tokens start existing when they are minted (`_mint`),
-     * and stop existing when they are burned (`_burn`).
-     */
-    function _exists(uint256 tokenId) internal view virtual returns (bool) {
-        return _ownerOf(tokenId) != address(0);
-    }
-
-    /**
-     * @dev Returns whether `spender` is allowed to manage `tokenId`.
-     *
-     * Requirements:
-     *
-     * - `tokenId` must exist.
-     */
-    function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual returns (bool) {
-        address owner = ERC721Upgradeable.ownerOf(tokenId);
-        return (spender == owner || isApprovedForAll(owner, spender) || getApproved(tokenId) == spender);
-    }
-
-    /**
-     * @dev Safely mints `tokenId` and transfers it to `to`.
-     *
-     * Requirements:
-     *
-     * - `tokenId` must not exist.
-     * - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon
-     * a safe transfer.
-     *
-     * Emits a {Transfer} event.
-     */
-    function _safeMint(address to, uint256 tokenId) internal virtual {
-        _safeMint(to, tokenId, "");
-    }
-
-    /**
-     * @dev Same as {xref-ERC721-_safeMint-address-uint256-}[`_safeMint`], with an additional `data` parameter which is
-     * forwarded in {IERC721Receiver-onERC721Received} to contract recipients.
-     */
-    function _safeMint(address to, uint256 tokenId, bytes memory data) internal virtual {
-        _mint(to, tokenId);
-        require(
-            _checkOnERC721Received(address(0), to, tokenId, data), "ERC721: transfer to non ERC721Receiver implementer"
-        );
-    }
-
-    /**
-     * @dev Mints `tokenId` and transfers it to `to`.
-     *
-     * WARNING: Usage of this method is discouraged, use {_safeMint} whenever possible
-     *
-     * Requirements:
-     *
-     * - `tokenId` must not exist.
-     * - `to` cannot be the zero address.
-     *
-     * Emits a {Transfer} event.
-     */
-    function _mint(address to, uint256 tokenId) internal virtual {
-        require(to != address(0), "ERC721: mint to the zero address");
-        require(!_exists(tokenId), "ERC721: token already minted");
-
-        _beforeTokenTransfer(address(0), to, tokenId, 1);
-
-        // Check that tokenId was not minted by `_beforeTokenTransfer` hook
-        require(!_exists(tokenId), "ERC721: token already minted");
-
-        unchecked {
-            // Will not overflow unless all 2**256 token ids are minted to the same owner.
-            // Given that tokens are minted one by one, it is impossible in practice that
-            // this ever happens. Might change if we allow batch minting.
-            // The ERC fails to describe this case.
-            _balances[to] += 1;
-        }
-
-        _owners[tokenId] = to;
-
-        emit Transfer(address(0), to, tokenId);
-
-        _afterTokenTransfer(address(0), to, tokenId, 1);
-    }
-
-    /**
-     * @dev Destroys `tokenId`.
-     * The approval is cleared when the token is burned.
-     * This is an internal function that does not check if the sender is authorized to operate on the token.
-     *
-     * Requirements:
-     *
-     * - `tokenId` must exist.
-     *
-     * Emits a {Transfer} event.
-     */
-    function _burn(uint256 tokenId) internal virtual {
-        address owner = ERC721Upgradeable.ownerOf(tokenId);
-
-        _beforeTokenTransfer(owner, address(0), tokenId, 1);
-
-        // Update ownership in case tokenId was transferred by `_beforeTokenTransfer` hook
-        owner = ERC721Upgradeable.ownerOf(tokenId);
-
-        // Clear approvals
-        delete _tokenApprovals[tokenId];
-
-        unchecked {
-            // Cannot overflow, as that would require more tokens to be burned/transferred
-            // out than the owner initially received through minting and transferring in.
-            _balances[owner] -= 1;
-        }
-        delete _owners[tokenId];
-
-        emit Transfer(owner, address(0), tokenId);
-
-        _afterTokenTransfer(owner, address(0), tokenId, 1);
-    }
-
-    /**
-     * @dev Transfers `tokenId` from `from` to `to`.
-     *  As opposed to {transferFrom}, this imposes no restrictions on msg.sender.
-     *
-     * Requirements:
-     *
-     * - `to` cannot be the zero address.
-     * - `tokenId` token must be owned by `from`.
-     *
-     * Emits a {Transfer} event.
-     */
-    function _transfer(address from, address to, uint256 tokenId) internal virtual {
-        require(ERC721Upgradeable.ownerOf(tokenId) == from, "ERC721: transfer from incorrect owner");
-        require(to != address(0), "ERC721: transfer to the zero address");
-
-        _beforeTokenTransfer(from, to, tokenId, 1);
-
-        // Check that tokenId was not transferred by `_beforeTokenTransfer` hook
-        require(ERC721Upgradeable.ownerOf(tokenId) == from, "ERC721: transfer from incorrect owner");
-
-        // Clear approvals from the previous owner
-        delete _tokenApprovals[tokenId];
-
-        unchecked {
-            // `_balances[from]` cannot overflow for the same reason as described in `_burn`:
-            // `from`'s balance is the number of token held, which is at least one before the current
-            // transfer.
-            // `_balances[to]` could overflow in the conditions described in `_mint`. That would require
-            // all 2**256 token ids to be minted, which in practice is impossible.
-            _balances[from] -= 1;
-            _balances[to] += 1;
-        }
-        _owners[tokenId] = to;
-
-        emit Transfer(from, to, tokenId);
-
-        _afterTokenTransfer(from, to, tokenId, 1);
-    }
-
-    /**
-     * @dev Approve `to` to operate on `tokenId`
-     *
-     * Emits an {Approval} event.
-     */
-    function _approve(address to, uint256 tokenId) internal virtual {
-        _tokenApprovals[tokenId] = to;
-        emit Approval(ERC721Upgradeable.ownerOf(tokenId), to, tokenId);
-    }
-
-    /**
-     * @dev Approve `operator` to operate on all of `owner` tokens
-     *
-     * Emits an {ApprovalForAll} event.
-     */
-    function _setApprovalForAll(address owner, address operator, bool approved) internal virtual {
-        require(owner != operator, "ERC721: approve to caller");
-        _operatorApprovals[owner][operator] = approved;
-        emit ApprovalForAll(owner, operator, approved);
-    }
-
-    /**
-     * @dev Reverts if the `tokenId` has not been minted yet.
-     */
-    function _requireMinted(uint256 tokenId) internal view virtual {
-        require(_exists(tokenId), "ERC721: invalid token ID");
-    }
-
-    /**
-     * @dev Internal function to invoke {IERC721Receiver-onERC721Received} on a target address.
-     * The call is not executed if the target address is not a contract.
-     *
-     * @param from address representing the previous owner of the given token ID
-     * @param to target address that will receive the tokens
-     * @param tokenId uint256 ID of the token to be transferred
-     * @param data bytes optional data to send along with the call
-     * @return bool whether the call correctly returned the expected magic value
-     */
-    function _checkOnERC721Received(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes memory data
-    )
-        private
-        returns (bool)
-    {
-        if (to.isContract()) {
-            try IERC721ReceiverUpgradeable(to).onERC721Received(_msgSender(), from, tokenId, data) returns (
-                bytes4 retval
-            ) {
-                return retval == IERC721ReceiverUpgradeable.onERC721Received.selector;
-            } catch (bytes memory reason) {
-                if (reason.length == 0) {
-                    revert("ERC721: transfer to non ERC721Receiver implementer");
-                } else {
-                    /// @solidity memory-safe-assembly
-                    assembly {
-                        revert(add(32, reason), mload(reason))
-                    }
-                }
-            }
-        } else {
-            return true;
-        }
-    }
-
-    /**
-     * @dev Hook that is called before any token transfer. This includes minting and burning. If {ERC721Consecutive} is
-     * used, the hook may be called as part of a consecutive (batch) mint, as indicated by `batchSize` greater than 1.
-     *
-     * Calling conditions:
-     *
-     * - When `from` and `to` are both non-zero, ``from``'s tokens will be transferred to `to`.
-     * - When `from` is zero, the tokens will be minted for `to`.
-     * - When `to` is zero, ``from``'s tokens will be burned.
-     * - `from` and `to` are never both zero.
-     * - `batchSize` is non-zero.
-     *
-     * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
-     */
-    function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize) internal virtual { }
-
-    /**
-     * @dev Hook that is called after any token transfer. This includes minting and burning. If {ERC721Consecutive} is
-     * used, the hook may be called as part of a consecutive (batch) mint, as indicated by `batchSize` greater than 1.
-     *
-     * Calling conditions:
-     *
-     * - When `from` and `to` are both non-zero, ``from``'s tokens were transferred to `to`.
-     * - When `from` is zero, the tokens were minted for `to`.
-     * - When `to` is zero, ``from``'s tokens were burned.
-     * - `from` and `to` are never both zero.
-     * - `batchSize` is non-zero.
-     *
-     * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
-     */
-    function _afterTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize) internal virtual { }
-
-    /**
-     * @dev Unsafe write access to the balances, used by extensions that "mint" tokens using an {ownerOf} override.
-     *
-     * WARNING: Anyone calling this MUST ensure that the balances remain consistent with the ownership. The invariant
-     * being that for any address `a` the value returned by `balanceOf(a)` must be equal to the number of tokens such
-     * that `ownerOf(tokenId)` is `a`.
-     */
-    // solhint-disable-next-line func-name-mixedcase
-    function __unsafe_increaseBalance(address account, uint256 amount) internal {
-        _balances[account] += amount;
-    }
-
-    /**
-     * @dev This empty reserved space is put in place to allow future versions to add new
-     * variables without shifting down storage in the inheritance chain.
-     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-     */
-    uint256[44] private __gap;
-}
-
-// src/archive/contracts/FantiumNFTV2.sol
-
-/**
- * @title FANtium ERC721 contract V2.
- * @author MTX stuido AG.
- */
-contract FantiumNFTV2 is
-    Initializable,
-    ERC721Upgradeable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
-    DefaultOperatorFiltererUpgradeable,
-    PausableUpgradeable
+    PausableUpgradeable,
+    IFANtiumUserManager
 {
     using StringsUpgradeable for uint256;
 
-    mapping(uint256 => Collection) public collections;
-    string public baseURI;
-    mapping(uint256 => mapping(address => uint256)) public collectionIdToAllowList;
-    mapping(address => bool) public kycedAddresses;
-    // address payable public fantiumPrimarySalesAddress;
-    // address payable public fantiumSecondarySalesAddress;
-    // uint256 public fantiumSecondarySalesBPS;
-    uint256 private nextCollectionId;
-    address public erc20PaymentToken;
-
-    uint256 constant ONE_MILLION = 1_000_000;
-    bytes4 private constant _INTERFACE_ID_ERC2981_OVERRIDE = 0xbb3bafd6;
-    /// ACM
-    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-    bytes32 public constant PLATFORM_MANAGER_ROLE = keccak256("PLATFORM_MANAGER_ROLE");
+    // ========================================================================
+    // Roles
+    // ========================================================================
+    bytes32 public constant FORWARDER_ROLE = keccak256("FORWARDER_ROLE");
     bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
-    /// generic event fields
-    bytes32 constant FIELD_FANTIUM_SECONDARY_MARKET_ROYALTY_BPS = "fantium secondary royalty BPS";
-    bytes32 constant FIELD_FANTIUM_PRIMARY_ADDRESS = "fantium primary sale address";
-    bytes32 constant FIELD_FANTIUM_SECONDARY_ADDRESS = "fantium secondary sale address";
-    bytes32 constant FIELD_COLLECTION_CREATED = "created";
-    bytes32 constant FIELD_COLLECTION_NAME = "name";
-    bytes32 constant FIELD_COLLECTION_ATHLETE_NAME = "name";
-    bytes32 constant FIELD_COLLECTION_ATHLETE_ADDRESS = "athlete address";
-    bytes32 constant FIELD_COLLECTION_PAUSED = "isMintingPaused";
-    bytes32 constant FIELD_COLLECTION_PRICE = "price";
-    bytes32 constant FIELD_COLLECTION_MAX_INVOCATIONS = "max invocations";
-    bytes32 constant FIELD_COLLECTION_PRIMARY_MARKET_ROYALTY_PERCENTAGE = "collection primary sale %";
-    bytes32 constant FIELD_COLLECTION_SECONDARY_MARKET_ROYALTY_PERCENTAGE = "collection secondary sale %";
-    bytes32 constant FIELD_COLLECTION_BASE_URI = "collection base uri";
-    bytes32 constant FIELD_COLLECTION_TIER = "collection tier";
-    bytes32 constant FILED_FANTIUM_BASE_URI = "fantium base uri";
-    bytes32 constant FIELD_FANTIUM_MINTER_ADDRESS = "fantium minter address";
-    bytes32 constant FIELD_COLLECTION_ACTIVATED = "isActivated";
-    bytes32 constant FIELD_COLLECTION_LAUNCH_TIMESTAMP = "launch timestamp";
+    bytes32 public constant ALLOWLIST_MANAGER_ROLE = keccak256("ALLOWLIST_MANAGER_ROLE");
 
-    struct Collection {
-        bool exists;
-        uint256 launchTimestamp;
-        bool isMintable;
-        bool isPaused;
-        uint24 invocations;
-        uint256 price;
-        uint256 maxInvocations;
-        uint256 tournamentEarningShare1e7;
-        address payable athleteAddress;
-        uint256 athletePrimarySalesBPS;
-        uint256 athleteSecondarySalesBPS;
-        address payable fantiumSalesAddress;
-        uint256 fantiumSecondarySalesBPS;
-    }
-
-    /*//////////////////////////////////////////////////////////////
-                                 EVENTS
-    //////////////////////////////////////////////////////////////*/
-
-    event Mint(address indexed _to, uint256 indexed _tokenId);
-    event CollectionUpdated(uint256 indexed _collectionId, bytes32 indexed _update);
-    event PlatformUpdated(bytes32 indexed _field);
-    event MinterUpdated(address indexed _currentMinter);
-    event AddressAddedToKYC(address indexed _address);
-    event AddressRemovedFromKYC(address indexed _address);
-    event AddressAddedToAllowList(uint256 collectionId, address indexed _address);
-    event AddressRemovedFromAllowList(uint256 collectionId, address indexed _address);
-
-    /*//////////////////////////////////////////////////////////////
-                            INTERFACE
-    //////////////////////////////////////////////////////////////*/
-
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override (AccessControlUpgradeable, ERC721Upgradeable)
-        returns (bool)
-    {
-        return interfaceId == _INTERFACE_ID_ERC2981_OVERRIDE || super.supportsInterface(interfaceId);
-    }
-
-    /*//////////////////////////////////////////////////////////////
-                            MODIFERS
-    //////////////////////////////////////////////////////////////*/
-
-    modifier onlyAthlete(uint256 _collectionId) {
-        require(
-            msg.sender == collections[_collectionId].athleteAddress || hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
-            "Only athlete"
-        );
-        _;
-    }
-
-    modifier onlyValidCollectionId(uint256 _collectionId) {
-        require(collections[_collectionId].exists == true, "Invalid collectionId");
-        _;
-    }
-
-    modifier onlyValidTokenId(uint256 _tokenId) {
-        require(_exists(_tokenId), "Invalid tokenId");
-        _;
-    }
-
-    modifier onlyValidAddress(address _address) {
-        require(_address != address(0), "Invalid address");
-        _;
-    }
-
-    modifier onlyKycManager() {
-        require(hasRole(KYC_MANAGER_ROLE, msg.sender), "Only KYC updater");
-        _;
-    }
-
-    /*///////////////////////////////////////////////////////////////
-                            UUPS UPGRADEABLE
-    //////////////////////////////////////////////////////////////*/
+    // ========================================================================
+    // State variables
+    // ========================================================================
+    mapping(address => User) public users;
 
     /**
-     * @notice Initializes contract.
-     * @param _tokenName Name of token.
-     * @param _tokenSymbol Token symbol.
-     * max(uint248) to avoid overflow when adding to it.
+     * @dev deprecated: replaced by the ALLOWLIST_MANAGER_ROLE
+     * @custom:oz-renamed-from allowedContracts
      */
-    ///@dev no constructor in upgradable contracts. Instead we have initializers
-    function initialize(
-        string memory _tokenName,
-        string memory _tokenSymbol,
-        address _defaultAdmin
-    )
-        public
-        initializer
-    {
-        __ERC721_init(_tokenName, _tokenSymbol);
-        __UUPSUpgradeable_init();
-        __AccessControl_init();
-        __DefaultOperatorFilterer_init();
-        __Pausable_init();
+    mapping(address => bool) private UNUSED_allowedContracts;
 
-        _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
-        _grantRole(UPGRADER_ROLE, _defaultAdmin);
+    /**
+     * @custom:oz-renamed-from trustedForwarder
+     */
+    address private UNUSED_trustedForwarder;
 
-        nextCollectionId = 1;
-    }
+    IFANtiumNFT public fantiumNFT;
 
-    /// @notice upgrade authorization logic
-    /// @dev required by the OZ UUPS module
-    /// @dev adds onlyRole(UPGRADER_ROLE) requirement
-    function _authorizeUpgrade(address) internal override onlyRole(UPGRADER_ROLE) { }
+    // ========================================================================
+    // Events
+    // ========================================================================
+    event KYCUpdate(address indexed account, bool isKYCed);
+    event IDENTUpdate(address indexed account, bool isIDENT);
+    event AllowListUpdate(address indexed account, uint256 indexed collectionId, uint256 amount);
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
+    // ========================================================================
+    // UUPS upgradeable pattern
+    // ========================================================================
+    /**
+     * @custom:oz-upgrades-unsafe-allow constructor
+     */
     constructor() {
         _disableInitializers();
     }
 
-    /*//////////////////////////////////////////////////////////////
-                                 KYC
-    //////////////////////////////////////////////////////////////*/
+    function initialize(address admin) public initializer {
+        __UUPSUpgradeable_init();
+        __AccessControl_init();
+        __Pausable_init();
 
-    /**
-     * @notice Add address to KYC list.
-     * @param _address address to be added to KYC list.
-     */
-    function addAddressToKYC(address _address) external whenNotPaused onlyKycManager {
-        kycedAddresses[_address] = true;
-        emit AddressAddedToKYC(_address);
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
     /**
-     * @notice Remove address from KYC list.
-     * @param _address address to be removed from KYC list.
+     * @notice Implementation of the upgrade authorization logic
+     * @dev Restricted to the DEFAULT_ADMIN_ROLE
      */
-    function removeAddressFromKYC(address _address) external whenNotPaused onlyKycManager {
-        kycedAddresses[_address] = false;
-        emit AddressRemovedFromKYC(_address);
+    function _authorizeUpgrade(address) internal view override {
+        _checkRole(DEFAULT_ADMIN_ROLE);
     }
 
-    /**
-     * @notice Check if address is KYCed.
-     * @param _address address to be checked.
-     * @return isKYCed true if address is KYCed.
-     */
-    function isAddressKYCed(address _address) public view returns (bool) {
-        return kycedAddresses[_address];
+    // ========================================================================
+    // Access control
+    // ========================================================================
+    modifier onlyRoleOrAdmin(bytes32 role) {
+        _checkRoleOrAdmin(role);
+        _;
     }
 
-    /*//////////////////////////////////////////////////////////////
-                            ALLOW LIST
-    //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice Add address to allow list.
-     * @param _collectionId collection ID.
-     * @param _addresses addresses to add to allow list.
-     * @param _increaseAllocations allocation to the address.
-     */
-    function batchAllowlist(
-        uint256 _collectionId,
-        address[] memory _addresses,
-        uint256[] memory _increaseAllocations
-    )
-        public
-        whenNotPaused
-        onlyRole(PLATFORM_MANAGER_ROLE)
-        onlyValidCollectionId(_collectionId)
-    {
-        for (uint256 i = 0; i < _addresses.length; i++) {
-            collectionIdToAllowList[_collectionId][_addresses[i]] += _increaseAllocations[i];
-            emit AddressAddedToAllowList(_collectionId, _addresses[i]);
-        }
+    modifier onlyAdmin() {
+        _checkRole(DEFAULT_ADMIN_ROLE);
+        _;
     }
 
-    /**
-     * @notice Remove address from allow list.
-     * @param _collectionId collection ID.
-     * @param _address address to be removed from allow list.
-     * @param _reduceAllocation allocation to the address.
-     */
-    function reduceAllowListAllocation(
-        uint256 _collectionId,
-        address _address,
-        uint256 _reduceAllocation
-    )
-        public
-        whenNotPaused
-        onlyRole(PLATFORM_MANAGER_ROLE)
-        onlyValidCollectionId(_collectionId)
-    {
-        collectionIdToAllowList[_collectionId][_address] > _reduceAllocation
-            ? collectionIdToAllowList[_collectionId][_address] -= _reduceAllocation
-            : collectionIdToAllowList[_collectionId][_address] = 0;
-        emit AddressRemovedFromAllowList(_collectionId, _address);
-    }
-
-    /*//////////////////////////////////////////////////////////////
-                                 MINTING
-    //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice Batch Mints a token
-     * @param _collectionId Collection ID.
-     * @param _amount Amount of tokens to mint.
-     */
-    function batchMint(uint256 _collectionId, uint24 _amount) public whenNotPaused {
-        // limit amount to 10
-        _amount = _amount > 10 ? 10 : _amount;
-
-        // CHECKS
-        require(isAddressKYCed(msg.sender), "Address is not KYCed");
-        Collection storage collection = collections[_collectionId];
-        require(collection.exists, "Collection does not exist");
-        require(
-            collection.launchTimestamp <= block.timestamp || hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
-            "Collection not launched"
-        );
-        require(collection.isMintable, "Collection is not mintable");
-        require(erc20PaymentToken != address(0), "ERC20 payment token not set");
-
-        // multiply token price by amount
-        uint256 totalPrice = collection.price * 10 ** ERC20(erc20PaymentToken).decimals() * _amount;
-        require(ERC20(erc20PaymentToken).allowance(msg.sender, address(this)) >= totalPrice, "ERC20 allowance too low");
-
-        if (collection.isPaused) {
-            // if minting is paused, require address to be on allowlist
-            require(
-                collectionIdToAllowList[_collectionId][msg.sender] >= _amount
-                    || hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
-                "Collection is paused or allowlist allocation insufficient"
+    function _checkRoleOrAdmin(bytes32 role) internal view virtual {
+        if (!hasRole(role, _msgSender()) && !hasRole(DEFAULT_ADMIN_ROLE, _msgSender())) {
+            revert(
+                string(
+                    abi.encodePacked(
+                        "AccessControl: account ",
+                        StringsUpgradeable.toHexString(_msgSender()),
+                        " is missing role ",
+                        StringsUpgradeable.toHexString(uint256(role), 32)
+                    )
+                )
             );
         }
-        require(collection.invocations + _amount < collection.maxInvocations, "Max invocations suppassed with amount");
-
-        uint256 tokenId = (_collectionId * ONE_MILLION) + collection.invocations;
-
-        // EFFECTS
-        collection.invocations += _amount;
-
-        if (collection.isPaused && !hasRole(PLATFORM_MANAGER_ROLE, msg.sender)) {
-            collectionIdToAllowList[_collectionId][msg.sender] -= _amount;
-        }
-
-        // INTERACTIONS
-        _splitFunds(totalPrice, _collectionId, msg.sender);
-
-        for (uint256 i = 0; i < _amount; i++) {
-            _mint(msg.sender, tokenId + i);
-            emit Mint(msg.sender, tokenId);
-        }
     }
 
-    /**
-     * @dev splits funds between sender (if refund),
-     * FANtium, and athlete for a token purchased on
-     * collection `_collectionId`.
-     */
-    function _splitFunds(uint256 _price, uint256 _collectionId, address _sender) internal {
-        // split funds between FANtium and athlete
-        (uint256 fantiumRevenue_, address fantiumAddress_, uint256 athleteRevenue_, address athleteAddress_) =
-            getPrimaryRevenueSplits(_collectionId, _price);
-        // FANtium payment
-        if (fantiumRevenue_ > 0) {
-            IERC20(erc20PaymentToken).transferFrom(_sender, fantiumAddress_, fantiumRevenue_);
-        }
-        // athlete payment
-        if (athleteRevenue_ > 0) {
-            IERC20(erc20PaymentToken).transferFrom(_sender, athleteAddress_, athleteRevenue_);
-        }
-    }
-
-    /**
-     * @notice View function that returns appropriate revenue splits between
-     * different FANtium, athlete given a sale price of `_price` on collection `_collectionId`.
-     * This always returns two revenue amounts and two addresses, but if a
-     * revenue is zero for athlete, the corresponding
-     * address returned will also be null (for gas optimization).
-     * Does not account for refund if user overpays for a token
-     * @param _collectionId collection ID to be queried.
-     * @param _price Sale price of token.
-     * @return fantiumRevenue_ amount of revenue to be sent to FANtium
-     * @return fantiumAddress_ address to send FANtium revenue to
-     * @return athleteRevenue_ amount of revenue to be sent to athlete
-     * @return athleteAddress_ address to send athlete revenue to. Will be null
-     * if no revenue is due to athlete (gas optimization).
-     * @dev this always returns 2 addresses and 2 revenues, but if the
-     * revenue is zero, the corresponding address will be address(0). It is up
-     * to the contract performing the revenue split to handle this
-     * appropriately.
-     */
-    function getPrimaryRevenueSplits(
-        uint256 _collectionId,
-        uint256 _price
-    )
-        public
-        view
-        returns (
-            uint256 fantiumRevenue_,
-            address payable fantiumAddress_,
-            uint256 athleteRevenue_,
-            address payable athleteAddress_
-        )
-    {
-        // get athlete address & revenue from collection
-        Collection memory collection = collections[_collectionId];
-
-        // calculate revenues
-        athleteRevenue_ = (_price * uint256(collection.athletePrimarySalesBPS)) / 10_000;
-
-        fantiumRevenue_ = _price - athleteRevenue_;
-
-        // set addresses from storage
-        fantiumAddress_ = collection.fantiumSalesAddress;
-        if (athleteRevenue_ > 0) {
-            athleteAddress_ = collection.athleteAddress;
-        }
-    }
-
-    /*//////////////////////////////////////////////////////////////
-                                 TOKEN
-    //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice Gets token URI for token ID `_tokenId`.
-     * @dev token URIs are the concatenation of the collection base URI and the
-     * token ID.
-     */
-    function tokenURI(uint256 _tokenId) public view override onlyValidTokenId(_tokenId) returns (string memory) {
-        return string(bytes.concat(bytes(baseURI), bytes(_tokenId.toString())));
-    }
-
-    /*//////////////////////////////////////////////////////////////
-                        COLLECTION FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice Adds new collection.
-     * @param _athleteAddress Address of the athlete.
-     * @param _athletePrimarySalesBPS Primary sales percentage of the athlete.
-     * @param _athleteSecondarySalesBPS Secondary sales percentage of the athlete.
-     * @param _maxInvocations Maximum number of invocations.
-     * @param _price Price of the token.
-     * @param _tournamentEarningShare1e7 Tournament earning share.
-     * @param _launchTimestamp Launch timestamp.
-     */
-    function addCollection(
-        address payable _athleteAddress,
-        uint256 _athletePrimarySalesBPS,
-        uint256 _athleteSecondarySalesBPS,
-        uint256 _maxInvocations,
-        uint256 _price,
-        uint256 _launchTimestamp,
-        address payable _fantiumSalesAddress,
-        uint256 _fantiumSecondarySalesBPS,
-        uint256 _tournamentEarningShare1e7
-    )
-        external
-        whenNotPaused
-        onlyRole(PLATFORM_MANAGER_ROLE)
-        onlyValidAddress(_athleteAddress)
-    {
-        uint256 collectionId = nextCollectionId;
-        collections[collectionId].athleteAddress = _athleteAddress;
-        collections[collectionId].athletePrimarySalesBPS = _athletePrimarySalesBPS;
-        collections[collectionId].athleteSecondarySalesBPS = _athleteSecondarySalesBPS;
-        collections[collectionId].maxInvocations = _maxInvocations;
-        collections[collectionId].price = _price;
-        collections[collectionId].tournamentEarningShare1e7 = _tournamentEarningShare1e7;
-        collections[collectionId].launchTimestamp = _launchTimestamp;
-
-        collections[collectionId].invocations = 0;
-        collections[collectionId].exists = true;
-        collections[collectionId].isMintable = false;
-        collections[collectionId].isPaused = true;
-
-        collections[collectionId].fantiumSalesAddress = _fantiumSalesAddress;
-        collections[collectionId].fantiumSecondarySalesBPS = _fantiumSecondarySalesBPS;
-
-        nextCollectionId = collectionId + 1;
-        emit CollectionUpdated(collectionId, FIELD_COLLECTION_CREATED);
-    }
-
-    /**
-     * @notice Updates athlete of collection `_collectionId` to `_athleteAddress`.
-     */
-    function updateCollectionAthleteAddress(
-        uint256 _collectionId,
-        address payable _athleteAddress
-    )
-        external
-        whenNotPaused
-        onlyValidCollectionId(_collectionId)
-        onlyValidAddress(_athleteAddress)
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
-        collections[_collectionId].athleteAddress = _athleteAddress;
-        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ATHLETE_ADDRESS);
-    }
-
-    /**
-     * @notice Toggles isMintingPaused state of collection `_collectionId`.
-     */
-    function toggleCollectionPaused(uint256 _collectionId)
-        external
-        whenNotPaused
-        onlyValidCollectionId(_collectionId)
-        onlyAthlete(_collectionId)
-    {
-        collections[_collectionId].isPaused = !collections[_collectionId].isPaused;
-        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_PAUSED);
-    }
-
-    /**
-     * @notice Toggles isMintingPaused state of collection `_collectionId`.
-     */
-    function toggleCollectionMintable(uint256 _collectionId)
-        external
-        whenNotPaused
-        onlyValidCollectionId(_collectionId)
-        onlyAthlete(_collectionId)
-    {
-        collections[_collectionId].isMintable = !collections[_collectionId].isMintable;
-        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ACTIVATED);
-    }
-
-    /**
-     * @notice Updates athlete primary market royalties for collection
-     * `_collectionId` to be `_primaryMarketRoyalty` percent.
-     * This DOES NOT include the primary market royalty percentages collected
-     * by FANtium; this is only the total percentage of royalties that will
-     * be split to athlete.
-     * @param _collectionId collection ID.
-     * @param _primaryMarketRoyalty Percent of primary sales revenue that will
-     * be sent to the athlete. This must be less than
-     * or equal to 100 percent.
-     */
-    function updateCollectionAthletePrimaryMarketRoyaltyBPS(
-        uint256 _collectionId,
-        uint256 _primaryMarketRoyalty
-    )
-        external
-        whenNotPaused
-        onlyValidCollectionId(_collectionId)
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
-        require(_primaryMarketRoyalty <= 10_000, "Max of 100%");
-        collections[_collectionId].athletePrimarySalesBPS = _primaryMarketRoyalty;
-        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_PRIMARY_MARKET_ROYALTY_PERCENTAGE);
-    }
-
-    /**
-     * @notice Updates athlete secondary market royalties for collection
-     * `_collectionId` to be `_secondMarketRoyalty` percent.
-     * This DOES NOT include the secondary market royalty percentages collected
-     * by FANtium; this is only the total percentage of royalties that will
-     * be split to athlete.
-     * @param _collectionId collection ID.
-     * @param _secondMarketRoyalty Percent of secondary sales revenue that will
-     * be sent to the athlete. This must be less than
-     * or equal to 95 percent.
-     */
-    function updateCollectionAthleteSecondaryMarketRoyaltyBPS(
-        uint256 _collectionId,
-        uint256 _secondMarketRoyalty
-    )
-        external
-        whenNotPaused
-        onlyValidCollectionId(_collectionId)
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
-        require(_secondMarketRoyalty <= 9500, "Max of 95%");
-        collections[_collectionId].athleteSecondarySalesBPS = _secondMarketRoyalty;
-        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_SECONDARY_MARKET_ROYALTY_PERCENTAGE);
-    }
-
-    /**
-     * @notice Update Collection tier for collection `_collectionId` to be `_tierName`.
-     */
-    function updateCollectionSales(
-        uint256 _collectionId,
-        uint256 _maxInvocations,
-        uint256 _price,
-        uint256 _tournamentEarningShare1e7
-    )
-        external
-        whenNotPaused
-        onlyValidCollectionId(_collectionId)
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
-        require(
-            _maxInvocations > 0 && _price > 0 && _tournamentEarningShare1e7 > 0, "all parameters must be greater than 0"
-        );
-        collections[_collectionId].maxInvocations = _maxInvocations;
-        collections[_collectionId].price = _price;
-        collections[_collectionId].tournamentEarningShare1e7 = _tournamentEarningShare1e7;
-        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_TIER);
-    }
-
-    /**
-     * @notice Updates the launch timestamp of collection `_collectionId` to be
-     * `_launchTimestamp`.
-     */
-    function updateCollectionLaunchTimestamp(
-        uint256 _collectionId,
-        uint256 _launchTimestamp
-    )
-        external
-        whenNotPaused
-        onlyValidCollectionId(_collectionId)
-        onlyRole(PLATFORM_MANAGER_ROLE)
-    {
-        collections[_collectionId].launchTimestamp = _launchTimestamp;
-        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_LAUNCH_TIMESTAMP);
-    }
-
-    /*///////////////////////////////////////////////////////////////
-                        PLATFORM FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
-
-    //update baseURI only platform manager
-    function updateBaseURI(string memory _baseURI) external whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
-        baseURI = _baseURI;
-        emit PlatformUpdated(FILED_FANTIUM_BASE_URI);
-    }
-
-    /**
-     * @notice Updates the platform address to be `_fantiumPrimarySalesAddress`.
-     */
-    function updateFantiumSalesInformation(
-        uint256 _collectionId,
-        address payable _fantiumSalesAddress,
-        uint256 _fantiumSecondarySalesBPS
-    )
-        external
-        whenNotPaused
-        onlyRole(PLATFORM_MANAGER_ROLE)
-        onlyValidAddress(_fantiumSalesAddress)
-    {
-        collections[_collectionId].fantiumSalesAddress = _fantiumSalesAddress;
-        collections[_collectionId].fantiumSecondarySalesBPS = _fantiumSecondarySalesBPS;
-    }
-
+    // ========================================================================
+    // Pause
+    // ========================================================================
     /**
      * @notice Update contract pause status to `_paused`.
      */
-    function pause() external onlyRole(PLATFORM_MANAGER_ROLE) {
+    function pause() external onlyAdmin {
         _pause();
     }
 
     /**
      * @notice Unpauses contract
      */
-    function unpause() external onlyRole(PLATFORM_MANAGER_ROLE) {
+    function unpause() external onlyAdmin {
         _unpause();
     }
 
-    /*//////////////////////////////////////////////////////////////
-                            PAYMENT TOKEN
-    //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice Updates the erc20 Payment Token
-     * @param _address address of ERC20 payment token
-     */
-    function updatePaymentToken(address _address) external onlyRole(PLATFORM_MANAGER_ROLE) {
-        require(_address != address(0));
-        erc20PaymentToken = _address;
+    // ========================================================================
+    // ERC2771
+    // ========================================================================
+    function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
+        return hasRole(FORWARDER_ROLE, forwarder);
     }
 
-    /*//////////////////////////////////////////////////////////////
-                                 VIEWS
-    //////////////////////////////////////////////////////////////*/
+    function _msgSender() internal view virtual override returns (address sender) {
+        if (isTrustedForwarder(msg.sender)) {
+            // The assembly code is more direct than the Solidity version using `abi.decode`.
+            /// @solidity memory-safe-assembly
+            assembly {
+                sender := shr(96, calldataload(sub(calldatasize(), 20)))
+            }
+        } else {
+            return super._msgSender();
+        }
+    }
 
-    /**
-     * @notice Gets royalty Basis Points (BPS) for token ID `_tokenId`.
-     * This conforms to the IManifold interface designated in the Royalty
-     * Registry's RoyaltyEngineV1.sol contract.
-     * ref: https://github.com/manifoldxyz/royalty-registry-solidity
-     * @param _tokenId Token ID to be queried.
-     * @return recipients Array of royalty payment recipients
-     * @return bps Array of Basis Points (BPS) allocated to each recipient,
-     * aligned by index.
-     * @dev reverts if invalid _tokenId
-     * @dev only returns recipients that have a non-zero BPS allocation
-     */
-    function getRoyalties(uint256 _tokenId)
+    function _msgData() internal view virtual override returns (bytes calldata) {
+        if (isTrustedForwarder(msg.sender)) {
+            return msg.data[:msg.data.length - 20];
+        } else {
+            return super._msgData();
+        }
+    }
+
+    // ========================================================================
+    // Setters
+    // ========================================================================
+    function setFANtiumNFT(IFANtiumNFT _fantiumNFT) external onlyAdmin {
+        fantiumNFT = _fantiumNFT;
+    }
+
+    // ========================================================================
+    // Know-your-customer functions
+    // ========================================================================
+    function _setKYC(address account, bool isKYCed_) internal {
+        users[account].isKYCed = isKYCed_;
+        emit KYCUpdate(account, isKYCed_);
+    }
+
+    function setKYC(address account, bool isKYCed_) external whenNotPaused onlyRoleOrAdmin(KYC_MANAGER_ROLE) {
+        _setKYC(account, isKYCed_);
+    }
+
+    function setBatchKYC(
+        address[] memory accounts,
+        bool[] memory isKYCed_
+    )
         external
-        view
-        onlyValidTokenId(_tokenId)
-        returns (address payable[] memory recipients, uint256[] memory bps)
+        whenNotPaused
+        onlyRoleOrAdmin(KYC_MANAGER_ROLE)
     {
-        // initialize arrays with maximum potential length
-        recipients = new address payable[](2);
-        bps = new uint256[](2);
-
-        uint256 collectionId = _tokenId / ONE_MILLION;
-
-        Collection storage collection = collections[collectionId];
-        // load values into memory
-        uint256 athleteBPS = collection.athleteSecondarySalesBPS;
-        uint256 fantiumBPS = collection.fantiumSecondarySalesBPS;
-        // populate arrays
-        uint256 payeeCount;
-        if (athleteBPS > 0) {
-            recipients[payeeCount] = collection.athleteAddress;
-            bps[payeeCount++] = athleteBPS;
-        }
-        if (fantiumBPS > 0) {
-            recipients[payeeCount] = collection.fantiumSalesAddress;
-            bps[payeeCount++] = fantiumBPS;
+        if (accounts.length != isKYCed_.length) {
+            revert ArrayLengthMismatch(accounts.length, isKYCed_.length);
         }
 
-        return (recipients, bps);
+        for (uint256 i = 0; i < accounts.length; i++) {
+            _setKYC(accounts[i], isKYCed_[i]);
+        }
     }
 
-    /*//////////////////////////////////////////////////////////////
-                            OS FILTER
-    //////////////////////////////////////////////////////////////*/
-
-    function setApprovalForAll(
-        address operator,
-        bool approved
-    )
-        public
-        override
-        whenNotPaused
-        onlyAllowedOperatorApproval(operator)
-    {
-        super.setApprovalForAll(operator, approved);
+    function isKYCed(address account) public view returns (bool) {
+        return users[account].isKYCed;
     }
 
-    function approve(
-        address operator,
-        uint256 tokenId
-    )
-        public
-        override
-        whenNotPaused
-        onlyAllowedOperatorApproval(operator)
-    {
-        super.approve(operator, tokenId);
+    // ========================================================================
+    // INDENT functions
+    // ========================================================================
+    function _setIDENT(address account, bool isIDENT_) internal {
+        users[account].isIDENT = isIDENT_;
+        emit IDENTUpdate(account, isIDENT_);
     }
 
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    )
-        public
-        override
-        whenNotPaused
-        onlyAllowedOperator(from)
-    {
-        super.transferFrom(from, to, tokenId);
+    function setIDENT(address account, bool isIDENT_) external whenNotPaused onlyRoleOrAdmin(KYC_MANAGER_ROLE) {
+        _setIDENT(account, isIDENT_);
     }
 
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
+    function setBatchIDENT(
+        address[] memory accounts,
+        bool[] memory isIDENT_
     )
-        public
-        override
+        external
         whenNotPaused
-        onlyAllowedOperator(from)
+        onlyRoleOrAdmin(KYC_MANAGER_ROLE)
     {
-        super.safeTransferFrom(from, to, tokenId);
+        if (accounts.length != isIDENT_.length) {
+            revert ArrayLengthMismatch(accounts.length, isIDENT_.length);
+        }
+
+        for (uint256 i = 0; i < accounts.length; i++) {
+            _setIDENT(accounts[i], isIDENT_[i]);
+        }
     }
 
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes memory data
+    function isIDENT(address account) public view returns (bool) {
+        return users[account].isIDENT;
+    }
+
+    // ========================================================================
+    // AllowList functions
+    // ========================================================================
+    function allowlist(address account, uint256 collectionId) public view returns (uint256) {
+        return users[account].contractToAllowlistToSpots[address(fantiumNFT)][collectionId];
+    }
+
+    function _setAllowList(address account, uint256 collectionId, uint256 allocation) internal {
+        users[account].contractToAllowlistToSpots[address(fantiumNFT)][collectionId] = allocation;
+        emit AllowListUpdate(account, collectionId, allocation);
+    }
+
+    function setAllowList(
+        address account,
+        uint256 collectionId,
+        uint256 allocation
     )
-        public
-        override
+        external
         whenNotPaused
-        onlyAllowedOperator(from)
+        onlyRoleOrAdmin(ALLOWLIST_MANAGER_ROLE)
     {
-        super.safeTransferFrom(from, to, tokenId, data);
+        _setAllowList(account, collectionId, allocation);
+    }
+
+    function batchSetAllowList(
+        address[] memory accounts,
+        uint256[] memory collectionIds,
+        uint256[] memory allocations
+    )
+        external
+        onlyRoleOrAdmin(ALLOWLIST_MANAGER_ROLE)
+    {
+        if (accounts.length != collectionIds.length) {
+            revert ArrayLengthMismatch(accounts.length, collectionIds.length);
+        }
+        if (accounts.length != allocations.length) {
+            revert ArrayLengthMismatch(accounts.length, allocations.length);
+        }
+
+        for (uint256 i = 0; i < accounts.length; i++) {
+            _setAllowList(accounts[i], collectionIds[i], allocations[i]);
+        }
+    }
+
+    /**
+     * @notice Increases the allowlist for an account and collection.
+     * @dev If the result is greater than type(uint256).max, it will be set to type(uint256).max.
+     * @param account The account to increase the allowlist for.
+     * @param collectionId The collection to increase the allowlist for.
+     * @param delta The amount to increase the allowlist by.
+     */
+    function increaseAllowList(
+        address account,
+        uint256 collectionId,
+        uint256 delta
+    )
+        external
+        whenNotPaused
+        onlyRoleOrAdmin(ALLOWLIST_MANAGER_ROLE)
+    {
+        uint256 current = allowlist(account, collectionId);
+        uint256 max = type(uint256).max;
+        _setAllowList(account, collectionId, (delta > max - current) ? max : current + delta);
+    }
+
+    /**
+     * @notice Decreases the allowlist for an account and collection.
+     * @dev If the current allowlist is less than the delta, it will be set to 0.
+     * @param account The account to decrease the allowlist for.
+     * @param collectionId The collection to decrease the allowlist for.
+     * @param delta The amount to decrease the allowlist by.
+     */
+    function decreaseAllowList(
+        address account,
+        uint256 collectionId,
+        uint256 delta
+    )
+        external
+        whenNotPaused
+        onlyRoleOrAdmin(ALLOWLIST_MANAGER_ROLE)
+    {
+        uint256 current = allowlist(account, collectionId);
+        _setAllowList(account, collectionId, current < delta ? 0 : current - delta);
     }
 }

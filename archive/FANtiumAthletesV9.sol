@@ -622,6 +622,56 @@ interface IERC721ReceiverUpgradeable {
         returns (bytes4);
 }
 
+// src/interfaces/IFANtiumUserManager.sol
+
+/**
+ * @title FANtium User Manager Interface
+ * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
+ */
+interface IFANtiumUserManager {
+    // ========================================================================
+    // Structs
+    // ========================================================================
+    struct User {
+        bool isKYCed;
+        bool isIDENT;
+        mapping(address => mapping(uint256 => uint256)) contractToAllowlistToSpots;
+    }
+
+    // ========================================================================
+    // Errors
+    // ========================================================================
+    error ArrayLengthMismatch(uint256 lhs, uint256 rhs);
+
+    // ========================================================================
+    // Know-your-customer functions
+    // ========================================================================
+    function setKYC(address account, bool isKYCed) external;
+    function setBatchKYC(address[] memory accounts, bool[] memory isKYCed) external;
+    function isKYCed(address account) external view returns (bool);
+
+    // ========================================================================
+    // INDENT functions
+    // ========================================================================
+    function setIDENT(address account, bool isIDENT) external;
+    function setBatchIDENT(address[] memory accounts, bool[] memory isIDENT) external;
+    function isIDENT(address account) external view returns (bool);
+
+    // ========================================================================
+    // AllowList functions
+    // ========================================================================
+    function allowlist(address account, uint256 collectionId) external view returns (uint256);
+    function setAllowList(address account, uint256 collectionId, uint256 allocation) external;
+    function batchSetAllowList(
+        address[] memory accounts,
+        uint256[] memory collectionIds,
+        uint256[] memory allocations
+    )
+        external;
+    function increaseAllowList(address account, uint256 collectionId, uint256 delta) external;
+    function decreaseAllowList(address account, uint256 collectionId, uint256 delta) external;
+}
+
 // src/interfaces/IRescue.sol
 
 /**
@@ -665,7 +715,6 @@ library MathUpgradeable {
         Down, // Toward negative infinity
         Up, // Toward infinity
         Zero // Toward zero
-
     }
 
     /**
@@ -1201,11 +1250,7 @@ library TokenVersionUtil {
         baseTokenId = collectionId * ONE_MILLION + number;
     }
 
-    function createTokenId(
-        uint256 _collectionId,
-        uint256 _versionId,
-        uint256 _tokenNr
-    )
+    function createTokenId(uint256 _collectionId, uint256 _versionId, uint256 _tokenNr)
         internal
         pure
         returns (uint256)
@@ -1478,7 +1523,8 @@ abstract contract Initializable {
     modifier initializer() {
         bool isTopLevelCall = !_initializing;
         require(
-            (isTopLevelCall && _initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),
+            (isTopLevelCall && _initialized < 1)
+                || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),
             "Initializable: contract is already initialized"
         );
         _initialized = 1;
@@ -1964,7 +2010,6 @@ library ECDSAUpgradeable {
         InvalidSignatureLength,
         InvalidSignatureS,
         InvalidSignatureV // Deprecated in v4.8
-
     }
 
     function _throwError(RecoverError error) private pure {
@@ -3431,7 +3476,9 @@ contract ERC721Upgradeable is
      *
      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
      */
-    function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize) internal virtual { }
+    function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
+        internal
+        virtual { }
 
     /**
      * @dev Hook that is called after any token transfer. This includes minting and burning. If {ERC721Consecutive} is
@@ -3469,14 +3516,14 @@ contract ERC721Upgradeable is
     uint256[44] private __gap;
 }
 
-// src/FANtiumAthletesV10.sol
+// src/FANtiumAthletesV9.sol
 
 /**
- * @title FANtium Athletes ERC721 contract V10.
+ * @title FANtium Athletes ERC721 contract V9.
  * @author Mathieu Bour, Alex Chernetsky - FANtium AG, based on previous work by MTX studio AG.
- * @custom:oz-upgrades-from src/archive/FANtiumAthletesV9.sol:FANtiumAthletesV9
+ * @custom:oz-upgrades-from src/archive/FANtiumNFTV8.sol:FANtiumNFTV8
  */
-contract FANtiumAthletesV10 is
+contract FANtiumAthletesV9 is
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
@@ -3558,10 +3605,9 @@ contract FANtiumAthletesV10 is
     address private UNUSED_claimContract;
 
     /**
-     * @dev Deprecated: kept for upgrade compatibility
-     * @custom:oz-renamed-from userManager
+     * @dev Use to retrieve user information such as KYC status, IDENT status, and allowlist allocations.
      */
-    address private UNUSED_userManager;
+    IFANtiumUserManager public userManager;
 
     /**
      * @dev Deprecated: replaced by the FORWARDER_ROLE.
@@ -3703,6 +3749,15 @@ contract FANtiumAthletesV10 is
      */
     function setBaseURI(string memory baseURI_) external whenNotPaused onlyAdmin {
         baseURI = baseURI_;
+    }
+
+    /**
+     * @notice Sets the user manager.
+     * @dev Restricted to admin.
+     * @param _userManager The new user manager.
+     */
+    function setUserManager(IFANtiumUserManager _userManager) external whenNotPaused onlyAdmin {
+        userManager = _userManager;
     }
 
     /**
@@ -3951,8 +4006,19 @@ contract FANtiumAthletesV10 is
     /**
      * @notice Checks if a mint is possible for a collection
      * @param collectionId Collection ID.
+     * @param quantity Amount of tokens to mint.
+     * @param recipient Recipient of the mint.
      */
-    function mintable(uint256 collectionId) public view onlyValidCollectionId(collectionId) {
+    function mintable(
+        uint256 collectionId,
+        uint24 quantity,
+        address recipient
+    )
+        public
+        view
+        onlyValidCollectionId(collectionId)
+        returns (bool useAllowList)
+    {
         Collection memory collection = _collections[collectionId];
         if (!collection.isMintable) {
             revert InvalidMint(MintErrorReason.COLLECTION_NOT_MINTABLE);
@@ -3962,10 +4028,20 @@ contract FANtiumAthletesV10 is
             revert InvalidMint(MintErrorReason.COLLECTION_NOT_LAUNCHED);
         }
 
+        if (!userManager.isKYCed(recipient)) {
+            revert InvalidMint(MintErrorReason.ACCOUNT_NOT_KYCED);
+        }
+
         // If the collection is paused, we need to check if the recipient is on the allowlist and has enough allocation
         if (collection.isPaused) {
-            revert InvalidMint(MintErrorReason.COLLECTION_PAUSED);
+            useAllowList = true;
+            bool isAllowListed = userManager.allowlist(recipient, collectionId) >= quantity;
+            if (!isAllowListed) {
+                revert InvalidMint(MintErrorReason.COLLECTION_PAUSED);
+            }
         }
+
+        return useAllowList;
     }
 
     /**
@@ -4001,9 +4077,12 @@ contract FANtiumAthletesV10 is
         Collection memory collection = _collections[collectionId];
         uint256 tokenId = (collectionId * MAX_COLLECTIONS) + collection.invocations;
 
-        mintable(collectionId);
+        bool useAllowList = mintable(collectionId, quantity, recipient);
 
         _collections[collectionId].invocations += quantity;
+        if (useAllowList) {
+            userManager.decreaseAllowList(recipient, collectionId, quantity);
+        }
 
         // Send funds to the treasury and athlete account.
         _splitFunds(amount, collectionId, _msgSender());
@@ -4050,8 +4129,8 @@ contract FANtiumAthletesV10 is
         whenNotPaused
         returns (uint256)
     {
-        bytes32 hash =
-            keccak256(abi.encode(collectionId, quantity, recipient, amount, nonces[recipient])).toEthSignedMessageHash();
+        bytes32 hash = keccak256(abi.encode(collectionId, quantity, recipient, amount, nonces[recipient]))
+            .toEthSignedMessageHash();
         if (!hasRole(SIGNER_ROLE, hash.recover(signature))) {
             revert InvalidMint(MintErrorReason.INVALID_SIGNATURE);
         }

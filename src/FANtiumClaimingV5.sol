@@ -28,7 +28,7 @@ import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
  * @notice This contract is used to manage distributions and claim payouts for FAN token holders.
  * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
  *
- * @custom:oz-upgrades-from src/archive/FANtiumClaimingV4.sol:FANtiumClaimingV4
+ * @custom:oz-upgrades-from archive:FANtiumClaimingV4
  */
 contract FANtiumClaimingV5 is
     Initializable,
@@ -570,14 +570,7 @@ contract FANtiumClaimingV5 is
      * @param tokenId The ID of the token
      * @param distributionId The ID of the distribution
      */
-    function claim(
-        uint256 tokenId,
-        uint256 distributionId
-    )
-        public
-        whenNotPaused
-        onlyValidDistribution(distributionId)
-    {
+    function claim(uint256 tokenId, uint256 distributionId) public whenNotPaused onlyValidDistribution(distributionId) {
         Distribution memory existingDE = _distributions[distributionId];
         if (existingDE.closed) {
             revert InvalidDistributionClose(DistributionCloseErrorReason.DISTRIBUTION_ALREADY_CLOSED);

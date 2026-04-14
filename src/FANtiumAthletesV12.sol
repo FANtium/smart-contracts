@@ -30,7 +30,7 @@ import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 /**
  * @title FANtium Athletes ERC721 contract V12.
  * @author Mathieu Bour, Alex Chernetsky - FANtium AG, based on previous work by MTX studio AG.
- * @custom:oz-upgrades-from src/archive/FANtiumAthletesV11.sol:FANtiumAthletesV11
+ * @custom:oz-upgrades-from archive:FANtiumAthletesV11
  */
 contract FANtiumAthletesV12 is
     Initializable,

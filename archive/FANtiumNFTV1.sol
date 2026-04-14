@@ -1,6 +1,112 @@
 // SPDX-License-Identifier: Apache 2.0
 pragma solidity ^0.8.0 ^0.8.1 ^0.8.13 ^0.8.2;
 
+// node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol
+
+// OpenZeppelin Contracts (last updated v4.9.0) (token/ERC20/IERC20.sol)
+
+/**
+ * @dev Interface of the ERC20 standard as defined in the EIP.
+ */
+interface IERC20 {
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /**
+     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+     * a call to {approve}. `value` is the new allowance.
+     */
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    /**
+     * @dev Returns the amount of tokens in existence.
+     */
+    function totalSupply() external view returns (uint256);
+
+    /**
+     * @dev Returns the amount of tokens owned by `account`.
+     */
+    function balanceOf(address account) external view returns (uint256);
+
+    /**
+     * @dev Moves `amount` tokens from the caller's account to `to`.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transfer(address to, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Returns the remaining number of tokens that `spender` will be
+     * allowed to spend on behalf of `owner` through {transferFrom}. This is
+     * zero by default.
+     *
+     * This value changes when {approve} or {transferFrom} are called.
+     */
+    function allowance(address owner, address spender) external view returns (uint256);
+
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * IMPORTANT: Beware that changing an allowance with this method brings the risk
+     * that someone may use both the old and the new allowance by unfortunate
+     * transaction ordering. One possible solution to mitigate this race
+     * condition is to first reduce the spender's allowance to 0 and set the
+     * desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     *
+     * Emits an {Approval} event.
+     */
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Moves `amount` tokens from `from` to `to` using the
+     * allowance mechanism. `amount` is then deducted from the caller's
+     * allowance.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+}
+
+// node_modules/@openzeppelin/contracts/utils/Context.sol
+
+// OpenZeppelin Contracts (last updated v4.9.4) (utils/Context.sol)
+
+/**
+ * @dev Provides information about the current execution context, including the
+ * sender of the transaction and its data. While these are generally available
+ * via msg.sender and msg.data, they should not be accessed in such a direct
+ * manner, since when dealing with meta-transactions the account sending and
+ * paying for execution may not be the actual sender (as far as an application
+ * is concerned).
+ *
+ * This contract is only required for intermediate, library-like contracts.
+ */
+abstract contract Context {
+    function _msgSender() internal view virtual returns (address) {
+        return msg.sender;
+    }
+
+    function _msgData() internal view virtual returns (bytes calldata) {
+        return msg.data;
+    }
+
+    function _contextSuffixLength() internal view virtual returns (uint256) {
+        return 0;
+    }
+}
+
 // node_modules/@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol
 
 // OpenZeppelin Contracts v4.4.1 (access/IAccessControl.sol)
@@ -151,173 +257,34 @@ interface IBeaconUpgradeable {
     function implementation() external view returns (address);
 }
 
-// node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol
+// node_modules/@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol
 
-// OpenZeppelin Contracts (last updated v4.9.0) (token/ERC20/IERC20.sol)
-
-/**
- * @dev Interface of the ERC20 standard as defined in the EIP.
- */
-interface IERC20Upgradeable {
-    /**
-     * @dev Emitted when `value` tokens are moved from one account (`from`) to
-     * another (`to`).
-     *
-     * Note that `value` may be zero.
-     */
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    /**
-     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
-     * a call to {approve}. `value` is the new allowance.
-     */
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-
-    /**
-     * @dev Returns the amount of tokens in existence.
-     */
-    function totalSupply() external view returns (uint256);
-
-    /**
-     * @dev Returns the amount of tokens owned by `account`.
-     */
-    function balanceOf(address account) external view returns (uint256);
-
-    /**
-     * @dev Moves `amount` tokens from the caller's account to `to`.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transfer(address to, uint256 amount) external returns (bool);
-
-    /**
-     * @dev Returns the remaining number of tokens that `spender` will be
-     * allowed to spend on behalf of `owner` through {transferFrom}. This is
-     * zero by default.
-     *
-     * This value changes when {approve} or {transferFrom} are called.
-     */
-    function allowance(address owner, address spender) external view returns (uint256);
-
-    /**
-     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * IMPORTANT: Beware that changing an allowance with this method brings the risk
-     * that someone may use both the old and the new allowance by unfortunate
-     * transaction ordering. One possible solution to mitigate this race
-     * condition is to first reduce the spender's allowance to 0 and set the
-     * desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     *
-     * Emits an {Approval} event.
-     */
-    function approve(address spender, uint256 amount) external returns (bool);
-
-    /**
-     * @dev Moves `amount` tokens from `from` to `to` using the
-     * allowance mechanism. `amount` is then deducted from the caller's
-     * allowance.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transferFrom(address from, address to, uint256 amount) external returns (bool);
-}
-
-// node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20PermitUpgradeable.sol
-
-// OpenZeppelin Contracts (last updated v4.9.4) (token/ERC20/extensions/IERC20Permit.sol)
+// OpenZeppelin Contracts (last updated v4.6.0) (token/ERC721/IERC721Receiver.sol)
 
 /**
- * @dev Interface of the ERC20 Permit extension allowing approvals to be made via signatures, as defined in
- * https://eips.ethereum.org/EIPS/eip-2612[EIP-2612].
- *
- * Adds the {permit} method, which can be used to change an account's ERC20 allowance (see {IERC20-allowance}) by
- * presenting a message signed by the account. By not relying on {IERC20-approve}, the token holder account doesn't
- * need to send a transaction, and thus is not required to hold Ether at all.
- *
- * ==== Security Considerations
- *
- * There are two important considerations concerning the use of `permit`. The first is that a valid permit signature
- * expresses an allowance, and it should not be assumed to convey additional meaning. In particular, it should not be
- * considered as an intention to spend the allowance in any specific way. The second is that because permits have
- * built-in replay protection and can be submitted by anyone, they can be frontrun. A protocol that uses permits should
- * take this into consideration and allow a `permit` call to fail. Combining these two aspects, a pattern that may be
- * generally recommended is:
- *
- * ```solidity
- * function doThingWithPermit(..., uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public {
- *     try token.permit(msg.sender, address(this), value, deadline, v, r, s) {} catch {}
- *     doThing(..., value);
- * }
- *
- * function doThing(..., uint256 value) public {
- *     token.safeTransferFrom(msg.sender, address(this), value);
- *     ...
- * }
- * ```
- *
- * Observe that: 1) `msg.sender` is used as the owner, leaving no ambiguity as to the signer intent, and 2) the use of
- * `try/catch` allows the permit to fail and makes the code tolerant to frontrunning. (See also
- * {SafeERC20-safeTransferFrom}).
- *
- * Additionally, note that smart contract wallets (such as Argent or Safe) are not able to produce permit signatures, so
- * contracts should have entry points that don't rely on permit.
+ * @title ERC721 token receiver interface
+ * @dev Interface for any contract that wants to support safeTransfers
+ * from ERC721 asset contracts.
  */
-interface IERC20PermitUpgradeable {
+interface IERC721ReceiverUpgradeable {
     /**
-     * @dev Sets `value` as the allowance of `spender` over ``owner``'s tokens,
-     * given ``owner``'s signed approval.
+     * @dev Whenever an {IERC721} `tokenId` token is transferred to this contract via {IERC721-safeTransferFrom}
+     * by `operator` from `from`, this function is called.
      *
-     * IMPORTANT: The same issues {IERC20-approve} has related to transaction
-     * ordering also apply here.
+     * It must return its Solidity selector to confirm the token transfer.
+     * If any other value is returned or the interface is not implemented by the recipient, the transfer will be
+     * reverted.
      *
-     * Emits an {Approval} event.
-     *
-     * Requirements:
-     *
-     * - `spender` cannot be the zero address.
-     * - `deadline` must be a timestamp in the future.
-     * - `v`, `r` and `s` must be a valid `secp256k1` signature from `owner`
-     * over the EIP712-formatted function arguments.
-     * - the signature must use ``owner``'s current nonce (see {nonces}).
-     *
-     * For more information on the signature format, see the
-     * https://eips.ethereum.org/EIPS/eip-2612#specification[relevant EIP
-     * section].
-     *
-     * CAUTION: See Security Considerations above.
+     * The selector can be obtained in Solidity with `IERC721Receiver.onERC721Received.selector`.
      */
-    function permit(
-        address owner,
-        address spender,
-        uint256 value,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
     )
-        external;
-
-    /**
-     * @dev Returns the current nonce for `owner`. This value must be
-     * included whenever a signature is generated for {permit}.
-     *
-     * Every successful call to {permit} increases ``owner``'s nonce by one. This
-     * prevents a signature from being used multiple times.
-     */
-    function nonces(address owner) external view returns (uint256);
-
-    /**
-     * @dev Returns the domain separator used in the encoding of the signature for {permit}, as defined by {EIP712}.
-     */
-    // solhint-disable-next-line func-name-mixedcase
-    function DOMAIN_SEPARATOR() external view returns (bytes32);
+        external
+        returns (bytes4);
 }
 
 // node_modules/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol
@@ -763,7 +730,6 @@ library MathUpgradeable {
         Down, // Toward negative infinity
         Up, // Toward infinity
         Zero // Toward zero
-
     }
 
     /**
@@ -1137,159 +1103,181 @@ library SignedMathUpgradeable {
     }
 }
 
-// src/archive/contracts/interfaces/IFantiumNFT.sol
+// node_modules/operator-filter-registry/src/IOperatorFilterRegistry.sol
 
-/**
- * @dev Interface of the IFantiumNFT
- */
-interface IFantiumNFT {
+interface IOperatorFilterRegistry {
     /**
-     * @notice upgrades token version. Old token gets burned and new token gets minted to owner of Token
-     * @param _tokenId TokenID to be upgraded
-     * @return bool if upgrade successfull it returns true
+     * @notice Returns true if operator is not filtered for a given token, either by address or codeHash. Also returns
+     *         true if supplied registrant address is not registered.
      */
-    function upgradeTokenVersion(uint256 _tokenId) external returns (bool);
+    function isOperatorAllowed(address registrant, address operator) external view returns (bool);
 
     /**
-     * @notice get royalties for secondary market transfers of token
-     * @param _tokenId tokenId of NFT
-     * @return recipients array of recepients of royalties
-     * @return bps array of bps of royalties
+     * @notice Registers an address with the registry. May be called by address itself or by EIP-173 owner.
      */
-    function getRoyalties(uint256 _tokenId)
-        external
-        view
-        returns (address payable[] memory recipients, uint256[] memory bps);
+    function register(address registrant) external;
 
     /**
-     * @notice get collection athlete address
-     * @param _collectionId collectionId of NFTs
-     * @return address of athlete
+     * @notice Registers an address with the registry and "subscribes" to another address's filtered operators and
+     * codeHashes.
      */
-    function getCollectionAthleteAddress(uint256 _collectionId) external view returns (address);
+    function registerAndSubscribe(address registrant, address subscription) external;
 
     /**
-     * @notice get earnings share per token of collection
-     * @param _collectionId collectionId of NFT
-     * @return uint256 tournament share in 1e7 per token of collection
-     * @return uint256 other share in 1e7 per token of collection
+     * @notice Registers an address with the registry and copies the filtered operators and codeHashes from another
+     *         address without subscribing.
      */
-    function getEarningsShares1e7(uint256 _collectionId) external view returns (uint256, uint256);
+    function registerAndCopyEntries(address registrant, address registrantToCopy) external;
 
     /**
-     * @notice check if collection exists
-     * @param _collectionId collectionId of NFT
-     * @return bool true if collection exists
+     * @notice Unregisters an address with the registry and removes its subscription. May be called by address itself or
+     * by EIP-173 owner.
+     *         Note that this does not remove any filtered addresses or codeHashes.
+     *         Also note that any subscriptions to this registrant will still be active and follow the existing filtered
+     * addresses and codehashes.
      */
-    function getCollectionExists(uint256 _collectionId) external view returns (bool);
+    function unregister(address addr) external;
 
     /**
-     * @notice get tokens minted per collection
-     * @param _collectionId collectionId of NFT
-     * @return uint24 returns amount of minted tokens of collection
+     * @notice Update an operator address for a registered address - when filtered is true, the operator is filtered.
      */
-    function getMintedTokensOfCollection(uint256 _collectionId) external view returns (uint24);
+    function updateOperator(address registrant, address operator, bool filtered) external;
+
+    /**
+     * @notice Update multiple operators for a registered address - when filtered is true, the operators will be
+     * filtered. Reverts on duplicates.
+     */
+    function updateOperators(address registrant, address[] calldata operators, bool filtered) external;
+
+    /**
+     * @notice Update a codeHash for a registered address - when filtered is true, the codeHash is filtered.
+     */
+    function updateCodeHash(address registrant, bytes32 codehash, bool filtered) external;
+
+    /**
+     * @notice Update multiple codeHashes for a registered address - when filtered is true, the codeHashes will be
+     * filtered. Reverts on duplicates.
+     */
+    function updateCodeHashes(address registrant, bytes32[] calldata codeHashes, bool filtered) external;
+
+    /**
+     * @notice Subscribe an address to another registrant's filtered operators and codeHashes. Will remove previous
+     *         subscription if present.
+     *         Note that accounts with subscriptions may go on to subscribe to other accounts - in this case,
+     *         subscriptions will not be forwarded. Instead the former subscription's existing entries will still be
+     *         used.
+     */
+    function subscribe(address registrant, address registrantToSubscribe) external;
+
+    /**
+     * @notice Unsubscribe an address from its current subscribed registrant, and optionally copy its filtered operators
+     * and codeHashes.
+     */
+    function unsubscribe(address registrant, bool copyExistingEntries) external;
+
+    /**
+     * @notice Get the subscription address of a given registrant, if any.
+     */
+    function subscriptionOf(address addr) external returns (address registrant);
+
+    /**
+     * @notice Get the set of addresses subscribed to a given registrant.
+     *         Note that order is not guaranteed as updates are made.
+     */
+    function subscribers(address registrant) external returns (address[] memory);
+
+    /**
+     * @notice Get the subscriber at a given index in the set of addresses subscribed to a given registrant.
+     *         Note that order is not guaranteed as updates are made.
+     */
+    function subscriberAt(address registrant, uint256 index) external returns (address);
+
+    /**
+     * @notice Copy filtered operators and codeHashes from a different registrantToCopy to addr.
+     */
+    function copyEntriesOf(address registrant, address registrantToCopy) external;
+
+    /**
+     * @notice Returns true if operator is filtered by a given address or its subscription.
+     */
+    function isOperatorFiltered(address registrant, address operator) external returns (bool);
+
+    /**
+     * @notice Returns true if the hash of an address's code is filtered by a given address or its subscription.
+     */
+    function isCodeHashOfFiltered(address registrant, address operatorWithCode) external returns (bool);
+
+    /**
+     * @notice Returns true if a codeHash is filtered by a given address or its subscription.
+     */
+    function isCodeHashFiltered(address registrant, bytes32 codeHash) external returns (bool);
+
+    /**
+     * @notice Returns a list of filtered operators for a given address or its subscription.
+     */
+    function filteredOperators(address addr) external returns (address[] memory);
+
+    /**
+     * @notice Returns the set of filtered codeHashes for a given address or its subscription.
+     *         Note that order is not guaranteed as updates are made.
+     */
+    function filteredCodeHashes(address addr) external returns (bytes32[] memory);
+
+    /**
+     * @notice Returns the filtered operator at the given index of the set of filtered operators for a given address or
+     *         its subscription.
+     *         Note that order is not guaranteed as updates are made.
+     */
+    function filteredOperatorAt(address registrant, uint256 index) external returns (address);
+
+    /**
+     * @notice Returns the filtered codeHash at the given index of the list of filtered codeHashes for a given address
+     * or
+     *         its subscription.
+     *         Note that order is not guaranteed as updates are made.
+     */
+    function filteredCodeHashAt(address registrant, uint256 index) external returns (bytes32);
+
+    /**
+     * @notice Returns true if an address has registered
+     */
+    function isRegistered(address addr) external returns (bool);
+
+    /**
+     * @dev Convenience method to compute the code hash of an arbitrary contract
+     */
+    function codeHashOf(address addr) external returns (bytes32);
 }
 
-// src/archive/contracts/interfaces/IFantiumUserManager.sol
+// node_modules/operator-filter-registry/src/lib/Constants.sol
+
+address constant CANONICAL_OPERATOR_FILTER_REGISTRY_ADDRESS = 0x000000000000AAeB6D7670E522A718067333cd4E;
+address constant CANONICAL_CORI_SUBSCRIPTION = 0x3cc6CddA760b79bAfa08dF41ECFA224f810dCeB6;
+
+// node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol
+
+// OpenZeppelin Contracts v4.4.1 (token/ERC20/extensions/IERC20Metadata.sol)
 
 /**
- * @dev Interface of the IFantiumUserManager
+ * @dev Interface for the optional metadata functions from the ERC20 standard.
+ *
+ * _Available since v4.1._
  */
-interface IFantiumUserManager {
+interface IERC20Metadata is IERC20 {
     /**
-     * @dev All events are emitted in the FantomUserManager contract.
+     * @dev Returns the name of the token.
      */
-    event AddressAddedToKYC(address indexed _address);
-    event AddressRemovedFromKYC(address indexed _address);
-    event AddressAddedToIDENT(address indexed _address);
-    event AddressRemovedFromIDENT(address indexed _address);
-    event AddressAddedToAllowList(uint256 collectionId, address indexed _address);
-    event AddressRemovedFromAllowList(uint256 collectionId, address indexed _address);
+    function name() external view returns (string memory);
 
     /**
-     * @notice Check if address is KYCed.
-     * @param _address address to be checked.
-     * @return isKYCed true if address is KYCed.
+     * @dev Returns the symbol of the token.
      */
-    function isAddressKYCed(address _address) external view returns (bool);
+    function symbol() external view returns (string memory);
 
     /**
-     * @notice Check if address is KYCed.
-     * @param _address address to be checked.
-     * @return isIDENT true if address is KYCed.
+     * @dev Returns the decimals places of the token.
      */
-    function isAddressIDENT(address _address) external view returns (bool);
-
-    /**
-     * @notice Check if address is allowlisted on a certain contract with a certain collection.
-     * @param _contractAddress ContractAddress of the NFT contract that allowlist applies to
-     * @param _collectionId CollectionId of the NFT contract that allowlist applies to
-     * @param _address address to be checked for alliwlist.
-     * @return hasAllowlist true if address is allowlisted.
-     */
-    function hasAllowlist(
-        address _contractAddress,
-        uint256 _collectionId,
-        address _address
-    )
-        external
-        view
-        returns (uint256);
-
-    /**
-     * @notice Reduce Allowlist for NFT contract
-     * @param _contractAddress ContractAddress of the NFT contract that allowlist applies to
-     * @param _collectionId CollectionId of the NFT contract that allowlist applies to
-     * @param _address address to be reduced the allowlist for.
-     * @return _reduceAllocation amount the allowlist gets reduced by.
-     */
-    function reduceAllowListAllocation(
-        uint256 _collectionId,
-        address _contractAddress,
-        address _address,
-        uint256 _reduceAllocation
-    )
-        external
-        returns (uint256);
-}
-
-// src/archive/contracts/utils/TokenVersionUtil.sol
-
-/**
- * @title Claiming contract that allows payout tokens to be claimed
- * for FAN token holders.
- * @author MTX stuido AG.
- */
-library TokenVersionUtil {
-    uint256 constant ONE_MILLION = 1_000_000;
-    uint256 constant TEN_THOUSAND = 10_000;
-
-    /*///////////////////////////////////////////////////////////////
-                            INTERNAL 
-    //////////////////////////////////////////////////////////////*/
-
-    function getTokenInfo(uint256 _tokenId) internal pure returns (uint256, uint256, uint256) {
-        uint256 collectionOfToken = _tokenId / ONE_MILLION;
-        uint256 versionOfToken = (_tokenId % ONE_MILLION) / TEN_THOUSAND;
-        uint256 tokenNr = _tokenId % TEN_THOUSAND;
-
-        return (collectionOfToken, versionOfToken, tokenNr);
-    }
-
-    function createTokenId(
-        uint256 _collectionId,
-        uint256 _versionId,
-        uint256 _tokenNr
-    )
-        internal
-        pure
-        returns (uint256)
-    {
-        uint256 tokenId = (_collectionId * ONE_MILLION) + (_versionId * TEN_THOUSAND) + _tokenNr;
-
-        return (tokenId);
-    }
+    function decimals() external view returns (uint8);
 }
 
 // node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol
@@ -1375,7 +1363,8 @@ abstract contract Initializable {
     modifier initializer() {
         bool isTopLevelCall = !_initializing;
         require(
-            (isTopLevelCall && _initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),
+            (isTopLevelCall && _initialized < 1)
+                || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),
             "Initializable: contract is already initialized"
         );
         _initialized = 1;
@@ -1454,32 +1443,6 @@ abstract contract Initializable {
     function _isInitializing() internal view returns (bool) {
         return _initializing;
     }
-}
-
-// node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol
-
-// OpenZeppelin Contracts v4.4.1 (token/ERC20/extensions/IERC20Metadata.sol)
-
-/**
- * @dev Interface for the optional metadata functions from the ERC20 standard.
- *
- * _Available since v4.1._
- */
-interface IERC20MetadataUpgradeable is IERC20Upgradeable {
-    /**
-     * @dev Returns the name of the token.
-     */
-    function name() external view returns (string memory);
-
-    /**
-     * @dev Returns the symbol of the token.
-     */
-    function symbol() external view returns (string memory);
-
-    /**
-     * @dev Returns the decimals places of the token.
-     */
-    function decimals() external view returns (uint8);
 }
 
 // node_modules/@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol
@@ -1615,6 +1578,31 @@ interface IERC721Upgradeable is IERC165Upgradeable {
     function isApprovedForAll(address owner, address operator) external view returns (bool);
 }
 
+// node_modules/@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol
+
+// OpenZeppelin Contracts v4.4.1 (token/ERC721/extensions/IERC721Metadata.sol)
+
+/**
+ * @title ERC-721 Non-Fungible Token Standard, optional metadata extension
+ * @dev See https://eips.ethereum.org/EIPS/eip-721
+ */
+interface IERC721MetadataUpgradeable is IERC721Upgradeable {
+    /**
+     * @dev Returns the token collection name.
+     */
+    function name() external view returns (string memory);
+
+    /**
+     * @dev Returns the token collection symbol.
+     */
+    function symbol() external view returns (string memory);
+
+    /**
+     * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
+     */
+    function tokenURI(uint256 tokenId) external view returns (string memory);
+}
+
 // node_modules/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol
 
 // OpenZeppelin Contracts (last updated v4.9.4) (utils/Context.sol)
@@ -1739,300 +1727,7 @@ library StringsUpgradeable {
     }
 }
 
-// node_modules/@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol
-
-// OpenZeppelin Contracts (last updated v4.7.0) (security/Pausable.sol)
-
-/**
- * @dev Contract module which allows children to implement an emergency stop
- * mechanism that can be triggered by an authorized account.
- *
- * This module is used through inheritance. It will make available the
- * modifiers `whenNotPaused` and `whenPaused`, which can be applied to
- * the functions of your contract. Note that they will not be pausable by
- * simply including this module, only once the modifiers are put in place.
- */
-abstract contract PausableUpgradeable is Initializable, ContextUpgradeable {
-    /**
-     * @dev Emitted when the pause is triggered by `account`.
-     */
-    event Paused(address account);
-
-    /**
-     * @dev Emitted when the pause is lifted by `account`.
-     */
-    event Unpaused(address account);
-
-    bool private _paused;
-
-    /**
-     * @dev Initializes the contract in unpaused state.
-     */
-    function __Pausable_init() internal onlyInitializing {
-        __Pausable_init_unchained();
-    }
-
-    function __Pausable_init_unchained() internal onlyInitializing {
-        _paused = false;
-    }
-
-    /**
-     * @dev Modifier to make a function callable only when the contract is not paused.
-     *
-     * Requirements:
-     *
-     * - The contract must not be paused.
-     */
-    modifier whenNotPaused() {
-        _requireNotPaused();
-        _;
-    }
-
-    /**
-     * @dev Modifier to make a function callable only when the contract is paused.
-     *
-     * Requirements:
-     *
-     * - The contract must be paused.
-     */
-    modifier whenPaused() {
-        _requirePaused();
-        _;
-    }
-
-    /**
-     * @dev Returns true if the contract is paused, and false otherwise.
-     */
-    function paused() public view virtual returns (bool) {
-        return _paused;
-    }
-
-    /**
-     * @dev Throws if the contract is paused.
-     */
-    function _requireNotPaused() internal view virtual {
-        require(!paused(), "Pausable: paused");
-    }
-
-    /**
-     * @dev Throws if the contract is not paused.
-     */
-    function _requirePaused() internal view virtual {
-        require(paused(), "Pausable: not paused");
-    }
-
-    /**
-     * @dev Triggers stopped state.
-     *
-     * Requirements:
-     *
-     * - The contract must not be paused.
-     */
-    function _pause() internal virtual whenNotPaused {
-        _paused = true;
-        emit Paused(_msgSender());
-    }
-
-    /**
-     * @dev Returns to normal state.
-     *
-     * Requirements:
-     *
-     * - The contract must be paused.
-     */
-    function _unpause() internal virtual whenPaused {
-        _paused = false;
-        emit Unpaused(_msgSender());
-    }
-
-    /**
-     * @dev This empty reserved space is put in place to allow future versions to add new
-     * variables without shifting down storage in the inheritance chain.
-     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-     */
-    uint256[49] private __gap;
-}
-
-// node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol
-
-// OpenZeppelin Contracts (last updated v4.9.3) (token/ERC20/utils/SafeERC20.sol)
-
-/**
- * @title SafeERC20
- * @dev Wrappers around ERC20 operations that throw on failure (when the token
- * contract returns false). Tokens that return no value (and instead revert or
- * throw on failure) are also supported, non-reverting calls are assumed to be
- * successful.
- * To use this library you can add a `using SafeERC20 for IERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
- */
-library SafeERC20Upgradeable {
-    using AddressUpgradeable for address;
-
-    /**
-     * @dev Transfer `value` amount of `token` from the calling contract to `to`. If `token` returns no value,
-     * non-reverting calls are assumed to be successful.
-     */
-    function safeTransfer(IERC20Upgradeable token, address to, uint256 value) internal {
-        _callOptionalReturn(token, abi.encodeWithSelector(token.transfer.selector, to, value));
-    }
-
-    /**
-     * @dev Transfer `value` amount of `token` from `from` to `to`, spending the approval given by `from` to the
-     * calling contract. If `token` returns no value, non-reverting calls are assumed to be successful.
-     */
-    function safeTransferFrom(IERC20Upgradeable token, address from, address to, uint256 value) internal {
-        _callOptionalReturn(token, abi.encodeWithSelector(token.transferFrom.selector, from, to, value));
-    }
-
-    /**
-     * @dev Deprecated. This function has issues similar to the ones found in
-     * {IERC20-approve}, and its usage is discouraged.
-     *
-     * Whenever possible, use {safeIncreaseAllowance} and
-     * {safeDecreaseAllowance} instead.
-     */
-    function safeApprove(IERC20Upgradeable token, address spender, uint256 value) internal {
-        // safeApprove should only be called when setting an initial allowance,
-        // or when resetting it to zero. To increase and decrease it, use
-        // 'safeIncreaseAllowance' and 'safeDecreaseAllowance'
-        require(
-            (value == 0) || (token.allowance(address(this), spender) == 0),
-            "SafeERC20: approve from non-zero to non-zero allowance"
-        );
-        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, value));
-    }
-
-    /**
-     * @dev Increase the calling contract's allowance toward `spender` by `value`. If `token` returns no value,
-     * non-reverting calls are assumed to be successful.
-     */
-    function safeIncreaseAllowance(IERC20Upgradeable token, address spender, uint256 value) internal {
-        uint256 oldAllowance = token.allowance(address(this), spender);
-        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, oldAllowance + value));
-    }
-
-    /**
-     * @dev Decrease the calling contract's allowance toward `spender` by `value`. If `token` returns no value,
-     * non-reverting calls are assumed to be successful.
-     */
-    function safeDecreaseAllowance(IERC20Upgradeable token, address spender, uint256 value) internal {
-        unchecked {
-            uint256 oldAllowance = token.allowance(address(this), spender);
-            require(oldAllowance >= value, "SafeERC20: decreased allowance below zero");
-            _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, oldAllowance - value));
-        }
-    }
-
-    /**
-     * @dev Set the calling contract's allowance toward `spender` to `value`. If `token` returns no value,
-     * non-reverting calls are assumed to be successful. Meant to be used with tokens that require the approval
-     * to be set to zero before setting it to a non-zero value, such as USDT.
-     */
-    function forceApprove(IERC20Upgradeable token, address spender, uint256 value) internal {
-        bytes memory approvalCall = abi.encodeWithSelector(token.approve.selector, spender, value);
-
-        if (!_callOptionalReturnBool(token, approvalCall)) {
-            _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, 0));
-            _callOptionalReturn(token, approvalCall);
-        }
-    }
-
-    /**
-     * @dev Use a ERC-2612 signature to set the `owner` approval toward `spender` on `token`.
-     * Revert on invalid signature.
-     */
-    function safePermit(
-        IERC20PermitUpgradeable token,
-        address owner,
-        address spender,
-        uint256 value,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    )
-        internal
-    {
-        uint256 nonceBefore = token.nonces(owner);
-        token.permit(owner, spender, value, deadline, v, r, s);
-        uint256 nonceAfter = token.nonces(owner);
-        require(nonceAfter == nonceBefore + 1, "SafeERC20: permit did not succeed");
-    }
-
-    /**
-     * @dev Imitates a Solidity high-level call (i.e. a regular function call to a contract), relaxing the requirement
-     * on the return value: the return value is optional (but if data is returned, it must not be false).
-     * @param token The token targeted by the call.
-     * @param data The call data (encoded using abi.encode or one of its variants).
-     */
-    function _callOptionalReturn(IERC20Upgradeable token, bytes memory data) private {
-        // We need to perform a low level call here, to bypass Solidity's return data size checking mechanism, since
-        // we're implementing it ourselves. We use {Address-functionCall} to perform this call, which verifies that
-        // the target address contains contract code and also asserts for success in the low-level call.
-
-        bytes memory returndata = address(token).functionCall(data, "SafeERC20: low-level call failed");
-        require(returndata.length == 0 || abi.decode(returndata, (bool)), "SafeERC20: ERC20 operation did not succeed");
-    }
-
-    /**
-     * @dev Imitates a Solidity high-level call (i.e. a regular function call to a contract), relaxing the requirement
-     * on the return value: the return value is optional (but if data is returned, it must not be false).
-     * @param token The token targeted by the call.
-     * @param data The call data (encoded using abi.encode or one of its variants).
-     *
-     * This is a variant of {_callOptionalReturn} that silents catches all reverts and returns a bool instead.
-     */
-    function _callOptionalReturnBool(IERC20Upgradeable token, bytes memory data) private returns (bool) {
-        // We need to perform a low level call here, to bypass Solidity's return data size checking mechanism, since
-        // we're implementing it ourselves. We cannot use {Address-functionCall} here since this should return false
-        // and not revert is the subcall reverts.
-
-        (bool success, bytes memory returndata) = address(token).call(data);
-        return success && (returndata.length == 0 || abi.decode(returndata, (bool)))
-            && AddressUpgradeable.isContract(address(token));
-    }
-}
-
-// node_modules/@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol
-
-// OpenZeppelin Contracts v4.4.1 (utils/introspection/ERC165.sol)
-
-/**
- * @dev Implementation of the {IERC165} interface.
- *
- * Contracts that want to implement ERC165 should inherit from this contract and override {supportsInterface} to check
- * for the additional interface id that will be supported. For example:
- *
- * ```solidity
- * function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
- *     return interfaceId == type(MyInterface).interfaceId || super.supportsInterface(interfaceId);
- * }
- * ```
- *
- * Alternatively, {ERC165Storage} provides an easier to use but more expensive implementation.
- */
-abstract contract ERC165Upgradeable is Initializable, IERC165Upgradeable {
-    function __ERC165_init() internal onlyInitializing { }
-
-    function __ERC165_init_unchained() internal onlyInitializing { }
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(IERC165Upgradeable).interfaceId;
-    }
-
-    /**
-     * @dev This empty reserved space is put in place to allow future versions to add new
-     * variables without shifting down storage in the inheritance chain.
-     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-     */
-    uint256[50] private __gap;
-}
-
-// node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol
+// node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol
 
 // OpenZeppelin Contracts (last updated v4.9.0) (token/ERC20/ERC20.sol)
 
@@ -2064,7 +1759,7 @@ abstract contract ERC165Upgradeable is Initializable, IERC165Upgradeable {
  * functions have been added to mitigate the well-known issues around setting
  * allowances. See {IERC20-approve}.
  */
-contract ERC20Upgradeable is Initializable, ContextUpgradeable, IERC20Upgradeable, IERC20MetadataUpgradeable {
+contract ERC20 is Context, IERC20, IERC20Metadata {
     mapping(address => uint256) private _balances;
 
     mapping(address => mapping(address => uint256)) private _allowances;
@@ -2080,11 +1775,7 @@ contract ERC20Upgradeable is Initializable, ContextUpgradeable, IERC20Upgradeabl
      * All two of these values are immutable: they can only be set once during
      * construction.
      */
-    function __ERC20_init(string memory name_, string memory symbol_) internal onlyInitializing {
-        __ERC20_init_unchained(name_, symbol_);
-    }
-
-    function __ERC20_init_unchained(string memory name_, string memory symbol_) internal onlyInitializing {
+    constructor(string memory name_, string memory symbol_) {
         _name = name_;
         _symbol = symbol_;
     }
@@ -2396,13 +2087,246 @@ contract ERC20Upgradeable is Initializable, ContextUpgradeable, IERC20Upgradeabl
      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
      */
     function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual { }
+}
+
+// node_modules/@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol
+
+// OpenZeppelin Contracts (last updated v4.7.0) (security/Pausable.sol)
+
+/**
+ * @dev Contract module which allows children to implement an emergency stop
+ * mechanism that can be triggered by an authorized account.
+ *
+ * This module is used through inheritance. It will make available the
+ * modifiers `whenNotPaused` and `whenPaused`, which can be applied to
+ * the functions of your contract. Note that they will not be pausable by
+ * simply including this module, only once the modifiers are put in place.
+ */
+abstract contract PausableUpgradeable is Initializable, ContextUpgradeable {
+    /**
+     * @dev Emitted when the pause is triggered by `account`.
+     */
+    event Paused(address account);
+
+    /**
+     * @dev Emitted when the pause is lifted by `account`.
+     */
+    event Unpaused(address account);
+
+    bool private _paused;
+
+    /**
+     * @dev Initializes the contract in unpaused state.
+     */
+    function __Pausable_init() internal onlyInitializing {
+        __Pausable_init_unchained();
+    }
+
+    function __Pausable_init_unchained() internal onlyInitializing {
+        _paused = false;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is not paused.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     */
+    modifier whenNotPaused() {
+        _requireNotPaused();
+        _;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is paused.
+     *
+     * Requirements:
+     *
+     * - The contract must be paused.
+     */
+    modifier whenPaused() {
+        _requirePaused();
+        _;
+    }
+
+    /**
+     * @dev Returns true if the contract is paused, and false otherwise.
+     */
+    function paused() public view virtual returns (bool) {
+        return _paused;
+    }
+
+    /**
+     * @dev Throws if the contract is paused.
+     */
+    function _requireNotPaused() internal view virtual {
+        require(!paused(), "Pausable: paused");
+    }
+
+    /**
+     * @dev Throws if the contract is not paused.
+     */
+    function _requirePaused() internal view virtual {
+        require(paused(), "Pausable: not paused");
+    }
+
+    /**
+     * @dev Triggers stopped state.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     */
+    function _pause() internal virtual whenNotPaused {
+        _paused = true;
+        emit Paused(_msgSender());
+    }
+
+    /**
+     * @dev Returns to normal state.
+     *
+     * Requirements:
+     *
+     * - The contract must be paused.
+     */
+    function _unpause() internal virtual whenPaused {
+        _paused = false;
+        emit Unpaused(_msgSender());
+    }
 
     /**
      * @dev This empty reserved space is put in place to allow future versions to add new
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
-    uint256[45] private __gap;
+    uint256[49] private __gap;
+}
+
+// node_modules/@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol
+
+// OpenZeppelin Contracts v4.4.1 (utils/introspection/ERC165.sol)
+
+/**
+ * @dev Implementation of the {IERC165} interface.
+ *
+ * Contracts that want to implement ERC165 should inherit from this contract and override {supportsInterface} to check
+ * for the additional interface id that will be supported. For example:
+ *
+ * ```solidity
+ * function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+ *     return interfaceId == type(MyInterface).interfaceId || super.supportsInterface(interfaceId);
+ * }
+ * ```
+ *
+ * Alternatively, {ERC165Storage} provides an easier to use but more expensive implementation.
+ */
+abstract contract ERC165Upgradeable is Initializable, IERC165Upgradeable {
+    function __ERC165_init() internal onlyInitializing { }
+
+    function __ERC165_init_unchained() internal onlyInitializing { }
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return interfaceId == type(IERC165Upgradeable).interfaceId;
+    }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
+}
+
+// node_modules/operator-filter-registry/src/upgradeable/OperatorFiltererUpgradeable.sol
+
+/**
+ * @title  OperatorFiltererUpgradeable
+ * @notice Abstract contract whose constructor automatically registers and optionally subscribes to or copies another
+ *         registrant's entries in the OperatorFilterRegistry when the init function is called.
+ * @dev    This smart contract is meant to be inherited by token contracts so they can use the following:
+ *         - `onlyAllowedOperator` modifier for `transferFrom` and `safeTransferFrom` methods.
+ *         - `onlyAllowedOperatorApproval` modifier for `approve` and `setApprovalForAll` methods.
+ */
+abstract contract OperatorFiltererUpgradeable is Initializable {
+    /// @notice Emitted when an operator is not allowed.
+    error OperatorNotAllowed(address operator);
+
+    IOperatorFilterRegistry constant OPERATOR_FILTER_REGISTRY =
+        IOperatorFilterRegistry(0x000000000000AAeB6D7670E522A718067333cd4E);
+
+    /// @dev The upgradeable initialize function that should be called when the contract is being upgraded.
+    function __OperatorFilterer_init(address subscriptionOrRegistrantToCopy, bool subscribe) internal onlyInitializing {
+        // If an inheriting token contract is deployed to a network without the registry deployed, the modifier
+        // will not revert, but the contract will need to be registered with the registry once it is deployed in
+        // order for the modifier to filter addresses.
+        if (address(OPERATOR_FILTER_REGISTRY).code.length > 0) {
+            if (!OPERATOR_FILTER_REGISTRY.isRegistered(address(this))) {
+                if (subscribe) {
+                    OPERATOR_FILTER_REGISTRY.registerAndSubscribe(address(this), subscriptionOrRegistrantToCopy);
+                } else {
+                    if (subscriptionOrRegistrantToCopy != address(0)) {
+                        OPERATOR_FILTER_REGISTRY.registerAndCopyEntries(address(this), subscriptionOrRegistrantToCopy);
+                    } else {
+                        OPERATOR_FILTER_REGISTRY.register(address(this));
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @dev A helper modifier to check if the operator is allowed.
+     */
+    modifier onlyAllowedOperator(address from) virtual {
+        // Allow spending tokens from addresses with balance
+        // Note that this still allows listings and marketplaces with escrow to transfer tokens if transferred
+        // from an EOA.
+        if (from != msg.sender) {
+            _checkFilterOperator(msg.sender);
+        }
+        _;
+    }
+
+    /**
+     * @dev A helper modifier to check if the operator approval is allowed.
+     */
+    modifier onlyAllowedOperatorApproval(address operator) virtual {
+        _checkFilterOperator(operator);
+        _;
+    }
+
+    /**
+     * @dev A helper function to check if the operator is allowed.
+     */
+    function _checkFilterOperator(address operator) internal view virtual {
+        // Check registry code length to facilitate testing in environments without a deployed registry.
+        if (address(OPERATOR_FILTER_REGISTRY).code.length > 0) {
+            // under normal circumstances, this function will revert rather than return false, but inheriting or
+            // upgraded contracts may specify their own OperatorFilterRegistry implementations, which may behave
+            // differently
+            if (!OPERATOR_FILTER_REGISTRY.isOperatorAllowed(address(this), operator)) {
+                revert OperatorNotAllowed(operator);
+            }
+        }
+    }
+}
+
+// node_modules/operator-filter-registry/src/upgradeable/DefaultOperatorFiltererUpgradeable.sol
+
+/**
+ * @title  DefaultOperatorFiltererUpgradeable
+ * @notice Inherits from OperatorFiltererUpgradeable and automatically subscribes to the default OpenSea subscription
+ *         when the init function is called.
+ */
+abstract contract DefaultOperatorFiltererUpgradeable is OperatorFiltererUpgradeable {
+    /// @dev The upgradeable initialize function that should be called when the contract is being deployed.
+    function __DefaultOperatorFilterer_init() internal onlyInitializing {
+        OperatorFiltererUpgradeable.__OperatorFilterer_init(CANONICAL_CORI_SUBSCRIPTION, true);
+    }
 }
 
 // node_modules/@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol
@@ -2933,105 +2857,617 @@ abstract contract AccessControlUpgradeable is
     uint256[49] private __gap;
 }
 
-// src/archive/contracts/claiming/FantiumClaimingV1.sol
+// node_modules/@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol
 
-// import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+// OpenZeppelin Contracts (last updated v4.9.0) (token/ERC721/ERC721.sol)
 
 /**
- * @title Claiming contract that allows payout tokens to be claimed
- * for FAN token holders.
- * @author MTX Studio AG.
+ * @dev Implementation of https://eips.ethereum.org/EIPS/eip-721[ERC721] Non-Fungible Token Standard, including
+ * the Metadata extension, but not including the Enumerable extension, which is available separately as
+ * {ERC721Enumerable}.
  */
-contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgradeable, PausableUpgradeable {
-    address public globalPayoutToken;
-    address private trustedForwarder;
-    address public fantiumNFTContract;
-    address public fantiumUserManager;
+contract ERC721Upgradeable is
+    Initializable,
+    ContextUpgradeable,
+    ERC165Upgradeable,
+    IERC721Upgradeable,
+    IERC721MetadataUpgradeable
+{
+    using AddressUpgradeable for address;
+    using StringsUpgradeable for uint256;
 
-    // mapping of distributionEvent to TokenID to claimed
-    mapping(uint256 => DistributionEvent) public distributionEvents;
-    mapping(uint256 => mapping(uint256 => bool)) public distributionEventToBaseTokenToClaimed;
-    mapping(uint256 => mapping(uint256 => collectionInfo)) public distributionEventToCollectionInfo;
-    mapping(uint256 => address) public distributionEventToPayoutToken;
+    // Token name
+    string private _name;
 
-    uint256 private nextDistributionEventId;
+    // Token symbol
+    string private _symbol;
+
+    // Mapping from token ID to owner address
+    mapping(uint256 => address) private _owners;
+
+    // Mapping owner address to token count
+    mapping(address => uint256) private _balances;
+
+    // Mapping from token ID to approved address
+    mapping(uint256 => address) private _tokenApprovals;
+
+    // Mapping from owner to operator approvals
+    mapping(address => mapping(address => bool)) private _operatorApprovals;
+
+    /**
+     * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
+     */
+    function __ERC721_init(string memory name_, string memory symbol_) internal onlyInitializing {
+        __ERC721_init_unchained(name_, symbol_);
+    }
+
+    function __ERC721_init_unchained(string memory name_, string memory symbol_) internal onlyInitializing {
+        _name = name_;
+        _symbol = symbol_;
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override (ERC165Upgradeable, IERC165Upgradeable)
+        returns (bool)
+    {
+        return interfaceId == type(IERC721Upgradeable).interfaceId
+            || interfaceId == type(IERC721MetadataUpgradeable).interfaceId || super.supportsInterface(interfaceId);
+    }
+
+    /**
+     * @dev See {IERC721-balanceOf}.
+     */
+    function balanceOf(address owner) public view virtual override returns (uint256) {
+        require(owner != address(0), "ERC721: address zero is not a valid owner");
+        return _balances[owner];
+    }
+
+    /**
+     * @dev See {IERC721-ownerOf}.
+     */
+    function ownerOf(uint256 tokenId) public view virtual override returns (address) {
+        address owner = _ownerOf(tokenId);
+        require(owner != address(0), "ERC721: invalid token ID");
+        return owner;
+    }
+
+    /**
+     * @dev See {IERC721Metadata-name}.
+     */
+    function name() public view virtual override returns (string memory) {
+        return _name;
+    }
+
+    /**
+     * @dev See {IERC721Metadata-symbol}.
+     */
+    function symbol() public view virtual override returns (string memory) {
+        return _symbol;
+    }
+
+    /**
+     * @dev See {IERC721Metadata-tokenURI}.
+     */
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        _requireMinted(tokenId);
+
+        string memory baseURI = _baseURI();
+        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, tokenId.toString())) : "";
+    }
+
+    /**
+     * @dev Base URI for computing {tokenURI}. If set, the resulting URI for each
+     * token will be the concatenation of the `baseURI` and the `tokenId`. Empty
+     * by default, can be overridden in child contracts.
+     */
+    function _baseURI() internal view virtual returns (string memory) {
+        return "";
+    }
+
+    /**
+     * @dev See {IERC721-approve}.
+     */
+    function approve(address to, uint256 tokenId) public virtual override {
+        address owner = ERC721Upgradeable.ownerOf(tokenId);
+        require(to != owner, "ERC721: approval to current owner");
+
+        require(
+            _msgSender() == owner || isApprovedForAll(owner, _msgSender()),
+            "ERC721: approve caller is not token owner or approved for all"
+        );
+
+        _approve(to, tokenId);
+    }
+
+    /**
+     * @dev See {IERC721-getApproved}.
+     */
+    function getApproved(uint256 tokenId) public view virtual override returns (address) {
+        _requireMinted(tokenId);
+
+        return _tokenApprovals[tokenId];
+    }
+
+    /**
+     * @dev See {IERC721-setApprovalForAll}.
+     */
+    function setApprovalForAll(address operator, bool approved) public virtual override {
+        _setApprovalForAll(_msgSender(), operator, approved);
+    }
+
+    /**
+     * @dev See {IERC721-isApprovedForAll}.
+     */
+    function isApprovedForAll(address owner, address operator) public view virtual override returns (bool) {
+        return _operatorApprovals[owner][operator];
+    }
+
+    /**
+     * @dev See {IERC721-transferFrom}.
+     */
+    function transferFrom(address from, address to, uint256 tokenId) public virtual override {
+        //solhint-disable-next-line max-line-length
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: caller is not token owner or approved");
+
+        _transfer(from, to, tokenId);
+    }
+
+    /**
+     * @dev See {IERC721-safeTransferFrom}.
+     */
+    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override {
+        safeTransferFrom(from, to, tokenId, "");
+    }
+
+    /**
+     * @dev See {IERC721-safeTransferFrom}.
+     */
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public virtual override {
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: caller is not token owner or approved");
+        _safeTransfer(from, to, tokenId, data);
+    }
+
+    /**
+     * @dev Safely transfers `tokenId` token from `from` to `to`, checking first that contract recipients
+     * are aware of the ERC721 protocol to prevent tokens from being forever locked.
+     *
+     * `data` is additional data, it has no specified format and it is sent in call to `to`.
+     *
+     * This internal function is equivalent to {safeTransferFrom}, and can be used to e.g.
+     * implement alternative mechanisms to perform token transfer, such as signature-based.
+     *
+     * Requirements:
+     *
+     * - `from` cannot be the zero address.
+     * - `to` cannot be the zero address.
+     * - `tokenId` token must exist and be owned by `from`.
+     * - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon
+     * a safe transfer.
+     *
+     * Emits a {Transfer} event.
+     */
+    function _safeTransfer(address from, address to, uint256 tokenId, bytes memory data) internal virtual {
+        _transfer(from, to, tokenId);
+        require(_checkOnERC721Received(from, to, tokenId, data), "ERC721: transfer to non ERC721Receiver implementer");
+    }
+
+    /**
+     * @dev Returns the owner of the `tokenId`. Does NOT revert if token doesn't exist
+     */
+    function _ownerOf(uint256 tokenId) internal view virtual returns (address) {
+        return _owners[tokenId];
+    }
+
+    /**
+     * @dev Returns whether `tokenId` exists.
+     *
+     * Tokens can be managed by their owner or approved accounts via {approve} or {setApprovalForAll}.
+     *
+     * Tokens start existing when they are minted (`_mint`),
+     * and stop existing when they are burned (`_burn`).
+     */
+    function _exists(uint256 tokenId) internal view virtual returns (bool) {
+        return _ownerOf(tokenId) != address(0);
+    }
+
+    /**
+     * @dev Returns whether `spender` is allowed to manage `tokenId`.
+     *
+     * Requirements:
+     *
+     * - `tokenId` must exist.
+     */
+    function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual returns (bool) {
+        address owner = ERC721Upgradeable.ownerOf(tokenId);
+        return (spender == owner || isApprovedForAll(owner, spender) || getApproved(tokenId) == spender);
+    }
+
+    /**
+     * @dev Safely mints `tokenId` and transfers it to `to`.
+     *
+     * Requirements:
+     *
+     * - `tokenId` must not exist.
+     * - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon
+     * a safe transfer.
+     *
+     * Emits a {Transfer} event.
+     */
+    function _safeMint(address to, uint256 tokenId) internal virtual {
+        _safeMint(to, tokenId, "");
+    }
+
+    /**
+     * @dev Same as {xref-ERC721-_safeMint-address-uint256-}[`_safeMint`], with an additional `data` parameter which is
+     * forwarded in {IERC721Receiver-onERC721Received} to contract recipients.
+     */
+    function _safeMint(address to, uint256 tokenId, bytes memory data) internal virtual {
+        _mint(to, tokenId);
+        require(
+            _checkOnERC721Received(address(0), to, tokenId, data), "ERC721: transfer to non ERC721Receiver implementer"
+        );
+    }
+
+    /**
+     * @dev Mints `tokenId` and transfers it to `to`.
+     *
+     * WARNING: Usage of this method is discouraged, use {_safeMint} whenever possible
+     *
+     * Requirements:
+     *
+     * - `tokenId` must not exist.
+     * - `to` cannot be the zero address.
+     *
+     * Emits a {Transfer} event.
+     */
+    function _mint(address to, uint256 tokenId) internal virtual {
+        require(to != address(0), "ERC721: mint to the zero address");
+        require(!_exists(tokenId), "ERC721: token already minted");
+
+        _beforeTokenTransfer(address(0), to, tokenId, 1);
+
+        // Check that tokenId was not minted by `_beforeTokenTransfer` hook
+        require(!_exists(tokenId), "ERC721: token already minted");
+
+        unchecked {
+            // Will not overflow unless all 2**256 token ids are minted to the same owner.
+            // Given that tokens are minted one by one, it is impossible in practice that
+            // this ever happens. Might change if we allow batch minting.
+            // The ERC fails to describe this case.
+            _balances[to] += 1;
+        }
+
+        _owners[tokenId] = to;
+
+        emit Transfer(address(0), to, tokenId);
+
+        _afterTokenTransfer(address(0), to, tokenId, 1);
+    }
+
+    /**
+     * @dev Destroys `tokenId`.
+     * The approval is cleared when the token is burned.
+     * This is an internal function that does not check if the sender is authorized to operate on the token.
+     *
+     * Requirements:
+     *
+     * - `tokenId` must exist.
+     *
+     * Emits a {Transfer} event.
+     */
+    function _burn(uint256 tokenId) internal virtual {
+        address owner = ERC721Upgradeable.ownerOf(tokenId);
+
+        _beforeTokenTransfer(owner, address(0), tokenId, 1);
+
+        // Update ownership in case tokenId was transferred by `_beforeTokenTransfer` hook
+        owner = ERC721Upgradeable.ownerOf(tokenId);
+
+        // Clear approvals
+        delete _tokenApprovals[tokenId];
+
+        unchecked {
+            // Cannot overflow, as that would require more tokens to be burned/transferred
+            // out than the owner initially received through minting and transferring in.
+            _balances[owner] -= 1;
+        }
+        delete _owners[tokenId];
+
+        emit Transfer(owner, address(0), tokenId);
+
+        _afterTokenTransfer(owner, address(0), tokenId, 1);
+    }
+
+    /**
+     * @dev Transfers `tokenId` from `from` to `to`.
+     *  As opposed to {transferFrom}, this imposes no restrictions on msg.sender.
+     *
+     * Requirements:
+     *
+     * - `to` cannot be the zero address.
+     * - `tokenId` token must be owned by `from`.
+     *
+     * Emits a {Transfer} event.
+     */
+    function _transfer(address from, address to, uint256 tokenId) internal virtual {
+        require(ERC721Upgradeable.ownerOf(tokenId) == from, "ERC721: transfer from incorrect owner");
+        require(to != address(0), "ERC721: transfer to the zero address");
+
+        _beforeTokenTransfer(from, to, tokenId, 1);
+
+        // Check that tokenId was not transferred by `_beforeTokenTransfer` hook
+        require(ERC721Upgradeable.ownerOf(tokenId) == from, "ERC721: transfer from incorrect owner");
+
+        // Clear approvals from the previous owner
+        delete _tokenApprovals[tokenId];
+
+        unchecked {
+            // `_balances[from]` cannot overflow for the same reason as described in `_burn`:
+            // `from`'s balance is the number of token held, which is at least one before the current
+            // transfer.
+            // `_balances[to]` could overflow in the conditions described in `_mint`. That would require
+            // all 2**256 token ids to be minted, which in practice is impossible.
+            _balances[from] -= 1;
+            _balances[to] += 1;
+        }
+        _owners[tokenId] = to;
+
+        emit Transfer(from, to, tokenId);
+
+        _afterTokenTransfer(from, to, tokenId, 1);
+    }
+
+    /**
+     * @dev Approve `to` to operate on `tokenId`
+     *
+     * Emits an {Approval} event.
+     */
+    function _approve(address to, uint256 tokenId) internal virtual {
+        _tokenApprovals[tokenId] = to;
+        emit Approval(ERC721Upgradeable.ownerOf(tokenId), to, tokenId);
+    }
+
+    /**
+     * @dev Approve `operator` to operate on all of `owner` tokens
+     *
+     * Emits an {ApprovalForAll} event.
+     */
+    function _setApprovalForAll(address owner, address operator, bool approved) internal virtual {
+        require(owner != operator, "ERC721: approve to caller");
+        _operatorApprovals[owner][operator] = approved;
+        emit ApprovalForAll(owner, operator, approved);
+    }
+
+    /**
+     * @dev Reverts if the `tokenId` has not been minted yet.
+     */
+    function _requireMinted(uint256 tokenId) internal view virtual {
+        require(_exists(tokenId), "ERC721: invalid token ID");
+    }
+
+    /**
+     * @dev Internal function to invoke {IERC721Receiver-onERC721Received} on a target address.
+     * The call is not executed if the target address is not a contract.
+     *
+     * @param from address representing the previous owner of the given token ID
+     * @param to target address that will receive the tokens
+     * @param tokenId uint256 ID of the token to be transferred
+     * @param data bytes optional data to send along with the call
+     * @return bool whether the call correctly returned the expected magic value
+     */
+    function _checkOnERC721Received(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes memory data
+    )
+        private
+        returns (bool)
+    {
+        if (to.isContract()) {
+            try IERC721ReceiverUpgradeable(to).onERC721Received(_msgSender(), from, tokenId, data) returns (
+                bytes4 retval
+            ) {
+                return retval == IERC721ReceiverUpgradeable.onERC721Received.selector;
+            } catch (bytes memory reason) {
+                if (reason.length == 0) {
+                    revert("ERC721: transfer to non ERC721Receiver implementer");
+                } else {
+                    /// @solidity memory-safe-assembly
+                    assembly {
+                        revert(add(32, reason), mload(reason))
+                    }
+                }
+            }
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * @dev Hook that is called before any token transfer. This includes minting and burning. If {ERC721Consecutive} is
+     * used, the hook may be called as part of a consecutive (batch) mint, as indicated by `batchSize` greater than 1.
+     *
+     * Calling conditions:
+     *
+     * - When `from` and `to` are both non-zero, ``from``'s tokens will be transferred to `to`.
+     * - When `from` is zero, the tokens will be minted for `to`.
+     * - When `to` is zero, ``from``'s tokens will be burned.
+     * - `from` and `to` are never both zero.
+     * - `batchSize` is non-zero.
+     *
+     * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
+     */
+    function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
+        internal
+        virtual { }
+
+    /**
+     * @dev Hook that is called after any token transfer. This includes minting and burning. If {ERC721Consecutive} is
+     * used, the hook may be called as part of a consecutive (batch) mint, as indicated by `batchSize` greater than 1.
+     *
+     * Calling conditions:
+     *
+     * - When `from` and `to` are both non-zero, ``from``'s tokens were transferred to `to`.
+     * - When `from` is zero, the tokens were minted for `to`.
+     * - When `to` is zero, ``from``'s tokens were burned.
+     * - `from` and `to` are never both zero.
+     * - `batchSize` is non-zero.
+     *
+     * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
+     */
+    function _afterTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize) internal virtual { }
+
+    /**
+     * @dev Unsafe write access to the balances, used by extensions that "mint" tokens using an {ownerOf} override.
+     *
+     * WARNING: Anyone calling this MUST ensure that the balances remain consistent with the ownership. The invariant
+     * being that for any address `a` the value returned by `balanceOf(a)` must be equal to the number of tokens such
+     * that `ownerOf(tokenId)` is `a`.
+     */
+    // solhint-disable-next-line func-name-mixedcase
+    function __unsafe_increaseBalance(address account, uint256 amount) internal {
+        _balances[account] += amount;
+    }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[44] private __gap;
+}
+
+// src/archive/contracts/FantiumNFT.sol
+
+/**
+ * @title FANtium ERC721 contract V1.
+ * @author MTX stuido AG.
+ */
+contract FantiumNFT is
+    Initializable,
+    ERC721Upgradeable,
+    UUPSUpgradeable,
+    AccessControlUpgradeable,
+    DefaultOperatorFiltererUpgradeable,
+    PausableUpgradeable
+{
+    using StringsUpgradeable for uint256;
+
+    mapping(uint256 => Collection) public collections;
+    string public baseURI;
+    mapping(uint256 => mapping(address => uint256)) public collectionIdToAllowList;
+    mapping(address => bool) public kycedAddresses;
+    // address payable public fantiumPrimarySalesAddress;
+    // address payable public fantiumSecondarySalesAddress;
+    // uint256 public fantiumSecondarySalesBPS;
+    uint256 private nextCollectionId;
+    address public erc20PaymentToken;
+
     uint256 constant ONE_MILLION = 1_000_000;
+    bytes4 private constant _INTERFACE_ID_ERC2981_OVERRIDE = 0xbb3bafd6;
     /// ACM
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant PLATFORM_MANAGER_ROLE = keccak256("PLATFORM_MANAGER_ROLE");
+    bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
+    /// generic event fields
+    bytes32 constant FIELD_FANTIUM_SECONDARY_MARKET_ROYALTY_BPS = "fantium secondary royalty BPS";
+    bytes32 constant FIELD_FANTIUM_PRIMARY_ADDRESS = "fantium primary sale address";
+    bytes32 constant FIELD_FANTIUM_SECONDARY_ADDRESS = "fantium secondary sale address";
+    bytes32 constant FIELD_COLLECTION_CREATED = "created";
+    bytes32 constant FIELD_COLLECTION_NAME = "name";
+    bytes32 constant FIELD_COLLECTION_ATHLETE_NAME = "name";
+    bytes32 constant FIELD_COLLECTION_ATHLETE_ADDRESS = "athlete address";
+    bytes32 constant FIELD_COLLECTION_PAUSED = "isMintingPaused";
+    bytes32 constant FIELD_COLLECTION_PRICE = "price";
+    bytes32 constant FIELD_COLLECTION_MAX_INVOCATIONS = "max invocations";
+    bytes32 constant FIELD_COLLECTION_PRIMARY_MARKET_ROYALTY_PERCENTAGE = "collection primary sale %";
+    bytes32 constant FIELD_COLLECTION_SECONDARY_MARKET_ROYALTY_PERCENTAGE = "collection secondary sale %";
+    bytes32 constant FIELD_COLLECTION_BASE_URI = "collection base uri";
+    bytes32 constant FIELD_COLLECTION_TIER = "collection tier";
+    bytes32 constant FILED_FANTIUM_BASE_URI = "fantium base uri";
+    bytes32 constant FIELD_FANTIUM_MINTER_ADDRESS = "fantium minter address";
+    bytes32 constant FIELD_COLLECTION_ACTIVATED = "isActivated";
+    bytes32 constant FIELD_COLLECTION_LAUNCH_TIMESTAMP = "launch timestamp";
 
-    bytes32 constant FIELD_CREATED = "created";
-    bytes32 constant FIELD_COLLECTIONS = "collection IDs";
-    bytes32 constant FIELD_AMOUNT = "earning amounts";
-    bytes32 constant FIELD_DISTRIBUTION_PERCENTAGE = "Distribution Percentage";
-    bytes32 constant FIELD_ADDRESSES = "addresses";
-    bytes32 constant FIELD_FANTIUMFEE = "fantium fee";
-    bytes32 constant FIELD_CLOSED = "closed";
-    bytes32 constant FIELD_TIMESTAMPS = "start and close timestamp";
-    bytes32 constant FIELD_PAYOUT_CONTRACT_CONFIGS = "payout address config";
-    bytes32 constant FIELD_NFT_CONTRACT_CONFIGS = "NFT address config";
-    bytes32 constant FIELD_USER_MANAGER_CONFIGS = "userManager address config";
-    bytes32 constant FIELD_FORWARDER_CONFIGS = "forwarder address config";
-
-    struct DistributionEvent {
-        uint256 distributionEventId;
-        uint256[] collectionIds; // NFT collections allowed to claim
-        address payable athleteAddress; // athlete address that need to pay in amount
-        uint256 totalTournamentEarnings; // total earnings from tournaments with decimals
-        uint256 totalOtherEarnings; // total earnings from other sources with decimals
-        uint256 tournamentDistributionAmount; // total earnings to be distributed from tournaments with decimals
-        uint256 otherDistributionAmount; // total earnings to be distributed from other sources with decimals
-        uint256 amountPaidIn; // amount has been paid in
-        uint256 claimedAmount; // total amount claimed so far
-        uint256 fantiumFeeBPS; // fantium fee in basis points
-        address payable fantiumFeeAddress;
-        uint256 startTime; // start time of distribution event (can be 0 if it starts immediately)
-        uint256 closeTime; // close time of distribution event (can be 0 if it never closes)
+    struct Collection {
         bool exists;
-        bool closed;
-    }
-
-    struct collectionInfo {
-        uint256 mintedTokens;
-        uint256 tokenTournamentClaim;
-        uint256 tokenOtherClaim;
+        uint256 launchTimestamp;
+        bool isMintable;
+        bool isPaused;
+        uint24 invocations;
+        uint256 price;
+        uint256 maxInvocations;
+        uint256 tournamentEarningShare1e7;
+        address payable athleteAddress;
+        uint256 athletePrimarySalesBPS;
+        uint256 athleteSecondarySalesBPS;
+        address payable fantiumSalesAddress;
+        uint256 fantiumSecondarySalesBPS;
     }
 
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
 
-    event Claim(uint256 indexed _distributionEventId, uint256 indexed _tokenId, uint256 amount);
-    event DistributionEventUpdate(uint256 indexed _distributionEventId, bytes32 indexed _field);
-    event PayIn(uint256 indexed _distributionEventId, uint256 amount);
-    event SnapShotTaken(uint256 indexed _distributionEventId);
-    event PlatformUpdate(bytes32 indexed _update);
+    event Mint(address indexed _to, uint256 indexed _tokenId);
+    event CollectionUpdated(uint256 indexed _collectionId, bytes32 indexed _update);
+    event PlatformUpdated(bytes32 indexed _field);
+    event MinterUpdated(address indexed _currentMinter);
+    event AddressAddedToKYC(address indexed _address);
+    event AddressRemovedFromKYC(address indexed _address);
+    event AddressAddedToAllowList(uint256 collectionId, address indexed _address);
+    event AddressRemovedFromAllowList(uint256 collectionId, address indexed _address);
+
+    /*//////////////////////////////////////////////////////////////
+                            INTERFACE
+    //////////////////////////////////////////////////////////////*/
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override (AccessControlUpgradeable, ERC721Upgradeable)
+        returns (bool)
+    {
+        return interfaceId == _INTERFACE_ID_ERC2981_OVERRIDE || super.supportsInterface(interfaceId);
+    }
 
     /*//////////////////////////////////////////////////////////////
                             MODIFERS
     //////////////////////////////////////////////////////////////*/
 
-    modifier onlyAthlete(uint256 _distributionEventId) {
+    modifier onlyAthlete(uint256 _collectionId) {
         require(
-            address(_msgSender()) == address(distributionEvents[_distributionEventId].athleteAddress)
-                || hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
-            "only athlete"
+            msg.sender == collections[_collectionId].athleteAddress || hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
+            "Only athlete"
         );
         _;
     }
 
-    modifier onlyValidDistributionEvent(uint256 _distributionEventId) {
-        require(distributionEvents[_distributionEventId].exists, "Invalid distribution event");
+    modifier onlyValidCollectionId(uint256 _collectionId) {
+        require(collections[_collectionId].exists == true, "Invalid collectionId");
         _;
     }
 
-    modifier onlyPlatformManager() {
-        require(hasRole(PLATFORM_MANAGER_ROLE, msg.sender), "only platform manager");
+    modifier onlyValidTokenId(uint256 _tokenId) {
+        require(_exists(_tokenId), "Invalid tokenId");
         _;
     }
 
-    modifier onlyUpgrader() {
-        require(hasRole(UPGRADER_ROLE, msg.sender), "only upgrader");
+    modifier onlyValidAddress(address _address) {
+        require(_address != address(0), "Invalid address");
+        _;
+    }
+
+    modifier onlyKycManager() {
+        require(hasRole(KYC_MANAGER_ROLE, msg.sender), "Only KYC updater");
         _;
     }
 
@@ -3041,40 +3477,35 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
 
     /**
      * @notice Initializes contract.
+     * @param _tokenName Name of token.
+     * @param _tokenSymbol Token symbol.
      * max(uint248) to avoid overflow when adding to it.
      */
     ///@dev no constructor in upgradable contracts. Instead we have initializers
     function initialize(
-        address _defaultAdmin,
-        address _payoutToken,
-        address _fantiumNFTContract,
-        address _trustedForwarder
+        string memory _tokenName,
+        string memory _tokenSymbol,
+        address _defaultAdmin
     )
         public
         initializer
     {
+        __ERC721_init(_tokenName, _tokenSymbol);
         __UUPSUpgradeable_init();
         __AccessControl_init();
+        __DefaultOperatorFilterer_init();
         __Pausable_init();
-        require(
-            _defaultAdmin != address(0) && _payoutToken != address(0) && _fantiumNFTContract != address(0)
-                && _trustedForwarder != address(0),
-            "Invalid addresses"
-        );
-        globalPayoutToken = _payoutToken;
-        fantiumNFTContract = _fantiumNFTContract;
-        trustedForwarder = _trustedForwarder;
 
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _grantRole(UPGRADER_ROLE, _defaultAdmin);
 
-        nextDistributionEventId = 1;
+        nextCollectionId = 1;
     }
 
     /// @notice upgrade authorization logic
     /// @dev required by the OZ UUPS module
-    /// @dev adds onlyUpgrader requirement
-    function _authorizeUpgrade(address) internal override onlyUpgrader { }
+    /// @dev adds onlyRole(UPGRADER_ROLE) requirement
+    function _authorizeUpgrade(address) internal override onlyRole(UPGRADER_ROLE) { }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -3082,579 +3513,552 @@ contract FantiumClaimingV1 is Initializable, UUPSUpgradeable, AccessControlUpgra
     }
 
     /*//////////////////////////////////////////////////////////////
-                                 VIEW
+                                 KYC
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Check if address is IDENTed.
-     * @param _address address to be checked.
-     * @return isIDENTed true if address is IDENTed.
+     * @notice Add address to KYC list.
+     * @param _address address to be added to KYC list.
      */
-    function isAddressIDENT(address _address) public view returns (bool) {
-        require(fantiumUserManager != address(0), "FantiumClaimingV1: FantiumUserManager not set");
-        return IFantiumUserManager(fantiumUserManager).isAddressIDENT(_address);
+    function addAddressToKYC(address _address) external whenNotPaused onlyKycManager {
+        kycedAddresses[_address] = true;
+        emit AddressAddedToKYC(_address);
     }
 
-    function getDistributionEvent(uint256 _id) public view returns (DistributionEvent memory) {
-        return distributionEvents[_id];
+    /**
+     * @notice Remove address from KYC list.
+     * @param _address address to be removed from KYC list.
+     */
+    function removeAddressFromKYC(address _address) external whenNotPaused onlyKycManager {
+        kycedAddresses[_address] = false;
+        emit AddressRemovedFromKYC(_address);
     }
 
-    /*///////////////////////////////////////////////////////////////
-                            SETUP
+    /**
+     * @notice Check if address is KYCed.
+     * @param _address address to be checked.
+     * @return isKYCed true if address is KYCed.
+     */
+    function isAddressKYCed(address _address) public view returns (bool) {
+        return kycedAddresses[_address];
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            ALLOW LIST
     //////////////////////////////////////////////////////////////*/
 
-    //
-    function setupDistributionEvent(
-        address payable _athleteAddress,
-        uint256 _totalTournamentEarnings,
-        uint256 _totalOtherEarnings,
-        uint256 _startTime,
-        uint256 _closeTime,
-        uint256[] memory _collectionIds,
-        address payable _fantiumAddress,
-        uint256 _fantiumFeeBPS
-    )
-        external
-        onlyPlatformManager
-        whenNotPaused
-    {
-        require(
-            _startTime > 0 && _closeTime > 0 && _startTime < _closeTime && block.timestamp < _closeTime,
-            "FantiumClaimingV1: times must be greater than 0 and close time must be greater than start time and in the future"
-        );
-        require(_collectionIds.length > 0, "FantiumClaimingV1: collectionIds must be greater than 0");
-        require(_fantiumFeeBPS < 10_000, "FantiumClaimingV1: fantium fee must be less than 10000");
-
-        require(
-            _athleteAddress != address(0) && _fantiumAddress != address(0), "FantiumClaimingV1: addresses cannot be 0"
-        );
-
-        // check if amount is less than a billion
-        require(
-            (_totalTournamentEarnings + _totalOtherEarnings) > 0
-                && (_totalTournamentEarnings + _totalOtherEarnings)
-                    < (1_000_000_000 * 10 ** ERC20Upgradeable(globalPayoutToken).decimals()),
-            "FantiumClaimingV1: amount must be less than a billion and greater than 0"
-        );
-
-        //check if collection exists
-        for (uint256 i = 0; i < _collectionIds.length; i++) {
-            bool collectionExists = IFantiumNFT(fantiumNFTContract).getCollectionExists(_collectionIds[i]);
-            require(collectionExists, "FantiumClaimingV1: collection does not exist");
-        }
-        // EFFECTS
-        DistributionEvent memory distributionEvent;
-        distributionEvent.distributionEventId = nextDistributionEventId;
-        distributionEvent.collectionIds = _collectionIds;
-        distributionEvent.athleteAddress = _athleteAddress;
-        distributionEvent.totalTournamentEarnings = _totalTournamentEarnings;
-        distributionEvent.totalOtherEarnings = _totalOtherEarnings;
-        distributionEvent.fantiumFeeAddress = _fantiumAddress;
-        distributionEvent.fantiumFeeBPS = _fantiumFeeBPS;
-        distributionEvent.startTime = _startTime;
-        distributionEvent.closeTime = _closeTime;
-        distributionEvent.exists = true;
-        distributionEvent.closed = false;
-        distributionEventToPayoutToken[nextDistributionEventId] = globalPayoutToken;
-        distributionEvents[nextDistributionEventId] = distributionEvent;
-        triggerClaimingSnapshot(nextDistributionEventId);
-        emit DistributionEventUpdate(nextDistributionEventId, FIELD_CREATED);
-        nextDistributionEventId++;
-    }
-
-    function batchAddDistributionAmount(uint256[] memory _distributionEventIds) external whenNotPaused {
-        for (uint256 i = 0; i < _distributionEventIds.length; i++) {
-            addDistributionAmount(_distributionEventIds[i]);
-        }
-    }
-
-    function addDistributionAmount(uint256 _distributionEventId)
-        public
-        whenNotPaused
-        onlyAthlete(_distributionEventId)
-    {
-        // CHECKS
-        require(
-            distributionEvents[_distributionEventId].exists, "FantiumClaimingV1: distributionEventId does not exist"
-        );
-
-        // check that the distribution event is open
-        require(
-            distributionEvents[_distributionEventId].closed == false, "FantiumClaimingV1: distribution event not open"
-        );
-
-        uint256 payInAmount = (
-            distributionEvents[_distributionEventId].tournamentDistributionAmount
-                + distributionEvents[_distributionEventId].otherDistributionAmount
-        ) - distributionEvents[_distributionEventId].amountPaidIn;
-
-        // check if a topup is needed
-        require(payInAmount > 0, "FantiumClaimingV1: amount already paid in");
-
-        // EFFECT
-        address payOutToken = distributionEventToPayoutToken[_distributionEventId];
-
-        uint256 balanceBefore = IERC20Upgradeable(payOutToken).balanceOf(address(this));
-
-        SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(payOutToken), _msgSender(), address(this), payInAmount);
-
-        require(
-            balanceBefore + payInAmount == IERC20Upgradeable(payOutToken).balanceOf(address(this)),
-            "FantiumClaimingV1: transfer failed"
-        );
-
-        distributionEvents[_distributionEventId].amountPaidIn += payInAmount;
-        emit PayIn(_distributionEventId, payInAmount);
-    }
-
-    /*///////////////////////////////////////////////////////////////
-                            UPDATE FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
-
-    function updateDistribtionTotalEarningsAmounts(
-        uint256 _id,
-        uint256 _totalTournamentEarnings,
-        uint256 _totalOtherEarnings
-    )
-        external
-        onlyValidDistributionEvent(_id)
-        onlyPlatformManager
-    {
-        require(!distributionEvents[_id].closed, "FantiumClaimingV1: distribution already closed");
-        require(
-            distributionEvents[_id].claimedAmount == 0 && distributionEvents[_id].startTime > block.timestamp,
-            "FantiumClaimingV1: payout already started"
-        );
-
-        require(
-            (_totalTournamentEarnings + _totalOtherEarnings) > 0,
-            "FantiumClaimingV1: total amount must be greater than 0"
-        );
-
-        distributionEvents[_id].totalTournamentEarnings = _totalTournamentEarnings;
-        distributionEvents[_id].totalOtherEarnings = _totalOtherEarnings;
-
-        triggerClaimingSnapshot(_id);
-        require(
-            (distributionEvents[_id].tournamentDistributionAmount + distributionEvents[_id].otherDistributionAmount)
-                >= distributionEvents[_id].amountPaidIn,
-            "FantiumClaimingV1: total payout amount must be greater than amount already paid in"
-        );
-        emit DistributionEventUpdate(_id, FIELD_AMOUNT);
-    }
-
-    function updateDistributionEventCollectionIds(
-        uint256 _id,
-        uint256[] memory collectionIds
-    )
-        external
-        onlyValidDistributionEvent(_id)
-        onlyPlatformManager
-    {
-        require(!distributionEvents[_id].closed, "FantiumClaimingV1: distribution already closed");
-        require(
-            distributionEvents[_id].claimedAmount == 0 && distributionEvents[_id].startTime > block.timestamp,
-            "FantiumClaimingV1: payout already started"
-        );
-
-        require(collectionIds.length > 0, "FantiumClaimingV1: collectionIds length must be greater than 0");
-
-        for (uint256 i = 0; i < collectionIds.length; i++) {
-            bool collectionExists = IFantiumNFT(fantiumNFTContract).getCollectionExists(collectionIds[i]);
-            require(collectionExists, "FantiumClaimingV1: collection does not exist");
-        }
-
-        distributionEvents[_id].collectionIds = collectionIds;
-        triggerClaimingSnapshot(_id);
-        require(
-            (distributionEvents[_id].tournamentDistributionAmount + distributionEvents[_id].otherDistributionAmount)
-                >= distributionEvents[_id].amountPaidIn,
-            "FantiumClaimingV1: total payout amount must be greater than amount already paid in"
-        );
-
-        emit DistributionEventUpdate(_id, FIELD_COLLECTIONS);
-    }
-
-    function updateDistributionEventAddresses(
-        uint256 _id,
-        address payable _athleteAddress,
-        address payable _fantiumAdress
-    )
-        external
-        onlyValidDistributionEvent(_id)
-        onlyPlatformManager
-    {
-        require(
-            _athleteAddress != address(0) && _fantiumAdress != address(0),
-            "FantiumClaimingV1: athlete address cannot be 0"
-        );
-        distributionEvents[_id].athleteAddress = _athleteAddress;
-        distributionEvents[_id].fantiumFeeAddress = _fantiumAdress;
-        emit DistributionEventUpdate(_id, FIELD_ADDRESSES);
-    }
-
-    function updateDistributionEventTimeStamps(
-        uint256 _id,
-        uint256 _startTime,
-        uint256 _closeTime
-    )
-        external
-        onlyValidDistributionEvent(_id)
-        onlyPlatformManager
-    {
-        require(
-            _startTime > 0 && _closeTime > 0 && _startTime < _closeTime && block.timestamp < _closeTime,
-            "FantiumClaimingV1: times must be greater than 0 and close time must be greater than start time and in the future"
-        );
-        distributionEvents[_id].startTime = _startTime;
-        distributionEvents[_id].closeTime = _closeTime;
-        emit DistributionEventUpdate(_id, FIELD_TIMESTAMPS);
-    }
-
-    function updateDistributionEventFee(
-        uint256 _id,
-        uint256 _feeBPS
-    )
-        external
-        onlyValidDistributionEvent(_id)
-        onlyPlatformManager
-    {
-        require(distributionEvents[_id].claimedAmount == 0, "FantiumClaimingV1: payout already started");
-
-        require(_feeBPS >= 0 && _feeBPS < 10_000, "FantiumClaimingV1: fee must be between 0 and 10000");
-        distributionEvents[_id].fantiumFeeBPS = _feeBPS;
-        emit DistributionEventUpdate(_id, FIELD_FANTIUMFEE);
-    }
-
-    /*///////////////////////////////////////////////////////////////
-                            CLAIMING
-    //////////////////////////////////////////////////////////////*/
-
-    function batchClaim(uint256[] memory _tokenIds, uint256[] memory _distributionEventID) external whenNotPaused {
-        require(_tokenIds.length == _distributionEventID.length, "FantiumClaimingV1: Arrays must be of same length");
-        require(_tokenIds.length <= 100, "FantiumClaimingV1: Arrays must be of length <= 100");
-
-        for (uint256 i = 0; i < _tokenIds.length; i++) {
-            claim(_tokenIds[i], _distributionEventID[i]);
-        }
-    }
-
-    function claim(
-        uint256 _tokenId,
-        uint256 _distributionEventId
+    /**
+     * @notice Add address to allow list.
+     * @param _collectionId collection ID.
+     * @param _address address to be added to allow list.
+     * @param _increaseAllocation allocation to the address.
+     */
+    function increaseAllowListAllocation(
+        uint256 _collectionId,
+        address _address,
+        uint256 _increaseAllocation
     )
         public
         whenNotPaused
-        onlyValidDistributionEvent(_distributionEventId)
+        onlyRole(PLATFORM_MANAGER_ROLE)
+        onlyValidCollectionId(_collectionId)
     {
+        collectionIdToAllowList[_collectionId][_address] += _increaseAllocation;
+        emit AddressAddedToAllowList(_collectionId, _address);
+    }
+
+    /**
+     * @notice Remove address from allow list.
+     * @param _collectionId collection ID.
+     * @param _address address to be removed from allow list.
+     * @param _reduceAllocation allocation to the address.
+     */
+    function reduceAllowListAllocation(
+        uint256 _collectionId,
+        address _address,
+        uint256 _reduceAllocation
+    )
+        public
+        whenNotPaused
+        onlyRole(PLATFORM_MANAGER_ROLE)
+        onlyValidCollectionId(_collectionId)
+    {
+        collectionIdToAllowList[_collectionId][_address] > _reduceAllocation
+            ? collectionIdToAllowList[_collectionId][_address] -= _reduceAllocation
+            : collectionIdToAllowList[_collectionId][_address] = 0;
+        emit AddressRemovedFromAllowList(_collectionId, _address);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                                 MINTING
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Mints a token
+     * @param _collectionId Collection ID.
+     */
+    function mint(uint256 _collectionId) public whenNotPaused {
         // CHECKS
-
-        // check if distribution Event was paid in in full
+        require(isAddressKYCed(msg.sender), "Address is not KYCed");
+        Collection storage collection = collections[_collectionId];
+        require(collection.exists, "Collection does not exist");
         require(
-            distributionEvents[_distributionEventId].amountPaidIn
-                == (
-                    distributionEvents[_distributionEventId].tournamentDistributionAmount
-                        + distributionEvents[_distributionEventId].otherDistributionAmount
-                ),
-            "FantiumClaimingV1: total distribution amount has not been paid in"
+            collection.launchTimestamp <= block.timestamp || hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
+            "Collection not launched"
         );
+        require(collection.isMintable, "Collection is not mintable");
+        require(erc20PaymentToken != address(0), "ERC20 payment token not set");
+        uint256 tokenPrice = collection.price * 10 ** ERC20(erc20PaymentToken).decimals();
+        require(ERC20(erc20PaymentToken).allowance(msg.sender, address(this)) >= tokenPrice, "ERC20 allowance too low");
+        if (collection.isPaused) {
+            // if minting is paused, require address to be on allowlist
+            require(collectionIdToAllowList[_collectionId][msg.sender] > 0, "Collection is paused");
+        }
+        require(collection.invocations < collection.maxInvocations, "Max invocations reached");
 
-        //check if _msgSender() has FAN token Id
-        require(
-            _msgSender() == IERC721Upgradeable(fantiumNFTContract).ownerOf(_tokenId),
-            "FantiumClaimingV1: Only token owner"
-        );
-
-        //check if _msgSender() is IDENTed
-        require(isAddressIDENT(_msgSender()), "FantiumClaimingV1: Only ID verified");
-
-        //check if lockTime is over or ca be ignored
-        require(
-            distributionEvents[_distributionEventId].startTime < block.timestamp
-                && distributionEvents[_distributionEventId].closeTime > block.timestamp,
-            "FantiumClaimingV1: distribution time has not started or has ended"
-        );
-
-        // check if distribution event is closed
-        require(
-            distributionEvents[_distributionEventId].closed == false, "FantiumClaimingV1: distribution event is closed"
-        );
-
-        // check if token is from a valid collection
-        // check that hasn't claimed yet for that distribution event
-        (uint256 collectionOfToken,, uint256 tokenNr) = TokenVersionUtil.getTokenInfo(_tokenId);
-        uint256 baseTokenId = collectionOfToken * 1_000_000 + tokenNr;
-        // check if token alreadu claimed
-        require(
-            checkTokenAllowed(_distributionEventId, collectionOfToken, baseTokenId, tokenNr),
-            "FantiumClaimingV1: token not allowed"
-        );
+        uint256 tokenId = (_collectionId * ONE_MILLION) + collection.invocations;
 
         // EFFECTS
-        //set claimed to true
-        distributionEventToBaseTokenToClaimed[_distributionEventId][baseTokenId] = true;
-
-        //calculate claim amount
-        uint256 tournamentClaim =
-            distributionEventToCollectionInfo[_distributionEventId][collectionOfToken].tokenTournamentClaim;
-        uint256 otherClaim = distributionEventToCollectionInfo[_distributionEventId][collectionOfToken].tokenOtherClaim;
-        uint256 claimAmount = tournamentClaim + otherClaim;
-
-        require(
-            distributionEvents[_distributionEventId].claimedAmount + claimAmount
-                <= distributionEvents[_distributionEventId].amountPaidIn,
-            "FantiumClaimingV1: distribution amount exceeds payInAmount"
-        );
-        distributionEvents[_distributionEventId].claimedAmount += claimAmount;
+        collection.invocations++;
+        if (collection.isPaused) {
+            collectionIdToAllowList[_collectionId][msg.sender]--;
+        }
 
         // INTERACTIONS
-        //upgrade token to new version
-        require(IFantiumNFT(fantiumNFTContract).upgradeTokenVersion(_tokenId), "FantiumClaimingV1: upgrade failed");
-        //transfer USDC to _msgSender()
-        _splitFunds(claimAmount, _distributionEventId);
-        emit Claim(_distributionEventId, _tokenId, claimAmount);
-    }
+        _splitFunds(tokenPrice, _collectionId, msg.sender);
+        _mint(msg.sender, tokenId);
 
-    /*///////////////////////////////////////////////////////////////
-                            INTERNAL 
-    //////////////////////////////////////////////////////////////*/
-
-    // calcualtes the amount to send to the user
-    function calculateClaim(
-        uint256 _distributionEventID,
-        uint256 _tournamentEarningsShare1e7,
-        uint256 _otherEarningShare1e7
-    )
-        internal
-        view
-        returns (uint256, uint256)
-    {
-        require(
-            (_tournamentEarningsShare1e7 > 0) || (_otherEarningShare1e7 > 0), "FantiumClaimingV1: Token has no earnings"
-        );
-        // calculate amount to send
-        // note: totalTorunamentEarnings = Total amount of earnings from tournaments
-        // note: tournamentShare1e7 = % share of fan of total athlete earnings in 1e7 e.g. 0,00001% == 0,0000001 == 1
-        // note: dividing by 1e7 to get the share in base 10
-        // note: Get the total distribution amount and multiple it by the token share and devide it by the overall share
-        // distributed
-        // note: Example calculation for one token with 1% share: 100_000 USDC (amount) * 10.000.000(1e7)(share) / 1e7  =
-        // 1000 USDC
-        uint256 tournamentClaim =
-            ((distributionEvents[_distributionEventID].totalTournamentEarnings * _tournamentEarningsShare1e7) / 1e7);
-
-        uint256 otherClaim =
-            ((distributionEvents[_distributionEventID].totalOtherEarnings * _otherEarningShare1e7) / 1e7);
-
-        return (tournamentClaim, otherClaim);
-    }
-
-    // check if token is from a valid collection and hasn't claimed yet for that distribution event
-    function checkTokenAllowed(
-        uint256 _distributionEventID,
-        uint256 _collectionOfToken,
-        uint256 _baseTokenId,
-        uint256 _tokenNr
-    )
-        internal
-        view
-        returns (bool)
-    {
-        bool collectionIncluded = false;
-        bool tokenNrClaimed = false;
-        bool tokenInSnapshot = true;
-
-        //check if payouts were claimed for this token
-        tokenNrClaimed = distributionEventToBaseTokenToClaimed[_distributionEventID][_baseTokenId];
-
-        if (!tokenNrClaimed) {
-            //check if collection is included in distribution event
-            for (uint256 i = 0; i < distributionEvents[_distributionEventID].collectionIds.length; i++) {
-                // checking if the token is from a collection that is included in the distribution event
-                uint256 collectionID = distributionEvents[_distributionEventID].collectionIds[i];
-                if (collectionID == _collectionOfToken) {
-                    collectionIncluded = true;
-                    // check if tokenNr is in snapshot
-                    if (_tokenNr >= distributionEventToCollectionInfo[_distributionEventID][collectionID].mintedTokens)
-                    {
-                        tokenInSnapshot = false;
-                    }
-                    break;
-                }
-            }
-        }
-        return (collectionIncluded && !tokenNrClaimed && tokenInSnapshot);
+        emit Mint(msg.sender, tokenId);
     }
 
     /**
-     * @dev splits funds between receiver and
-     * FANtium for a claim on a specific distribution event `_distributionEventId`
+     * @dev splits funds between sender (if refund),
+     * FANtium, and athlete for a token purchased on
+     * collection `_collectionId`.
      */
-    function _splitFunds(uint256 _claimAmount, uint256 _distributionEventId) internal {
-        // split funds between user and Fantium
-
-        // get fantium address & revenue from disitrbution Event
-        DistributionEvent memory distributionEvent = distributionEvents[_distributionEventId];
-
-        // calculate fantium revenue
-        uint256 fantiumRevenue_ = ((_claimAmount * distributionEvent.fantiumFeeBPS) / 10_000);
-
-        // calculate user revenue
-        uint256 userRevenue_ = _claimAmount - fantiumRevenue_;
-
-        // set addresses from storage
-        address fantiumAddress_ = distributionEvents[_distributionEventId].fantiumFeeAddress;
-
-        address payOutToken = distributionEventToPayoutToken[_distributionEventId];
-
+    function _splitFunds(uint256 _price, uint256 _collectionId, address _sender) internal {
+        // split funds between FANtium and athlete
+        (uint256 fantiumRevenue_, address fantiumAddress_, uint256 athleteRevenue_, address athleteAddress_) =
+            getPrimaryRevenueSplits(_collectionId, _price);
         // FANtium payment
         if (fantiumRevenue_ > 0) {
-            SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(payOutToken), fantiumAddress_, fantiumRevenue_);
+            IERC20(erc20PaymentToken).transferFrom(_sender, fantiumAddress_, fantiumRevenue_);
         }
-        // yser payment
-        if (userRevenue_ > 0) {
-            SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(payOutToken), _msgSender(), userRevenue_);
+        // athlete payment
+        if (athleteRevenue_ > 0) {
+            IERC20(erc20PaymentToken).transferFrom(_sender, athleteAddress_, athleteRevenue_);
         }
+    }
+
+    /**
+     * @notice View function that returns appropriate revenue splits between
+     * different FANtium, athlete given a sale price of `_price` on collection `_collectionId`.
+     * This always returns two revenue amounts and two addresses, but if a
+     * revenue is zero for athlete, the corresponding
+     * address returned will also be null (for gas optimization).
+     * Does not account for refund if user overpays for a token
+     * @param _collectionId collection ID to be queried.
+     * @param _price Sale price of token.
+     * @return fantiumRevenue_ amount of revenue to be sent to FANtium
+     * @return fantiumAddress_ address to send FANtium revenue to
+     * @return athleteRevenue_ amount of revenue to be sent to athlete
+     * @return athleteAddress_ address to send athlete revenue to. Will be null
+     * if no revenue is due to athlete (gas optimization).
+     * @dev this always returns 2 addresses and 2 revenues, but if the
+     * revenue is zero, the corresponding address will be address(0). It is up
+     * to the contract performing the revenue split to handle this
+     * appropriately.
+     */
+    function getPrimaryRevenueSplits(
+        uint256 _collectionId,
+        uint256 _price
+    )
+        public
+        view
+        returns (
+            uint256 fantiumRevenue_,
+            address payable fantiumAddress_,
+            uint256 athleteRevenue_,
+            address payable athleteAddress_
+        )
+    {
+        // get athlete address & revenue from collection
+        Collection memory collection = collections[_collectionId];
+
+        // calculate revenues
+        athleteRevenue_ = (_price * uint256(collection.athletePrimarySalesBPS)) / 10_000;
+
+        fantiumRevenue_ = _price - athleteRevenue_;
+
+        // set addresses from storage
+        fantiumAddress_ = collection.fantiumSalesAddress;
+        if (athleteRevenue_ > 0) {
+            athleteAddress_ = collection.athleteAddress;
+        }
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                                 TOKEN
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Gets token URI for token ID `_tokenId`.
+     * @dev token URIs are the concatenation of the collection base URI and the
+     * token ID.
+     */
+    function tokenURI(uint256 _tokenId) public view override onlyValidTokenId(_tokenId) returns (string memory) {
+        return string(bytes.concat(bytes(baseURI), bytes(_tokenId.toString())));
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                        COLLECTION FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Adds new collection.
+     * @param _athleteAddress Address of the athlete.
+     * @param _athletePrimarySalesBPS Primary sales percentage of the athlete.
+     * @param _athleteSecondarySalesBPS Secondary sales percentage of the athlete.
+     * @param _maxInvocations Maximum number of invocations.
+     * @param _price Price of the token.
+     * @param _tournamentEarningShare1e7 Tournament earning share.
+     * @param _launchTimestamp Launch timestamp.
+     */
+    function addCollection(
+        address payable _athleteAddress,
+        uint256 _athletePrimarySalesBPS,
+        uint256 _athleteSecondarySalesBPS,
+        uint256 _maxInvocations,
+        uint256 _price,
+        uint256 _tournamentEarningShare1e7,
+        uint256 _launchTimestamp,
+        address payable _fantiumSalesAddress,
+        uint256 _fantiumSecondarySalesBPS
+    )
+        external
+        whenNotPaused
+        onlyRole(PLATFORM_MANAGER_ROLE)
+        onlyValidAddress(_athleteAddress)
+    {
+        uint256 collectionId = nextCollectionId;
+        collections[collectionId].athleteAddress = _athleteAddress;
+        collections[collectionId].athletePrimarySalesBPS = _athletePrimarySalesBPS;
+        collections[collectionId].athleteSecondarySalesBPS = _athleteSecondarySalesBPS;
+        collections[collectionId].maxInvocations = _maxInvocations;
+        collections[collectionId].price = _price;
+        collections[collectionId].tournamentEarningShare1e7 = _tournamentEarningShare1e7;
+        collections[collectionId].launchTimestamp = _launchTimestamp;
+
+        collections[collectionId].invocations = 0;
+        collections[collectionId].exists = true;
+        collections[collectionId].isMintable = false;
+        collections[collectionId].isPaused = true;
+
+        collections[collectionId].fantiumSalesAddress = _fantiumSalesAddress;
+        collections[collectionId].fantiumSecondarySalesBPS = _fantiumSecondarySalesBPS;
+
+        nextCollectionId = collectionId + 1;
+        emit CollectionUpdated(collectionId, FIELD_COLLECTION_CREATED);
+    }
+
+    /**
+     * @notice Updates athlete of collection `_collectionId` to `_athleteAddress`.
+     */
+    function updateCollectionAthleteAddress(
+        uint256 _collectionId,
+        address payable _athleteAddress
+    )
+        external
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
+        onlyValidAddress(_athleteAddress)
+        onlyRole(PLATFORM_MANAGER_ROLE)
+    {
+        collections[_collectionId].athleteAddress = _athleteAddress;
+        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ATHLETE_ADDRESS);
+    }
+
+    /**
+     * @notice Toggles isMintingPaused state of collection `_collectionId`.
+     */
+    function toggleCollectionPaused(uint256 _collectionId)
+        external
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
+        onlyAthlete(_collectionId)
+    {
+        collections[_collectionId].isPaused = !collections[_collectionId].isPaused;
+        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_PAUSED);
+    }
+
+    /**
+     * @notice Toggles isMintingPaused state of collection `_collectionId`.
+     */
+    function toggleCollectionMintable(uint256 _collectionId)
+        external
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
+        onlyAthlete(_collectionId)
+    {
+        collections[_collectionId].isMintable = !collections[_collectionId].isMintable;
+        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_ACTIVATED);
+    }
+
+    /**
+     * @notice Updates athlete primary market royalties for collection
+     * `_collectionId` to be `_primaryMarketRoyalty` percent.
+     * This DOES NOT include the primary market royalty percentages collected
+     * by FANtium; this is only the total percentage of royalties that will
+     * be split to athlete.
+     * @param _collectionId collection ID.
+     * @param _primaryMarketRoyalty Percent of primary sales revenue that will
+     * be sent to the athlete. This must be less than
+     * or equal to 100 percent.
+     */
+    function updateCollectionAthletePrimaryMarketRoyaltyBPS(
+        uint256 _collectionId,
+        uint256 _primaryMarketRoyalty
+    )
+        external
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
+        onlyRole(PLATFORM_MANAGER_ROLE)
+    {
+        require(_primaryMarketRoyalty <= 10_000, "Max of 100%");
+        collections[_collectionId].athletePrimarySalesBPS = _primaryMarketRoyalty;
+        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_PRIMARY_MARKET_ROYALTY_PERCENTAGE);
+    }
+
+    /**
+     * @notice Updates athlete secondary market royalties for collection
+     * `_collectionId` to be `_secondMarketRoyalty` percent.
+     * This DOES NOT include the secondary market royalty percentages collected
+     * by FANtium; this is only the total percentage of royalties that will
+     * be split to athlete.
+     * @param _collectionId collection ID.
+     * @param _secondMarketRoyalty Percent of secondary sales revenue that will
+     * be sent to the athlete. This must be less than
+     * or equal to 95 percent.
+     */
+    function updateCollectionAthleteSecondaryMarketRoyaltyBPS(
+        uint256 _collectionId,
+        uint256 _secondMarketRoyalty
+    )
+        external
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
+        onlyRole(PLATFORM_MANAGER_ROLE)
+    {
+        require(_secondMarketRoyalty <= 9500, "Max of 95%");
+        collections[_collectionId].athleteSecondarySalesBPS = _secondMarketRoyalty;
+        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_SECONDARY_MARKET_ROYALTY_PERCENTAGE);
+    }
+
+    /**
+     * @notice Update Collection tier for collection `_collectionId` to be `_tierName`.
+     */
+    function updateCollectionSales(
+        uint256 _collectionId,
+        uint256 _maxInvocations,
+        uint256 _price,
+        uint256 _tournamentEarningShare1e7
+    )
+        external
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
+        onlyRole(PLATFORM_MANAGER_ROLE)
+    {
+        require(
+            _maxInvocations > 0 && _price > 0 && _tournamentEarningShare1e7 > 0, "all parameters must be greater than 0"
+        );
+        collections[_collectionId].maxInvocations = _maxInvocations;
+        collections[_collectionId].price = _price;
+        collections[_collectionId].tournamentEarningShare1e7 = _tournamentEarningShare1e7;
+        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_TIER);
+    }
+
+    /**
+     * @notice Updates the launch timestamp of collection `_collectionId` to be
+     * `_launchTimestamp`.
+     */
+    function updateCollectionLaunchTimestamp(
+        uint256 _collectionId,
+        uint256 _launchTimestamp
+    )
+        external
+        whenNotPaused
+        onlyValidCollectionId(_collectionId)
+        onlyRole(PLATFORM_MANAGER_ROLE)
+    {
+        collections[_collectionId].launchTimestamp = _launchTimestamp;
+        emit CollectionUpdated(_collectionId, FIELD_COLLECTION_LAUNCH_TIMESTAMP);
     }
 
     /*///////////////////////////////////////////////////////////////
-                            ADMIN
+                        PLATFORM FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    // take tokenSnapshot by platform manager
-    function takeClaimingSnapshot(uint256 _distributionEventId)
+    //update baseURI only platform manager
+    function updateBaseURI(string memory _baseURI) external whenNotPaused onlyRole(PLATFORM_MANAGER_ROLE) {
+        baseURI = _baseURI;
+        emit PlatformUpdated(FILED_FANTIUM_BASE_URI);
+    }
+
+    /**
+     * @notice Updates the platform address to be `_fantiumPrimarySalesAddress`.
+     */
+    function updateFantiumSalesInformation(
+        uint256 _collectionId,
+        address payable _fantiumSalesAddress,
+        uint256 _fantiumSecondarySalesBPS
+    )
         external
-        onlyPlatformManager
-        onlyValidDistributionEvent(_distributionEventId)
-    {
-        triggerClaimingSnapshot(_distributionEventId);
-        emit SnapShotTaken(_distributionEventId);
-    }
-
-    // automatic trigger for taking tokenSnapshot for claiming
-    function triggerClaimingSnapshot(uint256 _distributionEventId) internal {
-        uint256 holdersTournamentEarningsShare1e7;
-        uint256 holdersOtherEarningsShare1e7;
-
-        for (uint256 i = 0; i < distributionEvents[_distributionEventId].collectionIds.length; i++) {
-            uint256 collectionId = distributionEvents[_distributionEventId].collectionIds[i];
-            uint256 mintedTokens = IFantiumNFT(fantiumNFTContract).getMintedTokensOfCollection(collectionId);
-            (uint256 tournamentEarningShare1e7, uint256 otherEarningShare1e7) =
-                IFantiumNFT(fantiumNFTContract).getEarningsShares1e7(collectionId);
-
-            (uint256 tournamentClaim, uint256 otherClaim) =
-                calculateClaim(_distributionEventId, tournamentEarningShare1e7, otherEarningShare1e7);
-
-            distributionEventToCollectionInfo[_distributionEventId][collectionId].mintedTokens = mintedTokens;
-            distributionEventToCollectionInfo[_distributionEventId][collectionId].tokenTournamentClaim = tournamentClaim;
-            distributionEventToCollectionInfo[_distributionEventId][collectionId].tokenOtherClaim = otherClaim;
-
-            holdersTournamentEarningsShare1e7 += (mintedTokens * tournamentEarningShare1e7);
-            holdersOtherEarningsShare1e7 += (mintedTokens * otherEarningShare1e7);
-        }
-
-        distributionEvents[_distributionEventId].tournamentDistributionAmount =
-            (holdersTournamentEarningsShare1e7 * distributionEvents[_distributionEventId].totalTournamentEarnings) / 1e7;
-        distributionEvents[_distributionEventId].otherDistributionAmount =
-            (holdersOtherEarningsShare1e7 * distributionEvents[_distributionEventId].totalOtherEarnings) / 1e7;
-    }
-
-    // update fantiumNFTContract address
-    function updateFantiumNFTContract(address _fantiumNFTContract) external onlyPlatformManager {
-        require(_fantiumNFTContract != address(0), "Null address not allowed");
-        fantiumNFTContract = _fantiumNFTContract;
-        emit PlatformUpdate(FIELD_NFT_CONTRACT_CONFIGS);
-    }
-
-    // update payoutToken address
-    function updateGlobalPayoutToken(address _globalPayoutToken) external onlyPlatformManager {
-        require(_globalPayoutToken != address(0), "Null address not allowed");
-        globalPayoutToken = _globalPayoutToken;
-        emit PlatformUpdate(FIELD_PAYOUT_CONTRACT_CONFIGS);
-    }
-
-    // update payoutToken address
-    function updateFantiumUserManager(address _fantiumUserManager) external onlyPlatformManager {
-        require(_fantiumUserManager != address(0), "Null address not allowed");
-        fantiumUserManager = _fantiumUserManager;
-        emit PlatformUpdate(FIELD_USER_MANAGER_CONFIGS);
-    }
-
-    function closeDistribution(uint256 _distributionEventId)
-        external
-        onlyPlatformManager
         whenNotPaused
-        onlyValidDistributionEvent(_distributionEventId)
+        onlyRole(PLATFORM_MANAGER_ROLE)
+        onlyValidAddress(_fantiumSalesAddress)
     {
-        require(
-            distributionEvents[_distributionEventId].closed == false, "FantiumClaimingV1: distribution already closed"
-        );
-
-        // check if the athlete address is set
-        require(
-            distributionEvents[_distributionEventId].athleteAddress != address(0),
-            "FantiumClaimingV1: Athlete address not set yet"
-        );
-
-        distributionEvents[_distributionEventId].closed = true;
-        uint256 closingAmount = distributionEvents[_distributionEventId].amountPaidIn
-            - distributionEvents[_distributionEventId].claimedAmount;
-
-        require(closingAmount > 0, "FantiumClaimingV1: Amount to pay is 0");
-
-        address payOutToken = distributionEventToPayoutToken[_distributionEventId];
-
-        SafeERC20Upgradeable.safeTransfer(
-            IERC20Upgradeable(payOutToken), distributionEvents[_distributionEventId].athleteAddress, closingAmount
-        );
-
-        emit DistributionEventUpdate(_distributionEventId, FIELD_CLOSED);
+        collections[_collectionId].fantiumSalesAddress = _fantiumSalesAddress;
+        collections[_collectionId].fantiumSecondarySalesBPS = _fantiumSecondarySalesBPS;
     }
 
     /**
      * @notice Update contract pause status to `_paused`.
      */
-    function pause() external onlyPlatformManager {
+    function pause() external onlyRole(PLATFORM_MANAGER_ROLE) {
         _pause();
     }
 
     /**
      * @notice Unpauses contract
      */
-    function unpause() external onlyPlatformManager {
+    function unpause() external onlyRole(PLATFORM_MANAGER_ROLE) {
         _unpause();
     }
 
-    /*///////////////////////////////////////////////////////////////
-                            ERC2771
+    /*//////////////////////////////////////////////////////////////
+                            PAYMENT TOKEN
     //////////////////////////////////////////////////////////////*/
 
-    function setTrustedForwarder(address forwarder) external onlyUpgrader {
-        trustedForwarder = forwarder;
-        emit PlatformUpdate(FIELD_FORWARDER_CONFIGS);
+    /**
+     * @notice Updates the erc20 Payment Token
+     * @param _address address of ERC20 payment token
+     */
+    function updatePaymentToken(address _address) external onlyRole(PLATFORM_MANAGER_ROLE) {
+        require(_address != address(0));
+        erc20PaymentToken = _address;
     }
 
-    function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
-        return forwarder == trustedForwarder;
-    }
+    /*//////////////////////////////////////////////////////////////
+                                 VIEWS
+    //////////////////////////////////////////////////////////////*/
 
-    function _msgSender() internal view virtual override returns (address sender) {
-        if (isTrustedForwarder(msg.sender)) {
-            // The assembly code is more direct than the Solidity version using `abi.decode`.
-            /// @solidity memory-safe-assembly
-            assembly {
-                sender := shr(96, calldataload(sub(calldatasize(), 20)))
-            }
-        } else {
-            return super._msgSender();
+    /**
+     * @notice Gets royalty Basis Points (BPS) for token ID `_tokenId`.
+     * This conforms to the IManifold interface designated in the Royalty
+     * Registry's RoyaltyEngineV1.sol contract.
+     * ref: https://github.com/manifoldxyz/royalty-registry-solidity
+     * @param _tokenId Token ID to be queried.
+     * @return recipients Array of royalty payment recipients
+     * @return bps Array of Basis Points (BPS) allocated to each recipient,
+     * aligned by index.
+     * @dev reverts if invalid _tokenId
+     * @dev only returns recipients that have a non-zero BPS allocation
+     */
+    function getRoyalties(uint256 _tokenId)
+        external
+        view
+        onlyValidTokenId(_tokenId)
+        returns (address payable[] memory recipients, uint256[] memory bps)
+    {
+        // initialize arrays with maximum potential length
+        recipients = new address payable[](2);
+        bps = new uint256[](2);
+
+        uint256 collectionId = _tokenId / ONE_MILLION;
+
+        Collection storage collection = collections[collectionId];
+        // load values into memory
+        uint256 athleteBPS = collection.athleteSecondarySalesBPS;
+        uint256 fantiumBPS = collection.fantiumSecondarySalesBPS;
+        // populate arrays
+        uint256 payeeCount;
+        if (athleteBPS > 0) {
+            recipients[payeeCount] = collection.athleteAddress;
+            bps[payeeCount++] = athleteBPS;
         }
+        if (fantiumBPS > 0) {
+            recipients[payeeCount] = collection.fantiumSalesAddress;
+            bps[payeeCount++] = fantiumBPS;
+        }
+
+        return (recipients, bps);
     }
 
-    function _msgData() internal view virtual override returns (bytes calldata) {
-        if (isTrustedForwarder(msg.sender)) {
-            return msg.data[:msg.data.length - 20];
-        } else {
-            return super._msgData();
-        }
+    /*//////////////////////////////////////////////////////////////
+                            OS FILTER
+    //////////////////////////////////////////////////////////////*/
+
+    function setApprovalForAll(
+        address operator,
+        bool approved
+    )
+        public
+        override
+        whenNotPaused
+        onlyAllowedOperatorApproval(operator)
+    {
+        super.setApprovalForAll(operator, approved);
+    }
+
+    function approve(
+        address operator,
+        uint256 tokenId
+    )
+        public
+        override
+        whenNotPaused
+        onlyAllowedOperatorApproval(operator)
+    {
+        super.approve(operator, tokenId);
+    }
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    )
+        public
+        override
+        whenNotPaused
+        onlyAllowedOperator(from)
+    {
+        super.transferFrom(from, to, tokenId);
+    }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    )
+        public
+        override
+        whenNotPaused
+        onlyAllowedOperator(from)
+    {
+        super.safeTransferFrom(from, to, tokenId);
+    }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes memory data
+    )
+        public
+        override
+        whenNotPaused
+        onlyAllowedOperator(from)
+    {
+        super.safeTransferFrom(from, to, tokenId, data);
     }
 }

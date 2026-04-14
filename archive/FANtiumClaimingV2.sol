@@ -1030,7 +1030,6 @@ library MathUpgradeable {
         Down, // Toward negative infinity
         Up, // Toward infinity
         Zero // Toward zero
-
     }
 
     /**
@@ -1610,11 +1609,7 @@ library TokenVersionUtil {
         baseTokenId = collectionId * ONE_MILLION + number;
     }
 
-    function createTokenId(
-        uint256 _collectionId,
-        uint256 _versionId,
-        uint256 _tokenNr
-    )
+    function createTokenId(uint256 _collectionId, uint256 _versionId, uint256 _tokenNr)
         internal
         pure
         returns (uint256)
@@ -1734,7 +1729,8 @@ abstract contract Initializable {
     modifier initializer() {
         bool isTopLevelCall = !_initializing;
         require(
-            (isTopLevelCall && _initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),
+            (isTopLevelCall && _initialized < 1)
+                || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),
             "Initializable: contract is already initialized"
         );
         _initialized = 1;
@@ -3601,14 +3597,7 @@ contract FANtiumClaimingV2 is
      * @param tokenId The ID of the token
      * @param distributionId The ID of the distribution
      */
-    function claim(
-        uint256 tokenId,
-        uint256 distributionId
-    )
-        public
-        whenNotPaused
-        onlyValidDistribution(distributionId)
-    {
+    function claim(uint256 tokenId, uint256 distributionId) public whenNotPaused onlyValidDistribution(distributionId) {
         Distribution memory existingDE = _distributions[distributionId];
         if (existingDE.closed) {
             revert InvalidDistributionClose(DistributionCloseErrorReason.DISTRIBUTION_ALREADY_CLOSED);

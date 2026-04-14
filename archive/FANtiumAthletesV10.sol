@@ -1,355 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.28 ^0.8.0 ^0.8.1 ^0.8.2;
 
-// node_modules/@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol
-
-// OpenZeppelin Contracts v4.4.1 (access/IAccessControl.sol)
-
-/**
- * @dev External interface of AccessControl declared to support ERC165 detection.
- */
-interface IAccessControlUpgradeable {
-    /**
-     * @dev Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole`
-     *
-     * `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite
-     * {RoleAdminChanged} not being emitted signaling this.
-     *
-     * _Available since v3.1._
-     */
-    event RoleAdminChanged(bytes32 indexed role, bytes32 indexed previousAdminRole, bytes32 indexed newAdminRole);
-
-    /**
-     * @dev Emitted when `account` is granted `role`.
-     *
-     * `sender` is the account that originated the contract call, an admin role
-     * bearer except when using {AccessControl-_setupRole}.
-     */
-    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
-
-    /**
-     * @dev Emitted when `account` is revoked `role`.
-     *
-     * `sender` is the account that originated the contract call:
-     *   - if using `revokeRole`, it is the admin role bearer
-     *   - if using `renounceRole`, it is the role bearer (i.e. `account`)
-     */
-    event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
-
-    /**
-     * @dev Returns `true` if `account` has been granted `role`.
-     */
-    function hasRole(bytes32 role, address account) external view returns (bool);
-
-    /**
-     * @dev Returns the admin role that controls `role`. See {grantRole} and
-     * {revokeRole}.
-     *
-     * To change a role's admin, use {AccessControl-_setRoleAdmin}.
-     */
-    function getRoleAdmin(bytes32 role) external view returns (bytes32);
-
-    /**
-     * @dev Grants `role` to `account`.
-     *
-     * If `account` had not been already granted `role`, emits a {RoleGranted}
-     * event.
-     *
-     * Requirements:
-     *
-     * - the caller must have ``role``'s admin role.
-     */
-    function grantRole(bytes32 role, address account) external;
-
-    /**
-     * @dev Revokes `role` from `account`.
-     *
-     * If `account` had been granted `role`, emits a {RoleRevoked} event.
-     *
-     * Requirements:
-     *
-     * - the caller must have ``role``'s admin role.
-     */
-    function revokeRole(bytes32 role, address account) external;
-
-    /**
-     * @dev Revokes `role` from the calling account.
-     *
-     * Roles are often managed via {grantRole} and {revokeRole}: this function's
-     * purpose is to provide a mechanism for accounts to lose their privileges
-     * if they are compromised (such as when a trusted device is misplaced).
-     *
-     * If the calling account had been granted `role`, emits a {RoleRevoked}
-     * event.
-     *
-     * Requirements:
-     *
-     * - the caller must be `account`.
-     */
-    function renounceRole(bytes32 role, address account) external;
-}
-
-// node_modules/@openzeppelin/contracts-upgradeable/interfaces/IERC1967Upgradeable.sol
-
-// OpenZeppelin Contracts (last updated v4.9.0) (interfaces/IERC1967.sol)
-
-/**
- * @dev ERC-1967: Proxy Storage Slots. This interface contains the events defined in the ERC.
- *
- * _Available since v4.8.3._
- */
-interface IERC1967Upgradeable {
-    /**
-     * @dev Emitted when the implementation is upgraded.
-     */
-    event Upgraded(address indexed implementation);
-
-    /**
-     * @dev Emitted when the admin account has changed.
-     */
-    event AdminChanged(address previousAdmin, address newAdmin);
-
-    /**
-     * @dev Emitted when the beacon is changed.
-     */
-    event BeaconUpgraded(address indexed beacon);
-}
-
-// node_modules/@openzeppelin/contracts-upgradeable/interfaces/draft-IERC1822Upgradeable.sol
-
-// OpenZeppelin Contracts (last updated v4.5.0) (interfaces/draft-IERC1822.sol)
-
-/**
- * @dev ERC1822: Universal Upgradeable Proxy Standard (UUPS) documents a method for upgradeability through a simplified
- * proxy whose upgrades are fully controlled by the current implementation.
- */
-interface IERC1822ProxiableUpgradeable {
-    /**
-     * @dev Returns the storage slot that the proxiable contract assumes is being used to store the implementation
-     * address.
-     *
-     * IMPORTANT: A proxy pointing at a proxiable contract should not be considered proxiable itself, because this risks
-     * bricking a proxy that upgrades to it, by delegating to itself until out of gas. Thus it is critical that this
-     * function revert if invoked through a proxy.
-     */
-    function proxiableUUID() external view returns (bytes32);
-}
-
-// node_modules/@openzeppelin/contracts-upgradeable/proxy/beacon/IBeaconUpgradeable.sol
-
-// OpenZeppelin Contracts v4.4.1 (proxy/beacon/IBeacon.sol)
-
-/**
- * @dev This is the interface that {BeaconProxy} expects of its beacon.
- */
-interface IBeaconUpgradeable {
-    /**
-     * @dev Must return an address that can be used as a delegate call target.
-     *
-     * {BeaconProxy} will check that this address is a contract.
-     */
-    function implementation() external view returns (address);
-}
-
-// node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol
-
-// OpenZeppelin Contracts (last updated v4.9.0) (token/ERC20/IERC20.sol)
-
-/**
- * @dev Interface of the ERC20 standard as defined in the EIP.
- */
-interface IERC20Upgradeable {
-    /**
-     * @dev Emitted when `value` tokens are moved from one account (`from`) to
-     * another (`to`).
-     *
-     * Note that `value` may be zero.
-     */
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    /**
-     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
-     * a call to {approve}. `value` is the new allowance.
-     */
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-
-    /**
-     * @dev Returns the amount of tokens in existence.
-     */
-    function totalSupply() external view returns (uint256);
-
-    /**
-     * @dev Returns the amount of tokens owned by `account`.
-     */
-    function balanceOf(address account) external view returns (uint256);
-
-    /**
-     * @dev Moves `amount` tokens from the caller's account to `to`.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transfer(address to, uint256 amount) external returns (bool);
-
-    /**
-     * @dev Returns the remaining number of tokens that `spender` will be
-     * allowed to spend on behalf of `owner` through {transferFrom}. This is
-     * zero by default.
-     *
-     * This value changes when {approve} or {transferFrom} are called.
-     */
-    function allowance(address owner, address spender) external view returns (uint256);
-
-    /**
-     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * IMPORTANT: Beware that changing an allowance with this method brings the risk
-     * that someone may use both the old and the new allowance by unfortunate
-     * transaction ordering. One possible solution to mitigate this race
-     * condition is to first reduce the spender's allowance to 0 and set the
-     * desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     *
-     * Emits an {Approval} event.
-     */
-    function approve(address spender, uint256 amount) external returns (bool);
-
-    /**
-     * @dev Moves `amount` tokens from `from` to `to` using the
-     * allowance mechanism. `amount` is then deducted from the caller's
-     * allowance.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transferFrom(address from, address to, uint256 amount) external returns (bool);
-}
-
-// node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20PermitUpgradeable.sol
-
-// OpenZeppelin Contracts (last updated v4.9.4) (token/ERC20/extensions/IERC20Permit.sol)
-
-/**
- * @dev Interface of the ERC20 Permit extension allowing approvals to be made via signatures, as defined in
- * https://eips.ethereum.org/EIPS/eip-2612[EIP-2612].
- *
- * Adds the {permit} method, which can be used to change an account's ERC20 allowance (see {IERC20-allowance}) by
- * presenting a message signed by the account. By not relying on {IERC20-approve}, the token holder account doesn't
- * need to send a transaction, and thus is not required to hold Ether at all.
- *
- * ==== Security Considerations
- *
- * There are two important considerations concerning the use of `permit`. The first is that a valid permit signature
- * expresses an allowance, and it should not be assumed to convey additional meaning. In particular, it should not be
- * considered as an intention to spend the allowance in any specific way. The second is that because permits have
- * built-in replay protection and can be submitted by anyone, they can be frontrun. A protocol that uses permits should
- * take this into consideration and allow a `permit` call to fail. Combining these two aspects, a pattern that may be
- * generally recommended is:
- *
- * ```solidity
- * function doThingWithPermit(..., uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public {
- *     try token.permit(msg.sender, address(this), value, deadline, v, r, s) {} catch {}
- *     doThing(..., value);
- * }
- *
- * function doThing(..., uint256 value) public {
- *     token.safeTransferFrom(msg.sender, address(this), value);
- *     ...
- * }
- * ```
- *
- * Observe that: 1) `msg.sender` is used as the owner, leaving no ambiguity as to the signer intent, and 2) the use of
- * `try/catch` allows the permit to fail and makes the code tolerant to frontrunning. (See also
- * {SafeERC20-safeTransferFrom}).
- *
- * Additionally, note that smart contract wallets (such as Argent or Safe) are not able to produce permit signatures, so
- * contracts should have entry points that don't rely on permit.
- */
-interface IERC20PermitUpgradeable {
-    /**
-     * @dev Sets `value` as the allowance of `spender` over ``owner``'s tokens,
-     * given ``owner``'s signed approval.
-     *
-     * IMPORTANT: The same issues {IERC20-approve} has related to transaction
-     * ordering also apply here.
-     *
-     * Emits an {Approval} event.
-     *
-     * Requirements:
-     *
-     * - `spender` cannot be the zero address.
-     * - `deadline` must be a timestamp in the future.
-     * - `v`, `r` and `s` must be a valid `secp256k1` signature from `owner`
-     * over the EIP712-formatted function arguments.
-     * - the signature must use ``owner``'s current nonce (see {nonces}).
-     *
-     * For more information on the signature format, see the
-     * https://eips.ethereum.org/EIPS/eip-2612#specification[relevant EIP
-     * section].
-     *
-     * CAUTION: See Security Considerations above.
-     */
-    function permit(
-        address owner,
-        address spender,
-        uint256 value,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    )
-        external;
-
-    /**
-     * @dev Returns the current nonce for `owner`. This value must be
-     * included whenever a signature is generated for {permit}.
-     *
-     * Every successful call to {permit} increases ``owner``'s nonce by one. This
-     * prevents a signature from being used multiple times.
-     */
-    function nonces(address owner) external view returns (uint256);
-
-    /**
-     * @dev Returns the domain separator used in the encoding of the signature for {permit}, as defined by {EIP712}.
-     */
-    // solhint-disable-next-line func-name-mixedcase
-    function DOMAIN_SEPARATOR() external view returns (bytes32);
-}
-
-// node_modules/@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol
-
-// OpenZeppelin Contracts (last updated v4.6.0) (token/ERC721/IERC721Receiver.sol)
-
-/**
- * @title ERC721 token receiver interface
- * @dev Interface for any contract that wants to support safeTransfers
- * from ERC721 asset contracts.
- */
-interface IERC721ReceiverUpgradeable {
-    /**
-     * @dev Whenever an {IERC721} `tokenId` token is transferred to this contract via {IERC721-safeTransferFrom}
-     * by `operator` from `from`, this function is called.
-     *
-     * It must return its Solidity selector to confirm the token transfer.
-     * If any other value is returned or the interface is not implemented by the recipient, the transfer will be
-     * reverted.
-     *
-     * The selector can be obtained in Solidity with `IERC721Receiver.onERC721Received.selector`.
-     */
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    )
-        external
-        returns (bytes4);
-}
-
 // node_modules/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol
 
 // OpenZeppelin Contracts (last updated v4.9.0) (utils/Address.sol)
@@ -617,143 +268,108 @@ library AddressUpgradeable {
     }
 }
 
-// node_modules/@openzeppelin/contracts-upgradeable/utils/StorageSlotUpgradeable.sol
+// node_modules/@openzeppelin/contracts-upgradeable/access/IAccessControlUpgradeable.sol
 
-// OpenZeppelin Contracts (last updated v4.9.0) (utils/StorageSlot.sol)
-// This file was procedurally generated from scripts/generate/templates/StorageSlot.js.
+// OpenZeppelin Contracts v4.4.1 (access/IAccessControl.sol)
 
 /**
- * @dev Library for reading and writing primitive types to specific storage slots.
- *
- * Storage slots are often used to avoid storage conflict when dealing with upgradeable contracts.
- * This library helps with reading and writing to such slots without the need for inline assembly.
- *
- * The functions in this library return Slot structs that contain a `value` member that can be used to read or write.
- *
- * Example usage to set ERC1967 implementation slot:
- * ```solidity
- * contract ERC1967 {
- *     bytes32 internal constant _IMPLEMENTATION_SLOT =
- * 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
- *
- *     function _getImplementation() internal view returns (address) {
- *         return StorageSlot.getAddressSlot(_IMPLEMENTATION_SLOT).value;
- *     }
- *
- *     function _setImplementation(address newImplementation) internal {
- *         require(Address.isContract(newImplementation), "ERC1967: new implementation is not a contract");
- *         StorageSlot.getAddressSlot(_IMPLEMENTATION_SLOT).value = newImplementation;
- *     }
- * }
- * ```
- *
- * _Available since v4.1 for `address`, `bool`, `bytes32`, `uint256`._
- * _Available since v4.9 for `string`, `bytes`._
+ * @dev External interface of AccessControl declared to support ERC165 detection.
  */
-library StorageSlotUpgradeable {
-    struct AddressSlot {
-        address value;
-    }
-
-    struct BooleanSlot {
-        bool value;
-    }
-
-    struct Bytes32Slot {
-        bytes32 value;
-    }
-
-    struct Uint256Slot {
-        uint256 value;
-    }
-
-    struct StringSlot {
-        string value;
-    }
-
-    struct BytesSlot {
-        bytes value;
-    }
+interface IAccessControlUpgradeable {
+    /**
+     * @dev Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole`
+     *
+     * `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite
+     * {RoleAdminChanged} not being emitted signaling this.
+     *
+     * _Available since v3.1._
+     */
+    event RoleAdminChanged(bytes32 indexed role, bytes32 indexed previousAdminRole, bytes32 indexed newAdminRole);
 
     /**
-     * @dev Returns an `AddressSlot` with member `value` located at `slot`.
+     * @dev Emitted when `account` is granted `role`.
+     *
+     * `sender` is the account that originated the contract call, an admin role
+     * bearer except when using {AccessControl-_setupRole}.
      */
-    function getAddressSlot(bytes32 slot) internal pure returns (AddressSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
+    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
 
     /**
-     * @dev Returns an `BooleanSlot` with member `value` located at `slot`.
+     * @dev Emitted when `account` is revoked `role`.
+     *
+     * `sender` is the account that originated the contract call:
+     *   - if using `revokeRole`, it is the admin role bearer
+     *   - if using `renounceRole`, it is the role bearer (i.e. `account`)
      */
-    function getBooleanSlot(bytes32 slot) internal pure returns (BooleanSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
+    event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
 
     /**
-     * @dev Returns an `Bytes32Slot` with member `value` located at `slot`.
+     * @dev Returns `true` if `account` has been granted `role`.
      */
-    function getBytes32Slot(bytes32 slot) internal pure returns (Bytes32Slot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
+    function hasRole(bytes32 role, address account) external view returns (bool);
 
     /**
-     * @dev Returns an `Uint256Slot` with member `value` located at `slot`.
+     * @dev Returns the admin role that controls `role`. See {grantRole} and
+     * {revokeRole}.
+     *
+     * To change a role's admin, use {AccessControl-_setRoleAdmin}.
      */
-    function getUint256Slot(bytes32 slot) internal pure returns (Uint256Slot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
+    function getRoleAdmin(bytes32 role) external view returns (bytes32);
 
     /**
-     * @dev Returns an `StringSlot` with member `value` located at `slot`.
+     * @dev Grants `role` to `account`.
+     *
+     * If `account` had not been already granted `role`, emits a {RoleGranted}
+     * event.
+     *
+     * Requirements:
+     *
+     * - the caller must have ``role``'s admin role.
      */
-    function getStringSlot(bytes32 slot) internal pure returns (StringSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
+    function grantRole(bytes32 role, address account) external;
 
     /**
-     * @dev Returns an `StringSlot` representation of the string storage pointer `store`.
+     * @dev Revokes `role` from `account`.
+     *
+     * If `account` had been granted `role`, emits a {RoleRevoked} event.
+     *
+     * Requirements:
+     *
+     * - the caller must have ``role``'s admin role.
      */
-    function getStringSlot(string storage store) internal pure returns (StringSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := store.slot
-        }
-    }
+    function revokeRole(bytes32 role, address account) external;
 
     /**
-     * @dev Returns an `BytesSlot` with member `value` located at `slot`.
+     * @dev Revokes `role` from the calling account.
+     *
+     * Roles are often managed via {grantRole} and {revokeRole}: this function's
+     * purpose is to provide a mechanism for accounts to lose their privileges
+     * if they are compromised (such as when a trusted device is misplaced).
+     *
+     * If the calling account had been granted `role`, emits a {RoleRevoked}
+     * event.
+     *
+     * Requirements:
+     *
+     * - the caller must be `account`.
      */
-    function getBytesSlot(bytes32 slot) internal pure returns (BytesSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := slot
-        }
-    }
+    function renounceRole(bytes32 role, address account) external;
+}
 
+// node_modules/@openzeppelin/contracts-upgradeable/proxy/beacon/IBeaconUpgradeable.sol
+
+// OpenZeppelin Contracts v4.4.1 (proxy/beacon/IBeacon.sol)
+
+/**
+ * @dev This is the interface that {BeaconProxy} expects of its beacon.
+ */
+interface IBeaconUpgradeable {
     /**
-     * @dev Returns an `BytesSlot` representation of the bytes storage pointer `store`.
+     * @dev Must return an address that can be used as a delegate call target.
+     *
+     * {BeaconProxy} will check that this address is a contract.
      */
-    function getBytesSlot(bytes storage store) internal pure returns (BytesSlot storage r) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            r.slot := store.slot
-        }
-    }
+    function implementation() external view returns (address);
 }
 
 // node_modules/@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol
@@ -781,6 +397,262 @@ interface IERC165Upgradeable {
     function supportsInterface(bytes4 interfaceId) external view returns (bool);
 }
 
+// node_modules/@openzeppelin/contracts-upgradeable/interfaces/IERC1967Upgradeable.sol
+
+// OpenZeppelin Contracts (last updated v4.9.0) (interfaces/IERC1967.sol)
+
+/**
+ * @dev ERC-1967: Proxy Storage Slots. This interface contains the events defined in the ERC.
+ *
+ * _Available since v4.8.3._
+ */
+interface IERC1967Upgradeable {
+    /**
+     * @dev Emitted when the implementation is upgraded.
+     */
+    event Upgraded(address indexed implementation);
+
+    /**
+     * @dev Emitted when the admin account has changed.
+     */
+    event AdminChanged(address previousAdmin, address newAdmin);
+
+    /**
+     * @dev Emitted when the beacon is changed.
+     */
+    event BeaconUpgraded(address indexed beacon);
+}
+
+// node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20PermitUpgradeable.sol
+
+// OpenZeppelin Contracts (last updated v4.9.4) (token/ERC20/extensions/IERC20Permit.sol)
+
+/**
+ * @dev Interface of the ERC20 Permit extension allowing approvals to be made via signatures, as defined in
+ * https://eips.ethereum.org/EIPS/eip-2612[EIP-2612].
+ *
+ * Adds the {permit} method, which can be used to change an account's ERC20 allowance (see {IERC20-allowance}) by
+ * presenting a message signed by the account. By not relying on {IERC20-approve}, the token holder account doesn't
+ * need to send a transaction, and thus is not required to hold Ether at all.
+ *
+ * ==== Security Considerations
+ *
+ * There are two important considerations concerning the use of `permit`. The first is that a valid permit signature
+ * expresses an allowance, and it should not be assumed to convey additional meaning. In particular, it should not be
+ * considered as an intention to spend the allowance in any specific way. The second is that because permits have
+ * built-in replay protection and can be submitted by anyone, they can be frontrun. A protocol that uses permits should
+ * take this into consideration and allow a `permit` call to fail. Combining these two aspects, a pattern that may be
+ * generally recommended is:
+ *
+ * ```solidity
+ * function doThingWithPermit(..., uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public {
+ *     try token.permit(msg.sender, address(this), value, deadline, v, r, s) {} catch {}
+ *     doThing(..., value);
+ * }
+ *
+ * function doThing(..., uint256 value) public {
+ *     token.safeTransferFrom(msg.sender, address(this), value);
+ *     ...
+ * }
+ * ```
+ *
+ * Observe that: 1) `msg.sender` is used as the owner, leaving no ambiguity as to the signer intent, and 2) the use of
+ * `try/catch` allows the permit to fail and makes the code tolerant to frontrunning. (See also
+ * {SafeERC20-safeTransferFrom}).
+ *
+ * Additionally, note that smart contract wallets (such as Argent or Safe) are not able to produce permit signatures, so
+ * contracts should have entry points that don't rely on permit.
+ */
+interface IERC20PermitUpgradeable {
+    /**
+     * @dev Sets `value` as the allowance of `spender` over ``owner``'s tokens,
+     * given ``owner``'s signed approval.
+     *
+     * IMPORTANT: The same issues {IERC20-approve} has related to transaction
+     * ordering also apply here.
+     *
+     * Emits an {Approval} event.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     * - `deadline` must be a timestamp in the future.
+     * - `v`, `r` and `s` must be a valid `secp256k1` signature from `owner`
+     * over the EIP712-formatted function arguments.
+     * - the signature must use ``owner``'s current nonce (see {nonces}).
+     *
+     * For more information on the signature format, see the
+     * https://eips.ethereum.org/EIPS/eip-2612#specification[relevant EIP
+     * section].
+     *
+     * CAUTION: See Security Considerations above.
+     */
+    function permit(
+        address owner,
+        address spender,
+        uint256 value,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    )
+        external;
+
+    /**
+     * @dev Returns the current nonce for `owner`. This value must be
+     * included whenever a signature is generated for {permit}.
+     *
+     * Every successful call to {permit} increases ``owner``'s nonce by one. This
+     * prevents a signature from being used multiple times.
+     */
+    function nonces(address owner) external view returns (uint256);
+
+    /**
+     * @dev Returns the domain separator used in the encoding of the signature for {permit}, as defined by {EIP712}.
+     */
+    // solhint-disable-next-line func-name-mixedcase
+    function DOMAIN_SEPARATOR() external view returns (bytes32);
+}
+
+// node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol
+
+// OpenZeppelin Contracts (last updated v4.9.0) (token/ERC20/IERC20.sol)
+
+/**
+ * @dev Interface of the ERC20 standard as defined in the EIP.
+ */
+interface IERC20Upgradeable {
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /**
+     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+     * a call to {approve}. `value` is the new allowance.
+     */
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    /**
+     * @dev Returns the amount of tokens in existence.
+     */
+    function totalSupply() external view returns (uint256);
+
+    /**
+     * @dev Returns the amount of tokens owned by `account`.
+     */
+    function balanceOf(address account) external view returns (uint256);
+
+    /**
+     * @dev Moves `amount` tokens from the caller's account to `to`.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transfer(address to, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Returns the remaining number of tokens that `spender` will be
+     * allowed to spend on behalf of `owner` through {transferFrom}. This is
+     * zero by default.
+     *
+     * This value changes when {approve} or {transferFrom} are called.
+     */
+    function allowance(address owner, address spender) external view returns (uint256);
+
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * IMPORTANT: Beware that changing an allowance with this method brings the risk
+     * that someone may use both the old and the new allowance by unfortunate
+     * transaction ordering. One possible solution to mitigate this race
+     * condition is to first reduce the spender's allowance to 0 and set the
+     * desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     *
+     * Emits an {Approval} event.
+     */
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Moves `amount` tokens from `from` to `to` using the
+     * allowance mechanism. `amount` is then deducted from the caller's
+     * allowance.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+}
+
+// node_modules/@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol
+
+// OpenZeppelin Contracts (last updated v4.6.0) (token/ERC721/IERC721Receiver.sol)
+
+/**
+ * @title ERC721 token receiver interface
+ * @dev Interface for any contract that wants to support safeTransfers
+ * from ERC721 asset contracts.
+ */
+interface IERC721ReceiverUpgradeable {
+    /**
+     * @dev Whenever an {IERC721} `tokenId` token is transferred to this contract via {IERC721-safeTransferFrom}
+     * by `operator` from `from`, this function is called.
+     *
+     * It must return its Solidity selector to confirm the token transfer.
+     * If any other value is returned or the interface is not implemented by the recipient, the transfer will be
+     * reverted.
+     *
+     * The selector can be obtained in Solidity with `IERC721Receiver.onERC721Received.selector`.
+     */
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    )
+        external
+        returns (bytes4);
+}
+
+// src/interfaces/IRescue.sol
+
+/**
+ * @title IRescue
+ * @notice Interface for rescuing NFTs in emergency situations
+ * @dev This interface provides functionality for authorized parties to transfer NFTs to a specified address
+ */
+interface IRescue {
+    /**
+     * @notice Emitted when a token is rescued
+     * @param tokenId The ID of the rescued token
+     * @param recipient The address that received the rescued token
+     * @param reason A string explaining why the token was rescued
+     */
+    event Rescued(uint256 tokenId, address recipient, string reason);
+
+    /**
+     * @notice Rescues a single token by transferring it to a specified address
+     * @param tokenId The ID of the token to rescue
+     * @param reason A string explaining why the token is being rescued
+     */
+    function rescue(uint256 tokenId, string memory reason) external;
+
+    /**
+     * @notice Rescues multiple tokens by transferring them to a specified address
+     * @param tokenIds An array of token IDs to rescue
+     * @param reason A string explaining why the tokens are being rescued
+     */
+    function rescueBatch(uint256[] memory tokenIds, string memory reason) external;
+}
+
 // node_modules/@openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol
 
 // OpenZeppelin Contracts (last updated v4.9.0) (utils/math/Math.sol)
@@ -793,7 +665,6 @@ library MathUpgradeable {
         Down, // Toward negative infinity
         Up, // Toward infinity
         Zero // Toward zero
-
     }
 
     /**
@@ -1167,54 +1038,143 @@ library SignedMathUpgradeable {
     }
 }
 
-// src/interfaces/IFANtiumUserManager.sol
+// node_modules/@openzeppelin/contracts-upgradeable/utils/StorageSlotUpgradeable.sol
+
+// OpenZeppelin Contracts (last updated v4.9.0) (utils/StorageSlot.sol)
+// This file was procedurally generated from scripts/generate/templates/StorageSlot.js.
 
 /**
- * @title FANtium User Manager Interface
- * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
+ * @dev Library for reading and writing primitive types to specific storage slots.
+ *
+ * Storage slots are often used to avoid storage conflict when dealing with upgradeable contracts.
+ * This library helps with reading and writing to such slots without the need for inline assembly.
+ *
+ * The functions in this library return Slot structs that contain a `value` member that can be used to read or write.
+ *
+ * Example usage to set ERC1967 implementation slot:
+ * ```solidity
+ * contract ERC1967 {
+ *     bytes32 internal constant _IMPLEMENTATION_SLOT =
+ * 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+ *
+ *     function _getImplementation() internal view returns (address) {
+ *         return StorageSlot.getAddressSlot(_IMPLEMENTATION_SLOT).value;
+ *     }
+ *
+ *     function _setImplementation(address newImplementation) internal {
+ *         require(Address.isContract(newImplementation), "ERC1967: new implementation is not a contract");
+ *         StorageSlot.getAddressSlot(_IMPLEMENTATION_SLOT).value = newImplementation;
+ *     }
+ * }
+ * ```
+ *
+ * _Available since v4.1 for `address`, `bool`, `bytes32`, `uint256`._
+ * _Available since v4.9 for `string`, `bytes`._
  */
-interface IFANtiumUserManager {
-    // ========================================================================
-    // Structs
-    // ========================================================================
-    struct User {
-        bool isKYCed;
-        bool isIDENT;
-        mapping(address => mapping(uint256 => uint256)) contractToAllowlistToSpots;
+library StorageSlotUpgradeable {
+    struct AddressSlot {
+        address value;
     }
 
-    // ========================================================================
-    // Errors
-    // ========================================================================
-    error ArrayLengthMismatch(uint256 lhs, uint256 rhs);
+    struct BooleanSlot {
+        bool value;
+    }
 
-    // ========================================================================
-    // Know-your-customer functions
-    // ========================================================================
-    function setKYC(address account, bool isKYCed) external;
-    function setBatchKYC(address[] memory accounts, bool[] memory isKYCed) external;
-    function isKYCed(address account) external view returns (bool);
+    struct Bytes32Slot {
+        bytes32 value;
+    }
 
-    // ========================================================================
-    // INDENT functions
-    // ========================================================================
-    function setIDENT(address account, bool isIDENT) external;
-    function setBatchIDENT(address[] memory accounts, bool[] memory isIDENT) external;
-    function isIDENT(address account) external view returns (bool);
+    struct Uint256Slot {
+        uint256 value;
+    }
 
-    // ========================================================================
-    // AllowList functions
-    // ========================================================================
-    function allowlist(address account, uint256 collectionId) external view returns (uint256);
-    function setAllowList(address account, uint256 collectionId, uint256 allocation) external;
-    function batchSetAllowList(
-        address[] memory accounts,
-        uint256[] memory collectionIds,
-        uint256[] memory allocations
-    )
-        external;
-    function increaseAllowList(address account, uint256 collectionId, uint256 delta) external;
-    function decreaseAllowList(address account, uint256 collectionId, uint256 delta) external;
+    struct StringSlot {
+        string value;
+    }
+
+    struct BytesSlot {
+        bytes value;
+    }
+
+    /**
+     * @dev Returns an `AddressSlot` with member `value` located at `slot`.
+     */
+    function getAddressSlot(bytes32 slot) internal pure returns (AddressSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `BooleanSlot` with member `value` located at `slot`.
+     */
+    function getBooleanSlot(bytes32 slot) internal pure returns (BooleanSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `Bytes32Slot` with member `value` located at `slot`.
+     */
+    function getBytes32Slot(bytes32 slot) internal pure returns (Bytes32Slot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `Uint256Slot` with member `value` located at `slot`.
+     */
+    function getUint256Slot(bytes32 slot) internal pure returns (Uint256Slot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `StringSlot` with member `value` located at `slot`.
+     */
+    function getStringSlot(bytes32 slot) internal pure returns (StringSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `StringSlot` representation of the string storage pointer `store`.
+     */
+    function getStringSlot(string storage store) internal pure returns (StringSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := store.slot
+        }
+    }
+
+    /**
+     * @dev Returns an `BytesSlot` with member `value` located at `slot`.
+     */
+    function getBytesSlot(bytes32 slot) internal pure returns (BytesSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := slot
+        }
+    }
+
+    /**
+     * @dev Returns an `BytesSlot` representation of the bytes storage pointer `store`.
+     */
+    function getBytesSlot(bytes storage store) internal pure returns (BytesSlot storage r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            r.slot := store.slot
+        }
+    }
 }
 
 // src/utils/TokenVersionUtil.sol
@@ -1240,11 +1200,7 @@ library TokenVersionUtil {
         baseTokenId = collectionId * ONE_MILLION + number;
     }
 
-    function createTokenId(
-        uint256 _collectionId,
-        uint256 _versionId,
-        uint256 _tokenNr
-    )
+    function createTokenId(uint256 _collectionId, uint256 _versionId, uint256 _tokenNr)
         internal
         pure
         returns (uint256)
@@ -1255,168 +1211,24 @@ library TokenVersionUtil {
     }
 }
 
-// node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol
+// node_modules/@openzeppelin/contracts-upgradeable/interfaces/draft-IERC1822Upgradeable.sol
 
-// OpenZeppelin Contracts (last updated v4.9.0) (proxy/utils/Initializable.sol)
+// OpenZeppelin Contracts (last updated v4.5.0) (interfaces/draft-IERC1822.sol)
 
 /**
- * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed
- * behind a proxy. Since proxied contracts do not make use of a constructor, it's common to move constructor logic to an
- * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer
- * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.
- *
- * The initialization functions use a version number. Once a version number is used, it is consumed and cannot be
- * reused. This mechanism prevents re-execution of each "step" but allows the creation of new initialization steps in
- * case an upgrade adds a module that needs to be initialized.
- *
- * For example:
- *
- * [.hljs-theme-light.nopadding]
- * ```solidity
- * contract MyToken is ERC20Upgradeable {
- *     function initialize() initializer public {
- *         __ERC20_init("MyToken", "MTK");
- *     }
- * }
- *
- * contract MyTokenV2 is MyToken, ERC20PermitUpgradeable {
- *     function initializeV2() reinitializer(2) public {
- *         __ERC20Permit_init("MyToken");
- *     }
- * }
- * ```
- *
- * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as
- * possible by providing the encoded function call as the `_data` argument to {ERC1967Proxy-constructor}.
- *
- * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure
- * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.
- *
- * [CAUTION]
- * ====
- * Avoid leaving a contract uninitialized.
- *
- * An uninitialized contract can be taken over by an attacker. This applies to both a proxy and its implementation
- * contract, which may impact the proxy. To prevent the implementation contract from being used, you should invoke
- * the {_disableInitializers} function in the constructor to automatically lock it when it is deployed:
- *
- * [.hljs-theme-light.nopadding]
- * ```
- * /// @custom:oz-upgrades-unsafe-allow constructor
- * constructor() {
- *     _disableInitializers();
- * }
- * ```
- * ====
+ * @dev ERC1822: Universal Upgradeable Proxy Standard (UUPS) documents a method for upgradeability through a simplified
+ * proxy whose upgrades are fully controlled by the current implementation.
  */
-abstract contract Initializable {
+interface IERC1822ProxiableUpgradeable {
     /**
-     * @dev Indicates that the contract has been initialized.
-     * @custom:oz-retyped-from bool
-     */
-    uint8 private _initialized;
-
-    /**
-     * @dev Indicates that the contract is in the process of being initialized.
-     */
-    bool private _initializing;
-
-    /**
-     * @dev Triggered when the contract has been initialized or reinitialized.
-     */
-    event Initialized(uint8 version);
-
-    /**
-     * @dev A modifier that defines a protected initializer function that can be invoked at most once. In its scope,
-     * `onlyInitializing` functions can be used to initialize parent contracts.
+     * @dev Returns the storage slot that the proxiable contract assumes is being used to store the implementation
+     * address.
      *
-     * Similar to `reinitializer(1)`, except that functions marked with `initializer` can be nested in the context of a
-     * constructor.
-     *
-     * Emits an {Initialized} event.
+     * IMPORTANT: A proxy pointing at a proxiable contract should not be considered proxiable itself, because this risks
+     * bricking a proxy that upgrades to it, by delegating to itself until out of gas. Thus it is critical that this
+     * function revert if invoked through a proxy.
      */
-    modifier initializer() {
-        bool isTopLevelCall = !_initializing;
-        require(
-            (isTopLevelCall && _initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),
-            "Initializable: contract is already initialized"
-        );
-        _initialized = 1;
-        if (isTopLevelCall) {
-            _initializing = true;
-        }
-        _;
-        if (isTopLevelCall) {
-            _initializing = false;
-            emit Initialized(1);
-        }
-    }
-
-    /**
-     * @dev A modifier that defines a protected reinitializer function that can be invoked at most once, and only if the
-     * contract hasn't been initialized to a greater version before. In its scope, `onlyInitializing` functions can be
-     * used to initialize parent contracts.
-     *
-     * A reinitializer may be used after the original initialization step. This is essential to configure modules that
-     * are added through upgrades and that require initialization.
-     *
-     * When `version` is 1, this modifier is similar to `initializer`, except that functions marked with `reinitializer`
-     * cannot be nested. If one is invoked in the context of another, execution will revert.
-     *
-     * Note that versions can jump in increments greater than 1; this implies that if multiple reinitializers coexist in
-     * a contract, executing them in the right order is up to the developer or operator.
-     *
-     * WARNING: setting the version to 255 will prevent any future reinitialization.
-     *
-     * Emits an {Initialized} event.
-     */
-    modifier reinitializer(uint8 version) {
-        require(!_initializing && _initialized < version, "Initializable: contract is already initialized");
-        _initialized = version;
-        _initializing = true;
-        _;
-        _initializing = false;
-        emit Initialized(version);
-    }
-
-    /**
-     * @dev Modifier to protect an initialization function so that it can only be invoked by functions with the
-     * {initializer} and {reinitializer} modifiers, directly or indirectly.
-     */
-    modifier onlyInitializing() {
-        require(_initializing, "Initializable: contract is not initializing");
-        _;
-    }
-
-    /**
-     * @dev Locks the contract, preventing any future reinitialization. This cannot be part of an initializer call.
-     * Calling this in the constructor of a contract will prevent that contract from being initialized or reinitialized
-     * to any version. It is recommended to use this to lock implementation contracts that are designed to be called
-     * through proxies.
-     *
-     * Emits an {Initialized} event the first time it is successfully executed.
-     */
-    function _disableInitializers() internal virtual {
-        require(!_initializing, "Initializable: contract is initializing");
-        if (_initialized != type(uint8).max) {
-            _initialized = type(uint8).max;
-            emit Initialized(type(uint8).max);
-        }
-    }
-
-    /**
-     * @dev Returns the highest version that has been initialized. See {reinitializer}.
-     */
-    function _getInitializedVersion() internal view returns (uint8) {
-        return _initialized;
-    }
-
-    /**
-     * @dev Returns `true` if the contract is currently initializing. See {onlyInitializing}.
-     */
-    function _isInitializing() internal view returns (bool) {
-        return _initializing;
-    }
+    function proxiableUUID() external view returns (bytes32);
 }
 
 // node_modules/@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol
@@ -1578,29 +1390,228 @@ interface IERC721Upgradeable is IERC165Upgradeable {
     function isApprovedForAll(address owner, address operator) external view returns (bool);
 }
 
-// node_modules/@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol
+// node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol
 
-// OpenZeppelin Contracts v4.4.1 (token/ERC721/extensions/IERC721Metadata.sol)
+// OpenZeppelin Contracts (last updated v4.9.0) (proxy/utils/Initializable.sol)
 
 /**
- * @title ERC-721 Non-Fungible Token Standard, optional metadata extension
- * @dev See https://eips.ethereum.org/EIPS/eip-721
+ * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed
+ * behind a proxy. Since proxied contracts do not make use of a constructor, it's common to move constructor logic to an
+ * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer
+ * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.
+ *
+ * The initialization functions use a version number. Once a version number is used, it is consumed and cannot be
+ * reused. This mechanism prevents re-execution of each "step" but allows the creation of new initialization steps in
+ * case an upgrade adds a module that needs to be initialized.
+ *
+ * For example:
+ *
+ * [.hljs-theme-light.nopadding]
+ * ```solidity
+ * contract MyToken is ERC20Upgradeable {
+ *     function initialize() initializer public {
+ *         __ERC20_init("MyToken", "MTK");
+ *     }
+ * }
+ *
+ * contract MyTokenV2 is MyToken, ERC20PermitUpgradeable {
+ *     function initializeV2() reinitializer(2) public {
+ *         __ERC20Permit_init("MyToken");
+ *     }
+ * }
+ * ```
+ *
+ * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as
+ * possible by providing the encoded function call as the `_data` argument to {ERC1967Proxy-constructor}.
+ *
+ * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure
+ * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.
+ *
+ * [CAUTION]
+ * ====
+ * Avoid leaving a contract uninitialized.
+ *
+ * An uninitialized contract can be taken over by an attacker. This applies to both a proxy and its implementation
+ * contract, which may impact the proxy. To prevent the implementation contract from being used, you should invoke
+ * the {_disableInitializers} function in the constructor to automatically lock it when it is deployed:
+ *
+ * [.hljs-theme-light.nopadding]
+ * ```
+ * /// @custom:oz-upgrades-unsafe-allow constructor
+ * constructor() {
+ *     _disableInitializers();
+ * }
+ * ```
+ * ====
  */
-interface IERC721MetadataUpgradeable is IERC721Upgradeable {
+abstract contract Initializable {
     /**
-     * @dev Returns the token collection name.
+     * @dev Indicates that the contract has been initialized.
+     * @custom:oz-retyped-from bool
      */
-    function name() external view returns (string memory);
+    uint8 private _initialized;
 
     /**
-     * @dev Returns the token collection symbol.
+     * @dev Indicates that the contract is in the process of being initialized.
      */
-    function symbol() external view returns (string memory);
+    bool private _initializing;
 
     /**
-     * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
+     * @dev Triggered when the contract has been initialized or reinitialized.
      */
-    function tokenURI(uint256 tokenId) external view returns (string memory);
+    event Initialized(uint8 version);
+
+    /**
+     * @dev A modifier that defines a protected initializer function that can be invoked at most once. In its scope,
+     * `onlyInitializing` functions can be used to initialize parent contracts.
+     *
+     * Similar to `reinitializer(1)`, except that functions marked with `initializer` can be nested in the context of a
+     * constructor.
+     *
+     * Emits an {Initialized} event.
+     */
+    modifier initializer() {
+        bool isTopLevelCall = !_initializing;
+        require(
+            (isTopLevelCall && _initialized < 1)
+                || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),
+            "Initializable: contract is already initialized"
+        );
+        _initialized = 1;
+        if (isTopLevelCall) {
+            _initializing = true;
+        }
+        _;
+        if (isTopLevelCall) {
+            _initializing = false;
+            emit Initialized(1);
+        }
+    }
+
+    /**
+     * @dev A modifier that defines a protected reinitializer function that can be invoked at most once, and only if the
+     * contract hasn't been initialized to a greater version before. In its scope, `onlyInitializing` functions can be
+     * used to initialize parent contracts.
+     *
+     * A reinitializer may be used after the original initialization step. This is essential to configure modules that
+     * are added through upgrades and that require initialization.
+     *
+     * When `version` is 1, this modifier is similar to `initializer`, except that functions marked with `reinitializer`
+     * cannot be nested. If one is invoked in the context of another, execution will revert.
+     *
+     * Note that versions can jump in increments greater than 1; this implies that if multiple reinitializers coexist in
+     * a contract, executing them in the right order is up to the developer or operator.
+     *
+     * WARNING: setting the version to 255 will prevent any future reinitialization.
+     *
+     * Emits an {Initialized} event.
+     */
+    modifier reinitializer(uint8 version) {
+        require(!_initializing && _initialized < version, "Initializable: contract is already initialized");
+        _initialized = version;
+        _initializing = true;
+        _;
+        _initializing = false;
+        emit Initialized(version);
+    }
+
+    /**
+     * @dev Modifier to protect an initialization function so that it can only be invoked by functions with the
+     * {initializer} and {reinitializer} modifiers, directly or indirectly.
+     */
+    modifier onlyInitializing() {
+        require(_initializing, "Initializable: contract is not initializing");
+        _;
+    }
+
+    /**
+     * @dev Locks the contract, preventing any future reinitialization. This cannot be part of an initializer call.
+     * Calling this in the constructor of a contract will prevent that contract from being initialized or reinitialized
+     * to any version. It is recommended to use this to lock implementation contracts that are designed to be called
+     * through proxies.
+     *
+     * Emits an {Initialized} event the first time it is successfully executed.
+     */
+    function _disableInitializers() internal virtual {
+        require(!_initializing, "Initializable: contract is initializing");
+        if (_initialized != type(uint8).max) {
+            _initialized = type(uint8).max;
+            emit Initialized(type(uint8).max);
+        }
+    }
+
+    /**
+     * @dev Returns the highest version that has been initialized. See {reinitializer}.
+     */
+    function _getInitializedVersion() internal view returns (uint8) {
+        return _initialized;
+    }
+
+    /**
+     * @dev Returns `true` if the contract is currently initializing. See {onlyInitializing}.
+     */
+    function _isInitializing() internal view returns (bool) {
+        return _initializing;
+    }
+}
+
+// src/utils/Rescue.sol
+
+/**
+ * @title Rescue
+ * @author Mathieu Bour - FANtium AG
+ * @notice Utility contract for rescuing tokens from the contract
+ * @dev This contract is intended to be used as an internal utility for contracts that need to rescue tokens from the
+ * contract. It is not intended to be used as a standalone contract.
+ */
+abstract contract Rescue is IRescue {
+    /**
+     * @notice Authorizes a rescue of a token by checking if the sender has the DEFAULT_ADMIN_ROLE
+     * @param tokenId The ID of the token to rescue
+     * @param recipient The address that received the rescued token
+     * @param reason A string explaining why the token is being rescued
+     */
+    function _authorizeRescue(uint256 tokenId, address recipient, string calldata reason) internal virtual;
+
+    /**
+     * @notice Rescues a single token by transferring it to a specified address
+     * @param tokenId The ID of the token to rescue
+     * @param recipient The address that received the rescued token
+     * @param reason A string explaining why the token was rescued
+     */
+    function _rescue(uint256 tokenId, address recipient, string calldata reason) internal virtual;
+
+    /**
+     * @notice Rescues a single token by transferring it to a specified address
+     * @param tokenId The ID of the token to rescue
+     * @param recipient The address that received the rescued token
+     * @param reason A string explaining why the token was rescued
+     */
+    function _doRescue(uint256 tokenId, address recipient, string calldata reason) internal {
+        _authorizeRescue(tokenId, recipient, reason);
+        _rescue(tokenId, recipient, reason);
+        emit Rescued(tokenId, recipient, reason);
+    }
+
+    /**
+     * @notice Rescues a single token by transferring it to a specified address
+     * @param tokenId The ID of the token to rescue
+     * @param reason A string explaining why the token is being rescued
+     */
+    function rescue(uint256 tokenId, string calldata reason) external {
+        _doRescue(tokenId, msg.sender, reason);
+    }
+
+    /**
+     * @notice Rescues multiple tokens by transferring them to a specified address
+     * @param tokenIds An array of token IDs to rescue
+     * @param reason A string explaining why the tokens are being rescued
+     */
+    function rescueBatch(uint256[] memory tokenIds, string calldata reason) external {
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            _doRescue(tokenIds[i], msg.sender, reason);
+        }
+    }
 }
 
 // node_modules/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol
@@ -1640,6 +1651,211 @@ abstract contract ContextUpgradeable is Initializable {
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
     uint256[50] private __gap;
+}
+
+// node_modules/@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol
+
+// OpenZeppelin Contracts v4.4.1 (token/ERC721/extensions/IERC721Metadata.sol)
+
+/**
+ * @title ERC-721 Non-Fungible Token Standard, optional metadata extension
+ * @dev See https://eips.ethereum.org/EIPS/eip-721
+ */
+interface IERC721MetadataUpgradeable is IERC721Upgradeable {
+    /**
+     * @dev Returns the token collection name.
+     */
+    function name() external view returns (string memory);
+
+    /**
+     * @dev Returns the token collection symbol.
+     */
+    function symbol() external view returns (string memory);
+
+    /**
+     * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
+     */
+    function tokenURI(uint256 tokenId) external view returns (string memory);
+}
+
+// src/interfaces/IFANtiumAthletes.sol
+
+/**
+ * @notice Collection struct
+ * @dev CAUTION: Do not change the order of the struct fields!!
+ *
+ * Difference between isMintable and isPaused:
+ * - isMintable false means that nobody can mint new tokens
+ * - isPaused true means that the collection is mintable only by member of the collection allowlist
+ *
+ * price does not take the token decimals into account, which means that if the price is 1,000UDSC,
+ * mintTo function will need to multiply the price by 10^decimals of the token.
+ */
+struct Collection {
+    /**
+     * @notice Always true if the collection exists.
+     */
+    bool exists;
+    /**
+     * @notice UNIX timestamp of the collection launch.
+     */
+    uint256 launchTimestamp;
+    /**
+     * @notice True if the collection is mintable.
+     */
+    bool isMintable;
+    /**
+     * @notice True if the collection is paused.
+     */
+    bool isPaused;
+    /**
+     * @notice Number of minted tokens.
+     */
+    uint24 invocations;
+    /**
+     * @notice Price of a token in the collection without decimals, which means that this price must be multiplied by
+     * 10^decimals of the token.
+     */
+    uint256 price;
+    /**
+     * @notice Maximum number of tokens that can be minted.
+     */
+    uint256 maxInvocations;
+    /**
+     * @notice Tournament earnings share in 1e7 basis points.
+     */
+    uint256 tournamentEarningShare1e7;
+    /**
+     * @notice Address of the athlete.
+     */
+    address payable athleteAddress;
+    /**
+     * @notice Athlete primary sales share in 10,000 basis points.
+     */
+    uint256 athletePrimarySalesBPS;
+    /**
+     * @notice Athlete secondary sales share in 10,000 basis points.
+     */
+    uint256 athleteSecondarySalesBPS;
+    /**
+     * @notice Address of the FANtium sales.
+     */
+    address payable UNUSED_fantiumSalesAddress;
+    /**
+     * @notice FANtium secondary sales share in 10,000 basis points.
+     */
+    uint256 fantiumSecondarySalesBPS;
+    /**
+     * @notice Other earnings (e.g. sponsorships, royalties, etc.) share in 1e7 basis points.
+     */
+    uint256 otherEarningShare1e7;
+}
+
+/**
+ * @notice Create collection struct
+ * @dev Fields may be added.
+ */
+struct CollectionData {
+    address payable athleteAddress;
+    uint256 athletePrimarySalesBPS;
+    uint256 athleteSecondarySalesBPS;
+    uint256 fantiumSecondarySalesBPS;
+    uint256 launchTimestamp;
+    uint256 maxInvocations;
+    uint256 otherEarningShare1e7;
+    uint256 price;
+    uint256 tournamentEarningShare1e7;
+}
+
+enum CollectionErrorReason {
+    INVALID_BPS_SUM,
+    INVALID_MAX_INVOCATIONS,
+    INVALID_PRIMARY_SALES_BPS,
+    INVALID_SECONDARY_SALES_BPS,
+    MAX_COLLECTIONS_REACHED,
+    INVALID_TOURNAMENT_EARNING_SHARE,
+    INVALID_OTHER_EARNING_SHARE,
+    INVALID_ATHLETE_ADDRESS,
+    INVALID_FANTIUM_SALES_ADDRESS,
+    INVALID_PRICE
+}
+
+enum MintErrorReason {
+    INVALID_COLLECTION_ID,
+    COLLECTION_NOT_MINTABLE,
+    COLLECTION_NOT_LAUNCHED,
+    COLLECTION_PAUSED,
+    ACCOUNT_NOT_KYCED,
+    INVALID_SIGNATURE
+}
+
+enum UpgradeErrorReason {
+    INVALID_COLLECTION_ID,
+    VERSION_ID_TOO_HIGH
+}
+
+interface IFANtiumAthletes is IERC721Upgradeable {
+    // ========================================================================
+    // Events
+    // ========================================================================
+    event CollectionCreated(uint256 indexed collectionId, Collection collection);
+    event CollectionUpdated(uint256 indexed collectionId, Collection collection);
+    event Sale(
+        uint256 indexed collectionId, uint24 quantity, address indexed recipient, uint256 amount, uint256 discount
+    );
+
+    // ========================================================================
+    // Errors
+    // ========================================================================
+    error InvalidCollectionId(uint256 collectionId);
+    error AthleteOnly(uint256 collectionId, address account, address expected);
+    error InvalidCollection(CollectionErrorReason reason);
+    error InvalidMint(MintErrorReason reason);
+    error InvalidUpgrade(UpgradeErrorReason reason);
+
+    // ========================================================================
+    // Collection
+    // ========================================================================
+    function collections(uint256 collectionId) external view returns (Collection memory);
+    function createCollection(CollectionData memory data) external returns (uint256);
+    function updateCollection(uint256 collectionId, CollectionData memory data) external;
+    function setCollectionStatus(uint256 collectionId, bool isMintable, bool isPaused) external;
+
+    // ========================================================================
+    // Revenue splits
+    // ========================================================================
+    function getPrimaryRevenueSplits(
+        uint256 _collectionId,
+        uint256 _price
+    )
+        external
+        view
+        returns (
+            uint256 fantiumRevenue_,
+            address payable fantiumAddress_,
+            uint256 athleteRevenue_,
+            address payable athleteAddress_
+        );
+
+    // ========================================================================
+    // Minting
+    // ========================================================================
+    function mintTo(uint256 collectionId, uint24 quantity, address recipient) external returns (uint256);
+
+    function mintTo(
+        uint256 collectionId,
+        uint24 quantity,
+        address recipient,
+        uint256 amount,
+        bytes memory signature
+    )
+        external
+        returns (uint256);
+
+    // ========================================================================
+    // Claiming
+    // ========================================================================
+    function upgradeTokenVersion(uint256 tokenId) external returns (uint256);
 }
 
 // node_modules/@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol
@@ -1727,185 +1943,257 @@ library StringsUpgradeable {
     }
 }
 
-// src/interfaces/IFANtiumNFT.sol
+// node_modules/@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol
+
+// OpenZeppelin Contracts (last updated v4.9.0) (utils/cryptography/ECDSA.sol)
 
 /**
- * @notice Collection struct
- * @dev CAUTION: Do not change the order of the struct fields!!
+ * @dev Elliptic Curve Digital Signature Algorithm (ECDSA) operations.
  *
- * Difference between isMintable and isPaused:
- * - isMintable false means that nobody can mint new tokens
- * - isPaused true means that the collection is mintable only by member of the collection allowlist
- *
- * price does not take the token decimals into account, which means that if the price is 1,000UDSC,
- * mintTo function will need to multiply the price by 10^decimals of the token.
+ * These functions can be used to verify that a message was signed by the holder
+ * of the private keys of a given address.
  */
-struct Collection {
+library ECDSAUpgradeable {
+    enum RecoverError {
+        NoError,
+        InvalidSignature,
+        InvalidSignatureLength,
+        InvalidSignatureS,
+        InvalidSignatureV // Deprecated in v4.8
+    }
+
+    function _throwError(RecoverError error) private pure {
+        if (error == RecoverError.NoError) {
+            return; // no error: do nothing
+        } else if (error == RecoverError.InvalidSignature) {
+            revert("ECDSA: invalid signature");
+        } else if (error == RecoverError.InvalidSignatureLength) {
+            revert("ECDSA: invalid signature length");
+        } else if (error == RecoverError.InvalidSignatureS) {
+            revert("ECDSA: invalid signature 's' value");
+        }
+    }
+
     /**
-     * @notice Always true if the collection exists.
+     * @dev Returns the address that signed a hashed message (`hash`) with
+     * `signature` or error string. This address can then be used for verification purposes.
+     *
+     * The `ecrecover` EVM opcode allows for malleable (non-unique) signatures:
+     * this function rejects them by requiring the `s` value to be in the lower
+     * half order, and the `v` value to be either 27 or 28.
+     *
+     * IMPORTANT: `hash` _must_ be the result of a hash operation for the
+     * verification to be secure: it is possible to craft signatures that
+     * recover to arbitrary addresses for non-hashed data. A safe way to ensure
+     * this is by receiving a hash of the original message (which may otherwise
+     * be too long), and then calling {toEthSignedMessageHash} on it.
+     *
+     * Documentation for signature generation:
+     * - with https://web3js.readthedocs.io/en/v1.3.4/web3-eth-accounts.html#sign[Web3.js]
+     * - with https://docs.ethers.io/v5/api/signer/#Signer-signMessage[ethers]
+     *
+     * _Available since v4.3._
      */
-    bool exists;
+    function tryRecover(bytes32 hash, bytes memory signature) internal pure returns (address, RecoverError) {
+        if (signature.length == 65) {
+            bytes32 r;
+            bytes32 s;
+            uint8 v;
+            // ecrecover takes the signature parameters, and the only way to get them
+            // currently is to use assembly.
+            /// @solidity memory-safe-assembly
+            assembly {
+                r := mload(add(signature, 0x20))
+                s := mload(add(signature, 0x40))
+                v := byte(0, mload(add(signature, 0x60)))
+            }
+            return tryRecover(hash, v, r, s);
+        } else {
+            return (address(0), RecoverError.InvalidSignatureLength);
+        }
+    }
+
     /**
-     * @notice UNIX timestamp of the collection launch.
+     * @dev Returns the address that signed a hashed message (`hash`) with
+     * `signature`. This address can then be used for verification purposes.
+     *
+     * The `ecrecover` EVM opcode allows for malleable (non-unique) signatures:
+     * this function rejects them by requiring the `s` value to be in the lower
+     * half order, and the `v` value to be either 27 or 28.
+     *
+     * IMPORTANT: `hash` _must_ be the result of a hash operation for the
+     * verification to be secure: it is possible to craft signatures that
+     * recover to arbitrary addresses for non-hashed data. A safe way to ensure
+     * this is by receiving a hash of the original message (which may otherwise
+     * be too long), and then calling {toEthSignedMessageHash} on it.
      */
-    uint256 launchTimestamp;
+    function recover(bytes32 hash, bytes memory signature) internal pure returns (address) {
+        (address recovered, RecoverError error) = tryRecover(hash, signature);
+        _throwError(error);
+        return recovered;
+    }
+
     /**
-     * @notice True if the collection is mintable.
+     * @dev Overload of {ECDSA-tryRecover} that receives the `r` and `vs` short-signature fields separately.
+     *
+     * See https://eips.ethereum.org/EIPS/eip-2098[EIP-2098 short signatures]
+     *
+     * _Available since v4.3._
      */
-    bool isMintable;
+    function tryRecover(bytes32 hash, bytes32 r, bytes32 vs) internal pure returns (address, RecoverError) {
+        bytes32 s = vs & bytes32(0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
+        uint8 v = uint8((uint256(vs) >> 255) + 27);
+        return tryRecover(hash, v, r, s);
+    }
+
     /**
-     * @notice True if the collection is paused.
+     * @dev Overload of {ECDSA-recover} that receives the `r and `vs` short-signature fields separately.
+     *
+     * _Available since v4.2._
      */
-    bool isPaused;
+    function recover(bytes32 hash, bytes32 r, bytes32 vs) internal pure returns (address) {
+        (address recovered, RecoverError error) = tryRecover(hash, r, vs);
+        _throwError(error);
+        return recovered;
+    }
+
     /**
-     * @notice Number of minted tokens.
+     * @dev Overload of {ECDSA-tryRecover} that receives the `v`,
+     * `r` and `s` signature fields separately.
+     *
+     * _Available since v4.3._
      */
-    uint24 invocations;
+    function tryRecover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address, RecoverError) {
+        // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature
+        // unique. Appendix F in the Ethereum Yellow paper (https://ethereum.github.io/yellowpaper/paper.pdf), defines
+        // the valid range for s in (301): 0 < s < secp256k1n ÷ 2 + 1, and for v in (302): v ∈ {27, 28}. Most
+        // signatures from current libraries generate a unique signature with an s-value in the lower half order.
+        //
+        // If your library generates malleable signatures, such as s-values in the upper range, calculate a new s-value
+        // with 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141 - s1 and flip v from 27 to 28 or
+        // vice versa. If your library also generates signatures with 0/1 for v instead 27/28, add 27 to v to accept
+        // these malleable signatures as well.
+        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
+            return (address(0), RecoverError.InvalidSignatureS);
+        }
+
+        // If the signature is valid (and not malleable), return the signer address
+        address signer = ecrecover(hash, v, r, s);
+        if (signer == address(0)) {
+            return (address(0), RecoverError.InvalidSignature);
+        }
+
+        return (signer, RecoverError.NoError);
+    }
+
     /**
-     * @notice Price of a token in the collection without decimals, which means that this price must be multiplied by
-     * 10^decimals of the token.
+     * @dev Overload of {ECDSA-recover} that receives the `v`,
+     * `r` and `s` signature fields separately.
      */
-    uint256 price;
+    function recover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address) {
+        (address recovered, RecoverError error) = tryRecover(hash, v, r, s);
+        _throwError(error);
+        return recovered;
+    }
+
     /**
-     * @notice Maximum number of tokens that can be minted.
+     * @dev Returns an Ethereum Signed Message, created from a `hash`. This
+     * produces hash corresponding to the one signed with the
+     * https://eth.wiki/json-rpc/API#eth_sign[`eth_sign`]
+     * JSON-RPC method as part of EIP-191.
+     *
+     * See {recover}.
      */
-    uint256 maxInvocations;
+    function toEthSignedMessageHash(bytes32 hash) internal pure returns (bytes32 message) {
+        // 32 is the length in bytes of hash,
+        // enforced by the type signature above
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, "\x19Ethereum Signed Message:\n32")
+            mstore(0x1c, hash)
+            message := keccak256(0x00, 0x3c)
+        }
+    }
+
     /**
-     * @notice Tournament earnings share in 1e7 basis points.
+     * @dev Returns an Ethereum Signed Message, created from `s`. This
+     * produces hash corresponding to the one signed with the
+     * https://eth.wiki/json-rpc/API#eth_sign[`eth_sign`]
+     * JSON-RPC method as part of EIP-191.
+     *
+     * See {recover}.
      */
-    uint256 tournamentEarningShare1e7;
+    function toEthSignedMessageHash(bytes memory s) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n", StringsUpgradeable.toString(s.length), s));
+    }
+
     /**
-     * @notice Address of the athlete.
+     * @dev Returns an Ethereum Signed Typed Data, created from a
+     * `domainSeparator` and a `structHash`. This produces hash corresponding
+     * to the one signed with the
+     * https://eips.ethereum.org/EIPS/eip-712[`eth_signTypedData`]
+     * JSON-RPC method as part of EIP-712.
+     *
+     * See {recover}.
      */
-    address payable athleteAddress;
+    function toTypedDataHash(bytes32 domainSeparator, bytes32 structHash) internal pure returns (bytes32 data) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let ptr := mload(0x40)
+            mstore(ptr, "\x19\x01")
+            mstore(add(ptr, 0x02), domainSeparator)
+            mstore(add(ptr, 0x22), structHash)
+            data := keccak256(ptr, 0x42)
+        }
+    }
+
     /**
-     * @notice Athlete primary sales share in 10,000 basis points.
+     * @dev Returns an Ethereum Signed Data with intended validator, created from a
+     * `validator` and `data` according to the version 0 of EIP-191.
+     *
+     * See {recover}.
      */
-    uint256 athletePrimarySalesBPS;
-    /**
-     * @notice Athlete secondary sales share in 10,000 basis points.
-     */
-    uint256 athleteSecondarySalesBPS;
-    /**
-     * @notice Address of the FANtium sales.
-     */
-    address payable fantiumSalesAddress;
-    /**
-     * @notice FANtium secondary sales share in 10,000 basis points.
-     */
-    uint256 fantiumSecondarySalesBPS;
-    /**
-     * @notice Other earnings (e.g. sponsorships, royalties, etc.) share in 1e7 basis points.
-     */
-    uint256 otherEarningShare1e7;
+    function toDataWithIntendedValidatorHash(address validator, bytes memory data) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("\x19\x00", validator, data));
+    }
 }
+
+// node_modules/@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol
+
+// OpenZeppelin Contracts v4.4.1 (utils/introspection/ERC165.sol)
 
 /**
- * @notice Create collection struct
- * @dev Fields may be added.
+ * @dev Implementation of the {IERC165} interface.
+ *
+ * Contracts that want to implement ERC165 should inherit from this contract and override {supportsInterface} to check
+ * for the additional interface id that will be supported. For example:
+ *
+ * ```solidity
+ * function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+ *     return interfaceId == type(MyInterface).interfaceId || super.supportsInterface(interfaceId);
+ * }
+ * ```
+ *
+ * Alternatively, {ERC165Storage} provides an easier to use but more expensive implementation.
  */
-struct CollectionData {
-    address payable athleteAddress;
-    uint256 athletePrimarySalesBPS;
-    uint256 athleteSecondarySalesBPS;
-    address payable fantiumSalesAddress;
-    uint256 fantiumSecondarySalesBPS;
-    uint256 launchTimestamp;
-    uint256 maxInvocations;
-    uint256 otherEarningShare1e7;
-    uint256 price;
-    uint256 tournamentEarningShare1e7;
-}
+abstract contract ERC165Upgradeable is Initializable, IERC165Upgradeable {
+    function __ERC165_init() internal onlyInitializing { }
 
-enum CollectionErrorReason {
-    INVALID_BPS_SUM,
-    INVALID_MAX_INVOCATIONS,
-    INVALID_PRIMARY_SALES_BPS,
-    INVALID_SECONDARY_SALES_BPS,
-    MAX_COLLECTIONS_REACHED,
-    INVALID_TOURNAMENT_EARNING_SHARE,
-    INVALID_OTHER_EARNING_SHARE,
-    INVALID_ATHLETE_ADDRESS,
-    INVALID_FANTIUM_SALES_ADDRESS,
-    INVALID_PRICE
-}
+    function __ERC165_init_unchained() internal onlyInitializing { }
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
 
-enum MintErrorReason {
-    INVALID_COLLECTION_ID,
-    COLLECTION_NOT_MINTABLE,
-    COLLECTION_NOT_LAUNCHED,
-    COLLECTION_PAUSED,
-    ACCOUNT_NOT_KYCED,
-    INVALID_SIGNATURE
-}
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return interfaceId == type(IERC165Upgradeable).interfaceId;
+    }
 
-enum UpgradeErrorReason {
-    INVALID_COLLECTION_ID,
-    VERSION_ID_TOO_HIGH
-}
-
-interface IFANtiumNFT is IERC721Upgradeable {
-    // ========================================================================
-    // Events
-    // ========================================================================
-    event CollectionCreated(uint256 indexed collectionId, Collection collection);
-    event CollectionUpdated(uint256 indexed collectionId, Collection collection);
-    event Sale(
-        uint256 indexed collectionId, uint24 quantity, address indexed recipient, uint256 amount, uint256 discount
-    );
-
-    // ========================================================================
-    // Errors
-    // ========================================================================
-    error InvalidCollectionId(uint256 collectionId);
-    error AthleteOnly(uint256 collectionId, address account, address expected);
-    error InvalidCollection(CollectionErrorReason reason);
-    error InvalidMint(MintErrorReason reason);
-    error InvalidUpgrade(UpgradeErrorReason reason);
-
-    // ========================================================================
-    // Collection
-    // ========================================================================
-    function collections(uint256 collectionId) external view returns (Collection memory);
-    function createCollection(CollectionData memory data) external returns (uint256);
-    function updateCollection(uint256 collectionId, CollectionData memory data) external;
-    function setCollectionStatus(uint256 collectionId, bool isMintable, bool isPaused) external;
-
-    // ========================================================================
-    // Revenue splits
-    // ========================================================================
-    function getPrimaryRevenueSplits(
-        uint256 _collectionId,
-        uint256 _price
-    )
-        external
-        view
-        returns (
-            uint256 fantiumRevenue_,
-            address payable fantiumAddress_,
-            uint256 athleteRevenue_,
-            address payable athleteAddress_
-        );
-
-    // ========================================================================
-    // Minting
-    // ========================================================================
-    function mintTo(uint256 collectionId, uint24 quantity, address recipient) external returns (uint256);
-
-    function mintTo(
-        uint256 collectionId,
-        uint24 quantity,
-        address recipient,
-        uint256 amount,
-        bytes memory signature
-    )
-        external
-        returns (uint256);
-
-    // ========================================================================
-    // Claiming
-    // ========================================================================
-    function upgradeTokenVersion(uint256 tokenId) external returns (uint256);
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }
 
 // node_modules/@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol
@@ -2161,260 +2449,6 @@ library SafeERC20Upgradeable {
         return success && (returndata.length == 0 || abi.decode(returndata, (bool)))
             && AddressUpgradeable.isContract(address(token));
     }
-}
-
-// node_modules/@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol
-
-// OpenZeppelin Contracts (last updated v4.9.0) (utils/cryptography/ECDSA.sol)
-
-/**
- * @dev Elliptic Curve Digital Signature Algorithm (ECDSA) operations.
- *
- * These functions can be used to verify that a message was signed by the holder
- * of the private keys of a given address.
- */
-library ECDSAUpgradeable {
-    enum RecoverError {
-        NoError,
-        InvalidSignature,
-        InvalidSignatureLength,
-        InvalidSignatureS,
-        InvalidSignatureV // Deprecated in v4.8
-
-    }
-
-    function _throwError(RecoverError error) private pure {
-        if (error == RecoverError.NoError) {
-            return; // no error: do nothing
-        } else if (error == RecoverError.InvalidSignature) {
-            revert("ECDSA: invalid signature");
-        } else if (error == RecoverError.InvalidSignatureLength) {
-            revert("ECDSA: invalid signature length");
-        } else if (error == RecoverError.InvalidSignatureS) {
-            revert("ECDSA: invalid signature 's' value");
-        }
-    }
-
-    /**
-     * @dev Returns the address that signed a hashed message (`hash`) with
-     * `signature` or error string. This address can then be used for verification purposes.
-     *
-     * The `ecrecover` EVM opcode allows for malleable (non-unique) signatures:
-     * this function rejects them by requiring the `s` value to be in the lower
-     * half order, and the `v` value to be either 27 or 28.
-     *
-     * IMPORTANT: `hash` _must_ be the result of a hash operation for the
-     * verification to be secure: it is possible to craft signatures that
-     * recover to arbitrary addresses for non-hashed data. A safe way to ensure
-     * this is by receiving a hash of the original message (which may otherwise
-     * be too long), and then calling {toEthSignedMessageHash} on it.
-     *
-     * Documentation for signature generation:
-     * - with https://web3js.readthedocs.io/en/v1.3.4/web3-eth-accounts.html#sign[Web3.js]
-     * - with https://docs.ethers.io/v5/api/signer/#Signer-signMessage[ethers]
-     *
-     * _Available since v4.3._
-     */
-    function tryRecover(bytes32 hash, bytes memory signature) internal pure returns (address, RecoverError) {
-        if (signature.length == 65) {
-            bytes32 r;
-            bytes32 s;
-            uint8 v;
-            // ecrecover takes the signature parameters, and the only way to get them
-            // currently is to use assembly.
-            /// @solidity memory-safe-assembly
-            assembly {
-                r := mload(add(signature, 0x20))
-                s := mload(add(signature, 0x40))
-                v := byte(0, mload(add(signature, 0x60)))
-            }
-            return tryRecover(hash, v, r, s);
-        } else {
-            return (address(0), RecoverError.InvalidSignatureLength);
-        }
-    }
-
-    /**
-     * @dev Returns the address that signed a hashed message (`hash`) with
-     * `signature`. This address can then be used for verification purposes.
-     *
-     * The `ecrecover` EVM opcode allows for malleable (non-unique) signatures:
-     * this function rejects them by requiring the `s` value to be in the lower
-     * half order, and the `v` value to be either 27 or 28.
-     *
-     * IMPORTANT: `hash` _must_ be the result of a hash operation for the
-     * verification to be secure: it is possible to craft signatures that
-     * recover to arbitrary addresses for non-hashed data. A safe way to ensure
-     * this is by receiving a hash of the original message (which may otherwise
-     * be too long), and then calling {toEthSignedMessageHash} on it.
-     */
-    function recover(bytes32 hash, bytes memory signature) internal pure returns (address) {
-        (address recovered, RecoverError error) = tryRecover(hash, signature);
-        _throwError(error);
-        return recovered;
-    }
-
-    /**
-     * @dev Overload of {ECDSA-tryRecover} that receives the `r` and `vs` short-signature fields separately.
-     *
-     * See https://eips.ethereum.org/EIPS/eip-2098[EIP-2098 short signatures]
-     *
-     * _Available since v4.3._
-     */
-    function tryRecover(bytes32 hash, bytes32 r, bytes32 vs) internal pure returns (address, RecoverError) {
-        bytes32 s = vs & bytes32(0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
-        uint8 v = uint8((uint256(vs) >> 255) + 27);
-        return tryRecover(hash, v, r, s);
-    }
-
-    /**
-     * @dev Overload of {ECDSA-recover} that receives the `r and `vs` short-signature fields separately.
-     *
-     * _Available since v4.2._
-     */
-    function recover(bytes32 hash, bytes32 r, bytes32 vs) internal pure returns (address) {
-        (address recovered, RecoverError error) = tryRecover(hash, r, vs);
-        _throwError(error);
-        return recovered;
-    }
-
-    /**
-     * @dev Overload of {ECDSA-tryRecover} that receives the `v`,
-     * `r` and `s` signature fields separately.
-     *
-     * _Available since v4.3._
-     */
-    function tryRecover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address, RecoverError) {
-        // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature
-        // unique. Appendix F in the Ethereum Yellow paper (https://ethereum.github.io/yellowpaper/paper.pdf), defines
-        // the valid range for s in (301): 0 < s < secp256k1n ÷ 2 + 1, and for v in (302): v ∈ {27, 28}. Most
-        // signatures from current libraries generate a unique signature with an s-value in the lower half order.
-        //
-        // If your library generates malleable signatures, such as s-values in the upper range, calculate a new s-value
-        // with 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141 - s1 and flip v from 27 to 28 or
-        // vice versa. If your library also generates signatures with 0/1 for v instead 27/28, add 27 to v to accept
-        // these malleable signatures as well.
-        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
-            return (address(0), RecoverError.InvalidSignatureS);
-        }
-
-        // If the signature is valid (and not malleable), return the signer address
-        address signer = ecrecover(hash, v, r, s);
-        if (signer == address(0)) {
-            return (address(0), RecoverError.InvalidSignature);
-        }
-
-        return (signer, RecoverError.NoError);
-    }
-
-    /**
-     * @dev Overload of {ECDSA-recover} that receives the `v`,
-     * `r` and `s` signature fields separately.
-     */
-    function recover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address) {
-        (address recovered, RecoverError error) = tryRecover(hash, v, r, s);
-        _throwError(error);
-        return recovered;
-    }
-
-    /**
-     * @dev Returns an Ethereum Signed Message, created from a `hash`. This
-     * produces hash corresponding to the one signed with the
-     * https://eth.wiki/json-rpc/API#eth_sign[`eth_sign`]
-     * JSON-RPC method as part of EIP-191.
-     *
-     * See {recover}.
-     */
-    function toEthSignedMessageHash(bytes32 hash) internal pure returns (bytes32 message) {
-        // 32 is the length in bytes of hash,
-        // enforced by the type signature above
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, "\x19Ethereum Signed Message:\n32")
-            mstore(0x1c, hash)
-            message := keccak256(0x00, 0x3c)
-        }
-    }
-
-    /**
-     * @dev Returns an Ethereum Signed Message, created from `s`. This
-     * produces hash corresponding to the one signed with the
-     * https://eth.wiki/json-rpc/API#eth_sign[`eth_sign`]
-     * JSON-RPC method as part of EIP-191.
-     *
-     * See {recover}.
-     */
-    function toEthSignedMessageHash(bytes memory s) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n", StringsUpgradeable.toString(s.length), s));
-    }
-
-    /**
-     * @dev Returns an Ethereum Signed Typed Data, created from a
-     * `domainSeparator` and a `structHash`. This produces hash corresponding
-     * to the one signed with the
-     * https://eips.ethereum.org/EIPS/eip-712[`eth_signTypedData`]
-     * JSON-RPC method as part of EIP-712.
-     *
-     * See {recover}.
-     */
-    function toTypedDataHash(bytes32 domainSeparator, bytes32 structHash) internal pure returns (bytes32 data) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let ptr := mload(0x40)
-            mstore(ptr, "\x19\x01")
-            mstore(add(ptr, 0x02), domainSeparator)
-            mstore(add(ptr, 0x22), structHash)
-            data := keccak256(ptr, 0x42)
-        }
-    }
-
-    /**
-     * @dev Returns an Ethereum Signed Data with intended validator, created from a
-     * `validator` and `data` according to the version 0 of EIP-191.
-     *
-     * See {recover}.
-     */
-    function toDataWithIntendedValidatorHash(address validator, bytes memory data) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked("\x19\x00", validator, data));
-    }
-}
-
-// node_modules/@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol
-
-// OpenZeppelin Contracts v4.4.1 (utils/introspection/ERC165.sol)
-
-/**
- * @dev Implementation of the {IERC165} interface.
- *
- * Contracts that want to implement ERC165 should inherit from this contract and override {supportsInterface} to check
- * for the additional interface id that will be supported. For example:
- *
- * ```solidity
- * function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
- *     return interfaceId == type(MyInterface).interfaceId || super.supportsInterface(interfaceId);
- * }
- * ```
- *
- * Alternatively, {ERC165Storage} provides an easier to use but more expensive implementation.
- */
-abstract contract ERC165Upgradeable is Initializable, IERC165Upgradeable {
-    function __ERC165_init() internal onlyInitializing { }
-
-    function __ERC165_init_unchained() internal onlyInitializing { }
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(IERC165Upgradeable).interfaceId;
-    }
-
-    /**
-     * @dev This empty reserved space is put in place to allow future versions to add new
-     * variables without shifting down storage in the inheritance chain.
-     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-     */
-    uint256[50] private __gap;
 }
 
 // node_modules/@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol
@@ -3392,7 +3426,9 @@ contract ERC721Upgradeable is
      *
      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
      */
-    function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize) internal virtual { }
+    function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
+        internal
+        virtual { }
 
     /**
      * @dev Hook that is called after any token transfer. This includes minting and burning. If {ERC721Consecutive} is
@@ -3430,24 +3466,25 @@ contract ERC721Upgradeable is
     uint256[44] private __gap;
 }
 
-// src/FANtiumNFTV6.sol
+// src/FANtiumAthletesV10.sol
 
 /**
- * @title FANtium ERC721 contract V6.
- * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
- *
- * @custom:oz-upgrades-from src/archive/FANtiumNFTV5.sol:FantiumNFTV5
+ * @title FANtium Athletes ERC721 contract V10.
+ * @author Mathieu Bour, Alex Chernetsky - FANtium AG, based on previous work by MTX studio AG.
+ * @custom:oz-upgrades-from src/archive/FANtiumAthletesV9.sol:FANtiumAthletesV9
  */
-contract FANtiumNFTV6 is
+contract FANtiumAthletesV10 is
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
     PausableUpgradeable,
-    IFANtiumNFT
+    Rescue,
+    IFANtiumAthletes
 {
     using StringsUpgradeable for uint256;
     using ECDSAUpgradeable for bytes32;
+    using SafeERC20Upgradeable for IERC20MetadataUpgradeable;
 
     // ========================================================================
     // Constants
@@ -3462,8 +3499,6 @@ contract FANtiumNFTV6 is
     // Roles
     // ========================================================================
     bytes32 public constant FORWARDER_ROLE = keccak256("FORWARDER_ROLE");
-    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
-    bytes32 public constant KYC_MANAGER_ROLE = keccak256("KYC_MANAGER_ROLE");
     bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
 
     /**
@@ -3472,12 +3507,18 @@ contract FANtiumNFTV6 is
      */
     bytes32 public constant TOKEN_UPGRADER_ROLE = keccak256("TOKEN_UPGRADER_ROLE");
 
+    /**
+     * @notice Trusted operator role that can approve all transfers - only first party operators are allowed.
+     * @dev Used by the marketplace to approve transfers.
+     */
+    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
+
     // ========================================================================
     // State variables
     // ========================================================================
     /**
      * @notice Mapping of collection IDs to collection data.
-     * @custom:oz-renamed-from collections
+     * @custom:oz-retyped-from mapping(uint256 => Collection)
      */
     mapping(uint256 => Collection) private _collections;
 
@@ -3489,14 +3530,12 @@ contract FANtiumNFTV6 is
     /**
      * @notice Mapping of collection IDs to allowlist allocations.
      * @dev Deprecated: replaced by the userManager contract.
-     * @custom:oz-renamed-from collectionIdToAllowList
      */
     mapping(uint256 => mapping(address => uint256)) private UNUSED_collectionIdToAllowList;
 
     /**
      * @notice Mapping of addresses that have been KYCed.
      * @dev Deprecated: replaced by the userManager contract.
-     * @custom:oz-renamed-from kycedAddresses
      */
     mapping(address => bool) private UNUSED_kycedAddresses;
 
@@ -3508,23 +3547,21 @@ contract FANtiumNFTV6 is
     /**
      * @notice The ERC20 token used for payments, usually a stablecoin.
      */
-    address public erc20PaymentToken;
+    IERC20MetadataUpgradeable public erc20PaymentToken;
 
     /**
      * @dev Deprecated: replaced by the TOKEN_UPGRADER_ROLE.
-     * @custom:oz-renamed-from claimContract
      */
     address private UNUSED_claimContract;
 
     /**
-     * @dev Use to retrieve user information such as KYC status, IDENT status, and allowlist allocations.
-     * @custom:oz-renamed-from fantiumUserManager
+     * @dev Deprecated: kept for upgrade compatibility
+     * @custom:oz-renamed-from userManager
      */
-    IFANtiumUserManager public userManager;
+    address private UNUSED_userManager;
 
     /**
      * @dev Deprecated: replaced by the FORWARDER_ROLE.
-     * @custom:oz-renamed-from trustedForwarder
      */
     address private UNUSED_trustedForwarder;
 
@@ -3533,6 +3570,11 @@ contract FANtiumNFTV6 is
      * @dev Used to prevent replay attacks with the mintTo function.
      */
     mapping(address => uint256) public nonces;
+
+    /**
+     * @dev The FANtium treasury address.
+     */
+    address payable public treasury;
 
     // ========================================================================
     // UUPS upgradeable pattern
@@ -3569,44 +3611,16 @@ contract FANtiumNFTV6 is
     // ========================================================================
     // Access control
     // ========================================================================
-    modifier onlyRoleOrAdmin(bytes32 role) {
-        _checkRoleOrAdmin(role);
-        _;
-    }
-
     modifier onlyAdmin() {
         _checkRole(DEFAULT_ADMIN_ROLE);
         _;
     }
 
-    modifier onlyManagerOrAdmin() {
-        _checkRoleOrAdmin(MANAGER_ROLE);
-        _;
-    }
-
-    function _checkRoleOrAdmin(bytes32 role) internal view virtual {
-        if (!hasRole(role, _msgSender()) && !hasRole(DEFAULT_ADMIN_ROLE, _msgSender())) {
-            revert(
-                string(
-                    abi.encodePacked(
-                        "AccessControl: account ",
-                        StringsUpgradeable.toHexString(_msgSender()),
-                        " is missing role ",
-                        StringsUpgradeable.toHexString(uint256(role), 32)
-                    )
-                )
-            );
-        }
-    }
-
     // ========================================================================
     // Modifiers
     // ========================================================================
-    modifier onlyAthleteOrManagerOrAdmin(uint256 collectionId) {
-        if (
-            _msgSender() != _collections[collectionId].athleteAddress && !hasRole(MANAGER_ROLE, _msgSender())
-                && !hasRole(DEFAULT_ADMIN_ROLE, _msgSender())
-        ) {
+    modifier onlyAthleteOrAdmin(uint256 collectionId) {
+        if (_msgSender() != _collections[collectionId].athleteAddress && !hasRole(DEFAULT_ADMIN_ROLE, _msgSender())) {
             revert AthleteOnly(collectionId, _msgSender(), _collections[collectionId].athleteAddress);
         }
         _;
@@ -3625,14 +3639,14 @@ contract FANtiumNFTV6 is
     /**
      * @notice Update contract pause status to `_paused`.
      */
-    function pause() external onlyManagerOrAdmin {
+    function pause() external onlyAdmin {
         _pause();
     }
 
     /**
      * @notice Unpauses contract
      */
-    function unpause() external onlyManagerOrAdmin {
+    function unpause() external onlyAdmin {
         _unpause();
     }
 
@@ -3681,29 +3695,29 @@ contract FANtiumNFTV6 is
     // ========================================================================
     /**
      * @notice Sets the base URI for the token metadata.
-     * @dev Restricted to manager or admin.
+     * @dev Restricted to admin.
      * @param baseURI_ The new base URI.
      */
-    function setBaseURI(string memory baseURI_) external whenNotPaused onlyManagerOrAdmin {
+    function setBaseURI(string memory baseURI_) external whenNotPaused onlyAdmin {
         baseURI = baseURI_;
     }
 
     /**
-     * @notice Sets the user manager.
-     * @dev Restricted to manager or admin.
-     * @param _userManager The new user manager.
+     * @notice Sets the ERC20 payment token.
+     * @dev Restricted to admin.
+     * @param _erc20PaymentToken The new ERC20 payment token.
      */
-    function setUserManager(IFANtiumUserManager _userManager) external whenNotPaused onlyManagerOrAdmin {
-        userManager = _userManager;
+    function setERC20PaymentToken(IERC20MetadataUpgradeable _erc20PaymentToken) external whenNotPaused onlyAdmin {
+        erc20PaymentToken = _erc20PaymentToken;
     }
 
     /**
-     * @notice Sets the ERC20 payment token.
-     * @dev Restricted to manager or admin.
-     * @param _erc20PaymentToken The new ERC20 payment token.
+     * @notice Sets the FANtium treasury address.
+     * @dev Restricted to admin.
+     * @param _treasury The new FANtium treasury address.
      */
-    function setERC20PaymentToken(address _erc20PaymentToken) external whenNotPaused onlyManagerOrAdmin {
-        erc20PaymentToken = _erc20PaymentToken;
+    function setTreasury(address payable _treasury) external whenNotPaused onlyAdmin {
+        treasury = _treasury;
     }
 
     // ========================================================================
@@ -3715,6 +3729,26 @@ contract FANtiumNFTV6 is
      */
     function _baseURI() internal view virtual override returns (string memory) {
         return baseURI;
+    }
+
+    /**
+     * @notice Returns true if `operator` is allowed to manage all of `owner`'s assets.
+     * @dev First party operators are allowed to manage all assets without restrictions.
+     */
+    function isApprovedForAll(
+        address owner,
+        address operator
+    )
+        public
+        view
+        override (ERC721Upgradeable, IERC721Upgradeable)
+        returns (bool)
+    {
+        if (hasRole(OPERATOR_ROLE, operator)) {
+            return true;
+        }
+
+        return super.isApprovedForAll(owner, operator);
     }
 
     // ========================================================================
@@ -3738,10 +3772,6 @@ contract FANtiumNFTV6 is
             revert InvalidCollection(CollectionErrorReason.INVALID_BPS_SUM);
         }
 
-        if (data.fantiumSalesAddress == address(0)) {
-            revert InvalidCollection(CollectionErrorReason.INVALID_FANTIUM_SALES_ADDRESS);
-        }
-
         if (data.maxInvocations >= MAX_INVOCATIONS) {
             revert InvalidCollection(CollectionErrorReason.INVALID_MAX_INVOCATIONS);
         }
@@ -3763,11 +3793,11 @@ contract FANtiumNFTV6 is
 
     /**
      * @notice Creates a new collection.
-     * @dev Restricted to manager or admin.
+     * @dev Restricted to admin.
      * @param data The new collection data.
      * @return collectionId The ID of the created collection.
      */
-    function createCollection(CollectionData memory data) external whenNotPaused onlyManagerOrAdmin returns (uint256) {
+    function createCollection(CollectionData memory data) external whenNotPaused onlyAdmin returns (uint256) {
         _checkCollectionData(data);
 
         uint256 collectionId = nextCollectionId++;
@@ -3776,7 +3806,7 @@ contract FANtiumNFTV6 is
             athletePrimarySalesBPS: data.athletePrimarySalesBPS,
             athleteSecondarySalesBPS: data.athleteSecondarySalesBPS,
             exists: true,
-            fantiumSalesAddress: data.fantiumSalesAddress,
+            UNUSED_fantiumSalesAddress: payable(address(0)),
             fantiumSecondarySalesBPS: data.fantiumSecondarySalesBPS,
             invocations: 0,
             isMintable: false,
@@ -3795,7 +3825,7 @@ contract FANtiumNFTV6 is
 
     /**
      * @notice Updates a collection.
-     * @dev Restricted to manager or admin.
+     * @dev Restricted to admin.
      * @param collectionId The collection ID to update.
      * @param data The new collection data.
      */
@@ -3806,7 +3836,7 @@ contract FANtiumNFTV6 is
         external
         onlyValidCollectionId(collectionId)
         whenNotPaused
-        onlyManagerOrAdmin
+        onlyAdmin
     {
         _checkCollectionData(data);
 
@@ -3819,7 +3849,6 @@ contract FANtiumNFTV6 is
         updatedCollection.athleteAddress = data.athleteAddress;
         updatedCollection.athletePrimarySalesBPS = data.athletePrimarySalesBPS;
         updatedCollection.athleteSecondarySalesBPS = data.athleteSecondarySalesBPS;
-        updatedCollection.fantiumSalesAddress = data.fantiumSalesAddress;
         updatedCollection.fantiumSecondarySalesBPS = data.fantiumSecondarySalesBPS;
         updatedCollection.launchTimestamp = data.launchTimestamp;
         updatedCollection.maxInvocations = data.maxInvocations;
@@ -3848,7 +3877,7 @@ contract FANtiumNFTV6 is
         external
         whenNotPaused
         onlyValidCollectionId(collectionId)
-        onlyAthleteOrManagerOrAdmin(collectionId)
+        onlyAthleteOrAdmin(collectionId)
     {
         _collections[collectionId].isMintable = isMintable;
         _collections[collectionId].isPaused = isPaused;
@@ -3888,7 +3917,7 @@ contract FANtiumNFTV6 is
         fantiumRevenue = amount - athleteRevenue;
 
         // set addresses from storage
-        fantiumAddress = collection.fantiumSalesAddress;
+        fantiumAddress = treasury;
         athleteAddress = collection.athleteAddress;
     }
 
@@ -3904,16 +3933,12 @@ contract FANtiumNFTV6 is
 
         // FANtium payment
         if (fantiumRevenue_ > 0) {
-            SafeERC20Upgradeable.safeTransferFrom(
-                IERC20Upgradeable(erc20PaymentToken), _sender, fantiumAddress_, fantiumRevenue_
-            );
+            erc20PaymentToken.safeTransferFrom(_sender, fantiumAddress_, fantiumRevenue_);
         }
 
         // athlete payment
         if (athleteRevenue_ > 0) {
-            SafeERC20Upgradeable.safeTransferFrom(
-                IERC20Upgradeable(erc20PaymentToken), _sender, athleteAddress_, athleteRevenue_
-            );
+            erc20PaymentToken.safeTransferFrom(_sender, athleteAddress_, athleteRevenue_);
         }
     }
 
@@ -3923,19 +3948,8 @@ contract FANtiumNFTV6 is
     /**
      * @notice Checks if a mint is possible for a collection
      * @param collectionId Collection ID.
-     * @param quantity Amount of tokens to mint.
-     * @param recipient Recipient of the mint.
      */
-    function mintable(
-        uint256 collectionId,
-        uint24 quantity,
-        address recipient
-    )
-        public
-        view
-        onlyValidCollectionId(collectionId)
-        returns (bool useAllowList)
-    {
+    function mintable(uint256 collectionId) public view onlyValidCollectionId(collectionId) {
         Collection memory collection = _collections[collectionId];
         if (!collection.isMintable) {
             revert InvalidMint(MintErrorReason.COLLECTION_NOT_MINTABLE);
@@ -3945,20 +3959,10 @@ contract FANtiumNFTV6 is
             revert InvalidMint(MintErrorReason.COLLECTION_NOT_LAUNCHED);
         }
 
-        if (!userManager.isKYCed(recipient)) {
-            revert InvalidMint(MintErrorReason.ACCOUNT_NOT_KYCED);
-        }
-
         // If the collection is paused, we need to check if the recipient is on the allowlist and has enough allocation
         if (collection.isPaused) {
-            useAllowList = true;
-            bool isAllowListed = userManager.allowlist(recipient, collectionId) >= quantity;
-            if (!isAllowListed) {
-                revert InvalidMint(MintErrorReason.COLLECTION_PAUSED);
-            }
+            revert InvalidMint(MintErrorReason.COLLECTION_PAUSED);
         }
-
-        return useAllowList;
     }
 
     /**
@@ -3994,12 +3998,9 @@ contract FANtiumNFTV6 is
         Collection memory collection = _collections[collectionId];
         uint256 tokenId = (collectionId * MAX_COLLECTIONS) + collection.invocations;
 
-        bool useAllowList = mintable(collectionId, quantity, recipient);
+        mintable(collectionId);
 
         _collections[collectionId].invocations += quantity;
-        if (useAllowList) {
-            userManager.decreaseAllowList(recipient, collectionId, quantity);
-        }
 
         // Send funds to the treasury and athlete account.
         _splitFunds(amount, collectionId, _msgSender());
@@ -4046,8 +4047,8 @@ contract FANtiumNFTV6 is
         whenNotPaused
         returns (uint256)
     {
-        bytes32 hash =
-            keccak256(abi.encode(collectionId, quantity, recipient, amount, nonces[recipient])).toEthSignedMessageHash();
+        bytes32 hash = keccak256(abi.encode(collectionId, quantity, recipient, amount, nonces[recipient]))
+            .toEthSignedMessageHash();
         if (!hasRole(SIGNER_ROLE, hash.recover(signature))) {
             revert InvalidMint(MintErrorReason.INVALID_SIGNATURE);
         }
@@ -4056,12 +4057,27 @@ contract FANtiumNFTV6 is
         return _mintTo(collectionId, quantity, amount, recipient);
     }
 
+    // ========================================================================
+    // Batch transfer functions
+    // ========================================================================
+    /**
+     * @notice Batch transfer NFTs from one address to another.
+     * @param from The address to transfer the NFTs from.
+     * @param to The address to transfer the NFTs to.
+     * @param tokenIds The IDs of the NFTs to transfer.
+     */
     function batchTransferFrom(address from, address to, uint256[] memory tokenIds) public whenNotPaused {
         for (uint256 i = 0; i < tokenIds.length; i++) {
             transferFrom(from, to, tokenIds[i]);
         }
     }
 
+    /**
+     * @notice Batch safe transfer NFTs from one address to another.
+     * @param from The address to transfer the NFTs from.
+     * @param to The address to transfer the NFTs to.
+     * @param tokenIds The IDs of the NFTs to transfer.
+     */
     function batchSafeTransferFrom(address from, address to, uint256[] memory tokenIds) public whenNotPaused {
         for (uint256 i = 0; i < tokenIds.length; i++) {
             safeTransferFrom(from, to, tokenIds[i]);
@@ -4101,5 +4117,24 @@ contract FANtiumNFTV6 is
         uint256 newTokenId = TokenVersionUtil.createTokenId(collectionId, tokenVersion, number);
         _mint(owner, newTokenId);
         return newTokenId;
+    }
+
+    // ========================================================================
+    // Rescue functions
+    // ========================================================================
+    /**
+     * @notice Authorizes a rescue of a token by checking if the sender has the DEFAULT_ADMIN_ROLE
+     */
+    function _authorizeRescue(uint256, address, string calldata) internal view override {
+        _checkRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+
+    /**
+     * @notice Rescues a single token by transferring it to a specified address
+     * @param tokenId The ID of the token to rescue
+     * @param recipient The address that received the rescued token
+     */
+    function _rescue(uint256 tokenId, address recipient, string calldata) internal override {
+        _transfer(ownerOf(tokenId), recipient, tokenId);
     }
 }

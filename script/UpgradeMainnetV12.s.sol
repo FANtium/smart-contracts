@@ -17,7 +17,8 @@ contract UpgradeMainnetV12 is Script {
         vm.startBroadcast(vm.envUint("DEPLOYER_PRIVATE_KEY"));
 
         Options memory opts;
-        opts.referenceContract = "src/archive/FANtiumAthletesV11.sol:FANtiumAthletesV11";
+        opts.referenceBuildInfoDir = "out-archive/archive";
+        opts.referenceContract = "archive:FANtiumAthletesV11";
         Core.prepareUpgrade("FANtiumAthletesV12.sol:FANtiumAthletesV12", opts);
         vm.stopBroadcast();
     }

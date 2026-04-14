@@ -793,7 +793,6 @@ library MathUpgradeable {
         Down, // Toward negative infinity
         Up, // Toward infinity
         Zero // Toward zero
-
     }
 
     /**
@@ -1447,7 +1446,7 @@ library TokenVersionUtil {
     uint256 constant TEN_THOUSAND = 10_000;
 
     /*///////////////////////////////////////////////////////////////
-                            INTERNAL 
+                            INTERNAL
     //////////////////////////////////////////////////////////////*/
 
     function getTokenInfo(uint256 _tokenId) internal pure returns (uint256, uint256, uint256) {
@@ -1458,11 +1457,7 @@ library TokenVersionUtil {
         return (collectionOfToken, versionOfToken, tokenNr);
     }
 
-    function createTokenId(
-        uint256 _collectionId,
-        uint256 _versionId,
-        uint256 _tokenNr
-    )
+    function createTokenId(uint256 _collectionId, uint256 _versionId, uint256 _tokenNr)
         internal
         pure
         returns (uint256)
@@ -1556,7 +1551,8 @@ abstract contract Initializable {
     modifier initializer() {
         bool isTopLevelCall = !_initializing;
         require(
-            (isTopLevelCall && _initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),
+            (isTopLevelCall && _initialized < 1)
+                || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),
             "Initializable: contract is already initialized"
         );
         _initialized = 1;
@@ -2256,13 +2252,7 @@ abstract contract OperatorFiltererUpgradeable is Initializable {
         IOperatorFilterRegistry(0x000000000000AAeB6D7670E522A718067333cd4E);
 
     /// @dev The upgradeable initialize function that should be called when the contract is being upgraded.
-    function __OperatorFilterer_init(
-        address subscriptionOrRegistrantToCopy,
-        bool subscribe
-    )
-        internal
-        onlyInitializing
-    {
+    function __OperatorFilterer_init(address subscriptionOrRegistrantToCopy, bool subscribe) internal onlyInitializing {
         // If an inheriting token contract is deployed to a network without the registry deployed, the modifier
         // will not revert, but the contract will need to be registered with the registry once it is deployed in
         // order for the modifier to filter addresses.
@@ -3680,7 +3670,9 @@ contract ERC721Upgradeable is
      *
      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
      */
-    function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize) internal virtual { }
+    function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
+        internal
+        virtual { }
 
     /**
      * @dev Hook that is called after any token transfer. This includes minting and burning. If {ERC721Consecutive} is
@@ -3718,13 +3710,13 @@ contract ERC721Upgradeable is
     uint256[44] private __gap;
 }
 
-// src/archive/contracts/FantiumNFTV4.sol
+// src/archive/contracts/FantiumNFTV3.sol
 
 /**
- * @title FANtium ERC721 contract V4.
+ * @title FANtium ERC721 contract V3.
  * @author MTX stuido AG.
  */
-contract FantiumNFTV4 is
+contract FantiumNFTV3 is
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
@@ -3944,7 +3936,7 @@ contract FantiumNFTV4 is
             // if minting is paused, require address to be on allowlist
             require(
                 IFantiumUserManager(fantiumUserManager).hasAllowlist(address(this), _collectionId, _msgSender())
-                    >= _amount || hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
+                        >= _amount || hasRole(PLATFORM_MANAGER_ROLE, msg.sender),
                 "Collection is paused or allowlist allocation insufficient"
             );
         }
@@ -3956,9 +3948,8 @@ contract FantiumNFTV4 is
         collection.invocations += _amount;
 
         if (collection.isPaused && !hasRole(PLATFORM_MANAGER_ROLE, msg.sender)) {
-            IFantiumUserManager(fantiumUserManager).reduceAllowListAllocation(
-                _collectionId, address(this), _msgSender(), _amount
-            );
+            IFantiumUserManager(fantiumUserManager)
+                .reduceAllowListAllocation(_collectionId, address(this), _msgSender(), _amount);
         }
 
         // INTERACTIONS
@@ -4094,7 +4085,7 @@ contract FantiumNFTV4 is
         require(nextCollectionId < 1_000_000, "FantiumNFTV3: max collections reached");
         require(
             _tournamentEarningShare1e7 <= 1e7 && _otherEarningShare1e7 <= 1e7,
-            "FantiumNFTV3: token share must be smaller 1e7"
+            "FantiumNFTV3: token share must be less than 1e7"
         );
 
         require(

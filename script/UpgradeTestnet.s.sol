@@ -2,6 +2,7 @@
 pragma solidity 0.8.28;
 
 import { Upgrades } from "@openzeppelin/foundry-upgrades/LegacyUpgrades.sol";
+import { Options } from "@openzeppelin/foundry-upgrades/Options.sol";
 import { Script } from "forge-std/Script.sol"; // v4 contracts
 
 /**
@@ -27,12 +28,16 @@ contract UpgradeTestnet is Script {
 
         vm.createSelectFork(vm.rpcUrl("amoy"));
         vm.startBroadcast(vm.envUint("ADMIN_PRIVATE_KEY"));
+
+        Options memory opts;
+        opts.referenceBuildInfoDir = "out-archive/archive";
+
         if (FANTIUM_ATHLETES_UPGRADE) {
-            Upgrades.upgradeProxy(FANTIUM_ATHLETES_PROXY, "FANtiumAthletesV12.sol:FANtiumAthletesV12", "");
+            Upgrades.upgradeProxy(FANTIUM_ATHLETES_PROXY, "FANtiumAthletesV12.sol:FANtiumAthletesV12", "", opts);
         }
 
         if (FANTIUM_CLAIMING_UPGRADE) {
-            Upgrades.upgradeProxy(FANTIUM_CLAIMING_PROXY, "FANtiumClaimingV5.sol:FANtiumClaimingV5", "");
+            Upgrades.upgradeProxy(FANTIUM_CLAIMING_PROXY, "FANtiumClaimingV5.sol:FANtiumClaimingV5", "", opts);
         }
         vm.stopBroadcast();
     }

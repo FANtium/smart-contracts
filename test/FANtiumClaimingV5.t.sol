@@ -113,7 +113,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             fantiumAddress: payable(makeAddr("fantiumAddress")),
             startTime: block.timestamp + 2 days, // Start in the future
             closeTime: block.timestamp + 1 days // Close < Start
-         });
+        });
 
         vm.expectRevert(
             abi.encodeWithSelector(IFANtiumClaiming.InvalidDistribution.selector, DistributionErrorReason.INVALID_TIME)
@@ -157,7 +157,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             otherEarningShare1e7: 5_000_000, // 50%
             price: 100 ether,
             tournamentEarningShare1e7: 2_500_000 // 25%
-         });
+        });
 
         vm.prank(fantiumAthletes_admin);
         uint256 collectionId = fantiumAthletes.createCollection(collectionData);

@@ -5,17 +5,18 @@
     "license": "MIT",
     "private": true,
     "scripts": {
-        "clean": "rm -rf cache out",
+        "clean": "rm -rf cache out out-archive",
         "build": "forge build",
+        "build:archive": "FOUNDRY_PROFILE=archive forge build && rm -rf out-archive/archive && mv out-archive/build-info out-archive/archive",
         "lint": "bun run lint:sol && bun run prettier:check",
         "lint:sol": "forge fmt --check && bun solhint \"{script,src,test}/**/*.sol\"",
         "prettier:check": "prettier --check \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
         "prettier:write": "prettier --write \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
-        "validate": "openzeppelin-upgrades-core validate out/build-info --exclude='src/archive/**/*.sol' --exclude='src/vendor/**/*.sol'",
-        "validate:rebuild": "forge clean && forge build && bun run validate",
+        "validate": "openzeppelin-upgrades-core validate out/build-info --referenceBuildInfoDirs out-archive/archive --exclude='archive/**/*.sol' --exclude='src/upgrades/**/*.sol'",
+        "validate:rebuild": "bun run clean && bun run build:archive && forge build && bun run validate",
         "test": "forge test",
         "test:coverage": "forge coverage --ir-minimum",
-        "test:coverage:report": "forge coverage --ir-minimum --report lcov && lcov --remove lcov.info 'src/archive/*' 'src/upgrades/*' 'script/*' 'test/*' --output-file lcov.info && genhtml lcov.info --branch-coverage --ignore-errors corrupt --output-dir coverage"
+        "test:coverage:report": "forge coverage --ir-minimum --report lcov && lcov --remove lcov.info 'archive/*' 'src/upgrades/*' 'script/*' 'test/*' --output-file lcov.info && genhtml lcov.info --branch-coverage --ignore-errors corrupt --output-dir coverage"
     },
     "dependencies": {
         "@openzeppelin/contracts": "4.9.6",

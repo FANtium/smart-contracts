@@ -1054,7 +1054,6 @@ library MathUpgradeable {
         Down, // Toward negative infinity
         Up, // Toward infinity
         Zero // Toward zero
-
     }
 
     /**
@@ -1590,11 +1589,7 @@ library TokenVersionUtil {
         baseTokenId = collectionId * ONE_MILLION + number;
     }
 
-    function createTokenId(
-        uint256 _collectionId,
-        uint256 _versionId,
-        uint256 _tokenNr
-    )
+    function createTokenId(uint256 _collectionId, uint256 _versionId, uint256 _tokenNr)
         internal
         pure
         returns (uint256)
@@ -1867,7 +1862,8 @@ abstract contract Initializable {
     modifier initializer() {
         bool isTopLevelCall = !_initializing;
         require(
-            (isTopLevelCall && _initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),
+            (isTopLevelCall && _initialized < 1)
+                || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),
             "Initializable: contract is already initialized"
         );
         _initialized = 1;
@@ -3073,16 +3069,16 @@ abstract contract AccessControlUpgradeable is
     uint256[49] private __gap;
 }
 
-// src/FANtiumClaimingV3.sol
+// src/FANtiumClaimingV4.sol
 
 /**
- * @title FANtium Claining contract V3.
+ * @title FANtium Claining contract V4.
  * @notice This contract is used to manage distributions and claim payouts for FAN token holders.
  * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
  *
- * @custom:oz-upgrades-from src/archive/FANtiumClaimingV1.sol:FantiumClaimingV1
+ * @custom:oz-upgrades-from src/archive/FANtiumClaimingV3.sol:FANtiumClaimingV3
  */
-contract FANtiumClaimingV3 is
+contract FANtiumClaimingV4 is
     Initializable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
@@ -3482,9 +3478,33 @@ contract FANtiumClaimingV3 is
         _computeShares(distributionId);
 
         Distribution memory updatedDE = _distributions[distributionId];
-        if (updatedDE.tournamentDistributionAmount + updatedDE.otherDistributionAmount > updatedDE.amountPaidIn) {
+        if (updatedDE.tournamentDistributionAmount + updatedDE.otherDistributionAmount < updatedDE.amountPaidIn) {
+            // Cannot lower the amount paid in
             revert InvalidDistribution(DistributionErrorReason.INVALID_AMOUNT);
         }
+    }
+
+    /**
+     * Forcefully set the athlete address of a distribution.
+     * Used only in extreme situations when the athletes don't have access to his wallet.
+     * @param distributionId The ID of the distribution
+     * @param newAthlete The new athlete address
+     */
+    function setDistributionAthlete(
+        uint256 distributionId,
+        address payable newAthlete
+    )
+        external
+        onlyAdmin
+        onlyValidDistribution(distributionId)
+    {
+        Distribution storage existingDE = _distributions[distributionId];
+
+        if (newAthlete == address(0)) {
+            revert InvalidDistribution(DistributionErrorReason.INVALID_ADDRESS);
+        }
+
+        existingDE.athleteAddress = newAthlete;
     }
 
     /**
@@ -3601,14 +3621,7 @@ contract FANtiumClaimingV3 is
      * @param tokenId The ID of the token
      * @param distributionId The ID of the distribution
      */
-    function claim(
-        uint256 tokenId,
-        uint256 distributionId
-    )
-        public
-        whenNotPaused
-        onlyValidDistribution(distributionId)
-    {
+    function claim(uint256 tokenId, uint256 distributionId) public whenNotPaused onlyValidDistribution(distributionId) {
         Distribution memory existingDE = _distributions[distributionId];
         if (existingDE.closed) {
             revert InvalidDistributionClose(DistributionCloseErrorReason.DISTRIBUTION_ALREADY_CLOSED);
