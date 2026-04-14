@@ -5,8 +5,9 @@ import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/ac
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import { IERC20MetadataUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+import {
+    IERC20MetadataUpgradeable
+} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {
     ERC721Upgradeable,
@@ -27,11 +28,11 @@ import { Rescue } from "src/utils/Rescue.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 
 /**
- * @title FANtium Athletes ERC721 contract V11.
+ * @title FANtium Athletes ERC721 contract V12.
  * @author Mathieu Bour, Alex Chernetsky - FANtium AG, based on previous work by MTX studio AG.
- * @custom:oz-upgrades-from src/archive/FANtiumAthletesV10.sol:FANtiumAthletesV10
+ * @custom:oz-upgrades-from src/archive/FANtiumAthletesV11.sol:FANtiumAthletesV11
  */
-contract FANtiumAthletesV11 is
+contract FANtiumAthletesV12 is
     Initializable,
     ERC721Upgradeable,
     UUPSUpgradeable,
@@ -41,7 +42,6 @@ contract FANtiumAthletesV11 is
     IFANtiumAthletes
 {
     using StringsUpgradeable for uint256;
-    using ECDSAUpgradeable for bytes32;
     using SafeERC20Upgradeable for IERC20MetadataUpgradeable;
 
     // ========================================================================
@@ -53,6 +53,18 @@ contract FANtiumAthletesV11 is
     uint256 private constant BPS_BASE = 10_000;
     uint256 private constant MAX_COLLECTIONS = 1_000_000;
     uint256 private constant MAX_INVOCATIONS = 10_000;
+
+    // EIP-712
+    // ========================================================================
+    /// @notice EIP-712 domain typehash.
+    bytes32 public constant EIP712_DOMAIN_TYPEHASH =
+        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+    /// @notice Typehash of the `Mint` struct signed by `SIGNER_ROLE` for custom-price mints.
+    bytes32 public constant MINT_TYPEHASH = keccak256(
+        "Mint(uint256 collectionId,uint24 quantity,address recipient,uint256 amount,uint256 nonce,uint256 deadline)"
+    );
+    bytes32 private constant _EIP712_NAME_HASH = keccak256(bytes("FANtium Athletes"));
+    bytes32 private constant _EIP712_VERSION_HASH = keccak256(bytes("1"));
 
     // Roles
     // ========================================================================
@@ -592,27 +604,102 @@ contract FANtiumAthletesV11 is
     }
 
     /**
-     * @notice Purchase NFTs from the sale with a custom price, checked
+     * @notice Returns the current EIP-712 domain separator, bound to `block.chainid` and `address(this)`.
+     * @dev Computed on-the-fly to avoid storage and stay compatible with proxy upgrades across chain forks.
+     */
+    function domainSeparator() public view returns (bytes32) {
+        return keccak256(
+            abi.encode(EIP712_DOMAIN_TYPEHASH, _EIP712_NAME_HASH, _EIP712_VERSION_HASH, block.chainid, address(this))
+        );
+    }
+
+    /**
+     * @notice Returns the fully-encoded EIP-712 digest for a given struct hash.
+     * @dev Mirrors `EIP712Upgradeable._hashTypedDataV4` without inheriting it (avoids storage-layout shift).
+     *      Delegates the `\x19\x01`-prefixed envelope to OZ's pure helper `ECDSAUpgradeable.toTypedDataHash`.
+     * @param structHash The EIP-712 hash of the inner struct (e.g. output of `_hashMintStruct`).
+     * @return The 32-byte EIP-712 digest that must be signed and passed to `ECDSA.recover`.
+     */
+    function _hashTypedDataV4(bytes32 structHash) internal view returns (bytes32) {
+        return ECDSAUpgradeable.toTypedDataHash(domainSeparator(), structHash);
+    }
+
+    /**
+     * @notice Returns the EIP-712 struct hash for a `Mint` authorization.
+     * @param collectionId The collection ID to purchase from.
+     * @param quantity The quantity of NFTs to purchase.
+     * @param recipient The recipient of the NFTs.
+     * @param amount The amount of payment tokens to charge.
+     * @param nonce The current `nonces[recipient]` counter.
+     * @param deadline UNIX timestamp after which the signature is no longer valid.
+     */
+    function _hashMintStruct(
+        uint256 collectionId,
+        uint24 quantity,
+        address recipient,
+        uint256 amount,
+        uint256 nonce,
+        uint256 deadline
+    )
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(abi.encode(MINT_TYPEHASH, collectionId, quantity, recipient, amount, nonce, deadline));
+    }
+
+    /**
+     * @notice Returns the EIP-712 digest a `SIGNER_ROLE` holder must sign to authorize a custom-price mint.
+     * @dev Exposed so backends and tests can introspect the exact digest without replicating the hashing math.
+     * @param collectionId The collection ID to purchase from.
+     * @param quantity The quantity of NFTs to purchase.
+     * @param recipient The recipient of the NFTs.
+     * @param amount The amount of payment tokens to charge.
+     * @param nonce The `nonces[recipient]` value at the time of signing.
+     * @param deadline UNIX timestamp after which the signature is no longer valid.
+     */
+    function hashMint(
+        uint256 collectionId,
+        uint24 quantity,
+        address recipient,
+        uint256 amount,
+        uint256 nonce,
+        uint256 deadline
+    )
+        public
+        view
+        returns (bytes32)
+    {
+        return _hashTypedDataV4(_hashMintStruct(collectionId, quantity, recipient, amount, nonce, deadline));
+    }
+
+    /**
+     * @notice Purchase NFTs from the sale with a custom price, checked via an EIP-712 signature.
      * @param collectionId The collection ID to purchase from.
      * @param quantity The quantity of NFTs to purchase.
      * @param recipient The recipient of the NFTs.
      * @param amount The amount of tokens to purchase the NFTs with.
-     * @param signature The signature of the purchase request.
+     * @param deadline UNIX timestamp after which the signature is no longer valid.
+     * @param signature EIP-712 signature produced by a `SIGNER_ROLE` holder over the `Mint` struct.
      */
     function mintTo(
         uint256 collectionId,
         uint24 quantity,
         address recipient,
         uint256 amount,
+        uint256 deadline,
         bytes memory signature
     )
         public
         whenNotPaused
         returns (uint256)
     {
-        bytes32 hash =
-            keccak256(abi.encode(collectionId, quantity, recipient, amount, nonces[recipient])).toEthSignedMessageHash();
-        if (!hasRole(SIGNER_ROLE, hash.recover(signature))) {
+        if (block.timestamp > deadline) {
+            revert InvalidMint(MintErrorReason.SIGNATURE_EXPIRED);
+        }
+
+        bytes32 digest = hashMint(collectionId, quantity, recipient, amount, nonces[recipient], deadline);
+        if (!hasRole(SIGNER_ROLE, ECDSAUpgradeable.recover(digest, signature))) {
             revert InvalidMint(MintErrorReason.INVALID_SIGNATURE);
         }
 

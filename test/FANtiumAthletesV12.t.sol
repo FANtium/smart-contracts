@@ -4,7 +4,6 @@ pragma solidity 0.8.28;
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
-import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {
     Collection,
     CollectionData,
@@ -17,9 +16,9 @@ import { IRescue } from "src/interfaces/IRescue.sol";
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumAthletesFactory } from "test/setup/FANtiumAthletesFactory.sol";
+import { EIP712Domain } from "test/utils/EIP712Signer.sol";
 
-contract FANtiumAthletesV11Test is BaseTest, FANtiumAthletesFactory {
-    using ECDSA for bytes32;
+contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
     using Strings for uint256;
 
     address public recipient = makeAddr("recipient");
@@ -183,7 +182,7 @@ contract FANtiumAthletesV11Test is BaseTest, FANtiumAthletesFactory {
             otherEarningShare1e7: 5_000_000, // 50%
             price: 100 ether,
             tournamentEarningShare1e7: 2_500_000 // 25%
-         });
+        });
 
         vm.prank(fantiumAthletes_admin);
         uint256 collectionId = fantiumAthletes.createCollection(data);
@@ -323,7 +322,7 @@ contract FANtiumAthletesV11Test is BaseTest, FANtiumAthletesFactory {
             otherEarningShare1e7: 5_000_000,
             price: 100 ether,
             tournamentEarningShare1e7: 10_000_001 // > 100%
-         });
+        });
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -367,7 +366,7 @@ contract FANtiumAthletesV11Test is BaseTest, FANtiumAthletesFactory {
             otherEarningShare1e7: 6_000_000, // 60%
             price: 200 ether,
             tournamentEarningShare1e7: 3_000_000 // 30%
-         });
+        });
 
         Collection memory beforeCollection = fantiumAthletes.collections(collectionId);
 
@@ -542,7 +541,7 @@ contract FANtiumAthletesV11Test is BaseTest, FANtiumAthletesFactory {
             otherEarningShare1e7: 5_000_000,
             price: 100 ether,
             tournamentEarningShare1e7: 10_000_001 // > 100%
-         });
+        });
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -759,8 +758,12 @@ contract FANtiumAthletesV11Test is BaseTest, FANtiumAthletesFactory {
         uint256 price = 1000 * 10 ** usdc.decimals();
         uint256 collectionId = 1; // Using collection 1 from fixtures
 
-        (uint256 fantiumRevenue, address payable fantiumAddress, uint256 athleteRevenue, address payable athleteAddress)
-        = fantiumAthletes.getPrimaryRevenueSplits(collectionId, price);
+        (
+            uint256 fantiumRevenue,
+            address payable fantiumAddress,
+            uint256 athleteRevenue,
+            address payable athleteAddress
+        ) = fantiumAthletes.getPrimaryRevenueSplits(collectionId, price);
 
         // Get collection to verify calculations
         Collection memory collection = fantiumAthletes.collections(collectionId);
@@ -845,12 +848,12 @@ contract FANtiumAthletesV11Test is BaseTest, FANtiumAthletesFactory {
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
         uint256 amountUSDC = 74 * 10 ** usdc.decimals(); // normal price is 99 USDC
-        (bytes memory signature,,,,,) = prepareSale(collectionId, quantity, recipient, amountUSDC);
+        (bytes memory signature,, uint256 deadline,,,,) = prepareSale(collectionId, quantity, recipient, amountUSDC);
 
         vm.expectEmit(true, true, false, true, address(fantiumAthletes));
         emit IFANtiumAthletes.Sale(collectionId, quantity, recipient, amountUSDC, 25 * 10 ** usdc.decimals());
         vm.prank(recipient);
-        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, signature);
+        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, deadline, signature);
 
         assertEq(fantiumAthletes.ownerOf(lastTokenId), recipient);
     }
@@ -859,39 +862,42 @@ contract FANtiumAthletesV11Test is BaseTest, FANtiumAthletesFactory {
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
         uint256 amountUSDC = 200;
+        uint256 deadline = block.timestamp + 1 hours;
         bytes memory malformedSignature = abi.encodePacked("malformed signature");
 
         vm.expectRevert("ECDSA: invalid signature length");
         vm.prank(recipient);
-        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, malformedSignature);
+        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, deadline, malformedSignature);
     }
 
     function test_mintTo_customPrice_revert_invalidSigner() public {
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
         uint256 amountUSDC = 200;
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 nonce = fantiumAthletes.nonces(recipient);
 
-        bytes32 hash =
-            keccak256(abi.encode(recipient, collectionId, quantity, amountUSDC, recipient)).toEthSignedMessageHash();
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(42_424_242_242_424_242, hash);
-        bytes memory forgedSignature = abi.encodePacked(r, s, v);
+        bytes32 structHash = keccak256(
+            abi.encode(fantiumAthletes.MINT_TYPEHASH(), collectionId, quantity, recipient, amountUSDC, nonce, deadline)
+        );
+        bytes memory forgedSignature = typedSignPacked(42_424_242_242_424_242, fantiumAthletesDomain(), structHash);
 
         vm.expectRevert(
             abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.INVALID_SIGNATURE)
         );
         vm.prank(recipient);
-        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, forgedSignature);
+        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, deadline, forgedSignature);
     }
 
     function test_mintTo_revert_invalidNonce() public {
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
         uint256 amountUSDC = 200;
-        (bytes memory signature,,,,,) = prepareSale(collectionId, quantity, recipient, amountUSDC);
+        (bytes memory signature,, uint256 deadline,,,,) = prepareSale(collectionId, quantity, recipient, amountUSDC);
 
         // First mint pass, and nonce is incremented
         vm.prank(recipient);
-        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, signature);
+        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, deadline, signature);
         assertEq(fantiumAthletes.ownerOf(lastTokenId), recipient);
 
         // Second mint fails, because nonce is incremented
@@ -899,7 +905,86 @@ contract FANtiumAthletesV11Test is BaseTest, FANtiumAthletesFactory {
             abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.INVALID_SIGNATURE)
         );
         vm.prank(recipient);
-        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, signature);
+        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, deadline, signature);
+    }
+
+    function test_mintTo_customPrice_revert_expiredDeadline() public {
+        uint256 collectionId = 1;
+        uint24 quantity = 1;
+        uint256 amountUSDC = 74 * 10 ** usdc.decimals();
+        (bytes memory signature,, uint256 deadline,,,,) = prepareSale(collectionId, quantity, recipient, amountUSDC);
+
+        // Advance past the deadline.
+        vm.warp(deadline + 1);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.SIGNATURE_EXPIRED)
+        );
+        vm.prank(recipient);
+        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, deadline, signature);
+    }
+
+    function test_mintTo_customPrice_revert_wrongChainId() public {
+        uint256 collectionId = 1;
+        uint24 quantity = 1;
+        uint256 amountUSDC = 74 * 10 ** usdc.decimals();
+        uint256 nonce = fantiumAthletes.nonces(recipient);
+
+        Collection memory collection = fantiumAthletes.collections(collectionId);
+        if (block.timestamp < collection.launchTimestamp) {
+            vm.warp(collection.launchTimestamp + 1);
+        }
+        deal(address(usdc), recipient, amountUSDC);
+        vm.prank(recipient);
+        usdc.approve(address(fantiumAthletes), amountUSDC);
+        uint256 deadline = block.timestamp + 1 hours;
+
+        EIP712Domain memory wrongDomain = EIP712Domain({
+            name: "FANtium Athletes",
+            version: "1",
+            chainId: block.chainid + 1,
+            verifyingContract: address(fantiumAthletes)
+        });
+        bytes32 structHash = keccak256(
+            abi.encode(fantiumAthletes.MINT_TYPEHASH(), collectionId, quantity, recipient, amountUSDC, nonce, deadline)
+        );
+        bytes memory signature = typedSignPacked(fantiumAthletes_signerKey, wrongDomain, structHash);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.INVALID_SIGNATURE)
+        );
+        vm.prank(recipient);
+        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, deadline, signature);
+    }
+
+    function test_mintTo_customPrice_revert_wrongVerifyingContract() public {
+        uint256 collectionId = 1;
+        uint24 quantity = 1;
+        uint256 amountUSDC = 74 * 10 ** usdc.decimals();
+        uint256 nonce = fantiumAthletes.nonces(recipient);
+
+        Collection memory collection = fantiumAthletes.collections(collectionId);
+        if (block.timestamp < collection.launchTimestamp) {
+            vm.warp(collection.launchTimestamp + 1);
+        }
+        deal(address(usdc), recipient, amountUSDC);
+        vm.prank(recipient);
+        usdc.approve(address(fantiumAthletes), amountUSDC);
+        uint256 deadline = block.timestamp + 1 hours;
+
+        EIP712Domain memory wrongDomain = EIP712Domain({
+            name: "FANtium Athletes", version: "1", chainId: block.chainid, verifyingContract: address(0x1234)
+        });
+        bytes32 structHash = keccak256(
+            abi.encode(fantiumAthletes.MINT_TYPEHASH(), collectionId, quantity, recipient, amountUSDC, nonce, deadline)
+        );
+        bytes memory signature = typedSignPacked(fantiumAthletes_signerKey, wrongDomain, structHash);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.INVALID_SIGNATURE)
+        );
+        vm.prank(recipient);
+        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, deadline, signature);
     }
 
     // batchTransferFrom

@@ -6,7 +6,7 @@ import { Collection, CollectionData, IFANtiumAthletes } from "src/interfaces/IFA
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumAthletesFactory } from "test/setup/FANtiumAthletesFactory.sol";
 
-contract FANtiumAthletesV11FuzzTest is BaseTest, FANtiumAthletesFactory {
+contract FANtiumAthletesV12FuzzTest is BaseTest, FANtiumAthletesFactory {
     function setUp() public override {
         FANtiumAthletesFactory.setUp();
     }
@@ -101,8 +101,12 @@ contract FANtiumAthletesV11FuzzTest is BaseTest, FANtiumAthletesFactory {
         vm.assume(0 < price && price < 1_000_000 * 10 ** usdc.decimals());
         uint256 collectionId = 1; // Using collection 1 from fixtures
 
-        (uint256 fantiumRevenue, address payable fantiumAddress, uint256 athleteRevenue, address payable athleteAddress)
-        = fantiumAthletes.getPrimaryRevenueSplits(collectionId, price);
+        (
+            uint256 fantiumRevenue,
+            address payable fantiumAddress,
+            uint256 athleteRevenue,
+            address payable athleteAddress
+        ) = fantiumAthletes.getPrimaryRevenueSplits(collectionId, price);
 
         // Get collection to verify calculations
         Collection memory collection = fantiumAthletes.collections(collectionId);
@@ -136,8 +140,12 @@ contract FANtiumAthletesV11FuzzTest is BaseTest, FANtiumAthletesFactory {
         );
         vm.stopPrank();
 
-        (uint256 fantiumRevenue, address payable fantiumAddress, uint256 athleteRevenue, address payable athleteAddress)
-        = fantiumAthletes.getPrimaryRevenueSplits(collectionId, price);
+        (
+            uint256 fantiumRevenue,
+            address payable fantiumAddress,
+            uint256 athleteRevenue,
+            address payable athleteAddress
+        ) = fantiumAthletes.getPrimaryRevenueSplits(collectionId, price);
 
         // Verify revenue splits
         assertEq(athleteRevenue, (price * athletePrimarySalesBPS) / 10_000, "Incorrect athlete revenue");

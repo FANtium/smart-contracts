@@ -110,7 +110,8 @@ enum MintErrorReason {
     COLLECTION_PAUSED,
     ACCOUNT_NOT_KYCED,
     INVALID_SIGNATURE,
-    MAX_INVOCATIONS_REACHED
+    MAX_INVOCATIONS_REACHED,
+    SIGNATURE_EXPIRED
 }
 
 enum UpgradeErrorReason {
@@ -171,6 +172,7 @@ interface IFANtiumAthletes is IERC721Upgradeable {
         uint24 quantity,
         address recipient,
         uint256 amount,
+        uint256 deadline,
         bytes memory signature
     )
         external

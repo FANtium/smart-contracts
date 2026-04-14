@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { IERC20MetadataUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
+import {
+    IERC20MetadataUpgradeable
+} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import { FANtiumAthletesV11 } from "src/FANtiumAthletesV11.sol";
+import { FANtiumAthletesV12 } from "src/FANtiumAthletesV12.sol";
 import { Collection, CollectionData } from "src/interfaces/IFANtiumAthletes.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { BaseTest } from "test/BaseTest.sol";
+import { EIP712Domain, EIP712Signer } from "test/utils/EIP712Signer.sol";
 
 /**
  * @notice Collection data structure for deserialization.
@@ -31,9 +32,7 @@ struct CollectionJson {
     uint256 tournamentEarningShare1e7;
 }
 
-contract FANtiumAthletesFactory is BaseTest {
-    using ECDSA for bytes32;
-
+contract FANtiumAthletesFactory is BaseTest, EIP712Signer {
     address public fantiumAthletes_admin = makeAddr("admin");
     address public fantiumAthletes_trustedForwarder = makeAddr("trustedForwarder");
     address payable public fantiumAthletes_athlete = payable(makeAddr("athlete"));
@@ -46,17 +45,17 @@ contract FANtiumAthletesFactory is BaseTest {
     ERC20 public usdc;
     address public fantiumAthletes_implementation;
     address public fantiumAthletes_proxy;
-    FANtiumAthletesV11 public fantiumAthletes;
+    FANtiumAthletesV12 public fantiumAthletes;
 
     function setUp() public virtual {
         (fantiumAthletes_signer, fantiumAthletes_signerKey) = makeAddrAndKey("rewarder");
 
         usdc = new ERC20("USD Coin", "USDC");
-        fantiumAthletes_implementation = address(new FANtiumAthletesV11());
+        fantiumAthletes_implementation = address(new FANtiumAthletesV12());
         fantiumAthletes_proxy = UnsafeUpgrades.deployUUPSProxy(
-            fantiumAthletes_implementation, abi.encodeCall(FANtiumAthletesV11.initialize, (fantiumAthletes_admin))
+            fantiumAthletes_implementation, abi.encodeCall(FANtiumAthletesV12.initialize, (fantiumAthletes_admin))
         );
-        fantiumAthletes = FANtiumAthletesV11(fantiumAthletes_proxy);
+        fantiumAthletes = FANtiumAthletesV12(fantiumAthletes_proxy);
 
         // Configure roles
         vm.startPrank(fantiumAthletes_admin);
@@ -130,6 +129,7 @@ contract FANtiumAthletesFactory is BaseTest {
         returns (
             bytes memory signature,
             uint256 nonce,
+            uint256 deadline,
             uint256 fantiumRevenue,
             address fantiumAddress,
             uint256 athleteRevenue,
@@ -150,14 +150,8 @@ contract FANtiumAthletesFactory is BaseTest {
         vm.prank(recipient);
         usdc.approve(address(fantiumAthletes), amountUSDC);
 
-        return (
-            signMint(recipient, nonce, collectionId, quantity, amountUSDC),
-            nonce,
-            fantiumRevenue,
-            fantiumAddress,
-            athleteRevenue,
-            athleteAddress
-        );
+        deadline = block.timestamp + 1 hours;
+        signature = signMint(recipient, nonce, collectionId, quantity, amountUSDC, deadline);
     }
 
     function mintTo(uint256 collectionId, uint24 quantity, address recipient) public returns (uint256 lastTokenId) {
@@ -166,19 +160,30 @@ contract FANtiumAthletesFactory is BaseTest {
         return fantiumAthletes.mintTo(collectionId, quantity, recipient);
     }
 
+    /**
+     * @notice EIP-712 domain matching `FANtiumAthletesV12`.
+     */
+    function fantiumAthletesDomain() public view returns (EIP712Domain memory) {
+        return EIP712Domain({
+            name: "FANtium Athletes", version: "1", chainId: block.chainid, verifyingContract: address(fantiumAthletes)
+        });
+    }
+
     function signMint(
         address recipient,
         uint256 nonce,
         uint256 collectionId,
         uint24 quantity,
-        uint256 amount
+        uint256 amount,
+        uint256 deadline
     )
         public
         view
         returns (bytes memory)
     {
-        bytes32 hash = keccak256(abi.encode(collectionId, quantity, recipient, amount, nonce)).toEthSignedMessageHash();
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(fantiumAthletes_signerKey, hash);
-        return abi.encodePacked(r, s, v);
+        bytes32 structHash = keccak256(
+            abi.encode(fantiumAthletes.MINT_TYPEHASH(), collectionId, quantity, recipient, amount, nonce, deadline)
+        );
+        return typedSignPacked(fantiumAthletes_signerKey, fantiumAthletesDomain(), structHash);
     }
 }
