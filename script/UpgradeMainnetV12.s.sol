@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.28;
+pragma solidity 0.8.34;
 
 import { Options } from "@openzeppelin/foundry-upgrades/Options.sol";
 import { Core } from "@openzeppelin/foundry-upgrades/internal/Core.sol";

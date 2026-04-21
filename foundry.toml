@@ -4,6 +4,7 @@
 ast = true
 auto_detect_solc = false
 build_info = true
+solc = "0.8.34"
 bytecode_hash = "none"
 evm_version = "paris"
 extra_output = ["storageLayout"]
@@ -42,6 +43,7 @@ src = "archive"
 out = "out-archive"
 test = "archive"
 script = "archive"
+solc = "0.8.28"
 
 [fmt]
 bracket_spacing = true
