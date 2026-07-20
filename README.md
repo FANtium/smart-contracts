@@ -2,6 +2,11 @@
 
 [![codecov](https://codecov.io/gh/FantiumAG/smart-contracts/graph/badge.svg?token=44GTGNWNM8)](https://codecov.io/gh/FantiumAG/smart-contracts)
 
+> [!NOTE]
+> The [FANtium/smart-contracts](https://github.com/FANtium/smart-contracts) repository is a **read-only mirror** of the
+> `contracts/fantium-v1` folder of FANtium's internal monorepo, where development happens. Issues are welcome here;
+> pull requests are ported to the monorepo manually.
+
 ## General informations
 
 This repository contains the smart contracts of the FANtium platform. Our smart contracts are based on [OpenZeppelin's contracts version 4](https://docs.openzeppelin.com/contracts/4.x/).
