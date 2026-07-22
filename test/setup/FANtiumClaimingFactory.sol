@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.27;
 
 import { FANtiumClaimingV5 } from "src/FANtiumClaimingV5.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";

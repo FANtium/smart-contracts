@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.34;
+// Scripts are expected to print their results.
+// solhint-disable no-console
 
 import { USDCeUniswapV3MigrationRelay } from "../src/USDCeUniswapV3MigrationRelay.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";

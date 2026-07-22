@@ -45,9 +45,19 @@ contract UpgradeMainnetV12ForkTest is Test {
     /// @notice FANtium Safe, holder of DEFAULT_ADMIN_ROLE on the proxy.
     address public constant FANTIUM_SAFE = 0x417834e4371610BB81DC150fF47C0859b72318B0;
 
+    /// @notice EIP-1967 implementation slot, used to detect whether the upgrade already happened.
+    bytes32 private constant _IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+    /// @notice The V11 implementation the rehearsal upgrades from.
+    address private constant _V11_IMPLEMENTATION = 0x6f4cd162708Eb3675da1244Eeb322A43d6f3454c;
+
     function test_fork_upgradeMainnetV12_migratesAllCollections() public {
         vm.skip(bytes(vm.envOr("ALCHEMY_API_KEY", string(""))).length == 0);
         vm.createSelectFork(vm.rpcUrl("polygon"));
+
+        // The rehearsal only applies while mainnet still runs V11. Once the Safe has executed the
+        // upgrade (2026-07-22), initializeV12 is consumed on-chain and this scenario is history.
+        address currentImplementation = address(uint160(uint256(vm.load(FANTIUM_ATHLETES_PROXY, _IMPLEMENTATION_SLOT))));
+        vm.skip(currentImplementation != _V11_IMPLEMENTATION);
 
         IFANtiumAthletesV11 v11 = IFANtiumAthletesV11(FANTIUM_ATHLETES_PROXY);
         uint256 nextCollectionId = v11.nextCollectionId();
