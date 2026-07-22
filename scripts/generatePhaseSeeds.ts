@@ -132,7 +132,8 @@ if (duplicates.length > 0) {
 }
 
 const outputPath = new URL('../test/fixtures/phase-seeds.json', import.meta.url).pathname;
-await Bun.write(outputPath, `${JSON.stringify(seeds, null, '\t')}\n`);
+// 4-space indent matches the local .prettierrc so the fixture stays clean under prettier --check.
+await Bun.write(outputPath, `${JSON.stringify(seeds, null, 4)}\n`);
 
 console.log(`Wrote ${seeds.length} phase seeds to ${outputPath}`);
 for (const seed of seeds) {
