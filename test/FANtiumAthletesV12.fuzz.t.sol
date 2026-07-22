@@ -2,7 +2,7 @@
 pragma solidity 0.8.34;
 
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import { Collection, CollectionData, IFANtiumAthletes } from "src/interfaces/IFANtiumAthletes.sol";
+import { Collection, CollectionData, IFANtiumAthletes, PricePhase } from "src/interfaces/IFANtiumAthletes.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumAthletesFactory } from "test/setup/FANtiumAthletesFactory.sol";
 
@@ -15,6 +15,8 @@ contract FANtiumAthletesV12FuzzTest is BaseTest, FANtiumAthletesFactory {
     // ========================================================================
     function testFuzz_mintTo_standardPrice_ok(address recipient) public {
         vm.assume(recipient != address(0));
+        // A FORWARDER_ROLE recipient would trigger the ERC2771 path in _msgSender() when pranked.
+        vm.assume(recipient != fantiumAthletes_trustedForwarder);
 
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
@@ -28,6 +30,10 @@ contract FANtiumAthletesV12FuzzTest is BaseTest, FANtiumAthletesFactory {
         ) = prepareSale(collectionId, quantity, recipient);
         vm.assume(recipient != fantiumAddress && recipient != athleteAddress);
 
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes memory signature =
+            signMint(recipient, fantiumAthletes.nonces(recipient), collectionId, quantity, deadline);
+
         uint256 recipientBalanceBefore = usdc.balanceOf(recipient);
         uint256 fantiumBalanceBefore = usdc.balanceOf(fantiumAddress);
         uint256 athleteBalanceBefore = usdc.balanceOf(athleteAddress);
@@ -37,7 +43,7 @@ contract FANtiumAthletesV12FuzzTest is BaseTest, FANtiumAthletesFactory {
         emit IFANtiumAthletes.Sale(collectionId, quantity, recipient, amountUSDC, 0);
 
         vm.prank(recipient);
-        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient);
+        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient, deadline, signature);
 
         assertEq(fantiumAthletes.ownerOf(lastTokenId), recipient);
         assertEq(usdc.balanceOf(recipient), recipientBalanceBefore - amountUSDC);
@@ -47,16 +53,11 @@ contract FANtiumAthletesV12FuzzTest is BaseTest, FANtiumAthletesFactory {
 
     function testFuzz_mintTo_standardPrice_ok_batch(address recipient, uint24 quantity) public {
         vm.assume(recipient != address(0));
+        // A FORWARDER_ROLE recipient would trigger the ERC2771 path in _msgSender() when pranked.
+        vm.assume(recipient != fantiumAthletes_trustedForwarder);
 
         uint256 collectionId = 1; // collection 1 is mintable
-        quantity = uint24(
-            bound(
-                uint256(quantity),
-                1,
-                fantiumAthletes.collections(collectionId).maxInvocations
-                    - fantiumAthletes.collections(collectionId).invocations
-            )
-        );
+        quantity = uint24(bound(uint256(quantity), 1, remainingSupply(collectionId)));
 
         (
             uint256 amountUSDC,
@@ -66,6 +67,10 @@ contract FANtiumAthletesV12FuzzTest is BaseTest, FANtiumAthletesFactory {
             address payable athleteAddress
         ) = prepareSale(collectionId, quantity, recipient);
         vm.assume(recipient != fantiumAddress && recipient != athleteAddress);
+
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes memory signature =
+            signMint(recipient, fantiumAthletes.nonces(recipient), collectionId, quantity, deadline);
 
         // Store initial balances
         uint256[3] memory balancesBefore =
@@ -82,7 +87,7 @@ contract FANtiumAthletesV12FuzzTest is BaseTest, FANtiumAthletesFactory {
         emit IFANtiumAthletes.Sale(collectionId, quantity, recipient, amountUSDC, 0);
 
         vm.prank(recipient);
-        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient);
+        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient, deadline, signature);
 
         // Verify ownership
         for (uint256 i = 0; i < quantity; i++) {
@@ -120,7 +125,7 @@ contract FANtiumAthletesV12FuzzTest is BaseTest, FANtiumAthletesFactory {
         assertEq(athleteAddress, collection.athleteAddress, "Incorrect athlete address");
     }
 
-    function testFuzz_getPrimaryRevenueSplits_newCollection(uint256 athletePrimarySalesBPS, uint256 price) public {
+    function testFuzz_getPrimaryRevenueSplits_newCollection(uint256 athletePrimarySalesBPS, uint128 price) public {
         vm.assume(0 < athletePrimarySalesBPS && athletePrimarySalesBPS < 10_000);
         vm.assume(0 < price && price < 1_000_000 * 10 ** usdc.decimals());
 
@@ -132,9 +137,8 @@ contract FANtiumAthletesV12FuzzTest is BaseTest, FANtiumAthletesFactory {
                 athleteSecondarySalesBPS: 0,
                 fantiumSecondarySalesBPS: 0,
                 launchTimestamp: block.timestamp,
-                maxInvocations: 1000,
                 otherEarningShare1e7: 0,
-                price: price,
+                phases: singlePhase(price, 1000),
                 tournamentEarningShare1e7: 0
             })
         );

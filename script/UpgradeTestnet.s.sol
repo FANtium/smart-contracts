@@ -4,6 +4,8 @@ pragma solidity 0.8.34;
 import { Upgrades } from "@openzeppelin/foundry-upgrades/LegacyUpgrades.sol";
 import { Options } from "@openzeppelin/foundry-upgrades/Options.sol";
 import { Script } from "forge-std/Script.sol"; // v4 contracts
+import { FANtiumAthletesV12 } from "src/FANtiumAthletesV12.sol";
+import { PhaseSeed } from "src/interfaces/IFANtiumAthletes.sol";
 
 /**
  * @notice Deploy a new version of our contracts to the testnet.
@@ -33,7 +35,15 @@ contract UpgradeTestnet is Script {
         opts.referenceBuildInfoDir = "out-archive/archive";
 
         if (FANTIUM_ATHLETES_UPGRADE) {
-            Upgrades.upgradeProxy(FANTIUM_ATHLETES_PROXY, "FANtiumAthletesV12.sol:FANtiumAthletesV12", "", opts);
+            // upgradeToAndCall: run the V12 storage migration atomically with the implementation switch.
+            // No phase seeds on testnet — every collection gets the single-phase default migration.
+            PhaseSeed[] memory seeds = new PhaseSeed[](0);
+            Upgrades.upgradeProxy(
+                FANTIUM_ATHLETES_PROXY,
+                "FANtiumAthletesV12.sol:FANtiumAthletesV12",
+                abi.encodeCall(FANtiumAthletesV12.initializeV12, (seeds)),
+                opts
+            );
         }
 
         if (FANTIUM_CLAIMING_UPGRADE) {

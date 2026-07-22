@@ -153,9 +153,8 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             athleteSecondarySalesBPS: 1000, // 10%
             fantiumSecondarySalesBPS: 500, // 5%
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
             otherEarningShare1e7: 5_000_000, // 50%
-            price: 100 ether,
+            phases: singlePhase(100 ether, 100),
             tournamentEarningShare1e7: 2_500_000 // 25%
         });
 

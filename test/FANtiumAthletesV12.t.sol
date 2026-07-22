@@ -4,12 +4,16 @@ pragma solidity 0.8.34;
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { Vm } from "forge-std/Vm.sol";
 import {
     Collection,
     CollectionData,
     CollectionErrorReason,
     IFANtiumAthletes,
     MintErrorReason,
+    PhaseSeed,
+    PricePhase,
+    SaleStatus,
     UpgradeErrorReason
 } from "src/interfaces/IFANtiumAthletes.sol";
 import { IRescue } from "src/interfaces/IRescue.sol";
@@ -178,9 +182,8 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             athleteSecondarySalesBPS: 1000, // 10%
             fantiumSecondarySalesBPS: 500, // 5%
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
             otherEarningShare1e7: 5_000_000, // 50%
-            price: 100 ether,
+            phases: singlePhase(100 ether, 100),
             tournamentEarningShare1e7: 2_500_000 // 25%
         });
 
@@ -194,13 +197,13 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
         assertTrue(collection.exists);
         assertEq(collection.fantiumSecondarySalesBPS, data.fantiumSecondarySalesBPS);
         assertEq(collection.invocations, 0);
-        assertFalse(collection.isMintable);
-        assertTrue(collection.isPaused);
+        assertEq(uint256(collection.status), uint256(SaleStatus.Pending));
         assertEq(collection.launchTimestamp, data.launchTimestamp);
-        assertEq(collection.maxInvocations, data.maxInvocations);
         assertEq(collection.otherEarningShare1e7, data.otherEarningShare1e7);
-        assertEq(collection.price, data.price);
         assertEq(collection.tournamentEarningShare1e7, data.tournamentEarningShare1e7);
+        assertEq(collection.phases.length, data.phases.length);
+        assertEq(collection.phases[0].price, data.phases[0].price);
+        assertEq(collection.phases[0].maxInvocations, data.phases[0].maxInvocations);
     }
 
     function test_createCollection_revert_invalidAthleteAddress() public {
@@ -210,9 +213,8 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             athleteSecondarySalesBPS: 1000,
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
             otherEarningShare1e7: 5_000_000,
-            price: 100 ether,
+            phases: singlePhase(100 ether, 100),
             tournamentEarningShare1e7: 2_500_000
         });
 
@@ -232,9 +234,8 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             athleteSecondarySalesBPS: 1000,
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
             otherEarningShare1e7: 5_000_000,
-            price: 100 ether,
+            phases: singlePhase(100 ether, 100),
             tournamentEarningShare1e7: 2_500_000
         });
 
@@ -254,9 +255,8 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             athleteSecondarySalesBPS: 9000,
             fantiumSecondarySalesBPS: 2000, // Sum > 100%
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
             otherEarningShare1e7: 5_000_000,
-            price: 100 ether,
+            phases: singlePhase(100 ether, 100),
             tournamentEarningShare1e7: 2_500_000
         });
 
@@ -274,9 +274,8 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             athleteSecondarySalesBPS: 1000,
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 10_000, // >= 10_000
             otherEarningShare1e7: 5_000_000,
-            price: 100 ether,
+            phases: singlePhase(100 ether, 10_000), // sum >= 10_000
             tournamentEarningShare1e7: 2_500_000
         });
 
@@ -296,9 +295,8 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             athleteSecondarySalesBPS: 1000,
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
             otherEarningShare1e7: 10_000_001, // > 100%
-            price: 100 ether,
+            phases: singlePhase(100 ether, 100),
             tournamentEarningShare1e7: 2_500_000
         });
 
@@ -318,9 +316,8 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             athleteSecondarySalesBPS: 1000,
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
             otherEarningShare1e7: 5_000_000,
-            price: 100 ether,
+            phases: singlePhase(100 ether, 100),
             tournamentEarningShare1e7: 10_000_001 // > 100%
         });
 
@@ -340,9 +337,8 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             athleteSecondarySalesBPS: 1000,
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
             otherEarningShare1e7: 5_000_000,
-            price: 100 ether,
+            phases: singlePhase(100 ether, 100),
             tournamentEarningShare1e7: 2_500_000
         });
 
@@ -362,9 +358,8 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             athleteSecondarySalesBPS: 1500, // 15%
             fantiumSecondarySalesBPS: 750, // 7.5%
             launchTimestamp: block.timestamp + 2 days,
-            maxInvocations: 200, // Increased from original
             otherEarningShare1e7: 6_000_000, // 60%
-            price: 200 ether,
+            phases: singlePhase(200 ether, 200), // Increased from original
             tournamentEarningShare1e7: 3_000_000 // 30%
         });
 
@@ -381,16 +376,16 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
         assertEq(afterCollection.athleteSecondarySalesBPS, data.athleteSecondarySalesBPS);
         assertEq(afterCollection.fantiumSecondarySalesBPS, data.fantiumSecondarySalesBPS);
         assertEq(afterCollection.launchTimestamp, data.launchTimestamp);
-        assertEq(afterCollection.maxInvocations, data.maxInvocations);
         assertEq(afterCollection.otherEarningShare1e7, data.otherEarningShare1e7);
-        assertEq(afterCollection.price, data.price);
         assertEq(afterCollection.tournamentEarningShare1e7, data.tournamentEarningShare1e7);
+        assertEq(afterCollection.phases.length, data.phases.length);
+        assertEq(afterCollection.phases[0].price, data.phases[0].price);
+        assertEq(afterCollection.phases[0].maxInvocations, data.phases[0].maxInvocations);
 
         // Verify non-updateable fields remained unchanged
         assertEq(afterCollection.exists, beforeCollection.exists);
         assertEq(afterCollection.invocations, beforeCollection.invocations);
-        assertEq(afterCollection.isMintable, beforeCollection.isMintable);
-        assertEq(afterCollection.isPaused, beforeCollection.isPaused);
+        assertEq(uint256(afterCollection.status), uint256(beforeCollection.status));
     }
 
     function test_updateCollection_revert_invalidCollectionId() public {
@@ -401,9 +396,8 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             athleteSecondarySalesBPS: 1000,
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
             otherEarningShare1e7: 5_000_000,
-            price: 100 ether,
+            phases: singlePhase(100 ether, 100),
             tournamentEarningShare1e7: 2_500_000
         });
 
@@ -412,27 +406,27 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
         fantiumAthletes.updateCollection(invalidCollectionId, data);
     }
 
-    function test_updateCollection_revert_decreasedMaxInvocations() public {
+    function test_updateCollection_revert_phasesDoNotAccommodateInvocations() public {
         uint256 collectionId = 1;
         mintTo(collectionId, 10, recipient); // mint 10 tokens to increase invocations
 
         Collection memory currentCollection = fantiumAthletes.collections(collectionId);
 
+        // Shrink total supply below current invocations: new phases sum to 5 while 10 are minted.
         CollectionData memory data = CollectionData({
             athleteAddress: payable(makeAddr("athlete")),
             athletePrimarySalesBPS: 5000,
             athleteSecondarySalesBPS: 1000,
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: currentCollection.invocations - 1, // Try to decrease below current invocations
             otherEarningShare1e7: 5_000_000,
-            price: 100 ether,
+            phases: singlePhase(100 ether, uint256(currentCollection.invocations) - 1),
             tournamentEarningShare1e7: 2_500_000
         });
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IFANtiumAthletes.InvalidCollection.selector, CollectionErrorReason.INVALID_MAX_INVOCATIONS
+                IFANtiumAthletes.PhasesMustAccommodateInvocations.selector, currentCollection.invocations
             )
         );
         vm.prank(fantiumAthletes_admin);
@@ -447,9 +441,8 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             athleteSecondarySalesBPS: 1000,
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
             otherEarningShare1e7: 5_000_000,
-            price: 100 ether,
+            phases: singlePhase(100 ether, 100),
             tournamentEarningShare1e7: 2_500_000
         });
 
@@ -470,9 +463,8 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             athleteSecondarySalesBPS: 1000,
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
             otherEarningShare1e7: 5_000_000,
-            price: 100 ether,
+            phases: singlePhase(100 ether, 100),
             tournamentEarningShare1e7: 2_500_000
         });
 
@@ -493,9 +485,8 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             athleteSecondarySalesBPS: 9000,
             fantiumSecondarySalesBPS: 2000, // Sum > 100%
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
             otherEarningShare1e7: 5_000_000,
-            price: 100 ether,
+            phases: singlePhase(100 ether, 100),
             tournamentEarningShare1e7: 2_500_000
         });
 
@@ -514,9 +505,8 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             athleteSecondarySalesBPS: 1000,
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
             otherEarningShare1e7: 10_000_001, // > 100%
-            price: 100 ether,
+            phases: singlePhase(100 ether, 100),
             tournamentEarningShare1e7: 2_500_000
         });
 
@@ -537,9 +527,8 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             athleteSecondarySalesBPS: 1000,
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
             otherEarningShare1e7: 5_000_000,
-            price: 100 ether,
+            phases: singlePhase(100 ether, 100),
             tournamentEarningShare1e7: 10_000_001 // > 100%
         });
 
@@ -560,9 +549,8 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             athleteSecondarySalesBPS: 1000,
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
             otherEarningShare1e7: 5_000_000,
-            price: 100 ether,
+            phases: singlePhase(100 ether, 100),
             tournamentEarningShare1e7: 2_500_000
         });
 
@@ -572,64 +560,123 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
         fantiumAthletes.updateCollection(collectionId, data);
     }
 
-    // setCollectionStatus
+    // setSaleStatus
     // ========================================================================
-    function test_setCollectionStatus_ok_admin() public {
+    function test_setSaleStatus_ok_admin() public {
         uint256 collectionId = 1;
-        bool isMintable = true;
-        bool isPaused = false;
 
+        vm.expectEmit(true, false, false, true, address(fantiumAthletes));
+        emit IFANtiumAthletes.SaleStatusUpdated(collectionId, SaleStatus.Paused);
         vm.prank(fantiumAthletes_admin);
-        fantiumAthletes.setCollectionStatus(collectionId, isMintable, isPaused);
+        fantiumAthletes.setSaleStatus(singleCollection(collectionId), SaleStatus.Paused);
 
-        Collection memory collection = fantiumAthletes.collections(collectionId);
-        assertEq(collection.isMintable, isMintable);
-        assertEq(collection.isPaused, isPaused);
+        assertEq(uint256(fantiumAthletes.collections(collectionId).status), uint256(SaleStatus.Paused));
     }
 
-    function test_setCollectionStatus_ok_manager() public {
-        uint256 collectionId = 1;
-        bool isMintable = true;
-        bool isPaused = false;
+    function test_setSaleStatus_ok_batch() public {
+        uint256[] memory collectionIds = new uint256[](3);
+        collectionIds[0] = 1;
+        collectionIds[1] = 2;
+        collectionIds[2] = 3;
 
+        for (uint256 i = 0; i < collectionIds.length; i++) {
+            vm.expectEmit(true, false, false, true, address(fantiumAthletes));
+            emit IFANtiumAthletes.SaleStatusUpdated(collectionIds[i], SaleStatus.Paused);
+        }
         vm.prank(fantiumAthletes_admin);
-        fantiumAthletes.setCollectionStatus(collectionId, isMintable, isPaused);
+        fantiumAthletes.setSaleStatus(collectionIds, SaleStatus.Paused);
 
-        Collection memory collection = fantiumAthletes.collections(collectionId);
-        assertEq(collection.isMintable, isMintable);
-        assertEq(collection.isPaused, isPaused);
+        for (uint256 i = 0; i < collectionIds.length; i++) {
+            assertEq(uint256(fantiumAthletes.collections(collectionIds[i]).status), uint256(SaleStatus.Paused));
+        }
     }
 
-    function test_setCollectionStatus_ok_athlete() public {
-        uint256 collectionId = 1;
-        bool isMintable = true;
-        bool isPaused = false;
+    function test_setSaleStatus_revert_batchWithForeignCollection() public {
+        // Collection 1 and 2 share the same athlete in the fixtures; create one owned by another.
+        address otherAthlete = makeAddr("otherAthlete");
+        CollectionData memory data = CollectionData({
+            athleteAddress: payable(otherAthlete),
+            athletePrimarySalesBPS: 5000,
+            athleteSecondarySalesBPS: 1000,
+            fantiumSecondarySalesBPS: 500,
+            launchTimestamp: block.timestamp + 1 days,
+            otherEarningShare1e7: 5_000_000,
+            phases: singlePhase(100 ether, 100),
+            tournamentEarningShare1e7: 2_500_000
+        });
+        vm.prank(fantiumAthletes_admin);
+        uint256 foreignCollectionId = fantiumAthletes.createCollection(data);
 
-        Collection memory collection = fantiumAthletes.collections(collectionId);
-        address athlete = collection.athleteAddress;
+        address athlete = fantiumAthletes.collections(1).athleteAddress;
+        uint256[] memory collectionIds = new uint256[](2);
+        collectionIds[0] = 1;
+        collectionIds[1] = foreignCollectionId;
+
+        // The whole batch reverts: no partial application.
+        vm.expectRevert(
+            abi.encodeWithSelector(IFANtiumAthletes.AthleteOnly.selector, foreignCollectionId, athlete, otherAthlete)
+        );
+        vm.prank(athlete);
+        fantiumAthletes.setSaleStatus(collectionIds, SaleStatus.Paused);
+
+        assertEq(uint256(fantiumAthletes.collections(1).status), uint256(SaleStatus.Open));
+    }
+
+    function test_setSaleStatus_ok_athlete() public {
+        uint256 collectionId = 1;
+        address athlete = fantiumAthletes.collections(collectionId).athleteAddress;
 
         vm.prank(athlete);
-        fantiumAthletes.setCollectionStatus(collectionId, isMintable, isPaused);
+        fantiumAthletes.setSaleStatus(singleCollection(collectionId), SaleStatus.Paused);
+        assertEq(uint256(fantiumAthletes.collections(collectionId).status), uint256(SaleStatus.Paused));
 
-        collection = fantiumAthletes.collections(collectionId);
-        assertEq(collection.isMintable, isMintable);
-        assertEq(collection.isPaused, isPaused);
+        vm.prank(athlete);
+        fantiumAthletes.setSaleStatus(singleCollection(collectionId), SaleStatus.Open);
+        assertEq(uint256(fantiumAthletes.collections(collectionId).status), uint256(SaleStatus.Open));
     }
 
-    function test_setCollectionStatus_revert_invalidCollectionId() public {
+    function test_setSaleStatus_ok_athleteCanClose() public {
+        uint256 collectionId = 1;
+        address athlete = fantiumAthletes.collections(collectionId).athleteAddress;
+
+        vm.prank(athlete);
+        fantiumAthletes.setSaleStatus(singleCollection(collectionId), SaleStatus.Closed);
+        assertEq(uint256(fantiumAthletes.collections(collectionId).status), uint256(SaleStatus.Closed));
+    }
+
+    function test_setSaleStatus_ok_adminCanReopenClosed() public {
+        uint256 collectionId = 1;
+
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.setSaleStatus(singleCollection(collectionId), SaleStatus.Closed);
+
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.setSaleStatus(singleCollection(collectionId), SaleStatus.Open);
+        assertEq(uint256(fantiumAthletes.collections(collectionId).status), uint256(SaleStatus.Open));
+    }
+
+    function test_setSaleStatus_revert_athleteCannotReopenClosed() public {
+        uint256 collectionId = 1;
+        address athlete = fantiumAthletes.collections(collectionId).athleteAddress;
+
+        vm.prank(athlete);
+        fantiumAthletes.setSaleStatus(singleCollection(collectionId), SaleStatus.Closed);
+
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumAthletes.SaleClosed.selector, collectionId));
+        vm.prank(athlete);
+        fantiumAthletes.setSaleStatus(singleCollection(collectionId), SaleStatus.Open);
+    }
+
+    function test_setSaleStatus_revert_invalidCollectionId() public {
         uint256 invalidCollectionId = 999_999;
-        bool isMintable = true;
-        bool isPaused = false;
 
         vm.expectRevert(abi.encodeWithSelector(IFANtiumAthletes.InvalidCollectionId.selector, invalidCollectionId));
         vm.prank(fantiumAthletes_admin);
-        fantiumAthletes.setCollectionStatus(invalidCollectionId, isMintable, isPaused);
+        fantiumAthletes.setSaleStatus(singleCollection(invalidCollectionId), SaleStatus.Open);
     }
 
-    function test_setCollectionStatus_revert_unauthorized() public {
+    function test_setSaleStatus_revert_unauthorized() public {
         uint256 collectionId = 1;
-        bool isMintable = true;
-        bool isPaused = false;
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -640,10 +687,10 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             )
         );
         vm.prank(nobody);
-        fantiumAthletes.setCollectionStatus(collectionId, isMintable, isPaused);
+        fantiumAthletes.setSaleStatus(singleCollection(collectionId), SaleStatus.Open);
     }
 
-    function test_setCollectionStatus_revert_wrongAthlete() public {
+    function test_setSaleStatus_revert_wrongAthlete() public {
         // Create two collections with different athletes
         address athlete1 = makeAddr("athlete1");
         address athlete2 = makeAddr("athlete2");
@@ -654,9 +701,8 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             athleteSecondarySalesBPS: 1000,
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
             otherEarningShare1e7: 5_000_000,
-            price: 100 ether,
+            phases: singlePhase(100 ether, 100),
             tournamentEarningShare1e7: 2_500_000
         });
 
@@ -666,9 +712,8 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             athleteSecondarySalesBPS: 1000,
             fantiumSecondarySalesBPS: 500,
             launchTimestamp: block.timestamp + 1 days,
-            maxInvocations: 100,
             otherEarningShare1e7: 5_000_000,
-            price: 100 ether,
+            phases: singlePhase(100 ether, 100),
             tournamentEarningShare1e7: 2_500_000
         });
 
@@ -683,45 +728,37 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             abi.encodeWithSelector(IFANtiumAthletes.AthleteOnly.selector, collectionId1, athlete2, athlete1)
         );
         vm.prank(athlete2);
-        fantiumAthletes.setCollectionStatus(collectionId1, true, false);
+        fantiumAthletes.setSaleStatus(singleCollection(collectionId1), SaleStatus.Open);
     }
 
-    // mintable
+    // mintTo — sale state checks
     // ========================================================================
-    function test_mintable_ok() public {
-        uint256 collectionId = 1; // collection 1 is mintable
-
-        // ensure that the launch timestamp has passed
-        Collection memory collection = fantiumAthletes.collections(collectionId);
-        if (block.timestamp < collection.launchTimestamp) {
-            skip(collection.launchTimestamp + 1 days);
-        }
-
-        vm.prank(recipient);
-        fantiumAthletes.mintable(collectionId);
-    }
-
-    function test_mintable_revert_invalidCollectionId() public {
+    function test_mintTo_revert_invalidCollectionId() public {
         uint256 collectionId = 999_999; // collection 999_999 does not exist
+        uint256 deadline = block.timestamp + 1 hours;
 
         vm.expectRevert(abi.encodeWithSelector(IFANtiumAthletes.InvalidCollectionId.selector, collectionId));
-        fantiumAthletes.mintable(collectionId);
+        vm.prank(recipient);
+        fantiumAthletes.mintTo(collectionId, 1, recipient, deadline, "");
     }
 
-    function test_mintable_revert_notMintable() public {
+    function test_mintTo_revert_notMintable() public {
         uint256 collectionId = 1; // collection 1 is mintable
 
         vm.prank(fantiumAthletes_admin);
-        fantiumAthletes.setCollectionStatus(collectionId, false, true);
+        fantiumAthletes.setSaleStatus(singleCollection(collectionId), SaleStatus.Pending);
+
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes memory signature = signMint(recipient, fantiumAthletes.nonces(recipient), collectionId, 1, deadline);
 
         vm.expectRevert(
             abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.COLLECTION_NOT_MINTABLE)
         );
         vm.prank(recipient);
-        fantiumAthletes.mintable(collectionId);
+        fantiumAthletes.mintTo(collectionId, 1, recipient, deadline, signature);
     }
 
-    function test_mintable_revert_notLaunched() public {
+    function test_mintTo_revert_notLaunched() public {
         uint256 collectionId = 1; // collection 1 is mintable
 
         Collection memory collection = fantiumAthletes.collections(collectionId);
@@ -729,27 +766,28 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             rewind(collection.launchTimestamp - 1 days);
         }
 
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes memory signature = signMint(recipient, fantiumAthletes.nonces(recipient), collectionId, 1, deadline);
+
         vm.expectRevert(
             abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.COLLECTION_NOT_LAUNCHED)
         );
-        fantiumAthletes.mintable(collectionId);
+        vm.prank(recipient);
+        fantiumAthletes.mintTo(collectionId, 1, recipient, deadline, signature);
     }
 
-    function test_mintable_revert_paused() public {
+    function test_mintTo_revert_paused() public {
         uint256 collectionId = 5; // collection 5 is paused
-        assertTrue(fantiumAthletes.collections(collectionId).isPaused);
+        assertEq(uint256(fantiumAthletes.collections(collectionId).status), uint256(SaleStatus.Paused));
 
-        // ensure that the launch timestamp has passed
-        Collection memory collection = fantiumAthletes.collections(collectionId);
-        if (block.timestamp < collection.launchTimestamp) {
-            skip(collection.launchTimestamp + 1 days);
-        }
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes memory signature = signMint(recipient, fantiumAthletes.nonces(recipient), collectionId, 1, deadline);
 
         vm.expectRevert(
             abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.COLLECTION_PAUSED)
         );
         vm.prank(recipient);
-        fantiumAthletes.mintable(collectionId);
+        fantiumAthletes.mintTo(collectionId, 1, recipient, deadline, signature);
     }
 
     // getPrimaryRevenueSplits
@@ -777,22 +815,44 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
         assertEq(athleteAddress, collection.athleteAddress, "Incorrect athlete address");
     }
 
-    // mintTo (standard price)
+    // quoteMint
     // ========================================================================
-    function test_mintTo_standardPrice_ok_single() public {
+    function test_quoteMint_ok() public view {
+        uint256 collectionId = 1; // collection 1 is mintable
+        Collection memory collection = fantiumAthletes.collections(collectionId);
+        (uint256 price, uint256 activePhaseBefore, uint256 activePhaseAfter, bool soldOutAfter) =
+            fantiumAthletes.quoteMint(collectionId, 3);
+        assertEq(price, uint256(collection.phases[0].price) * 3 * 10 ** usdc.decimals());
+        assertEq(activePhaseBefore, 0);
+        assertEq(activePhaseAfter, 0);
+        assertFalse(soldOutAfter);
+    }
+
+    function test_quoteMint_revert_insufficientSupply() public {
+        uint256 collectionId = 6; // collection 6 has 5 max invocations
+        vm.expectRevert(
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.MAX_INVOCATIONS_REACHED)
+        );
+        fantiumAthletes.quoteMint(collectionId, 6);
+    }
+
+    // mintTo
+    // ========================================================================
+    function test_mintTo_ok_single() public {
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
-        (uint256 amountUSDC,,,,) = prepareSale(collectionId, quantity, recipient);
+        (uint256 amountUSDC, uint256 deadline, bytes memory signature) =
+            prepareSignedSale(collectionId, quantity, recipient);
 
         vm.expectEmit(true, true, false, true, address(fantiumAthletes));
         emit IFANtiumAthletes.Sale(collectionId, quantity, recipient, amountUSDC, 0);
         vm.prank(recipient);
-        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient);
+        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient, deadline, signature);
 
         assertEq(fantiumAthletes.ownerOf(lastTokenId), recipient);
     }
 
-    function test_mintTo_standardPrice_ok_batch() public {
+    function test_mintTo_ok_batch() public {
         uint24 quantity = 10;
         uint256 collectionId = 1; // collection 1 is mintable
 
@@ -803,6 +863,9 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             uint256 athleteRevenue,
             address payable athleteAddress
         ) = prepareSale(collectionId, quantity, recipient);
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes memory signature =
+            signMint(recipient, fantiumAthletes.nonces(recipient), collectionId, quantity, deadline);
         uint256 recipientBalanceBefore = usdc.balanceOf(recipient);
 
         // Transfers expected
@@ -814,8 +877,7 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
         vm.expectEmit(true, true, false, true, address(fantiumAthletes));
         emit IFANtiumAthletes.Sale(collectionId, quantity, recipient, amountUSDC, 0);
         vm.prank(recipient);
-        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient);
-        vm.stopPrank();
+        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient, deadline, signature);
 
         uint256 firstTokenId = lastTokenId - quantity + 1;
 
@@ -826,78 +888,72 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
         assertEq(usdc.balanceOf(recipient), recipientBalanceBefore - amountUSDC);
     }
 
-    function test_mintTo_standardPrice_revert_maxInvocationsReached() public {
+    function test_mintTo_revert_maxInvocationsReached() public {
         uint256 collectionId = 6; // collection 6 is mintable
         uint24 quantity = 6; // collection 6 has 5 max invocations
 
-        prepareSale(collectionId, quantity, recipient);
-        uint256 recipientBalanceBefore = usdc.balanceOf(recipient);
+        Collection memory collection = fantiumAthletes.collections(collectionId);
+        if (block.timestamp < collection.launchTimestamp) {
+            vm.warp(collection.launchTimestamp + 1);
+        }
+
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes memory signature =
+            signMint(recipient, fantiumAthletes.nonces(recipient), collectionId, quantity, deadline);
 
         vm.expectRevert(
             abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.MAX_INVOCATIONS_REACHED)
         );
         vm.prank(recipient);
-        fantiumAthletes.mintTo(collectionId, quantity, recipient);
-
-        assertEq(usdc.balanceOf(recipient), recipientBalanceBefore);
+        fantiumAthletes.mintTo(collectionId, quantity, recipient, deadline, signature);
     }
 
-    // mintTo (custom price)
-    // ========================================================================
-    function test_mintTo_customPrice_ok_single() public {
+    function test_mintTo_revert_zeroQuantity() public {
         uint256 collectionId = 1; // collection 1 is mintable
-        uint24 quantity = 1;
-        uint256 amountUSDC = 74 * 10 ** usdc.decimals(); // normal price is 99 USDC
-        (bytes memory signature,, uint256 deadline,,,,) = prepareSale(collectionId, quantity, recipient, amountUSDC);
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes memory signature = signMint(recipient, fantiumAthletes.nonces(recipient), collectionId, 0, deadline);
 
-        vm.expectEmit(true, true, false, true, address(fantiumAthletes));
-        emit IFANtiumAthletes.Sale(collectionId, quantity, recipient, amountUSDC, 25 * 10 ** usdc.decimals());
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.INVALID_QUANTITY));
         vm.prank(recipient);
-        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, deadline, signature);
-
-        assertEq(fantiumAthletes.ownerOf(lastTokenId), recipient);
+        fantiumAthletes.mintTo(collectionId, 0, recipient, deadline, signature);
     }
 
-    function test_mintTo_customPrice_revert_malformedSignature() public {
+    function test_mintTo_revert_malformedSignature() public {
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
-        uint256 amountUSDC = 200;
         uint256 deadline = block.timestamp + 1 hours;
         bytes memory malformedSignature = abi.encodePacked("malformed signature");
 
         vm.expectRevert("ECDSA: invalid signature length");
         vm.prank(recipient);
-        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, deadline, malformedSignature);
+        fantiumAthletes.mintTo(collectionId, quantity, recipient, deadline, malformedSignature);
     }
 
-    function test_mintTo_customPrice_revert_invalidSigner() public {
+    function test_mintTo_revert_invalidSigner() public {
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
-        uint256 amountUSDC = 200;
         uint256 deadline = block.timestamp + 1 hours;
         uint256 nonce = fantiumAthletes.nonces(recipient);
 
-        bytes32 structHash = keccak256(
-            abi.encode(fantiumAthletes.MINT_TYPEHASH(), collectionId, quantity, recipient, amountUSDC, nonce, deadline)
-        );
+        bytes32 structHash =
+            keccak256(abi.encode(fantiumAthletes.MINT_TYPEHASH(), collectionId, quantity, recipient, nonce, deadline));
         bytes memory forgedSignature = typedSignPacked(42_424_242_242_424_242, fantiumAthletesDomain(), structHash);
 
         vm.expectRevert(
             abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.INVALID_SIGNATURE)
         );
         vm.prank(recipient);
-        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, deadline, forgedSignature);
+        fantiumAthletes.mintTo(collectionId, quantity, recipient, deadline, forgedSignature);
     }
 
     function test_mintTo_revert_invalidNonce() public {
         uint256 collectionId = 1; // collection 1 is mintable
         uint24 quantity = 1;
-        uint256 amountUSDC = 200;
-        (bytes memory signature,, uint256 deadline,,,,) = prepareSale(collectionId, quantity, recipient, amountUSDC);
+        (, uint256 deadline, bytes memory signature) = prepareSignedSale(collectionId, quantity, recipient);
 
         // First mint pass, and nonce is incremented
         vm.prank(recipient);
-        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, deadline, signature);
+        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, recipient, deadline, signature);
         assertEq(fantiumAthletes.ownerOf(lastTokenId), recipient);
 
         // Second mint fails, because nonce is incremented
@@ -905,14 +961,13 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.INVALID_SIGNATURE)
         );
         vm.prank(recipient);
-        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, deadline, signature);
+        fantiumAthletes.mintTo(collectionId, quantity, recipient, deadline, signature);
     }
 
-    function test_mintTo_customPrice_revert_expiredDeadline() public {
+    function test_mintTo_revert_expiredDeadline() public {
         uint256 collectionId = 1;
         uint24 quantity = 1;
-        uint256 amountUSDC = 74 * 10 ** usdc.decimals();
-        (bytes memory signature,, uint256 deadline,,,,) = prepareSale(collectionId, quantity, recipient, amountUSDC);
+        (, uint256 deadline, bytes memory signature) = prepareSignedSale(collectionId, quantity, recipient);
 
         // Advance past the deadline.
         vm.warp(deadline + 1);
@@ -921,22 +976,13 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.SIGNATURE_EXPIRED)
         );
         vm.prank(recipient);
-        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, deadline, signature);
+        fantiumAthletes.mintTo(collectionId, quantity, recipient, deadline, signature);
     }
 
-    function test_mintTo_customPrice_revert_wrongChainId() public {
+    function test_mintTo_revert_wrongChainId() public {
         uint256 collectionId = 1;
         uint24 quantity = 1;
-        uint256 amountUSDC = 74 * 10 ** usdc.decimals();
         uint256 nonce = fantiumAthletes.nonces(recipient);
-
-        Collection memory collection = fantiumAthletes.collections(collectionId);
-        if (block.timestamp < collection.launchTimestamp) {
-            vm.warp(collection.launchTimestamp + 1);
-        }
-        deal(address(usdc), recipient, amountUSDC);
-        vm.prank(recipient);
-        usdc.approve(address(fantiumAthletes), amountUSDC);
         uint256 deadline = block.timestamp + 1 hours;
 
         EIP712Domain memory wrongDomain = EIP712Domain({
@@ -945,46 +991,35 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
             chainId: block.chainid + 1,
             verifyingContract: address(fantiumAthletes)
         });
-        bytes32 structHash = keccak256(
-            abi.encode(fantiumAthletes.MINT_TYPEHASH(), collectionId, quantity, recipient, amountUSDC, nonce, deadline)
-        );
+        bytes32 structHash =
+            keccak256(abi.encode(fantiumAthletes.MINT_TYPEHASH(), collectionId, quantity, recipient, nonce, deadline));
         bytes memory signature = typedSignPacked(fantiumAthletes_signerKey, wrongDomain, structHash);
 
         vm.expectRevert(
             abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.INVALID_SIGNATURE)
         );
         vm.prank(recipient);
-        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, deadline, signature);
+        fantiumAthletes.mintTo(collectionId, quantity, recipient, deadline, signature);
     }
 
-    function test_mintTo_customPrice_revert_wrongVerifyingContract() public {
+    function test_mintTo_revert_wrongVerifyingContract() public {
         uint256 collectionId = 1;
         uint24 quantity = 1;
-        uint256 amountUSDC = 74 * 10 ** usdc.decimals();
         uint256 nonce = fantiumAthletes.nonces(recipient);
-
-        Collection memory collection = fantiumAthletes.collections(collectionId);
-        if (block.timestamp < collection.launchTimestamp) {
-            vm.warp(collection.launchTimestamp + 1);
-        }
-        deal(address(usdc), recipient, amountUSDC);
-        vm.prank(recipient);
-        usdc.approve(address(fantiumAthletes), amountUSDC);
         uint256 deadline = block.timestamp + 1 hours;
 
         EIP712Domain memory wrongDomain = EIP712Domain({
             name: "FANtium Athletes", version: "1", chainId: block.chainid, verifyingContract: address(0x1234)
         });
-        bytes32 structHash = keccak256(
-            abi.encode(fantiumAthletes.MINT_TYPEHASH(), collectionId, quantity, recipient, amountUSDC, nonce, deadline)
-        );
+        bytes32 structHash =
+            keccak256(abi.encode(fantiumAthletes.MINT_TYPEHASH(), collectionId, quantity, recipient, nonce, deadline));
         bytes memory signature = typedSignPacked(fantiumAthletes_signerKey, wrongDomain, structHash);
 
         vm.expectRevert(
             abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.INVALID_SIGNATURE)
         );
         vm.prank(recipient);
-        fantiumAthletes.mintTo(collectionId, quantity, recipient, amountUSDC, deadline, signature);
+        fantiumAthletes.mintTo(collectionId, quantity, recipient, deadline, signature);
     }
 
     // batchTransferFrom
@@ -1319,5 +1354,393 @@ contract FANtiumAthletesV12Test is BaseTest, FANtiumAthletesFactory {
         vm.expectRevert("ERC721: invalid token ID");
         vm.prank(fantiumAthletes_admin);
         fantiumAthletes.rescueBatch(invalidTokenIds, reason);
+    }
+
+    // Price phases
+    // ========================================================================
+    function _multiPhaseCollectionData(
+        uint128 p0,
+        uint128 m0,
+        uint128 p1,
+        uint128 m1
+    )
+        internal
+        returns (CollectionData memory data)
+    {
+        PricePhase[] memory phases = new PricePhase[](2);
+        phases[0] = PricePhase({ price: p0, maxInvocations: m0 });
+        phases[1] = PricePhase({ price: p1, maxInvocations: m1 });
+
+        data = CollectionData({
+            athleteAddress: payable(makeAddr("phaseAthlete")),
+            athletePrimarySalesBPS: 9000,
+            athleteSecondarySalesBPS: 500,
+            fantiumSecondarySalesBPS: 200,
+            launchTimestamp: block.timestamp,
+            otherEarningShare1e7: 100,
+            phases: phases,
+            tournamentEarningShare1e7: 800
+        });
+    }
+
+    function _createMintableMultiPhase(
+        uint128 p0,
+        uint128 m0,
+        uint128 p1,
+        uint128 m1
+    )
+        internal
+        returns (uint256 collectionId)
+    {
+        vm.startPrank(fantiumAthletes_admin);
+        collectionId = fantiumAthletes.createCollection(_multiPhaseCollectionData(p0, m0, p1, m1));
+        fantiumAthletes.setSaleStatus(singleCollection(collectionId), SaleStatus.Open);
+        vm.stopPrank();
+    }
+
+    function test_createCollection_revert_phasesEmpty() public {
+        CollectionData memory data = CollectionData({
+            athleteAddress: payable(makeAddr("athlete")),
+            athletePrimarySalesBPS: 5000,
+            athleteSecondarySalesBPS: 1000,
+            fantiumSecondarySalesBPS: 500,
+            launchTimestamp: block.timestamp + 1 days,
+            otherEarningShare1e7: 5_000_000,
+            phases: new PricePhase[](0),
+            tournamentEarningShare1e7: 2_500_000
+        });
+
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumAthletes.PhasesNotConfigured.selector, 7));
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.createCollection(data);
+    }
+
+    function test_createCollection_revert_phaseMaxInvocationsZero() public {
+        PricePhase[] memory phases = new PricePhase[](2);
+        phases[0] = PricePhase({ price: 50, maxInvocations: 10 });
+        phases[1] = PricePhase({ price: 100, maxInvocations: 0 }); // invalid
+
+        CollectionData memory data = CollectionData({
+            athleteAddress: payable(makeAddr("athlete")),
+            athletePrimarySalesBPS: 5000,
+            athleteSecondarySalesBPS: 1000,
+            fantiumSecondarySalesBPS: 500,
+            launchTimestamp: block.timestamp + 1 days,
+            otherEarningShare1e7: 5_000_000,
+            phases: phases,
+            tournamentEarningShare1e7: 2_500_000
+        });
+
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumAthletes.PhaseMaxInvocationsZero.selector, 1));
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.createCollection(data);
+    }
+
+    function test_createCollection_phases_seeded() public {
+        uint256 collectionId = _createMintableMultiPhase(50, 3, 200, 5);
+        Collection memory collection = fantiumAthletes.collections(collectionId);
+
+        assertEq(collection.phases.length, 2);
+        assertEq(collection.phases[0].price, 50);
+        assertEq(collection.phases[0].maxInvocations, 3);
+        assertEq(collection.phases[1].price, 200);
+        assertEq(collection.phases[1].maxInvocations, 5);
+    }
+
+    function test_mintTo_phases_advancesPrice() public {
+        uint128 p0 = 50;
+        uint128 p1 = 200;
+        uint256 collectionId = _createMintableMultiPhase(p0, 3, p1, 5);
+
+        address buyer = makeAddr("phaseBuyer");
+        uint24 phase0Quantity = 3;
+        (uint256 amount0, uint256 deadline0, bytes memory signature0) =
+            prepareSignedSale(collectionId, phase0Quantity, buyer);
+        assertEq(amount0, uint256(p0) * phase0Quantity * 10 ** usdc.decimals());
+
+        vm.expectEmit(true, true, false, true, address(fantiumAthletes));
+        emit IFANtiumAthletes.PhaseAdvanced(collectionId, 0, 1, 3);
+        vm.prank(buyer);
+        fantiumAthletes.mintTo(collectionId, phase0Quantity, buyer, deadline0, signature0);
+
+        // Next mint uses phase 1 price.
+        uint24 phase1Quantity = 2;
+        (uint256 amount1, uint256 deadline1, bytes memory signature1) =
+            prepareSignedSale(collectionId, phase1Quantity, buyer);
+        assertEq(amount1, uint256(p1) * phase1Quantity * 10 ** usdc.decimals());
+        vm.prank(buyer);
+        fantiumAthletes.mintTo(collectionId, phase1Quantity, buyer, deadline1, signature1);
+
+        Collection memory collection = fantiumAthletes.collections(collectionId);
+        assertEq(collection.invocations, 5);
+    }
+
+    function test_mintTo_ok_crossPhaseBoundary() public {
+        uint128 p0 = 50;
+        uint128 p1 = 200;
+        uint256 collectionId = _createMintableMultiPhase(p0, 3, p1, 5);
+
+        address buyer = makeAddr("boundaryBuyer");
+        mintTo(collectionId, 1, buyer); // phase 0 has 2 slots left
+
+        // Buy 5: 2 from phase 0 + 3 from phase 1, each segment at its own price.
+        uint24 quantity = 5;
+        (uint256 amountUSDC, uint256 deadline, bytes memory signature) =
+            prepareSignedSale(collectionId, quantity, buyer);
+        assertEq(amountUSDC, (2 * uint256(p0) + 3 * uint256(p1)) * 10 ** usdc.decimals());
+
+        vm.expectEmit(true, true, false, true, address(fantiumAthletes));
+        emit IFANtiumAthletes.Sale(collectionId, quantity, buyer, amountUSDC, 0);
+        vm.expectEmit(true, false, false, true, address(fantiumAthletes));
+        emit IFANtiumAthletes.PhaseAdvanced(collectionId, 0, 1, 6);
+        vm.prank(buyer);
+        fantiumAthletes.mintTo(collectionId, quantity, buyer, deadline, signature);
+
+        assertEq(fantiumAthletes.collections(collectionId).invocations, 6);
+    }
+
+    function test_mintTo_ok_crossMultiplePhases() public {
+        // Three phases: 2@10, 2@20, 6@30. A single purchase of 6 spans all three.
+        PricePhase[] memory phases = new PricePhase[](3);
+        phases[0] = PricePhase({ price: 10, maxInvocations: 2 });
+        phases[1] = PricePhase({ price: 20, maxInvocations: 2 });
+        phases[2] = PricePhase({ price: 30, maxInvocations: 6 });
+
+        CollectionData memory data = _multiPhaseCollectionData(10, 2, 20, 2);
+        data.phases = phases;
+
+        vm.startPrank(fantiumAthletes_admin);
+        uint256 collectionId = fantiumAthletes.createCollection(data);
+        fantiumAthletes.setSaleStatus(singleCollection(collectionId), SaleStatus.Open);
+        vm.stopPrank();
+
+        address buyer = makeAddr("multiPhaseBuyer");
+        uint24 quantity = 6; // 2*10 + 2*20 + 2*30 = 120
+        (uint256 amountUSDC, uint256 deadline, bytes memory signature) =
+            prepareSignedSale(collectionId, quantity, buyer);
+        assertEq(amountUSDC, 120 * 10 ** usdc.decimals());
+
+        // The active phase jumps from 0 straight to 2.
+        vm.expectEmit(true, false, false, true, address(fantiumAthletes));
+        emit IFANtiumAthletes.PhaseAdvanced(collectionId, 0, 2, 6);
+        vm.prank(buyer);
+        fantiumAthletes.mintTo(collectionId, quantity, buyer, deadline, signature);
+
+        assertEq(fantiumAthletes.collections(collectionId).invocations, 6);
+    }
+
+    function test_mintTo_ok_crossPhaseToFullSellout_noPhaseAdvancedEvent() public {
+        uint256 collectionId = _createMintableMultiPhase(50, 3, 200, 5);
+
+        address buyer = makeAddr("selloutBuyer");
+        uint24 quantity = 8; // entire supply in one purchase, spanning both phases
+        (uint256 amountUSDC, uint256 deadline, bytes memory signature) =
+            prepareSignedSale(collectionId, quantity, buyer);
+        assertEq(amountUSDC, (3 * 50 + 5 * 200) * 10 ** usdc.decimals());
+
+        vm.recordLogs();
+        vm.prank(buyer);
+        fantiumAthletes.mintTo(collectionId, quantity, buyer, deadline, signature);
+
+        // Sold out: there is no active phase to advance to.
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        for (uint256 i = 0; i < logs.length; i++) {
+            assertNotEq(logs[i].topics[0], IFANtiumAthletes.PhaseAdvanced.selector);
+        }
+        assertEq(fantiumAthletes.collections(collectionId).invocations, 8);
+    }
+
+    function test_updateCollection_phases_rewritten() public {
+        uint256 collectionId = 1;
+        uint24 quantity = 2;
+        mintTo(collectionId, quantity, recipient); // move invocations to 2
+
+        // Replace the single-phase config with a two-phase config. Phase 0 must cover current invocations (2).
+        PricePhase[] memory phases = new PricePhase[](2);
+        phases[0] = PricePhase({ price: 150, maxInvocations: 50 });
+        phases[1] = PricePhase({ price: 300, maxInvocations: 50 });
+
+        CollectionData memory data = CollectionData({
+            athleteAddress: payable(makeAddr("phaseAthleteUpdate")),
+            athletePrimarySalesBPS: 6000,
+            athleteSecondarySalesBPS: 500,
+            fantiumSecondarySalesBPS: 200,
+            launchTimestamp: block.timestamp,
+            otherEarningShare1e7: 100,
+            phases: phases,
+            tournamentEarningShare1e7: 800
+        });
+
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.updateCollection(collectionId, data);
+
+        Collection memory collection = fantiumAthletes.collections(collectionId);
+        assertEq(collection.phases.length, 2);
+        assertEq(collection.phases[0].price, 150);
+        assertEq(collection.phases[1].price, 300);
+        assertEq(collection.invocations, quantity);
+    }
+
+    function test_updateCollection_ok_soldOutCollection() public {
+        uint256 collectionId = 6; // collection 6 has 5 max invocations
+        mintTo(collectionId, 5, recipient); // sell out the collection
+
+        Collection memory collection = fantiumAthletes.collections(collectionId);
+        assertEq(collection.invocations, 5);
+
+        // Phases summing exactly to the current invocations are valid: the collection is sold out.
+        CollectionData memory data = CollectionData({
+            athleteAddress: collection.athleteAddress,
+            athletePrimarySalesBPS: collection.athletePrimarySalesBPS,
+            athleteSecondarySalesBPS: collection.athleteSecondarySalesBPS,
+            fantiumSecondarySalesBPS: collection.fantiumSecondarySalesBPS,
+            launchTimestamp: collection.launchTimestamp,
+            otherEarningShare1e7: collection.otherEarningShare1e7,
+            phases: singlePhase(collection.phases[0].price, 5),
+            tournamentEarningShare1e7: collection.tournamentEarningShare1e7
+        });
+
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.updateCollection(collectionId, data);
+
+        assertEq(fantiumAthletes.collections(collectionId).phases.length, 1);
+    }
+
+    function test_mintTo_revert_allPhasesConsumed() public {
+        uint256 collectionId = 6; // collection 6 has 5 max invocations
+        mintTo(collectionId, 5, recipient); // sell out the collection
+
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes memory signature = signMint(recipient, fantiumAthletes.nonces(recipient), collectionId, 1, deadline);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(IFANtiumAthletes.InvalidMint.selector, MintErrorReason.MAX_INVOCATIONS_REACHED)
+        );
+        vm.prank(recipient);
+        fantiumAthletes.mintTo(collectionId, 1, recipient, deadline, signature);
+    }
+
+    function test_mintTo_ok_phase1Price() public {
+        uint128 p1 = 200;
+        uint256 collectionId = _createMintableMultiPhase(50, 3, p1, 5);
+
+        address buyer = makeAddr("phase1Buyer");
+        mintTo(collectionId, 3, buyer); // fill phase 0
+
+        // The next mint is charged at the now-active phase 1 price.
+        uint24 quantity = 1;
+        (uint256 amountUSDC, uint256 deadline, bytes memory signature) =
+            prepareSignedSale(collectionId, quantity, buyer);
+        assertEq(amountUSDC, uint256(p1) * 10 ** usdc.decimals());
+
+        vm.expectEmit(true, true, false, true, address(fantiumAthletes));
+        emit IFANtiumAthletes.Sale(collectionId, quantity, buyer, amountUSDC, 0);
+        vm.prank(buyer);
+        uint256 lastTokenId = fantiumAthletes.mintTo(collectionId, quantity, buyer, deadline, signature);
+        assertEq(fantiumAthletes.ownerOf(lastTokenId), buyer);
+    }
+
+    // setPhases
+    // ========================================================================
+    function test_setPhases_ok() public {
+        uint256 collectionId = 1;
+        mintTo(collectionId, 2, recipient); // move invocations to 2
+
+        PricePhase[] memory phases = new PricePhase[](2);
+        phases[0] = PricePhase({ price: 150, maxInvocations: 50 });
+        phases[1] = PricePhase({ price: 300, maxInvocations: 50 });
+
+        vm.expectEmit(true, false, false, false, address(fantiumAthletes));
+        emit IFANtiumAthletes.CollectionUpdated(collectionId, fantiumAthletes.collections(collectionId));
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.setPhases(collectionId, phases);
+
+        Collection memory collection = fantiumAthletes.collections(collectionId);
+        assertEq(collection.phases.length, 2);
+        assertEq(collection.phases[0].price, 150);
+        assertEq(collection.phases[1].price, 300);
+        assertEq(collection.invocations, 2);
+    }
+
+    function test_setPhases_revert_unauthorized() public {
+        uint256 collectionId = 1;
+        address athlete = fantiumAthletes.collections(collectionId).athleteAddress;
+
+        expectMissingRole(athlete, fantiumAthletes.DEFAULT_ADMIN_ROLE());
+        vm.prank(athlete);
+        fantiumAthletes.setPhases(collectionId, singlePhase(100, 100));
+    }
+
+    function test_setPhases_revert_invalidCollectionId() public {
+        uint256 invalidCollectionId = 999_999;
+
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumAthletes.InvalidCollectionId.selector, invalidCollectionId));
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.setPhases(invalidCollectionId, singlePhase(100, 100));
+    }
+
+    function test_setPhases_revert_phasesDoNotAccommodateInvocations() public {
+        uint256 collectionId = 1;
+        mintTo(collectionId, 10, recipient);
+
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumAthletes.PhasesMustAccommodateInvocations.selector, 10));
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.setPhases(collectionId, singlePhase(100, 9));
+    }
+
+    // initializeV12
+    // ========================================================================
+    function test_initializeV12_ok_seedsApplied() public {
+        uint256 collectionId = 1;
+
+        PhaseSeed[] memory seeds = new PhaseSeed[](1);
+        seeds[0].collectionId = collectionId;
+        seeds[0].phases = new PricePhase[](2);
+        seeds[0].phases[0] = PricePhase({ price: 69, maxInvocations: 44 });
+        seeds[0].phases[1] = PricePhase({ price: 118, maxInvocations: 111 });
+
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.initializeV12(seeds);
+
+        Collection memory collection = fantiumAthletes.collections(collectionId);
+        assertEq(collection.phases.length, 2);
+        assertEq(collection.phases[0].price, 69);
+        assertEq(collection.phases[0].maxInvocations, 44);
+        assertEq(collection.phases[1].price, 118);
+        assertEq(collection.phases[1].maxInvocations, 111);
+    }
+
+    function test_initializeV12_revert_unknownSeedCollection() public {
+        PhaseSeed[] memory seeds = new PhaseSeed[](1);
+        seeds[0].collectionId = 999_999;
+        seeds[0].phases = singlePhase(100, 100);
+
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumAthletes.InvalidCollectionId.selector, 999_999));
+        vm.prank(fantiumAthletes_admin);
+        fantiumAthletes.initializeV12(seeds);
+    }
+
+    function test_initializeV12_revert_unauthorized() public {
+        PhaseSeed[] memory seeds = new PhaseSeed[](0);
+
+        expectMissingRole(nobody, fantiumAthletes.DEFAULT_ADMIN_ROLE());
+        vm.prank(nobody);
+        fantiumAthletes.initializeV12(seeds);
+    }
+
+    function test_mintTo_phases_noAdvanceEventOnLastPhase() public {
+        uint256 collectionId = _createMintableMultiPhase(50, 3, 200, 5);
+
+        address buyer = makeAddr("lastPhaseBuyer");
+        mintTo(collectionId, 3, buyer); // fill phase 0 (emits PhaseAdvanced)
+
+        vm.recordLogs();
+        mintTo(collectionId, 5, buyer); // fill phase 1 completely — no further phase to advance to
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        for (uint256 i = 0; i < logs.length; i++) {
+            assertNotEq(logs[i].topics[0], IFANtiumAthletes.PhaseAdvanced.selector);
+        }
+        assertEq(fantiumAthletes.collections(collectionId).invocations, 8);
     }
 }

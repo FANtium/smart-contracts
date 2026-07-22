@@ -1,0 +1,410 @@
+[
+	{
+		"collectionId": 64,
+		"phases": [
+			{
+				"maxInvocations": 44,
+				"price": 69
+			},
+			{
+				"maxInvocations": 67,
+				"price": 84
+			},
+			{
+				"maxInvocations": 111,
+				"price": 118
+			}
+		]
+	},
+	{
+		"collectionId": 65,
+		"phases": [
+			{
+				"maxInvocations": 37,
+				"price": 349
+			},
+			{
+				"maxInvocations": 56,
+				"price": 424
+			},
+			{
+				"maxInvocations": 93,
+				"price": 599
+			}
+		]
+	},
+	{
+		"collectionId": 66,
+		"phases": [
+			{
+				"maxInvocations": 7,
+				"price": 699
+			},
+			{
+				"maxInvocations": 11,
+				"price": 849
+			},
+			{
+				"maxInvocations": 18,
+				"price": 1199
+			}
+		]
+	},
+	{
+		"collectionId": 67,
+		"phases": [
+			{
+				"maxInvocations": 20,
+				"price": 69
+			},
+			{
+				"maxInvocations": 30,
+				"price": 84
+			},
+			{
+				"maxInvocations": 52,
+				"price": 119
+			}
+		]
+	},
+	{
+		"collectionId": 68,
+		"phases": [
+			{
+				"maxInvocations": 10,
+				"price": 209
+			},
+			{
+				"maxInvocations": 15,
+				"price": 254
+			},
+			{
+				"maxInvocations": 26,
+				"price": 359
+			}
+		]
+	},
+	{
+		"collectionId": 69,
+		"phases": [
+			{
+				"maxInvocations": 5,
+				"price": 699
+			},
+			{
+				"maxInvocations": 7,
+				"price": 849
+			},
+			{
+				"maxInvocations": 13,
+				"price": 1199
+			}
+		]
+	},
+	{
+		"collectionId": 76,
+		"phases": [
+			{
+				"maxInvocations": 20,
+				"price": 69
+			},
+			{
+				"maxInvocations": 30,
+				"price": 84
+			},
+			{
+				"maxInvocations": 52,
+				"price": 119
+			}
+		]
+	},
+	{
+		"collectionId": 77,
+		"phases": [
+			{
+				"maxInvocations": 10,
+				"price": 209
+			},
+			{
+				"maxInvocations": 15,
+				"price": 254
+			},
+			{
+				"maxInvocations": 26,
+				"price": 359
+			}
+		]
+	},
+	{
+		"collectionId": 78,
+		"phases": [
+			{
+				"maxInvocations": 5,
+				"price": 699
+			},
+			{
+				"maxInvocations": 7,
+				"price": 849
+			},
+			{
+				"maxInvocations": 13,
+				"price": 1199
+			}
+		]
+	},
+	{
+		"collectionId": 79,
+		"phases": [
+			{
+				"maxInvocations": 23,
+				"price": 69
+			},
+			{
+				"maxInvocations": 17,
+				"price": 84
+			},
+			{
+				"maxInvocations": 24,
+				"price": 119
+			}
+		]
+	},
+	{
+		"collectionId": 80,
+		"phases": [
+			{
+				"maxInvocations": 14,
+				"price": 349
+			},
+			{
+				"maxInvocations": 10,
+				"price": 424
+			},
+			{
+				"maxInvocations": 14,
+				"price": 599
+			}
+		]
+	},
+	{
+		"collectionId": 81,
+		"phases": [
+			{
+				"maxInvocations": 6,
+				"price": 699
+			},
+			{
+				"maxInvocations": 5,
+				"price": 849
+			},
+			{
+				"maxInvocations": 7,
+				"price": 1199
+			}
+		]
+	},
+	{
+		"collectionId": 82,
+		"phases": [
+			{
+				"maxInvocations": 20,
+				"price": 69
+			},
+			{
+				"maxInvocations": 30,
+				"price": 84
+			},
+			{
+				"maxInvocations": 52,
+				"price": 119
+			}
+		]
+	},
+	{
+		"collectionId": 83,
+		"phases": [
+			{
+				"maxInvocations": 10,
+				"price": 209
+			},
+			{
+				"maxInvocations": 15,
+				"price": 254
+			},
+			{
+				"maxInvocations": 26,
+				"price": 359
+			}
+		]
+	},
+	{
+		"collectionId": 84,
+		"phases": [
+			{
+				"maxInvocations": 5,
+				"price": 699
+			},
+			{
+				"maxInvocations": 7,
+				"price": 849
+			},
+			{
+				"maxInvocations": 13,
+				"price": 1199
+			}
+		]
+	},
+	{
+		"collectionId": 85,
+		"phases": [
+			{
+				"maxInvocations": 20,
+				"price": 69
+			},
+			{
+				"maxInvocations": 30,
+				"price": 84
+			},
+			{
+				"maxInvocations": 52,
+				"price": 119
+			}
+		]
+	},
+	{
+		"collectionId": 86,
+		"phases": [
+			{
+				"maxInvocations": 10,
+				"price": 209
+			},
+			{
+				"maxInvocations": 15,
+				"price": 254
+			},
+			{
+				"maxInvocations": 26,
+				"price": 359
+			}
+		]
+	},
+	{
+		"collectionId": 87,
+		"phases": [
+			{
+				"maxInvocations": 5,
+				"price": 699
+			},
+			{
+				"maxInvocations": 7,
+				"price": 849
+			},
+			{
+				"maxInvocations": 13,
+				"price": 1199
+			}
+		]
+	},
+	{
+		"collectionId": 88,
+		"phases": [
+			{
+				"maxInvocations": 36,
+				"price": 69
+			},
+			{
+				"maxInvocations": 55,
+				"price": 84
+			},
+			{
+				"maxInvocations": 96,
+				"price": 119
+			}
+		]
+	},
+	{
+		"collectionId": 89,
+		"phases": [
+			{
+				"maxInvocations": 28,
+				"price": 349
+			},
+			{
+				"maxInvocations": 42,
+				"price": 424
+			},
+			{
+				"maxInvocations": 74,
+				"price": 599
+			}
+		]
+	},
+	{
+		"collectionId": 90,
+		"phases": [
+			{
+				"maxInvocations": 6,
+				"price": 699
+			},
+			{
+				"maxInvocations": 9,
+				"price": 849
+			},
+			{
+				"maxInvocations": 15,
+				"price": 1199
+			}
+		]
+	},
+	{
+		"collectionId": 91,
+		"phases": [
+			{
+				"maxInvocations": 20,
+				"price": 69
+			},
+			{
+				"maxInvocations": 30,
+				"price": 84
+			},
+			{
+				"maxInvocations": 52,
+				"price": 119
+			}
+		]
+	},
+	{
+		"collectionId": 92,
+		"phases": [
+			{
+				"maxInvocations": 10,
+				"price": 209
+			},
+			{
+				"maxInvocations": 15,
+				"price": 254
+			},
+			{
+				"maxInvocations": 26,
+				"price": 359
+			}
+		]
+	},
+	{
+		"collectionId": 93,
+		"phases": [
+			{
+				"maxInvocations": 5,
+				"price": 699
+			},
+			{
+				"maxInvocations": 7,
+				"price": 849
+			},
+			{
+				"maxInvocations": 13,
+				"price": 1199
+			}
+		]
+	}
+]

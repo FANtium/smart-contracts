@@ -4,15 +4,52 @@ pragma solidity 0.8.34;
 import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 
 /**
+ * @notice Ordered price phase for a collection. phases[0] sells first; once its
+ *         `maxInvocations` is consumed, phases[1]'s price applies on subsequent mints, etc.
+ * @dev `price` does not take the payment token decimals into account; it must be multiplied
+ *      by 10^decimals at mint time. Packed as two `uint128` into one storage slot.
+ */
+struct PricePhase {
+    uint128 price;
+    uint128 maxInvocations;
+}
+
+/**
+ * @notice Phase schedule for one collection, used to seed `Collection.phases` during the V12
+ *         storage migration (`initializeV12`). Generated off-chain from the Strapi discount
+ *         sections (see `scripts/generatePhaseSeeds.ts`).
+ */
+struct PhaseSeed {
+    uint256 collectionId;
+    PricePhase[] phases;
+}
+
+/**
+ * @notice Lifecycle of a collection's primary sale.
+ * @dev `Pending` MUST stay at index 0 so that newly created collections default to it.
+ *      "Sold out" is intentionally not a status: it is derived from `invocations` vs the
+ *      phases' total supply. `launchTimestamp` remains a separate, time-derived gate on
+ *      top of `Open`.
+ */
+enum SaleStatus {
+    /// @notice Sale has not started yet; nothing is mintable.
+    Pending,
+    /// @notice Sale is live; minting is allowed once `launchTimestamp` has passed.
+    Open,
+    /// @notice Sale is temporarily halted and expected to resume.
+    Paused,
+    /// @notice Sale has permanently ended. Only an admin can reopen a closed sale.
+    Closed
+}
+
+/**
  * @notice Collection struct
  * @dev CAUTION: Do not change the order of the struct fields!!
  *
- * Difference between isMintable and isPaused:
- * - isMintable false means that nobody can mint new tokens
- * - isPaused true means that the collection is mintable only by member of the collection allowlist
- *
- * price does not take the token decimals into account, which means that if the price is 1,000UDSC,
- * mintTo function will need to multiply the price by 10^decimals of the token.
+ * The sale lifecycle is driven by `status` (see `SaleStatus`); the legacy
+ * `UNUSED_isMintable`/`UNUSED_isPaused` booleans are retained for storage-slot stability.
+ * Price and supply are driven by the `phases` array. `UNUSED_price` and `UNUSED_maxInvocations`
+ * are legacy single-tier fields retained for storage-slot stability.
  */
 struct Collection {
     /**
@@ -24,26 +61,25 @@ struct Collection {
      */
     uint256 launchTimestamp;
     /**
-     * @notice True if the collection is mintable.
+     * @dev Deprecated: replaced by `status` (`SaleStatus.Open`).
      */
-    bool isMintable;
+    bool UNUSED_isMintable;
     /**
-     * @notice True if the collection is paused.
+     * @dev Deprecated: replaced by `status` (`SaleStatus.Paused`).
      */
-    bool isPaused;
+    bool UNUSED_isPaused;
     /**
      * @notice Number of minted tokens.
      */
     uint24 invocations;
     /**
-     * @notice Price of a token in the collection without decimals, which means that this price must be multiplied by
-     * 10^decimals of the token.
+     * @dev Deprecated: replaced by `phases[activePhase].price`.
      */
-    uint256 price;
+    uint256 UNUSED_price;
     /**
-     * @notice Maximum number of tokens that can be minted.
+     * @dev Deprecated: replaced by the sum of `phases[i].maxInvocations`.
      */
-    uint256 maxInvocations;
+    uint256 UNUSED_maxInvocations;
     /**
      * @notice Tournament earnings share in 1e7 basis points.
      */
@@ -72,11 +108,20 @@ struct Collection {
      * @notice Other earnings (e.g. sponsorships, royalties, etc.) share in 1e7 basis points.
      */
     uint256 otherEarningShare1e7;
+    /**
+     * @notice Ordered list of price phases. The active phase is derived from `invocations` and
+     *         the cumulative sums of `phases[i].maxInvocations`.
+     */
+    PricePhase[] phases;
+    /**
+     * @notice Lifecycle status of the collection's primary sale.
+     */
+    SaleStatus status;
 }
 
 /**
- * @notice Create collection struct
- * @dev Fields may be added.
+ * @notice Create / update collection struct.
+ * @dev Fields may be added. Price and supply are expressed via `phases`.
  */
 struct CollectionData {
     address payable athleteAddress;
@@ -84,9 +129,8 @@ struct CollectionData {
     uint256 athleteSecondarySalesBPS;
     uint256 fantiumSecondarySalesBPS;
     uint256 launchTimestamp;
-    uint256 maxInvocations;
     uint256 otherEarningShare1e7;
-    uint256 price;
+    PricePhase[] phases;
     uint256 tournamentEarningShare1e7;
 }
 
@@ -111,7 +155,8 @@ enum MintErrorReason {
     ACCOUNT_NOT_KYCED,
     INVALID_SIGNATURE,
     MAX_INVOCATIONS_REACHED,
-    SIGNATURE_EXPIRED
+    SIGNATURE_EXPIRED,
+    INVALID_QUANTITY
 }
 
 enum UpgradeErrorReason {
@@ -128,6 +173,14 @@ interface IFANtiumAthletes is IERC721Upgradeable {
     event Sale(
         uint256 indexed collectionId, uint24 quantity, address indexed recipient, uint256 amount, uint256 discount
     );
+    /**
+     * @notice Emitted when a mint moves the collection's active phase forward — including across
+     *         several phases at once for purchases spanning multiple phase boundaries. Not emitted
+     *         when the purchase consumes the last phase entirely (the collection is then sold out
+     *         and has no active phase).
+     */
+    event PhaseAdvanced(uint256 indexed collectionId, uint256 fromIndex, uint256 toIndex, uint256 atInvocation);
+    event SaleStatusUpdated(uint256 indexed collectionId, SaleStatus status);
 
     // ========================================================================
     // Errors
@@ -137,14 +190,19 @@ interface IFANtiumAthletes is IERC721Upgradeable {
     error InvalidCollection(CollectionErrorReason reason);
     error InvalidMint(MintErrorReason reason);
     error InvalidUpgrade(UpgradeErrorReason reason);
+    error PhasesMustAccommodateInvocations(uint256 invocations);
+    error PhaseMaxInvocationsZero(uint256 index);
+    error PhasesNotConfigured(uint256 collectionId);
+    error SaleClosed(uint256 collectionId);
 
     // ========================================================================
     // Collection
     // ========================================================================
     function collections(uint256 collectionId) external view returns (Collection memory);
-    function createCollection(CollectionData memory data) external returns (uint256);
-    function updateCollection(uint256 collectionId, CollectionData memory data) external;
-    function setCollectionStatus(uint256 collectionId, bool isMintable, bool isPaused) external;
+    function createCollection(CollectionData calldata data) external returns (uint256);
+    function updateCollection(uint256 collectionId, CollectionData calldata data) external;
+    function setSaleStatus(uint256[] calldata collectionIds, SaleStatus status) external;
+    function setPhases(uint256 collectionId, PricePhase[] calldata phases) external;
 
     // ========================================================================
     // Revenue splits
@@ -165,13 +223,18 @@ interface IFANtiumAthletes is IERC721Upgradeable {
     // ========================================================================
     // Minting
     // ========================================================================
-    function mintTo(uint256 collectionId, uint24 quantity, address recipient) external returns (uint256);
+    function quoteMint(
+        uint256 collectionId,
+        uint24 quantity
+    )
+        external
+        view
+        returns (uint256 price, uint256 activePhaseBefore, uint256 activePhaseAfter, bool soldOutAfter);
 
     function mintTo(
         uint256 collectionId,
         uint24 quantity,
         address recipient,
-        uint256 amount,
         uint256 deadline,
         bytes memory signature
     )

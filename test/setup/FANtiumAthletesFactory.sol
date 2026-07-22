@@ -6,7 +6,7 @@ import {
 } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { FANtiumAthletesV12 } from "src/FANtiumAthletesV12.sol";
-import { Collection, CollectionData } from "src/interfaces/IFANtiumAthletes.sol";
+import { Collection, CollectionData, PricePhase, SaleStatus } from "src/interfaces/IFANtiumAthletes.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 import { BaseTest } from "test/BaseTest.sol";
 import { EIP712Domain, EIP712Signer } from "test/utils/EIP712Signer.sol";
@@ -77,17 +77,78 @@ contract FANtiumAthletesFactory is BaseTest, EIP712Signer {
                     athleteSecondarySalesBPS: collection.athleteSecondarySalesBPS,
                     fantiumSecondarySalesBPS: collection.fantiumSecondarySalesBPS,
                     launchTimestamp: collection.launchTimestamp,
-                    maxInvocations: collection.maxInvocations,
                     otherEarningShare1e7: collection.otherEarningShare1e7,
-                    price: collection.price,
+                    phases: singlePhase(collection.price, collection.maxInvocations),
                     tournamentEarningShare1e7: collection.tournamentEarningShare1e7
                 })
             );
 
-            // By default, collections are not mintable, set them as mintable/paused if needed
-            fantiumAthletes.setCollectionStatus(collectionId, collection.isMintable, collection.isPaused);
+            // By default, collections are Pending; map the fixture's legacy booleans to a SaleStatus.
+            fantiumAthletes.setSaleStatus(
+                singleCollection(collectionId), saleStatusFromLegacyFlags(collection.isMintable, collection.isPaused)
+            );
         }
         vm.stopPrank();
+    }
+
+    /**
+     * @notice Maps the legacy (isMintable, isPaused) booleans of the fixtures to a SaleStatus.
+     * @dev Deliberately keeps paused fixtures `Paused` (unlike `_migrateCollectionV12`, which
+     *      closes legacy-paused sales as a one-time business decision) so the test environment
+     *      retains collections exercising the `SaleStatus.Paused` code paths.
+     */
+    function saleStatusFromLegacyFlags(bool isMintable, bool isPaused) public pure returns (SaleStatus) {
+        if (isMintable) {
+            return isPaused ? SaleStatus.Paused : SaleStatus.Open;
+        }
+        return SaleStatus.Pending;
+    }
+
+    /**
+     * @notice Wraps a single collection ID into the array expected by `setSaleStatus`.
+     */
+    function singleCollection(uint256 collectionId) public pure returns (uint256[] memory collectionIds) {
+        collectionIds = new uint256[](1);
+        collectionIds[0] = collectionId;
+    }
+
+    /**
+     * @notice Builds a one-element phases array from a legacy single-tier (price, maxInvocations) config.
+     */
+    function singlePhase(uint256 price, uint256 maxInvocations) public pure returns (PricePhase[] memory phases) {
+        phases = new PricePhase[](1);
+        phases[0] = PricePhase({ price: uint128(price), maxInvocations: uint128(maxInvocations) });
+    }
+
+    /**
+     * @notice Mirrors the contract's active-phase resolution for test-side assertions.
+     */
+    function activePhase(uint256 collectionId)
+        public
+        view
+        returns (uint256 index, PricePhase memory phase, uint256 cumulativeUpToEnd)
+    {
+        Collection memory collection = fantiumAthletes.collections(collectionId);
+        uint256 cumulative = 0;
+        for (uint256 i = 0; i < collection.phases.length; i++) {
+            cumulative += collection.phases[i].maxInvocations;
+            if (collection.invocations < cumulative) {
+                return (i, collection.phases[i], cumulative);
+            }
+        }
+        revert("all phases consumed");
+    }
+
+    /**
+     * @notice Remaining mintable supply across all phases of a collection.
+     */
+    function remainingSupply(uint256 collectionId) public view returns (uint256 remaining) {
+        Collection memory collection = fantiumAthletes.collections(collectionId);
+        uint256 total = 0;
+        for (uint256 i = 0; i < collection.phases.length; i++) {
+            total += collection.phases[i].maxInvocations;
+        }
+        remaining = total - collection.invocations;
     }
 
     function prepareSale(
@@ -105,7 +166,7 @@ contract FANtiumAthletesFactory is BaseTest, EIP712Signer {
         )
     {
         Collection memory collection = fantiumAthletes.collections(collectionId);
-        amountUSDC = collection.price * quantity * 10 ** usdc.decimals();
+        (amountUSDC,,,) = fantiumAthletes.quoteMint(collectionId, quantity);
 
         (fantiumRevenue, fantiumAddress, athleteRevenue, athleteAddress) =
             fantiumAthletes.getPrimaryRevenueSplits(collectionId, amountUSDC);
@@ -119,27 +180,20 @@ contract FANtiumAthletesFactory is BaseTest, EIP712Signer {
         usdc.approve(address(fantiumAthletes), amountUSDC);
     }
 
-    function prepareSale(
+    /**
+     * @notice Prepares a signed sale: quotes via the contract, funds and approves the recipient
+     *         for the quoted amount, and signs the mint authorization.
+     */
+    function prepareSignedSale(
         uint256 collectionId,
         uint24 quantity,
-        address recipient,
-        uint256 amountUSDC
+        address recipient
     )
         public
-        returns (
-            bytes memory signature,
-            uint256 nonce,
-            uint256 deadline,
-            uint256 fantiumRevenue,
-            address fantiumAddress,
-            uint256 athleteRevenue,
-            address athleteAddress
-        )
+        returns (uint256 amountUSDC, uint256 deadline, bytes memory signature)
     {
         Collection memory collection = fantiumAthletes.collections(collectionId);
-        (fantiumRevenue, fantiumAddress, athleteRevenue, athleteAddress) =
-            fantiumAthletes.getPrimaryRevenueSplits(collectionId, amountUSDC);
-        nonce = fantiumAthletes.nonces(recipient);
+        (amountUSDC,,,) = fantiumAthletes.quoteMint(collectionId, quantity);
 
         if (block.timestamp < collection.launchTimestamp) {
             vm.warp(collection.launchTimestamp + 1);
@@ -151,13 +205,17 @@ contract FANtiumAthletesFactory is BaseTest, EIP712Signer {
         usdc.approve(address(fantiumAthletes), amountUSDC);
 
         deadline = block.timestamp + 1 hours;
-        signature = signMint(recipient, nonce, collectionId, quantity, amountUSDC, deadline);
+        signature = signMint(recipient, fantiumAthletes.nonces(recipient), collectionId, quantity, deadline);
     }
 
+    /**
+     * @notice Mints `quantity` tokens through the signed flow (the only mint entry point):
+     *         quotes, funds, approves, signs, and mints.
+     */
     function mintTo(uint256 collectionId, uint24 quantity, address recipient) public returns (uint256 lastTokenId) {
-        prepareSale(collectionId, quantity, recipient);
+        (, uint256 deadline, bytes memory signature) = prepareSignedSale(collectionId, quantity, recipient);
         vm.prank(recipient);
-        return fantiumAthletes.mintTo(collectionId, quantity, recipient);
+        return fantiumAthletes.mintTo(collectionId, quantity, recipient, deadline, signature);
     }
 
     /**
@@ -174,16 +232,14 @@ contract FANtiumAthletesFactory is BaseTest, EIP712Signer {
         uint256 nonce,
         uint256 collectionId,
         uint24 quantity,
-        uint256 amount,
         uint256 deadline
     )
         public
         view
         returns (bytes memory)
     {
-        bytes32 structHash = keccak256(
-            abi.encode(fantiumAthletes.MINT_TYPEHASH(), collectionId, quantity, recipient, amount, nonce, deadline)
-        );
+        bytes32 structHash =
+            keccak256(abi.encode(fantiumAthletes.MINT_TYPEHASH(), collectionId, quantity, recipient, nonce, deadline));
         return typedSignPacked(fantiumAthletes_signerKey, fantiumAthletesDomain(), structHash);
     }
 }
