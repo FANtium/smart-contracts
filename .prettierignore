@@ -5,6 +5,7 @@ cache
 data
 lib
 out
+out-archive
 node_modules
 pnpm-lock.yaml
 broadcast
