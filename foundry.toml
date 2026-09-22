@@ -44,6 +44,18 @@ out = "out-archive"
 test = "archive"
 script = "archive"
 solc = "0.8.28"
+# Archives flattened with a newer compiler are built by the `archive-0834` profile instead: a profile inherits
+# the default `solc` pin, which disables `auto_detect_solc`, so one pass cannot mix compiler versions.
+skip = ["archive/FANtiumClaimingV5.sol"]
+
+# Second archive pass for contracts deployed with solc 0.8.34 (the default pin). `bun run build:archive` builds
+# only those files with it and merges both passes' build-info into `out-archive/archive/`.
+[profile.archive-0834]
+src = "archive"
+out = "out-archive/0834"
+cache_path = "cache/archive-0834"
+test = "archive"
+script = "archive"
 
 [fmt]
 bracket_spacing = true

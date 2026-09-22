@@ -7,7 +7,7 @@
     "scripts": {
         "clean": "rm -rf cache out out-archive",
         "build": "forge build",
-        "build:archive": "FOUNDRY_PROFILE=archive forge build && rm -rf out-archive/archive && mv out-archive/build-info out-archive/archive",
+        "build:archive": "FOUNDRY_PROFILE=archive forge build && FOUNDRY_PROFILE=archive-0834 forge build archive/FANtiumClaimingV5.sol && rm -rf out-archive/archive && mkdir out-archive/archive && mv out-archive/build-info/*.json out-archive/0834/build-info/*.json out-archive/archive/",
         "lint": "bun run lint:sol && bun run prettier:check",
         "lint:sol": "forge fmt --check && bun solhint \"{script,src,test}/**/*.sol\"",
         "prettier:check": "prettier --check \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",

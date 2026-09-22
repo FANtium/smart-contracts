@@ -15,7 +15,7 @@ import {
 import { BaseTest } from "test/BaseTest.sol";
 import { FANtiumClaimingFactory } from "test/setup/FANtiumClaimingFactory.sol";
 
-contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
+contract FANtiumClaimingV6Test is BaseTest, FANtiumClaimingFactory {
     function setUp() public virtual override {
         FANtiumClaimingFactory.setUp();
     }
@@ -41,20 +41,11 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
         assertEq(address(fantiumClaiming.fantiumAthletes()), newFANtiumNFT);
     }
 
-    function test_setFANtiumNFT_ok_asManager() public {
-        address newFANtiumNFT = makeAddr("newFANtiumNFT");
-
-        vm.prank(fantiumClaiming_manager);
-        fantiumClaiming.setFANtiumNFT(IFANtiumAthletes(newFANtiumNFT));
-
-        assertEq(address(fantiumClaiming.fantiumAthletes()), newFANtiumNFT);
-    }
-
     function test_setFANtiumNFT_revert_unauthorized() public {
         address newFANtiumNFT = makeAddr("newFANtiumNFT");
         address oldFANtiumNFT = address(fantiumClaiming.fantiumAthletes());
 
-        expectMissingRole(nobody, fantiumClaiming.MANAGER_ROLE());
+        expectMissingRole(nobody, fantiumClaiming.DEFAULT_ADMIN_ROLE());
         vm.prank(nobody);
         fantiumClaiming.setFANtiumNFT(IFANtiumAthletes(newFANtiumNFT));
 
@@ -72,24 +63,34 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
         assertEq(address(fantiumClaiming.globalPayoutToken()), newPayoutToken);
     }
 
-    function test_setGlobalPayoutToken_ok_asManager() public {
-        address newPayoutToken = makeAddr("newPayoutToken");
-
-        vm.prank(fantiumClaiming_manager);
-        fantiumClaiming.setGlobalPayoutToken(newPayoutToken);
-
-        assertEq(address(fantiumClaiming.globalPayoutToken()), newPayoutToken);
-    }
-
     function test_setGlobalPayoutToken_revert_unauthorized() public {
         address newPayoutToken = makeAddr("newPayoutToken");
         address oldPayoutToken = address(fantiumClaiming.globalPayoutToken());
 
-        expectMissingRole(nobody, fantiumClaiming.MANAGER_ROLE());
+        expectMissingRole(nobody, fantiumClaiming.DEFAULT_ADMIN_ROLE());
         vm.prank(nobody);
         fantiumClaiming.setGlobalPayoutToken(newPayoutToken);
 
         assertEq(address(fantiumClaiming.globalPayoutToken()), oldPayoutToken);
+    }
+
+    // setTreasury
+    // ========================================================================
+    function test_setTreasury_ok_asAdmin() public {
+        address newTreasury = makeAddr("newTreasury");
+
+        vm.prank(fantiumClaiming_admin);
+        fantiumClaiming.setTreasury(newTreasury);
+
+        assertEq(fantiumClaiming.treasury(), newTreasury);
+    }
+
+    function test_setTreasury_revert_unauthorized() public {
+        expectMissingRole(nobody, fantiumClaiming.DEFAULT_ADMIN_ROLE());
+        vm.prank(nobody);
+        fantiumClaiming.setTreasury(makeAddr("newTreasury"));
+
+        assertEq(fantiumClaiming.treasury(), fantiumClaiming_treasury);
     }
 
     // distributions
@@ -119,7 +120,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             abi.encodeWithSelector(IFANtiumClaiming.InvalidDistribution.selector, DistributionErrorReason.INVALID_TIME)
         );
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         fantiumClaiming.createDistribution(data);
     }
 
@@ -142,7 +143,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             )
         );
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         fantiumClaiming.createDistribution(data);
     }
 
@@ -183,7 +184,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             )
         );
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         fantiumClaiming.createDistribution(distributionData);
     }
 
@@ -211,7 +212,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             )
         );
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         fantiumClaiming.createDistribution(data);
     }
 
@@ -239,7 +240,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             )
         );
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         fantiumClaiming.createDistribution(data);
     }
 
@@ -267,7 +268,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             )
         );
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         fantiumClaiming.createDistribution(data);
     }
 
@@ -289,7 +290,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             closeTime: block.timestamp + 2 days
         });
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
 
         assertEq(distEventId, 1, "New distribution id");
@@ -312,11 +313,11 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             closeTime: block.timestamp + 2 days
         });
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
 
         // Use the contract's method to close the distribution
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         fantiumClaiming.closeDistribution(distEventId);
 
         assertTrue(fantiumClaiming.distributions(distEventId).closed, "Distr. event 'closed' property is updated");
@@ -327,7 +328,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             )
         );
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         fantiumClaiming.updateDistribution(distEventId, data);
     }
 
@@ -348,7 +349,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             closeTime: block.timestamp + 2 days
         });
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
 
         // Prepare update
@@ -356,7 +357,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
         data2.totalTournamentEarnings = 15_000 * 10 ** 18;
         data2.totalOtherEarnings = 6000 * 10 ** 18;
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         fantiumClaiming.updateDistribution(distEventId, data2);
 
         assertEq(
@@ -403,7 +404,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             closeTime: block.timestamp + 2 days
         });
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
 
         // Prepare update
@@ -418,7 +419,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             closeTime: block.timestamp + 3 days
         });
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         fantiumClaiming.updateDistribution(distEventId, data2);
 
         assertEq(
@@ -508,7 +509,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
         });
 
         // Create distribution
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
 
         uint256 totalAmount = fantiumClaiming.distributions(distEventId).tournamentDistributionAmount
@@ -530,6 +531,63 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
         assertEq(updatedEvent.amountPaidIn, totalAmount, "Amount paid in should match total amount");
     }
 
+    function test_fundDistribution_ok_asAdmin() public {
+        uint256[] memory collectionIds = new uint256[](1);
+        collectionIds[0] = 1;
+        mintTo(1, 1, makeAddr("user1"));
+
+        vm.prank(fantiumClaiming_admin);
+        uint256 distributionId = fantiumClaiming.createDistribution(
+            DistributionData({
+                collectionIds: collectionIds,
+                athleteAddress: payable(makeAddr("athlete")),
+                totalTournamentEarnings: 10_000 * 10 ** 6,
+                totalOtherEarnings: 0,
+                fantiumFeeBPS: 500,
+                fantiumAddress: payable(makeAddr("fantiumAddress")),
+                startTime: block.timestamp + 1 days,
+                closeTime: block.timestamp + 2 days
+            })
+        );
+        uint256 amount = fantiumClaiming.distributions(distributionId).tournamentDistributionAmount;
+
+        // The admin funds on the athlete's behalf, from its own balance
+        vm.startPrank(fantiumClaiming_admin);
+        deal(address(usdc), fantiumClaiming_admin, amount);
+        usdc.approve(address(fantiumClaiming), amount);
+        fantiumClaiming.fundDistribution(distributionId);
+        vm.stopPrank();
+
+        assertEq(fantiumClaiming.distributions(distributionId).amountPaidIn, amount, "distribution is fully funded");
+        assertEq(usdc.balanceOf(fantiumClaiming_admin), 0, "funds are taken from the admin");
+    }
+
+    function test_createDistribution_revert_formerManager() public {
+        address formerManager = makeAddr("formerManager");
+        bytes32 legacyManagerRole = keccak256("MANAGER_ROLE");
+
+        // Holding the retired MANAGER_ROLE grants nothing anymore
+        vm.prank(fantiumClaiming_admin);
+        fantiumClaiming.grantRole(legacyManagerRole, formerManager);
+
+        uint256[] memory collectionIds = new uint256[](1);
+        collectionIds[0] = 1;
+        DistributionData memory data = DistributionData({
+            collectionIds: collectionIds,
+            athleteAddress: payable(makeAddr("athlete")),
+            totalTournamentEarnings: 10_000 * 10 ** 6,
+            totalOtherEarnings: 0,
+            fantiumFeeBPS: 500,
+            fantiumAddress: payable(makeAddr("fantiumAddress")),
+            startTime: block.timestamp + 1 days,
+            closeTime: block.timestamp + 2 days
+        });
+
+        expectMissingRole(formerManager, fantiumClaiming.DEFAULT_ADMIN_ROLE());
+        vm.prank(formerManager);
+        fantiumClaiming.createDistribution(data);
+    }
+
     function test_fundDistribution_revert_nonAthlete() public {
         uint256[] memory collectionIdsArray = new uint256[](2);
         collectionIdsArray[0] = 1;
@@ -547,7 +605,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             closeTime: block.timestamp + 2 days
         });
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
 
         vm.expectRevert(
@@ -580,7 +638,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             closeTime: block.timestamp + 2 days
         });
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
 
         vm.expectRevert(
@@ -611,11 +669,11 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             closeTime: block.timestamp + 2 days
         });
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
 
         // Use the contract's method to close the distribution
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         fantiumClaiming.closeDistribution(distEventId);
 
         assertTrue(fantiumClaiming.distributions(distEventId).closed, "Distr. event 'closed' property is updated");
@@ -671,9 +729,9 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
         });
 
         // Create distribution events
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId1 = fantiumClaiming.createDistribution(data1);
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId2 = fantiumClaiming.createDistribution(data2);
 
         uint256[] memory distributionEventIdsArray = new uint256[](2);
@@ -723,15 +781,14 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             closeTime: block.timestamp + 2 days
         });
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
 
         // close the distribution
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         fantiumClaiming.closeDistribution(distEventId);
 
         assertTrue(fantiumClaiming.distributions(distEventId).closed, "Distr. event 'closed' property is updated");
-        // todo: test this line payOutToken.safeTransfer(existingDE.athleteAddress, closingAmount);
     }
 
     function test_closeDistribution_revert_alreadyClosed() public {
@@ -751,11 +808,11 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             closeTime: block.timestamp + 2 days
         });
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
 
         // Use the contract's method to close the distribution
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         fantiumClaiming.closeDistribution(distEventId);
         assertTrue(fantiumClaiming.distributions(distEventId).closed, "Distr. event 'closed' property is updated");
 
@@ -766,8 +823,79 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             )
         );
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         fantiumClaiming.closeDistribution(distEventId);
+    }
+
+    /**
+     * @dev Creates a distribution over collection 1 with three minted tokens and funds it from the athlete.
+     */
+    function _createFundedDistribution(address athlete) private returns (uint256 distributionId, uint256 amount) {
+        uint256[] memory collectionIds = new uint256[](1);
+        collectionIds[0] = 1;
+        mintTo(1, 1, makeAddr("user1"));
+        mintTo(1, 2, makeAddr("user2"));
+        mintTo(1, 3, makeAddr("user3"));
+
+        vm.prank(fantiumClaiming_admin);
+        distributionId = fantiumClaiming.createDistribution(
+            DistributionData({
+                collectionIds: collectionIds,
+                athleteAddress: payable(athlete),
+                totalTournamentEarnings: 10_000 * 10 ** 6,
+                totalOtherEarnings: 5000 * 10 ** 6,
+                fantiumFeeBPS: 500,
+                fantiumAddress: payable(makeAddr("fantiumAddress")),
+                startTime: block.timestamp + 1 days,
+                closeTime: block.timestamp + 2 days
+            })
+        );
+
+        Distribution memory distribution = fantiumClaiming.distributions(distributionId);
+        amount = distribution.tournamentDistributionAmount + distribution.otherDistributionAmount;
+
+        vm.startPrank(athlete);
+        deal(address(usdc), athlete, amount);
+        usdc.approve(address(fantiumClaiming), amount);
+        fantiumClaiming.fundDistribution(distributionId);
+        vm.stopPrank();
+    }
+
+    function test_closeDistribution_ok_sendsRemainderToTreasury() public {
+        address athlete = makeAddr("athlete");
+        (uint256 distributionId, uint256 amount) = _createFundedDistribution(athlete);
+        assertGt(amount, 0, "distribution is funded");
+
+        vm.warp(block.timestamp + 3 days);
+        vm.prank(fantiumClaiming_admin);
+        fantiumClaiming.closeDistribution(distributionId);
+
+        assertEq(usdc.balanceOf(fantiumClaiming_treasury), amount, "treasury receives the unclaimed funds");
+        assertEq(usdc.balanceOf(athlete), 0, "athlete receives nothing back");
+        assertEq(usdc.balanceOf(address(fantiumClaiming)), 0, "claiming contract is emptied");
+    }
+
+    function test_closeDistribution_revert_treasuryNotSet() public {
+        (uint256 distributionId,) = _createFundedDistribution(makeAddr("athlete"));
+
+        vm.prank(fantiumClaiming_admin);
+        fantiumClaiming.setTreasury(address(0));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IFANtiumClaiming.InvalidDistributionClose.selector, DistributionCloseErrorReason.TREASURY_NOT_SET
+            )
+        );
+        vm.prank(fantiumClaiming_admin);
+        fantiumClaiming.closeDistribution(distributionId);
+    }
+
+    function test_closeDistribution_revert_unauthorized() public {
+        (uint256 distributionId,) = _createFundedDistribution(makeAddr("athlete"));
+
+        expectMissingRole(nobody, fantiumClaiming.DEFAULT_ADMIN_ROLE());
+        vm.prank(nobody);
+        fantiumClaiming.closeDistribution(distributionId);
     }
 
     // isEligibleForClaim
@@ -789,7 +917,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             closeTime: block.timestamp + 2 days
         });
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
 
         uint256 mockTokenId = 5_010_026; // Collection ID: 5, Version: 0, Number: 26
@@ -815,7 +943,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             closeTime: block.timestamp + 2 days
         });
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
 
         uint256 mockTokenId = 1_000_026; // Collection ID: 1, Version: 0, Number: 26
@@ -849,7 +977,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             closeTime: block.timestamp + 2 days
         });
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
 
         uint256 mockTokenId = 1_000_026; // Collection ID: 1, Version: 0, Number: 26
@@ -861,6 +989,54 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
 
     // claim
     // ========================================================================
+    function test_claim_ok_keepsTokenId() public {
+        address holder = makeAddr("holder");
+        uint256 tokenId = mintTo(1, 1, holder);
+        (uint256 distributionId,) = _createFundedDistribution(makeAddr("athlete"));
+        vm.warp(block.timestamp + 1 days + 1);
+
+        vm.prank(holder);
+        fantiumClaiming.claim(tokenId, distributionId);
+
+        // The token is neither burned nor renumbered: same id, same owner
+        assertEq(fantiumAthletes.ownerOf(tokenId), holder, "token id is unchanged");
+        assertGt(usdc.balanceOf(holder), 0, "holder is paid");
+        assertEq(fantiumClaiming.claimCount(tokenId), 1, "claim is recorded");
+        assertFalse(fantiumClaiming.isEligibleForClaim(distributionId, tokenId), "token is no longer eligible");
+
+        // The unchanged id cannot claim the same distribution twice
+        vm.expectRevert(abi.encodeWithSelector(IFANtiumClaiming.InvalidClaim.selector, ClaimErrorReason.NOT_ELIGIBLE));
+        vm.prank(holder);
+        fantiumClaiming.claim(tokenId, distributionId);
+    }
+
+    function test_claim_ok_legacyVersionedToken() public {
+        address holder = makeAddr("holder");
+        uint256 baseTokenId = mintTo(1, 1, holder);
+
+        // A token renumbered by a pre-V6 claim carries a version in its id
+        vm.prank(fantiumAthletes_tokenUpgrader);
+        uint256 versionedTokenId = fantiumAthletes.upgradeTokenVersion(baseTokenId);
+        assertEq(versionedTokenId, baseTokenId + 10_000, "version 1 id");
+
+        (uint256 distributionId,) = _createFundedDistribution(makeAddr("athlete"));
+        vm.warp(block.timestamp + 1 days + 1);
+
+        vm.prank(holder);
+        fantiumClaiming.claim(versionedTokenId, distributionId);
+
+        assertEq(fantiumAthletes.ownerOf(versionedTokenId), holder, "versioned id is unchanged");
+        assertEq(fantiumClaiming.claimCount(versionedTokenId), 1, "count by versioned id");
+        assertEq(fantiumClaiming.claimCount(baseTokenId), 1, "count by base id");
+    }
+
+    function test_claimCount_ok_unclaimed() public {
+        uint256 tokenId = mintTo(1, 1, makeAddr("holder"));
+        _createFundedDistribution(makeAddr("athlete"));
+
+        assertEq(fantiumClaiming.claimCount(tokenId), 0);
+    }
+
     function test_claim_revert_distributionAlreadyClosed() public {
         uint256[] memory collectionIdsArray = new uint256[](2);
         collectionIdsArray[0] = 1;
@@ -878,11 +1054,11 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
             closeTime: block.timestamp + 2 days
         });
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
 
         // Use the contract's method to close the distribution
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         fantiumClaiming.closeDistribution(distEventId);
         assertTrue(fantiumClaiming.distributions(distEventId).closed, "Distr. event 'closed' property is updated");
 
@@ -923,7 +1099,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
         });
 
         // Create distribution events
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
         uint256 mockTokenId = 1_010_026; // Collection ID: 1, Version: 0, Number: 26
 
@@ -961,7 +1137,7 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
         });
 
         // Create distribution events
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
 
         // Fund the distribution
@@ -1016,13 +1192,13 @@ contract FANtiumClaimingV4Test is BaseTest, FANtiumClaimingFactory {
         });
 
         // Create distribution events
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         uint256 distEventId = fantiumClaiming.createDistribution(data);
 
         uint256 tournamentEarningsShare1e7 = 800;
         uint256 otherEarningShare1e7 = 100;
 
-        vm.prank(fantiumClaiming_manager);
+        vm.prank(fantiumClaiming_admin);
         fantiumClaiming.recomputeShares(distEventId);
 
         uint256 expectedTournamentDistributionAmount =

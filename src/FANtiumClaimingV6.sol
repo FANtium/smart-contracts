@@ -5,7 +5,6 @@ import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/ac
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import { StringsUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -24,20 +23,21 @@ import {
 import { TokenVersionUtil } from "src/utils/TokenVersionUtil.sol";
 
 /**
- * @title FANtium Claining contract V4.
+ * @title FANtium Claiming contract V6.
  * @notice This contract is used to manage distributions and claim payouts for FAN token holders.
+ * @dev Since V6, claiming no longer burns and re-mints the token with a bumped version: token ids are stable. The
+ * claim record is `_distributionToBaseTokenToClaimed`, which has been the double-claim guard since V1.
  * @author Mathieu Bour - FANtium AG, based on previous work by MTX studio AG.
  *
- * @custom:oz-upgrades-from archive:FANtiumClaimingV4
+ * @custom:oz-upgrades-from archive:FANtiumClaimingV5
  */
-contract FANtiumClaimingV5 is
+contract FANtiumClaimingV6 is
     Initializable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
     PausableUpgradeable,
     IFANtiumClaiming
 {
-    using StringsUpgradeable for uint256;
     using SafeERC20 for IERC20;
 
     // ========================================================================
@@ -51,12 +51,17 @@ contract FANtiumClaimingV5 is
 
     // Roles
     // ========================================================================
+    /**
+     * @notice Role of the ERC-2771 forwarders allowed to relay calls on behalf of users.
+     */
     bytes32 public constant FORWARDER_ROLE = keccak256("FORWARDER_ROLE");
-    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     // ========================================================================
     // State variables
     // ========================================================================
+    /**
+     * @notice ERC-20 token new distributions are paid out in.
+     */
     address public globalPayoutToken;
 
     /**
@@ -106,20 +111,31 @@ contract FANtiumClaimingV5 is
     mapping(uint256 => IERC20) private _distributionToPayoutToken;
 
     /**
+     * @notice ID the next created distribution receives; distribution IDs start at 1.
      * @custom:oz-renamed-from nextDistributionEventId
      */
     uint256 public nextDistributionId;
+
+    /**
+     * @notice The FANtium treasury address, receiving the unclaimed funds of closed distributions.
+     */
+    address public treasury;
 
     // ========================================================================
     // UUPS upgradeable pattern
     // ========================================================================
     /**
+     * @notice Disables initializers on the implementation contract; the proxy is initialized instead.
      * @custom:oz-upgrades-unsafe-allow constructor
      */
     constructor() {
         _disableInitializers();
     }
 
+    /**
+     * @notice Initializes a new proxy.
+     * @param admin The address granted DEFAULT_ADMIN_ROLE
+     */
     function initialize(address admin) public initializer {
         __UUPSUpgradeable_init();
         __AccessControl_init();
@@ -131,8 +147,9 @@ contract FANtiumClaimingV5 is
 
     /**
      * @notice Implementation of the upgrade authorization logic
-     * @dev Restricted to the DEFAULT_ADMIN_ROLE
+     * @dev Restricted to the DEFAULT_ADMIN_ROLE. The new implementation address is unnamed: it is not checked.
      */
+    // solhint-disable-next-line use-natspec
     function _authorizeUpgrade(address) internal view override {
         _checkRole(DEFAULT_ADMIN_ROLE);
     }
@@ -140,60 +157,30 @@ contract FANtiumClaimingV5 is
     // ========================================================================
     // Access control
     // ========================================================================
-    modifier onlyRoleOrAdmin(bytes32 role) {
-        _checkRoleOrAdmin(role);
-        _;
-    }
-
     modifier onlyAdmin() {
         _checkRole(DEFAULT_ADMIN_ROLE);
         _;
     }
 
-    modifier onlyManagerOrAdmin() {
-        _checkRoleOrAdmin(MANAGER_ROLE);
-        _;
-    }
-
-    function _checkRoleOrAdmin(bytes32 role) internal view virtual {
-        if (!hasRole(role, _msgSender()) && !hasRole(DEFAULT_ADMIN_ROLE, _msgSender())) {
-            revert(
-                string(
-                    abi.encodePacked(
-                        "AccessControl: account ",
-                        StringsUpgradeable.toHexString(_msgSender()),
-                        " is missing role ",
-                        StringsUpgradeable.toHexString(uint256(role), 32)
-                    )
-                )
-            );
-        }
-    }
-
     // ========================================================================
     // Modifiers
     // ========================================================================
-    modifier onlyAthlete(uint256 distributionId) {
-        if (_msgSender() != _distributions[distributionId].athleteAddress) {
+    /**
+     * @dev Modifier to check if the sender is the athlete of the distribution or an admin.
+     * @param distributionId The ID of the distribution
+     */
+    modifier onlyAthleteOrAdmin(uint256 distributionId) {
+        if (_msgSender() != _distributions[distributionId].athleteAddress && !hasRole(DEFAULT_ADMIN_ROLE, _msgSender()))
+        {
             revert AthleteOnly(distributionId, _msgSender(), _distributions[distributionId].athleteAddress);
         }
         _;
     }
 
     /**
-     * @dev Modifier to check if the sender is the athlete, a manager or an admin.
+     * @dev Modifier to check that the distribution exists.
      * @param distributionId The ID of the distribution
      */
-    modifier onlyAthleteOrManagerOrAdmin(uint256 distributionId) {
-        if (
-            _msgSender() != _distributions[distributionId].athleteAddress && !hasRole(MANAGER_ROLE, _msgSender())
-                && !hasRole(DEFAULT_ADMIN_ROLE, _msgSender())
-        ) {
-            revert AthleteOnly(distributionId, _msgSender(), _distributions[distributionId].athleteAddress);
-        }
-        _;
-    }
-
     modifier onlyValidDistribution(uint256 distributionId) {
         if (!_distributions[distributionId].exists) {
             revert InvalidDistributionId(distributionId);
@@ -207,24 +194,33 @@ contract FANtiumClaimingV5 is
     /**
      * @notice Update contract pause status to `_paused`.
      */
-    function pause() external onlyManagerOrAdmin {
+    function pause() external onlyAdmin {
         _pause();
     }
 
     /**
      * @notice Unpauses contract
      */
-    function unpause() external onlyManagerOrAdmin {
+    function unpause() external onlyAdmin {
         _unpause();
     }
 
     // ========================================================================
     // ERC2771
     // ========================================================================
+    /**
+     * @notice Whether an address is a trusted ERC-2771 forwarder.
+     * @param forwarder The address to check
+     * @return Whether `forwarder` holds FORWARDER_ROLE
+     */
     function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
         return hasRole(FORWARDER_ROLE, forwarder);
     }
 
+    /**
+     * @notice The caller, unwrapped from the calldata suffix when relayed by a trusted forwarder.
+     * @return sender The original caller
+     */
     function _msgSender() internal view virtual override returns (address sender) {
         if (isTrustedForwarder(msg.sender)) {
             // The assembly code is more direct than the Solidity version using `abi.decode`.
@@ -237,6 +233,10 @@ contract FANtiumClaimingV5 is
         }
     }
 
+    /**
+     * @notice The calldata, stripped of the sender suffix when relayed by a trusted forwarder.
+     * @return The original calldata
+     */
     function _msgData() internal view virtual override returns (bytes calldata) {
         if (isTrustedForwarder(msg.sender)) {
             return msg.data[:msg.data.length - 20];
@@ -248,12 +248,31 @@ contract FANtiumClaimingV5 is
     // ========================================================================
     // Setters
     // ========================================================================
-    function setFANtiumNFT(IFANtiumAthletes _fantiumAthletes) external onlyManagerOrAdmin {
+    /**
+     * @notice Sets the FANtium Athletes NFT contract, whose `ownerOf` gates claims.
+     * @dev Restricted to admin.
+     * @param _fantiumAthletes The FANtium Athletes contract
+     */
+    function setFANtiumNFT(IFANtiumAthletes _fantiumAthletes) external onlyAdmin {
         fantiumAthletes = _fantiumAthletes;
     }
 
-    function setGlobalPayoutToken(address _globalPayoutToken) external onlyManagerOrAdmin {
+    /**
+     * @notice Sets the payout token of distributions created from now on.
+     * @dev Restricted to admin. Existing distributions keep the token they were created with.
+     * @param _globalPayoutToken The ERC-20 payout token
+     */
+    function setGlobalPayoutToken(address _globalPayoutToken) external onlyAdmin {
         globalPayoutToken = _globalPayoutToken;
+    }
+
+    /**
+     * @notice Sets the FANtium treasury address.
+     * @dev Restricted to admin.
+     * @param _treasury The new FANtium treasury address.
+     */
+    function setTreasury(address _treasury) external whenNotPaused onlyAdmin {
+        treasury = _treasury;
     }
 
     // ========================================================================
@@ -262,6 +281,7 @@ contract FANtiumClaimingV5 is
     /**
      * @notice Get the distribution data.
      * @param distributionId The ID of the distribution
+     * @return The distribution
      */
     function distributions(uint256 distributionId) public view returns (Distribution memory) {
         return _distributions[distributionId];
@@ -270,13 +290,14 @@ contract FANtiumClaimingV5 is
     /**
      * @notice Get all the collection infos for a distribution.
      * @param distributionId The ID of the distribution
+     * @return The collection infos, in the order of the distribution's `collectionIds`
      */
     function collectionInfos(uint256 distributionId) public view returns (CollectionInfo[] memory) {
         Distribution memory distribution = _distributions[distributionId];
         uint256 size = distribution.collectionIds.length;
         CollectionInfo[] memory output = new CollectionInfo[](size);
 
-        for (uint256 i = 0; i < size; i++) {
+        for (uint256 i = 0; i < size; ++i) {
             output[i] = _distributionToCollectionInfo[distributionId][distribution.collectionIds[i]];
         }
 
@@ -302,7 +323,7 @@ contract FANtiumClaimingV5 is
         }
 
         // Ensure all collections exist
-        for (uint256 i = 0; i < data.collectionIds.length; i++) {
+        for (uint256 i = 0; i < data.collectionIds.length; ++i) {
             if (!IFANtiumAthletes(fantiumAthletes).collections(data.collectionIds[i]).exists) {
                 revert InvalidDistribution(DistributionErrorReason.INVALID_COLLECTION_IDS);
             }
@@ -335,18 +356,14 @@ contract FANtiumClaimingV5 is
     }
 
     /**
-     * @notice Create a new distribution.
-     * @param data The distribution data
+     * @inheritdoc IFANtiumClaiming
+     * @dev Restricted to admin. The payout token is `globalPayoutToken` at creation time.
      */
-    function createDistribution(DistributionData memory data)
-        external
-        onlyManagerOrAdmin
-        whenNotPaused
-        returns (uint256)
-    {
+    function createDistribution(DistributionData calldata data) external onlyAdmin whenNotPaused returns (uint256) {
         _checkDistribution(data);
 
-        uint256 distributionId = nextDistributionId++;
+        uint256 distributionId = nextDistributionId;
+        ++nextDistributionId;
         Distribution memory newDistribution = Distribution({
             distributionId: distributionId,
             collectionIds: data.collectionIds,
@@ -372,17 +389,15 @@ contract FANtiumClaimingV5 is
     }
 
     /**
-     * @notice Update a distribution.
-     * @dev Only the manager can update a distribution.
-     * @param distributionId The ID of the distribution
-     * @param data The distribution data
+     * @inheritdoc IFANtiumClaiming
+     * @dev Restricted to admin. Reverts if the new total falls below the amount already paid in.
      */
     function updateDistribution(
         uint256 distributionId,
-        DistributionData memory data
+        DistributionData calldata data
     )
         external
-        onlyManagerOrAdmin
+        onlyAdmin
         onlyValidDistribution(distributionId)
     {
         _checkDistribution(data);
@@ -394,20 +409,11 @@ contract FANtiumClaimingV5 is
             revert InvalidDistribution(DistributionErrorReason.ALREADY_CLOSED);
         }
 
-        bool collectionIdsChanged = data.collectionIds.length != existingDE.collectionIds.length;
-        if (!collectionIdsChanged) {
-            for (uint256 i = 0; i < data.collectionIds.length; i++) {
-                if (data.collectionIds[i] != existingDE.collectionIds[i]) {
-                    collectionIdsChanged = true;
-                    break;
-                }
-            }
-        }
-
         // earnings, fee, collectionIds may only be updated before the distribution has started
         if (
             data.totalTournamentEarnings != existingDE.totalTournamentEarnings
-                || data.totalOtherEarnings != existingDE.totalOtherEarnings || collectionIdsChanged
+                || data.totalOtherEarnings != existingDE.totalOtherEarnings
+                || !_sameCollectionIds(data.collectionIds, existingDE.collectionIds)
                 || data.fantiumFeeBPS != existingDE.fantiumFeeBPS
         ) {
             // Earnings are updated - some extra checks are needed
@@ -434,7 +440,25 @@ contract FANtiumClaimingV5 is
     }
 
     /**
-     * Forcefully set the athlete address of a distribution.
+     * @notice Whether two collection ID lists are identical, order included.
+     * @param a The first list
+     * @param b The second list
+     * @return Whether `a` and `b` hold the same IDs in the same order
+     */
+    function _sameCollectionIds(uint256[] calldata a, uint256[] memory b) private pure returns (bool) {
+        if (a.length != b.length) {
+            return false;
+        }
+        for (uint256 i = 0; i < a.length; ++i) {
+            if (a[i] != b[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @notice Forcefully set the athlete address of a distribution.
      * Used only in extreme situations when the athletes don't have access to his wallet.
      * @param distributionId The ID of the distribution
      * @param newAthlete The new athlete address
@@ -457,14 +481,14 @@ contract FANtiumClaimingV5 is
     }
 
     /**
-     * @notice Pay the distribution amount for a distribution.
-     * @param distributionId The ID of the distribution
+     * @inheritdoc IFANtiumClaiming
+     * @dev Restricted to the athlete of the distribution or an admin.
      */
     function fundDistribution(uint256 distributionId)
         public
         whenNotPaused
         onlyValidDistribution(distributionId)
-        onlyAthlete(distributionId)
+        onlyAthleteOrAdmin(distributionId)
     {
         Distribution memory existingDE = _distributions[distributionId];
 
@@ -490,24 +514,23 @@ contract FANtiumClaimingV5 is
     }
 
     /**
-     * @notice Batch fund distributions.
-     * @dev No modifier is needed here since the caller is already checked for being the athlete.
-     * @param distributionIds The IDs of the distributions
+     * @inheritdoc IFANtiumClaiming
+     * @dev No modifier is needed here since `fundDistribution` checks the caller for each distribution.
      */
-    function batchFundDistribution(uint256[] memory distributionIds) external {
-        for (uint256 i = 0; i < distributionIds.length; i++) {
+    function batchFundDistribution(uint256[] calldata distributionIds) external {
+        for (uint256 i = 0; i < distributionIds.length; ++i) {
             fundDistribution(distributionIds[i]);
         }
     }
 
     /**
-     * @notice Close a distribution, sending the remaining funds to the athlete.
-     * @param distributionId The ID of the distribution
+     * @inheritdoc IFANtiumClaiming
+     * @dev Restricted to admin. Reverts while `treasury` is unset.
      */
     function closeDistribution(uint256 distributionId)
         external
         whenNotPaused
-        onlyManagerOrAdmin
+        onlyAdmin
         onlyValidDistribution(distributionId)
     {
         Distribution storage existingDE = _distributions[distributionId];
@@ -515,8 +538,8 @@ contract FANtiumClaimingV5 is
             revert InvalidDistributionClose(DistributionCloseErrorReason.DISTRIBUTION_ALREADY_CLOSED);
         }
 
-        if (existingDE.athleteAddress == address(0)) {
-            revert InvalidDistributionClose(DistributionCloseErrorReason.ATHLETE_ADDRESS_NOT_SET);
+        if (treasury == address(0)) {
+            revert InvalidDistributionClose(DistributionCloseErrorReason.TREASURY_NOT_SET);
         }
 
         existingDE.closed = true;
@@ -527,17 +550,37 @@ contract FANtiumClaimingV5 is
         }
 
         IERC20 payOutToken = _distributionToPayoutToken[distributionId];
-        payOutToken.safeTransfer(existingDE.athleteAddress, closingAmount);
+        payOutToken.safeTransfer(treasury, closingAmount);
     }
 
     // ========================================================================
     // Claiming
     // ========================================================================
     /**
-     * @notice To be eligiblem for a claim, a token:
+     * @notice Number of distributions the token has claimed.
+     * @dev Claims are recorded per base token id, so the count is the same for every version of a token id. Up to
+     * V5, each claim also burned the token and re-minted it with the next version: the version of a token id minted
+     * before V6 therefore equals its claim count at that time, and stays frozen since.
+     * @param tokenId The ID of the token, any version
+     * @return count The number of distributions the token has claimed
+     */
+    function claimCount(uint256 tokenId) external view returns (uint256 count) {
+        (,,, uint256 baseTokenId) = TokenVersionUtil.getTokenInfo(tokenId);
+        for (uint256 distributionId = 1; distributionId < nextDistributionId; ++distributionId) {
+            if (_distributionToBaseTokenToClaimed[distributionId][baseTokenId]) {
+                ++count;
+            }
+        }
+    }
+
+    /**
+     * @notice To be eligible for a claim, a token:
      * - must be part of one of the collections included in the distribution
-     * - is number must be in the snapshot, e.g. it must have been minted before the distribution started
+     * - its number must be in the snapshot, i.e. it must have been minted before the distribution started
      * - must not have been claimed yet for that distribution
+     * @param distributionId The ID of the distribution
+     * @param tokenId The ID of the token, any version
+     * @return Whether the token can claim the distribution
      */
     function isEligibleForClaim(uint256 distributionId, uint256 tokenId) public view returns (bool) {
         Distribution memory existingDE = _distributions[distributionId];
@@ -545,7 +588,7 @@ contract FANtiumClaimingV5 is
 
         // Check if the token is from a valid collection
         bool collectionOK;
-        for (uint256 i = 0; i < existingDE.collectionIds.length; i++) {
+        for (uint256 i = 0; i < existingDE.collectionIds.length; ++i) {
             if (existingDE.collectionIds[i] == collectionId) {
                 collectionOK = true;
                 break;
@@ -566,9 +609,8 @@ contract FANtiumClaimingV5 is
     }
 
     /**
-     * @notice Claim rewards associated with a token of a specific distribution.
-     * @param tokenId The ID of the token
-     * @param distributionId The ID of the distribution
+     * @inheritdoc IFANtiumClaiming
+     * @dev The token keeps its id: since V6, claiming no longer burns and re-mints it.
      */
     function claim(uint256 tokenId, uint256 distributionId) public whenNotPaused onlyValidDistribution(distributionId) {
         Distribution memory existingDE = _distributions[distributionId];
@@ -605,9 +647,6 @@ contract FANtiumClaimingV5 is
         }
         _distributions[distributionId].claimedAmount += claimAmount;
 
-        // Upgrade the token version
-        fantiumAthletes.upgradeTokenVersion(tokenId);
-
         // Split the claim amount between FANtium and the user
         uint256 fantiumRevenue_ = ((claimAmount * existingDE.fantiumFeeBPS) / BPS_BASE);
         uint256 userRevenue_ = claimAmount - fantiumRevenue_;
@@ -627,44 +666,20 @@ contract FANtiumClaimingV5 is
     }
 
     /**
-     * @notice Batch claim for multiple tokens.
-     * @param tokenIds The IDs of the tokens
-     * @param distributionIds The IDs of the distributions
+     * @inheritdoc IFANtiumClaiming
      */
-    function batchClaim(uint256[] memory tokenIds, uint256[] memory distributionIds) external whenNotPaused {
+    function batchClaim(uint256[] calldata tokenIds, uint256[] calldata distributionIds) external whenNotPaused {
         if (tokenIds.length != distributionIds.length) {
             revert ArrayLengthMismatch(tokenIds.length, distributionIds.length);
         }
 
-        for (uint256 i = 0; i < tokenIds.length; i++) {
+        for (uint256 i = 0; i < tokenIds.length; ++i) {
             claim(tokenIds[i], distributionIds[i]);
         }
     }
 
     /**
-     * @dev Given a distribution ID, a token's share of tournament earnings and a token's share of other earnings,
-     * this function calculates the amount to send to the user.
-     * @param distributionId The ID of the distribution
-     * @param tournamentEarningsShare1e7 The share of tournament earnings in 1e7
-     * @param otherEarningShare1e7 The share of other earnings in 1e7
-     * @return tournamentClaim The amount to send to the user for tournament earnings
-     * @return otherClaim The amount to send to the user for other earnings
-     */
-    function computeShares(
-        uint256 distributionId,
-        uint256 tournamentEarningsShare1e7,
-        uint256 otherEarningShare1e7
-    )
-        internal
-        view
-        returns (uint256 tournamentClaim, uint256 otherClaim)
-    {
-        Distribution memory distribution = _distributions[distributionId];
-        tournamentClaim = ((distribution.totalTournamentEarnings * tournamentEarningsShare1e7) / 1e7);
-        otherClaim = ((distribution.totalOtherEarnings * otherEarningShare1e7) / 1e7);
-    }
-
-    /**
+     * @notice Snapshots a distribution's collections and recomputes the amount it pays out.
      * @dev Recompute the amount to distribute to the holders for a distribution based on the distribution
      * tournament and other earnings. Also saves a snapshot of the number of minted tokens for each collection to
      * prevent users to mint tokens after the distribution has started.
@@ -677,7 +692,7 @@ contract FANtiumClaimingV5 is
         uint256 holdersTournamentEarningsShare1e7;
         uint256 holdersOtherEarningsShare1e7;
 
-        for (uint256 i = 0; i < distribution.collectionIds.length; i++) {
+        for (uint256 i = 0; i < distribution.collectionIds.length; ++i) {
             uint256 collectionId = distribution.collectionIds[i];
             Collection memory collection = fantiumAthletes.collections(collectionId);
 
@@ -687,8 +702,8 @@ contract FANtiumClaimingV5 is
             uint256 otherClaim = ((distribution.totalOtherEarnings * collection.otherEarningShare1e7) / 1e7);
 
             _distributionToCollectionInfo[distributionId][collectionId] = CollectionInfo({
-                // we record the current number of minted token to avoid user to purchase tokens afterwrads an be
-                // eligible for the distribution
+                // record the current number of minted tokens so that tokens bought afterwards are not eligible for
+                // the distribution
                 mintedTokens: collection.invocations,
                 tokenTournamentClaim: tournamentClaim,
                 tokenOtherClaim: otherClaim
@@ -709,14 +724,13 @@ contract FANtiumClaimingV5 is
     }
 
     /**
-     * @notice Call the _computeShares function manually.
-     * @dev Only managers or admins can call this function.
-     * @param distributionId The ID of the distribution
+     * @inheritdoc IFANtiumClaiming
+     * @dev Restricted to admin. Runs `_computeShares`.
      */
     function recomputeShares(uint256 distributionId)
         external
         whenNotPaused
-        onlyManagerOrAdmin
+        onlyAdmin
         onlyValidDistribution(distributionId)
     {
         return _computeShares(distributionId);

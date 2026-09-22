@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.34;
-// Scripts are expected to print their results.
-// solhint-disable no-console
 
 import {
     IERC20MetadataUpgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { Script } from "forge-std/Script.sol";
 import { FANtiumAthletesV12 } from "src/FANtiumAthletesV12.sol";
-import { FANtiumClaimingV5 } from "src/FANtiumClaimingV5.sol";
+import { FANtiumClaimingV6 } from "src/FANtiumClaimingV6.sol";
 import { UnsafeUpgrades } from "src/upgrades/UnsafeUpgrades.sol";
 
 /**
@@ -38,9 +36,9 @@ contract DeployTestnet is Script {
             )
         );
 
-        FANtiumClaimingV5 fantiumClaim = FANtiumClaimingV5(
+        FANtiumClaimingV6 fantiumClaim = FANtiumClaimingV6(
             UnsafeUpgrades.deployUUPSProxy(
-                address(new FANtiumClaimingV5()), abi.encodeCall(FANtiumClaimingV5.initialize, (ADMIN))
+                address(new FANtiumClaimingV6()), abi.encodeCall(FANtiumClaimingV6.initialize, (ADMIN))
             )
         );
 
@@ -57,6 +55,7 @@ contract DeployTestnet is Script {
         // FANtiumClaimingV2 setup
         fantiumClaim.setFANtiumNFT(fantiumAthletes);
         fantiumClaim.setGlobalPayoutToken(USDC);
+        fantiumClaim.setTreasury(ADMIN);
 
         vm.stopBroadcast();
     }

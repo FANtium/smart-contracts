@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.34;
-// Scripts are expected to print their results.
-// solhint-disable no-console
 
 import { MinimalForwarder } from "@openzeppelin/contracts/metatx/MinimalForwarder.sol";
 import { Script, VmSafe } from "forge-std/Script.sol";

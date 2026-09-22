@@ -5,6 +5,7 @@ import { Upgrades } from "@openzeppelin/foundry-upgrades/LegacyUpgrades.sol";
 import { Options } from "@openzeppelin/foundry-upgrades/Options.sol";
 import { Script } from "forge-std/Script.sol"; // v4 contracts
 import { FANtiumAthletesV12 } from "src/FANtiumAthletesV12.sol";
+import { FANtiumClaimingV6 } from "src/FANtiumClaimingV6.sol";
 import { PhaseSeed } from "src/interfaces/IFANtiumAthletes.sol";
 
 /**
@@ -47,7 +48,15 @@ contract UpgradeTestnet is Script {
         }
 
         if (FANTIUM_CLAIMING_UPGRADE) {
-            Upgrades.upgradeProxy(FANTIUM_CLAIMING_PROXY, "FANtiumClaimingV5.sol:FANtiumClaimingV5", "", opts);
+            // upgradeToAndCall: set the treasury atomically with the implementation switch, so closing a
+            // distribution never runs against an unset treasury.
+            opts.referenceContract = "archive:FANtiumClaimingV5";
+            Upgrades.upgradeProxy(
+                FANTIUM_CLAIMING_PROXY,
+                "FANtiumClaimingV6.sol:FANtiumClaimingV6",
+                abi.encodeCall(FANtiumClaimingV6.setTreasury, (ADMIN)),
+                opts
+            );
         }
         vm.stopBroadcast();
     }
